@@ -1,0 +1,29 @@
+[
+  {
+    "id": "ch_drone_kills",
+    "title": "ELIMINATE 15 COMBAT DRONES",
+    "description": "Destroy hostile drones across any match.",
+    "target": 15,
+    "rewardXp": 150,
+    "rewardCredits": 50,
+    "type": "daily"
+  },
+  {
+    "id": "ch_extraction_hp",
+    "title": "EXTRACT WITH > 80% HP",
+    "description": "Successfully complete a match while retaining health.",
+    "target": 1,
+    "rewardXp": 200,
+    "rewardCredits": 100,
+    "type": "daily"
+  },
+  {
+    "id": "ch_capture_nodes",
+    "title": "CAPTURE 3 DATA NODES",
+    "description": "Securing data terminals during infiltration missions.",
+    "target": 3,
+    "rewardXp": 100,
+    "rewardCredits": 75,
+    "type": "daily"
+  }
+]

@@ -66,12 +66,14 @@ export class LoadingScreen {
     progressContainer.style.height = "4px";
     progressContainer.style.backgroundColor = DS.colors.surface;
     progressContainer.style.marginBottom = "5px";
+    progressContainer.style.borderRadius = "0px";
 
     // Progress Bar Fill
     this.progressBarFill = document.createElement("div");
     this.progressBarFill.style.width = "0%";
     this.progressBarFill.style.height = "100%";
-    this.progressBarFill.style.backgroundColor = DS.colors.accent;
+    this.progressBarFill.style.backgroundColor = "#FFFFFF";
+    this.progressBarFill.style.borderRadius = "0px";
     progressContainer.appendChild(this.progressBarFill);
     this.overlay.appendChild(progressContainer);
 

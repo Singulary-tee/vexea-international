@@ -525,9 +525,9 @@ export async function ensureAssetsDownloaded(onComplete: () => void, mapId: stri
   Object.assign(progressWrap.style, { display: "none", flexDirection: "column", gap: "8px" });
   
   const barWrapper = document.createElement("div");
-  Object.assign(barWrapper.style, { width: "100%", height: "4px", background: "#1A1A1A" });
+  Object.assign(barWrapper.style, { width: "100%", height: "4px", background: "#1A1A1A", borderRadius: "0px" });
   const barInner = document.createElement("div");
-  Object.assign(barInner.style, { width: "0%", height: "100%", background: DS.colors.accent, transition: "width 0.1s" });
+  Object.assign(barInner.style, { width: "0%", height: "100%", background: "#FFFFFF", transition: "width 0.1s", borderRadius: "0px" });
   barWrapper.appendChild(barInner);
   
   const progressText = document.createElement("div");
