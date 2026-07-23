@@ -1,0 +1,8 @@
+{
+  "name": "Remix: Vexea",
+  "description": "Pve realtime multiplayer first person shooter. ",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
