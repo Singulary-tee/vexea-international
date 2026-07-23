@@ -1,0 +1,48 @@
+{
+  "baseUrl": "https://vexea-r2-asset-guard.alte.workers.dev",
+  "assets": [
+    {
+      "name": "main_menu_1.jpg",
+      "category": "Image",
+      "source": "CloudflareR2",
+      "path": "Images/Backgrounds/main_menu_1.jpg"
+    },
+    {
+      "name": "faction_card_1.jpg",
+      "category": "Image",
+      "source": "CloudflareR2",
+      "path": "Images/Cards/faction_card_1.jpg"
+    },
+    {
+      "name": "infiltration_card_1.png",
+      "category": "Image",
+      "source": "CloudflareR2",
+      "path": "Images/Cards/infiltration_card_1.png"
+    },
+    {
+      "name": "intel_card_1.jpg",
+      "category": "Image",
+      "source": "CloudflareR2",
+      "path": "Images/Cards/intel_card_1.jpg"
+    },
+    {
+      "name": "leaderboard_card_1.jpg",
+      "category": "Image",
+      "source": "CloudflareR2",
+      "path": "Images/Cards/leaderboard_card_1.jpg"
+    },
+    {
+      "name": "squad_card_1.jpg",
+      "category": "Image",
+      "source": "CloudflareR2",
+      "path": "Images/Cards/squad_card_1.jpg"
+    },
+    {
+      "name": "promo_rifle_1.jpg",
+      "category": "Image",
+      "source": "CloudflareR2",
+      "path": "Images/promotional/promo_rifle_1.jpg"
+    }
+  ],
+  "sounds": []
+}

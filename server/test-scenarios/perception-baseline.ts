@@ -1,0 +1,115 @@
+import RAPIER from '@dimforge/rapier3d-compat';
+import { MatchRoom } from '../MatchRoom.js';
+import { DroneType, DroneState } from '../../shared/constants.js';
+import { processDroneIntelligence } from '../ai/DroneIntelligence.js';
+
+async function run() {
+  await RAPIER.init();
+  process.env.PORT = "3333";
+  const room = new MatchRoom('test-room', undefined, 'map_1_facility');
+  
+  room.matchActive = true;
+  room.matchStartTime = Date.now();
+  
+  // Register player at (100, 5, 100)
+  const player = room.registerBotPlayer();
+  player.posX = 100; player.posY = 5; player.posZ = 100;
+  if (player.body) {
+    player.body.setTranslation({ x: 100, y: 5, z: 100 }, true);
+  }
+  player.inputMask = 0; // Stationary
+  player.velX = 0; player.velY = 0; player.velZ = 0;
+
+  // Find a dead drone and init as WHEELED at (100, 5, 110)
+  let drone = null;
+  for (let i = 0; i < room.drones.length; i++) {
+    if (room.drones[i].state === DroneState.DEAD) {
+      drone = room.drones[i];
+      drone.id = room.nextDroneId++;
+      drone.type = DroneType.WHEELED;
+      drone.state = DroneState.IDLE;
+      drone.posX = 100; drone.posY = 5; drone.posZ = 110;
+      room.initDronePhysics(drone);
+      break;
+    }
+  }
+
+  if (!drone) {
+    console.error("Failed to find and initialize drone");
+    return;
+  }
+
+  // Ensure stationary and facing player (which is at (100,5,100) from (100,5,110) -> direction is (0, 0, -1))
+  // Facing direction (0, 0, -1) is yaw = Math.PI (180 degrees)
+  drone.rotX = 0;
+  drone.rotY = 1; // sin(pi/2)
+  drone.rotZ = 0;
+  drone.rotW = 0; // cos(pi/2)
+  if (drone.body) {
+    drone.body.setTranslation({ x: 100, y: 5, z: 110 }, true);
+    drone.body.setRotation({ x: 0, y: 1, z: 0, w: 0 }, true);
+  }
+
+  // Let's run a single tick manually or step to check perception
+  console.log("--- PERCEPTION BASELINE RUN ---");
+  console.log("Player position:", { x: player.posX, y: player.posY, z: player.posZ });
+  console.log("Drone position:", { x: drone.posX, y: drone.posY, z: drone.posZ });
+  console.log("Drone state/mode before:", drone.state, "/", drone.mode);
+
+  // Synchronously call drone intelligence processing to trigger NORMAL -> COMBAT transition
+  let nowMs = Date.now();
+  processDroneIntelligence(nowMs, room.drones, room.players, room.rapierWorld, RAPIER, 0.0166);
+
+  console.log("Drone state/mode after 1 tick:", drone.state, "/", drone.mode);
+  console.log("Drone target identified:", drone.combatTarget ? "YES" : "NO");
+  if (drone.combatTarget) {
+    console.log("  Target confidence:", (drone.combatTarget as any).confidence);
+  }
+
+  // Verify transition to COMBAT has succeeded
+  if (drone.mode !== "COMBAT") {
+    console.error("TEST FAILED: Drone did not transition to COMBAT");
+    room.shutdown();
+    process.exit(1);
+  }
+
+  console.log("\n--- SIMULATING PLAYER ESCAPE (DECAY TO NORMAL) ---");
+  // Move player far away out of sight range
+  player.posX = 1000;
+  player.posY = 1000;
+  player.posZ = 1000;
+  if (player.body) {
+    player.body.setTranslation({ x: 1000, y: 1000, z: 1000 }, true);
+  }
+
+  // Step virtual ticks forward, using dt = 1.0 seconds to decay quickly
+  // DECAY_RATE = 1.0 / 15.0; and dt = 1.0 means each step decays confidence by ~0.0667.
+  // We need to decay below UNKNOWN_THRESHOLD (0.2) to transition back to NORMAL.
+  for (let step = 1; step <= 25; step++) {
+    nowMs += 1000; // Increment time by 1s
+    processDroneIntelligence(nowMs, room.drones, room.players, room.rapierWorld, RAPIER, 1.0);
+    
+    const record = drone.memoryRecords?.find(r => r.entityId === player.id);
+    const conf = record ? record.confidence : 0;
+    
+    if (step % 5 === 0 || drone.mode === "NORMAL") {
+      console.log(`Step ${step} | Player Distance: Far | Memory Confidence: ${conf.toFixed(4)} | Drone Mode: ${drone.mode}`);
+    }
+
+    if (drone.mode === "NORMAL") {
+      console.log(`Drone successfully returned to NORMAL at step ${step}!`);
+      break;
+    }
+  }
+
+  if (drone.mode !== "NORMAL") {
+    console.error("TEST FAILED: Drone did not transition back to NORMAL");
+    room.shutdown();
+    process.exit(1);
+  }
+
+  console.log("STATUS: SUCCESS - All transitions occurred and logged successfully.");
+  room.shutdown();
+}
+
+run().catch(console.error).finally(() => process.exit(0));

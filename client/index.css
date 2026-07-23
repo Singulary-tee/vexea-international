@@ -1,0 +1,48 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Barlow Condensed", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "Roboto Mono", ui-monospace, SFMono-Regular, monospace;
+}
+
+#dev-entities-screen {
+    z-index: 200000 !important;
+    background-color: #111111 !important; /* DS.colors.surface */
+    pointer-events: auto !important;
+    display: none; /* Controlled by JS but z-index is high */
+}
+
+/* Hide mobile controls on desktop */
+body:not(.ui-editor-active).platform-desktop #joystick-boundary,
+body:not(.ui-editor-active).platform-desktop #btn-sprint,
+body:not(.ui-editor-active).platform-desktop #btn-fire-left,
+body:not(.ui-editor-active).platform-desktop #btn-fire-right,
+body:not(.ui-editor-active).platform-desktop #btn-ads,
+body:not(.ui-editor-active).platform-desktop #btn-reload,
+body:not(.ui-editor-active).platform-desktop #btn-jump,
+body:not(.ui-editor-active).platform-desktop #btn-crouch,
+body:not(.ui-editor-active).platform-desktop #btn-dash {
+    display: none !important;
+}
+
+#dev-entities-screen.active-dev {
+    display: flex !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+}
+
+/* Fallback hiding of root if screen-manager fails or for CSS-only robustness */
+#dev-entities-screen:not([style*="display: none"]) ~ #root,
+#root:has(~ #dev-entities-screen:not([style*="display: none"])) {
+    display: none !important;
+}
+
+/* Hide scrollbars globally */
+::-webkit-scrollbar {
+    display: none !important;
+}
+html, body, * {
+    -ms-overflow-style: none !important; /* IE and Edge */
+    scrollbar-width: none !important; /* Firefox */
+}

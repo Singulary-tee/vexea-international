@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>VEXEA</title>
+    <meta name="description" content="Battle an AI commander that thinks, adapts, and coordinates every enemy assault. VEXEA is a multiplayer PvE drone shooter where no two matches unfold the same way." />
+    <meta name="keywords" content="VEXEA, multiplayer, PvE, FPS, drone shooter, WebGPU, Three.js, game" />
+    <meta name="author" content="VEXEA" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="VEXEA" />
+    <meta property="og:title" content="VEXEA" />
+    <meta property="og:description" content="Multiplayer PvE drone survival shooter with authoritative networking and AI-driven drone combat." />
+    <meta property="og:image" content="/inverted_plus.svg" />
+    <meta property="og:url" content="https://vexea-international.web.app" />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="VEXEA" />
+    <meta name="twitter:description" content="Multiplayer PvE drone survival shooter with authoritative networking and AI-driven drone combat." />
+    <meta name="twitter:image" content="/inverted_plus.svg" />
+
+    <meta name="robots" content="index,follow" />
+    <link rel="canonical" href="https://vexea-international.web.app" />
+    <link rel="icon" type="image/svg+xml" href="/inverted_plus.svg" />
+
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "VideoGame",
+      "name": "VEXEA",
+      "url": "https://vexea-international.web.app",
+      "description": "Multiplayer PvE drone survival shooter with authoritative networking and AI-driven drone combat.",
+      "genre": [
+        "First-person shooter",
+        "Action",
+        "Survival"
+      ],
+      "playMode": "MultiPlayer",
+      "gamePlatform": "Web Browser"
+    }
+    </script>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@300;400;500;600;700&family=Barlow+Condensed:wght@400;700&display=swap" rel="stylesheet">
+    
+    
+  </head>
+  <body class="bg-black text-white overflow-hidden select-none overscroll-none" style="touch-action: none; font-family: 'Barlow Condensed', sans-serif; background: #0A0A0A; text-transform: uppercase;">
+    <div id="portrait-lock" style="
+      display: flex;
+      position: fixed;
+      inset: 0;
+      background: #0A0A0A;
+      z-index: 99999;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 24px;
+      letter-spacing: 8px;
+      color: #FF4500;
+      text-transform: uppercase;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease-in-out;
+    ">ROTATE DEVICE</div>
+    <script>
+      (function() {
+        const lock = document.getElementById('portrait-lock');
+        const blockEvents = ["pointerdown", "pointerup", "pointermove", "mousedown", "mouseup", "mousemove", "click", "touchstart", "touchend", "touchmove"];
+        blockEvents.forEach(evt => {
+          lock.addEventListener(evt, (e) => {
+            e.stopPropagation();
+            e.preventDefault();
+          }, { capture: true });
+        });
+        function checkOrientation() {
+          const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+          const isPortrait = isMobile && (window.innerHeight > window.innerWidth);
+          if (isPortrait) {
+            lock.style.opacity = '1';
+            lock.style.pointerEvents = 'auto';
+          } else {
+            lock.style.opacity = '0';
+            lock.style.pointerEvents = 'none';
+          }
+        }
+        window.addEventListener('resize', checkOrientation);
+        window.addEventListener('orientationchange', checkOrientation);
+        checkOrientation();
+      })();
+    </script>
+    <div id="root" class="fixed inset-0 w-full h-full"></div>
+    <script type="module" src="/main.ts"></script>
+  </body>
+</html>

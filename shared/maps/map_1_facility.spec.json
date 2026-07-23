@@ -1,0 +1,1333 @@
+{
+  "id": "map_1_facility",
+  "version": "0.1.0",
+  "displayName": "VEXEA Facility 01 — LLM Center",
+  "worldSize": {
+    "x": 768,
+    "z": 768
+  },
+  "coordinateSystem": {
+    "note": "Blueprint X maps to Three.js X. Blueprint Y maps to Three.js Z. Elevation maps to Three.js Y. Z=0 is ground level. Tunnels at Y=-20. Rooftops at Y=+25 to +35."
+  },
+  "zones": [
+    {
+      "id": "zone_spawn",
+      "displayName": "Spawn Zone",
+      "threatLevel": 0,
+      "bounds": {
+        "xMin": 0,
+        "xMax": 128,
+        "zMin": 640,
+        "zMax": 768
+      },
+      "airAccess": true,
+      "playerSpawn": true,
+      "droneSpawn": false
+    },
+    {
+      "id": "zone_courtyard",
+      "displayName": "Courtyard",
+      "threatLevel": 1,
+      "bounds": {
+        "xMin": 0,
+        "xMax": 288,
+        "zMin": 352,
+        "zMax": 640
+      },
+      "airAccess": true,
+      "playerSpawn": false,
+      "droneSpawn": true
+    },
+    {
+      "id": "zone_warehouse",
+      "displayName": "Warehouse",
+      "threatLevel": 2,
+      "bounds": {
+        "xMin": 0,
+        "xMax": 288,
+        "zMin": 128,
+        "zMax": 352
+      },
+      "airAccess": true,
+      "playerSpawn": false,
+      "droneSpawn": true
+    },
+    {
+      "id": "zone_plant",
+      "displayName": "Plant / Manufacturing",
+      "threatLevel": 3,
+      "bounds": {
+        "xMin": 288,
+        "xMax": 768,
+        "zMin": 128,
+        "zMax": 768
+      },
+      "airAccess": true,
+      "playerSpawn": false,
+      "droneSpawn": true
+    },
+    {
+      "id": "zone_tunnels",
+      "displayName": "Tunnels",
+      "threatLevel": 4,
+      "bounds": {
+        "xMin": 128,
+        "xMax": 768,
+        "zMin": 0,
+        "zMax": 128
+      },
+      "airAccess": false,
+      "playerSpawn": false,
+      "droneSpawn": true
+    },
+    {
+      "id": "zone_core",
+      "displayName": "LLM Core",
+      "threatLevel": 5,
+      "bounds": {
+        "xMin": 320,
+        "xMax": 448,
+        "zMin": 320,
+        "zMax": 448
+      },
+      "airAccess": false,
+      "playerSpawn": false,
+      "droneSpawn": false
+    }
+  ],
+  "buildings": [
+    {
+      "id": "B01",
+      "meshType": "TYPE_MEDIUM_BLOCK",
+      "meshFile": "small_warehouse.glb",
+      "placeholder": false,
+      "position": {
+        "x": 40,
+        "y": 0,
+        "z": 200
+      },
+      "rotation": {
+        "y": 0
+      },
+      "scale": {
+        "x": 1.9804662435729827,
+        "y": 2.3393020064460366,
+        "z": 1.640948253408999
+      },
+      "size": {
+        "x": 20,
+        "y": 9,
+        "z": 20
+      },
+      "floors": 2,
+      "zone": "zone_warehouse"
+    },
+    {
+      "id": "B02",
+      "meshType": "TYPE_LARGE_HALL",
+      "meshFile": "warehouse_building.glb",
+      "placeholder": false,
+      "position": {
+        "x": 120,
+        "y": 0,
+        "z": 200
+      },
+      "rotation": {
+        "y": 90
+      },
+      "scale": {
+        "x": 1.5557345266542288,
+        "y": 0.5278102610247276,
+        "z": 1.4718505301529692
+      },
+      "size": {
+        "x": 40,
+        "y": 18,
+        "z": 60
+      },
+      "floors": 1,
+      "zone": "zone_warehouse"
+    },
+    {
+      "id": "B03",
+      "meshType": "TYPE_SMALL_UTILITY",
+      "meshFile": "small_warehouse.glb",
+      "placeholder": false,
+      "position": {
+        "x": 240,
+        "y": 0,
+        "z": 200
+      },
+      "rotation": {
+        "y": 0
+      },
+      "scale": {
+        "x": 2.3765594922875795,
+        "y": 1.8194571161246953,
+        "z": 1.3127586027271991
+      },
+      "size": {
+        "x": 24,
+        "y": 7,
+        "z": 16
+      },
+      "floors": 1,
+      "zone": "zone_warehouse"
+    },
+    {
+      "id": "B04",
+      "meshType": "TYPE_MEDIUM_BLOCK",
+      "meshFile": "small_warehouse.glb",
+      "placeholder": false,
+      "position": {
+        "x": 80,
+        "y": 0,
+        "z": 520
+      },
+      "rotation": {
+        "y": 0
+      },
+      "scale": {
+        "x": 2.970699365359474,
+        "y": 3.119069341928049,
+        "z": 2.4614223801134987
+      },
+      "size": {
+        "x": 30,
+        "y": 12,
+        "z": 30
+      },
+      "floors": 2,
+      "zone": "zone_courtyard"
+    },
+    {
+      "id": "B05",
+      "meshType": "TYPE_MEDIUM_BLOCK",
+      "meshFile": "small_warehouse.glb",
+      "placeholder": false,
+      "position": {
+        "x": 160,
+        "y": 0,
+        "z": 480
+      },
+      "rotation": {
+        "y": 0
+      },
+      "scale": {
+        "x": 2.772652741002176,
+        "y": 3.898836677410061,
+        "z": 2.9537068561361983
+      },
+      "size": {
+        "x": 28,
+        "y": 15,
+        "z": 36
+      },
+      "floors": 2,
+      "zone": "zone_courtyard"
+    },
+    {
+      "id": "B06",
+      "meshType": "TYPE_SMALL_UTILITY",
+      "meshFile": "small_warehouse.glb",
+      "placeholder": false,
+      "position": {
+        "x": 240,
+        "y": 0,
+        "z": 560
+      },
+      "rotation": {
+        "y": 0
+      },
+      "scale": {
+        "x": 1.5843729948583862,
+        "y": 2.079379561285366,
+        "z": 1.3127586027271991
+      },
+      "size": {
+        "x": 16,
+        "y": 8,
+        "z": 16
+      },
+      "floors": 1,
+      "zone": "zone_courtyard"
+    },
+    {
+      "id": "B07",
+      "meshType": "TYPE_LARGE_HALL",
+      "meshFile": "warehouse_building.glb",
+      "placeholder": false,
+      "position": {
+        "x": 360,
+        "y": 0,
+        "z": 600
+      },
+      "rotation": {
+        "y": 0
+      },
+      "scale": {
+        "x": 1.5557345266542288,
+        "y": 0.5864558455830307,
+        "z": 1.9624673735372922
+      },
+      "size": {
+        "x": 40,
+        "y": 20,
+        "z": 80
+      },
+      "floors": 1,
+      "zone": "zone_plant"
+    },
+    {
+      "id": "B08",
+      "meshType": "TYPE_LARGE_HALL",
+      "meshFile": "warehouse_building.glb",
+      "placeholder": false,
+      "position": {
+        "x": 440,
+        "y": 0,
+        "z": 600
+      },
+      "rotation": {
+        "y": 0
+      },
+      "scale": {
+        "x": 1.5557345266542288,
+        "y": 0.5864558455830307,
+        "z": 1.9624673735372922
+      },
+      "size": {
+        "x": 40,
+        "y": 20,
+        "z": 80
+      },
+      "floors": 1,
+      "zone": "zone_plant"
+    },
+    {
+      "id": "B09",
+      "meshType": "TYPE_LARGE_HALL",
+      "meshFile": "warehouse_building.glb",
+      "placeholder": false,
+      "position": {
+        "x": 540,
+        "y": 0,
+        "z": 600
+      },
+      "rotation": {
+        "y": 0
+      },
+      "scale": {
+        "x": 1.1668008949906716,
+        "y": 0.4691646764664245,
+        "z": 0.9812336867686461
+      },
+      "size": {
+        "x": 30,
+        "y": 16,
+        "z": 40
+      },
+      "floors": 1,
+      "zone": "zone_plant"
+    },
+    {
+      "id": "B10",
+      "meshType": "TYPE_MEDIUM_BLOCK",
+      "meshFile": "small_warehouse.glb",
+      "placeholder": false,
+      "position": {
+        "x": 660,
+        "y": 0,
+        "z": 600
+      },
+      "rotation": {
+        "y": 0
+      },
+      "scale": {
+        "x": 2.3765594922875795,
+        "y": 4.678604012892073,
+        "z": 2.6255172054543983
+      },
+      "size": {
+        "x": 24,
+        "y": 18,
+        "z": 32
+      },
+      "floors": 2,
+      "zone": "zone_plant"
+    },
+    {
+      "id": "B11",
+      "meshType": "TYPE_SMALL_UTILITY",
+      "meshFile": "small_warehouse.glb",
+      "placeholder": false,
+      "position": {
+        "x": 340,
+        "y": 0,
+        "z": 480
+      },
+      "rotation": {
+        "y": 0
+      },
+      "scale": {
+        "x": 1.9804662435729827,
+        "y": 3.119069341928049,
+        "z": 2.2973275547725986
+      },
+      "size": {
+        "x": 20,
+        "y": 12,
+        "z": 28
+      },
+      "floors": 1,
+      "zone": "zone_plant"
+    },
+    {
+      "id": "B12",
+      "meshType": "TYPE_TOWER",
+      "meshFile": "small_warehouse.glb",
+      "placeholder": false,
+      "position": {
+        "x": 420,
+        "y": 0,
+        "z": 480
+      },
+      "rotation": {
+        "y": 0
+      },
+      "scale": {
+        "x": 1.9804662435729827,
+        "y": 3.898836677410061,
+        "z": 1.640948253408999
+      },
+      "size": {
+        "x": 20,
+        "y": 15,
+        "z": 20
+      },
+      "floors": 1,
+      "zone": "zone_plant"
+    },
+    {
+      "id": "B13",
+      "meshType": "TYPE_SMALL_UTILITY",
+      "meshFile": "small_warehouse.glb",
+      "placeholder": false,
+      "position": {
+        "x": 520,
+        "y": 0,
+        "z": 480
+      },
+      "rotation": {
+        "y": 90
+      },
+      "scale": {
+        "x": 0.9902331217864914,
+        "y": 2.5992244516067076,
+        "z": 4.922844760226997
+      },
+      "size": {
+        "x": 10,
+        "y": 10,
+        "z": 60
+      },
+      "floors": 1,
+      "zone": "zone_plant"
+    },
+    {
+      "id": "B14",
+      "meshType": "TYPE_SMALL_UTILITY",
+      "meshFile": "small_warehouse.glb",
+      "placeholder": false,
+      "position": {
+        "x": 640,
+        "y": 0,
+        "z": 480
+      },
+      "rotation": {
+        "y": 0
+      },
+      "scale": {
+        "x": 1.9804662435729827,
+        "y": 3.119069341928049,
+        "z": 2.4614223801134987
+      },
+      "size": {
+        "x": 20,
+        "y": 12,
+        "z": 30
+      },
+      "floors": 1,
+      "zone": "zone_plant"
+    },
+    {
+      "id": "B15",
+      "meshType": "TYPE_LARGE_HALL",
+      "meshFile": "warehouse_building.glb",
+      "placeholder": false,
+      "position": {
+        "x": 520,
+        "y": 0,
+        "z": 360
+      },
+      "rotation": {
+        "y": 0
+      },
+      "scale": {
+        "x": 1.1668008949906716,
+        "y": 0.4691646764664245,
+        "z": 0.9812336867686461
+      },
+      "size": {
+        "x": 30,
+        "y": 16,
+        "z": 40
+      },
+      "floors": 1,
+      "zone": "zone_plant"
+    },
+    {
+      "id": "B16",
+      "meshType": "TYPE_LARGE_HALL",
+      "meshFile": "warehouse_building.glb",
+      "placeholder": false,
+      "position": {
+        "x": 600,
+        "y": 0,
+        "z": 360
+      },
+      "rotation": {
+        "y": 0
+      },
+      "scale": {
+        "x": 1.1668008949906716,
+        "y": 0.4691646764664245,
+        "z": 0.9812336867686461
+      },
+      "size": {
+        "x": 30,
+        "y": 16,
+        "z": 40
+      },
+      "floors": 1,
+      "zone": "zone_plant"
+    },
+    {
+      "id": "B17",
+      "meshType": "TYPE_MEDIUM_BLOCK",
+      "meshFile": "small_warehouse.glb",
+      "placeholder": false,
+      "position": {
+        "x": 600,
+        "y": 0,
+        "z": 280
+      },
+      "rotation": {
+        "y": 0
+      },
+      "scale": {
+        "x": 1.9804662435729827,
+        "y": 3.119069341928049,
+        "z": 1.640948253408999
+      },
+      "size": {
+        "x": 20,
+        "y": 12,
+        "z": 20
+      },
+      "floors": 2,
+      "zone": "zone_plant"
+    },
+    {
+      "id": "B18",
+      "meshType": "TYPE_MEDIUM_BLOCK",
+      "meshFile": "small_warehouse.glb",
+      "placeholder": false,
+      "position": {
+        "x": 520,
+        "y": 0,
+        "z": 280
+      },
+      "rotation": {
+        "y": 0
+      },
+      "scale": {
+        "x": 2.3765594922875795,
+        "y": 3.6389142322493906,
+        "z": 1.9691379040907988
+      },
+      "size": {
+        "x": 24,
+        "y": 14,
+        "z": 24
+      },
+      "floors": 2,
+      "zone": "zone_plant"
+    },
+    {
+      "id": "B19",
+      "meshType": "TYPE_CENTERPIECE",
+      "meshFile": null,
+      "placeholder": true,
+      "position": {
+        "x": 384,
+        "y": 0,
+        "z": 384
+      },
+      "rotation": {
+        "y": 0
+      },
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "size": {
+        "x": 80,
+        "y": 24,
+        "z": 80
+      },
+      "floors": 3,
+      "zone": "zone_core"
+    },
+    {
+      "id": "B20",
+      "meshType": "TYPE_SMALL_UTILITY",
+      "meshFile": "small_warehouse.glb",
+      "placeholder": false,
+      "position": {
+        "x": 640,
+        "y": 0,
+        "z": 64
+      },
+      "rotation": {
+        "y": 0
+      },
+      "scale": {
+        "x": 2.970699365359474,
+        "y": 3.6389142322493906,
+        "z": 2.4614223801134987
+      },
+      "size": {
+        "x": 30,
+        "y": 14,
+        "z": 30
+      },
+      "floors": 1,
+      "zone": "zone_tunnels"
+    }
+  ],
+  "spawnPoints": [
+    {
+      "id": "S_AIR_01",
+      "type": "AIR_HANGAR",
+      "position": {
+        "x": 416,
+        "y": 24,
+        "z": 736
+      }
+    },
+    {
+      "id": "S_AIR_02",
+      "type": "AIR_HANGAR",
+      "position": {
+        "x": 672,
+        "y": 32,
+        "z": 672
+      }
+    },
+    {
+      "id": "S_GND_01",
+      "type": "GROUND_GARAGE",
+      "position": {
+        "x": 84,
+        "y": 0,
+        "z": 224
+      }
+    },
+    {
+      "id": "S_GND_02",
+      "type": "GROUND_GARAGE",
+      "position": {
+        "x": 384,
+        "y": 0,
+        "z": 544
+      }
+    },
+    {
+      "id": "S_GND_03",
+      "type": "GROUND_GARAGE",
+      "position": {
+        "x": 540,
+        "y": 0,
+        "z": 256
+      }
+    },
+    {
+      "id": "S_ELEV_01",
+      "type": "ELEVATOR_SHAFT",
+      "position": {
+        "x": 256,
+        "y": -20,
+        "z": 64
+      }
+    },
+    {
+      "id": "S_ELEV_02",
+      "type": "ELEVATOR_SHAFT",
+      "position": {
+        "x": 448,
+        "y": -20,
+        "z": 64
+      }
+    }
+  ],
+  "playerSpawn": {
+    "id": "EXTRACT_01",
+    "position": {
+      "x": 384,
+      "y": 0,
+      "z": 0
+    }
+  },
+  "extractionPoint": {
+    "id": "EXTRACT_01",
+    "position": {
+      "x": 384,
+      "y": 0,
+      "z": 0
+    }
+  },
+  "restrictedGates": [
+    {
+      "id": "GATE_NORTH",
+      "position": {
+        "x": 384,
+        "y": 0,
+        "z": 448
+      },
+      "width": 6,
+      "defenses": [
+        "TURRETS",
+        "MINES"
+      ],
+      "killZoneRadius": 15
+    },
+    {
+      "id": "GATE_SOUTH",
+      "position": {
+        "x": 384,
+        "y": 0,
+        "z": 320
+      },
+      "width": 6,
+      "defenses": [
+        "TURRETS",
+        "MINES"
+      ],
+      "killZoneRadius": 15
+    },
+    {
+      "id": "GATE_EAST",
+      "position": {
+        "x": 448,
+        "y": 0,
+        "z": 384
+      },
+      "width": 6,
+      "defenses": [
+        "TURRETS",
+        "MINES"
+      ],
+      "killZoneRadius": 15
+    },
+    {
+      "id": "GATE_WEST",
+      "position": {
+        "x": 320,
+        "y": 0,
+        "z": 384
+      },
+      "width": 6,
+      "defenses": [
+        "TURRETS",
+        "MINES"
+      ],
+      "killZoneRadius": 15
+    },
+    {
+      "id": "CORE_MAIN_ENTRANCE",
+      "position": {
+        "x": 384,
+        "y": 0,
+        "z": 384
+      },
+      "width": 8,
+      "defenses": [
+        "TURRETS",
+        "LASERS"
+      ],
+      "killZoneRadius": 20
+    }
+  ],
+  "objective": {
+    "id": "LLM_CORE",
+    "zone": "zone_core",
+    "position": {
+      "x": 384,
+      "y": 0,
+      "z": 384
+    },
+    "meshType": "TYPE_CENTERPIECE"
+  },
+  "props": {
+    "cameras": [
+      {
+        "id": "cam_zone_spawn_0",
+        "meshFile": "security_camera_01_1k.gltf.glb",
+        "position": {
+          "x": 68.51317040252204,
+          "y": 4,
+          "z": 646.8059181576124
+        },
+        "rotation": {
+          "y": 171.40976386972923
+        }
+      },
+      {
+        "id": "cam_zone_spawn_1",
+        "meshFile": "security_camera_02_1k.gltf.glb",
+        "position": {
+          "x": 123.69011706718953,
+          "y": 4,
+          "z": 748.1410726786372
+        },
+        "rotation": {
+          "y": 358.3635872970993
+        }
+      },
+      {
+        "id": "cam_zone_spawn_2",
+        "meshFile": "security_camera_01_1k.gltf.glb",
+        "position": {
+          "x": 12.309726596027758,
+          "y": 4,
+          "z": 735.8317009138793
+        },
+        "rotation": {
+          "y": 5.050820291779612
+        }
+      },
+      {
+        "id": "cam_zone_spawn_3",
+        "meshFile": "security_camera_02_1k.gltf.glb",
+        "position": {
+          "x": 35.84892246414353,
+          "y": 4,
+          "z": 766.4755359195476
+        },
+        "rotation": {
+          "y": 144.4151487472293
+        }
+      },
+      {
+        "id": "cam_zone_spawn_4",
+        "meshFile": "security_camera_01_1k.gltf.glb",
+        "position": {
+          "x": 15.733772588308938,
+          "y": 4,
+          "z": 737.6515156356392
+        },
+        "rotation": {
+          "y": 179.18532248367387
+        }
+      },
+      {
+        "id": "cam_zone_spawn_5",
+        "meshFile": "security_camera_02_1k.gltf.glb",
+        "position": {
+          "x": 35.91430639903754,
+          "y": 4,
+          "z": 669.6622316792227
+        },
+        "rotation": {
+          "y": 208.7539205071288
+        }
+      },
+      {
+        "id": "cam_zone_spawn_6",
+        "meshFile": "security_camera_01_1k.gltf.glb",
+        "position": {
+          "x": 63.86770347447032,
+          "y": 4,
+          "z": 736.7784754188905
+        },
+        "rotation": {
+          "y": 13.61093261463827
+        }
+      },
+      {
+        "id": "cam_zone_spawn_7",
+        "meshFile": "security_camera_02_1k.gltf.glb",
+        "position": {
+          "x": 106.16275193924872,
+          "y": 4,
+          "z": 731.6954409244656
+        },
+        "rotation": {
+          "y": 215.85216426470194
+        }
+      },
+      {
+        "id": "cam_zone_spawn_8",
+        "meshFile": "security_camera_01_1k.gltf.glb",
+        "position": {
+          "x": 57.21683290360369,
+          "y": 4,
+          "z": 737.8139520104455
+        },
+        "rotation": {
+          "y": 185.71680495238718
+        }
+      },
+      {
+        "id": "cam_zone_spawn_9",
+        "meshFile": "security_camera_02_1k.gltf.glb",
+        "position": {
+          "x": 107.73822884490335,
+          "y": 4,
+          "z": 715.7083551892531
+        },
+        "rotation": {
+          "y": 253.82181450456093
+        }
+      },
+      {
+        "id": "cam_zone_spawn_10",
+        "meshFile": "security_camera_01_1k.gltf.glb",
+        "position": {
+          "x": 91.69953277388132,
+          "y": 4,
+          "z": 745.8038149186148
+        },
+        "rotation": {
+          "y": 249.17489298102643
+        }
+      },
+      {
+        "id": "cam_zone_spawn_11",
+        "meshFile": "security_camera_02_1k.gltf.glb",
+        "position": {
+          "x": 13.23796801701019,
+          "y": 4,
+          "z": 743.6916258436324
+        },
+        "rotation": {
+          "y": 174.77306820354622
+        }
+      },
+      {
+        "id": "cam_zone_spawn_12",
+        "meshFile": "security_camera_01_1k.gltf.glb",
+        "position": {
+          "x": 17.861016307700254,
+          "y": 4,
+          "z": 765.6338446559464
+        },
+        "rotation": {
+          "y": 120.54223044585817
+        }
+      },
+      {
+        "id": "cam_zone_spawn_13",
+        "meshFile": "security_camera_02_1k.gltf.glb",
+        "position": {
+          "x": 49.74447330877649,
+          "y": 4,
+          "z": 737.6326287702796
+        },
+        "rotation": {
+          "y": 127.64799987571817
+        }
+      },
+      {
+        "id": "cam_zone_spawn_14",
+        "meshFile": "security_camera_01_1k.gltf.glb",
+        "position": {
+          "x": 122.2337254252289,
+          "y": 4,
+          "z": 734.0090038010334
+        },
+        "rotation": {
+          "y": 271.4452830903138
+        }
+      },
+      {
+        "id": "cam_zone_spawn_15",
+        "meshFile": "security_camera_02_1k.gltf.glb",
+        "position": {
+          "x": 3.440009825616869,
+          "y": 4,
+          "z": 763.7195158354775
+        },
+        "rotation": {
+          "y": 166.10446341399344
+        }
+      },
+      {
+        "id": "cam_zone_spawn_16",
+        "meshFile": "security_camera_01_1k.gltf.glb",
+        "position": {
+          "x": 22.225291080096753,
+          "y": 4,
+          "z": 714.2652100871428
+        },
+        "rotation": {
+          "y": 109.15646375685212
+        }
+      },
+      {
+        "id": "cam_zone_spawn_17",
+        "meshFile": "security_camera_02_1k.gltf.glb",
+        "position": {
+          "x": 41.97290867074477,
+          "y": 4,
+          "z": 647.1655740872338
+        },
+        "rotation": {
+          "y": 145.66232703293113
+        }
+      },
+      {
+        "id": "cam_zone_spawn_18",
+        "meshFile": "security_camera_01_1k.gltf.glb",
+        "position": {
+          "x": 119.6797718177528,
+          "y": 4,
+          "z": 699.162994301464
+        },
+        "rotation": {
+          "y": 155.24381016832123
+        }
+      },
+      {
+        "id": "cam_zone_spawn_19",
+        "meshFile": "security_camera_02_1k.gltf.glb",
+        "position": {
+          "x": 70.04662442996525,
+          "y": 4,
+          "z": 670.8011760657758
+        },
+        "rotation": {
+          "y": 287.864305507906
+        }
+      }
+    ],
+    "lighting": [
+      {
+        "id": "light_32",
+        "meshFile": "double_arm.glb",
+        "position": {
+          "x": 32,
+          "y": 0,
+          "z": 352
+        },
+        "rotation": {
+          "y": 0
+        }
+      },
+      {
+        "id": "light_64",
+        "meshFile": "double_arm.glb",
+        "position": {
+          "x": 64,
+          "y": 0,
+          "z": 352
+        },
+        "rotation": {
+          "y": 0
+        }
+      },
+      {
+        "id": "light_96",
+        "meshFile": "double_arm.glb",
+        "position": {
+          "x": 96,
+          "y": 0,
+          "z": 352
+        },
+        "rotation": {
+          "y": 0
+        }
+      },
+      {
+        "id": "light_128",
+        "meshFile": "double_arm.glb",
+        "position": {
+          "x": 128,
+          "y": 0,
+          "z": 352
+        },
+        "rotation": {
+          "y": 0
+        }
+      },
+      {
+        "id": "light_160",
+        "meshFile": "double_arm.glb",
+        "position": {
+          "x": 160,
+          "y": 0,
+          "z": 352
+        },
+        "rotation": {
+          "y": 0
+        }
+      },
+      {
+        "id": "light_192",
+        "meshFile": "double_arm.glb",
+        "position": {
+          "x": 192,
+          "y": 0,
+          "z": 352
+        },
+        "rotation": {
+          "y": 0
+        }
+      },
+      {
+        "id": "light_224",
+        "meshFile": "double_arm.glb",
+        "position": {
+          "x": 224,
+          "y": 0,
+          "z": 352
+        },
+        "rotation": {
+          "y": 0
+        }
+      },
+      {
+        "id": "light_256",
+        "meshFile": "double_arm.glb",
+        "position": {
+          "x": 256,
+          "y": 0,
+          "z": 352
+        },
+        "rotation": {
+          "y": 0
+        }
+      },
+      {
+        "id": "light_288",
+        "meshFile": "double_arm.glb",
+        "position": {
+          "x": 288,
+          "y": 0,
+          "z": 352
+        },
+        "rotation": {
+          "y": 0
+        }
+      },
+      {
+        "id": "light_320",
+        "meshFile": "double_arm.glb",
+        "position": {
+          "x": 320,
+          "y": 0,
+          "z": 352
+        },
+        "rotation": {
+          "y": 0
+        }
+      },
+      {
+        "id": "light_352",
+        "meshFile": "double_arm.glb",
+        "position": {
+          "x": 352,
+          "y": 0,
+          "z": 352
+        },
+        "rotation": {
+          "y": 0
+        }
+      },
+      {
+        "id": "light_384",
+        "meshFile": "double_arm.glb",
+        "position": {
+          "x": 384,
+          "y": 0,
+          "z": 352
+        },
+        "rotation": {
+          "y": 0
+        }
+      },
+      {
+        "id": "light_416",
+        "meshFile": "double_arm.glb",
+        "position": {
+          "x": 416,
+          "y": 0,
+          "z": 352
+        },
+        "rotation": {
+          "y": 0
+        }
+      },
+      {
+        "id": "light_448",
+        "meshFile": "double_arm.glb",
+        "position": {
+          "x": 448,
+          "y": 0,
+          "z": 352
+        },
+        "rotation": {
+          "y": 0
+        }
+      },
+      {
+        "id": "light_480",
+        "meshFile": "double_arm.glb",
+        "position": {
+          "x": 480,
+          "y": 0,
+          "z": 352
+        },
+        "rotation": {
+          "y": 0
+        }
+      },
+      {
+        "id": "light_512",
+        "meshFile": "double_arm.glb",
+        "position": {
+          "x": 512,
+          "y": 0,
+          "z": 352
+        },
+        "rotation": {
+          "y": 0
+        }
+      },
+      {
+        "id": "light_544",
+        "meshFile": "double_arm.glb",
+        "position": {
+          "x": 544,
+          "y": 0,
+          "z": 352
+        },
+        "rotation": {
+          "y": 0
+        }
+      },
+      {
+        "id": "light_576",
+        "meshFile": "double_arm.glb",
+        "position": {
+          "x": 576,
+          "y": 0,
+          "z": 352
+        },
+        "rotation": {
+          "y": 0
+        }
+      },
+      {
+        "id": "light_608",
+        "meshFile": "double_arm.glb",
+        "position": {
+          "x": 608,
+          "y": 0,
+          "z": 352
+        },
+        "rotation": {
+          "y": 0
+        }
+      },
+      {
+        "id": "light_640",
+        "meshFile": "double_arm.glb",
+        "position": {
+          "x": 640,
+          "y": 0,
+          "z": 352
+        },
+        "rotation": {
+          "y": 0
+        }
+      },
+      {
+        "id": "light_672",
+        "meshFile": "double_arm.glb",
+        "position": {
+          "x": 672,
+          "y": 0,
+          "z": 352
+        },
+        "rotation": {
+          "y": 0
+        }
+      },
+      {
+        "id": "light_704",
+        "meshFile": "double_arm.glb",
+        "position": {
+          "x": 704,
+          "y": 0,
+          "z": 352
+        },
+        "rotation": {
+          "y": 0
+        }
+      },
+      {
+        "id": "light_736",
+        "meshFile": "double_arm.glb",
+        "position": {
+          "x": 736,
+          "y": 0,
+          "z": 352
+        },
+        "rotation": {
+          "y": 0
+        }
+      }
+    ],
+    "vegetation": [],
+    "note": "Props populated in prompt 3 after asset inventory is complete."
+  },
+  "adjacency": {
+    "zone_spawn": [
+      "zone_courtyard"
+    ],
+    "zone_courtyard": [
+      "zone_spawn",
+      "zone_warehouse",
+      "zone_plant"
+    ],
+    "zone_warehouse": [
+      "zone_courtyard",
+      "zone_tunnels"
+    ],
+    "zone_plant": [
+      "zone_courtyard",
+      "zone_tunnels",
+      "zone_core"
+    ],
+    "zone_tunnels": [
+      "zone_warehouse",
+      "zone_plant"
+    ],
+    "zone_core": [
+      "zone_plant"
+    ]
+  }
+}
