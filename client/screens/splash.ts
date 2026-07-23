@@ -12,17 +12,16 @@ const TEXTURES_TO_PRELOAD: string[] = [
 
 const IMAGES_TO_PRELOAD = [
   'splash_screen.png',
-  'slopInc_card.png',
   'infiltration_card_1.png',
   'intel_card_1.jpg',
   'leaderboard_card_1.jpg',
   'squad_card_1.jpg',
   'promo_rifle_1.jpg',
-  'feedback_card.png',
+  'promo_pistol_1.jpg',
+  'promo_shotgun_1.jpg',
   'file_00000000cdd071f48495d22753c89fa1.png',
   'main_menu_1.jpg',
-  'faction_card_1.jpg',
-  'statistics_card.png'
+  'faction_card_1.jpg'
 ];
 
 const VIDEOS_TO_PRELOAD: string[] = [

@@ -367,7 +367,14 @@ export async function getCachedOrFetchUrl(
       "intel_card_1.jpg": "Images/Cards/intel_card_1.jpg",
       "leaderboard_card_1.jpg": "Images/Cards/leaderboard_card_1.jpg",
       "squad_card_1.jpg": "Images/Cards/squad_card_1.jpg",
-      "promo_rifle_1.jpg": "Images/promotional/promo_rifle_1.jpg"
+      "promo_rifle_1.jpg": "Images/promotional/promo_rifle_1.jpg",
+      "promo_pistol_1.jpg": "Images/promotional/promo_pistol_1.jpg",
+      "promo_shotgun_1.jpg": "Images/promotional/promo_shotgun_1.jpg",
+      "splash_screen.png": "Images/Backgrounds/splash_screen.png",
+      "file_00000000cdd071f48495d22753c89fa1.png": "Images/Backgrounds/file_00000000cdd071f48495d22753c89fa1.png",
+      "click.mp3": "Audio/Sfx/click.mp3",
+      "vexea_theme.mp3": "Audio/Music/vexea_theme.mp3",
+      "iron_march.mp3": "Audio/Music/iron_march.mp3"
     };
 
     let downloadUrl = "";

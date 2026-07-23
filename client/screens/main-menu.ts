@@ -39,10 +39,9 @@ const cardImages = [
     'leaderboard_card_1.jpg',
     'squad_card_1.jpg',
     'promo_rifle_1.jpg',
-    'main_menu_1.jpg',
-    'slopInc_card.png',
-    'statistics_card.png',
-    'feedback_card.png'
+    'promo_pistol_1.jpg',
+    'promo_shotgun_1.jpg',
+    'main_menu_1.jpg'
 ];
 
 // Element References
@@ -830,8 +829,8 @@ export function initMainMenu() {
 
   const OFFERS = [
     { image: 'promo_rifle_1.jpg', promo: 'M4-HAZARD SKIN: 400 CR' },
-    { image: 'faction_card_1.jpg', promo: 'VIBE SPECIALIST: 600 CR' },
-    { image: 'slopInc_card.png', promo: 'SLOP DEFENDER: 500 CR' }
+    { image: 'promo_pistol_1.jpg', promo: 'SILENT ASSASSIN: 350 CR' },
+    { image: 'promo_shotgun_1.jpg', promo: 'BREACHER SPECIAL: 450 CR' }
   ];
   let currentOfferIdx = 0;
 
@@ -1046,7 +1045,7 @@ function updateProfileBox() {
       if (registeredUserData.photoURL) {
         avatarImg.src = registeredUserData.photoURL;
       } else {
-        avatarImg.src = getAssetUrl('statistics_card.png');
+        avatarImg.src = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%2523ff4400"><circle cx="12" cy="8" r="4"/><path d="M12 14c-6.1 0-8 4-8 4v2h16v-2s-1.9-4-8-4z"/></svg>';
       }
     }
 
@@ -1077,7 +1076,7 @@ function updateProfileBox() {
     profileNameText.style.color = DS.colors.textMuted;
 
     if (avatarImg) {
-      avatarImg.src = getAssetUrl('statistics_card.png');
+      avatarImg.src = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%2523ff4400"><circle cx="12" cy="8" r="4"/><path d="M12 14c-6.1 0-8 4-8 4v2h16v-2s-1.9-4-8-4z"/></svg>';
     }
 
     if (xpFill) {
