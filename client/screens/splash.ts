@@ -166,12 +166,14 @@ export function initSplash() {
     
     const loadingBarWrapper = document.createElement('div');
     Object.assign(loadingBarWrapper.style, {
-      width: '120px', height: '2px', background: DS.colors.surface, overflow: 'hidden'
+      width: '120px', height: '2px', background: DS.colors.surface, overflow: 'hidden',
+      borderRadius: '0px'
     });
 
     const loadingBarInner = document.createElement('div');
     Object.assign(loadingBarInner.style, {
-      height: '100%', width: '0', background: DS.colors.accent
+      height: '100%', width: '0', background: '#FFFFFF',
+      borderRadius: '0px'
     });
     loadingBarWrapper.appendChild(loadingBarInner);
 

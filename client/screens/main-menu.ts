@@ -1,11 +1,16 @@
 import * as screenManager from "./screen-manager";
-import { getFirestore, collection, addDoc, serverTimestamp, doc, getDoc, onSnapshot, setDoc } from "firebase/firestore";
+import { getFirestore, collection, addDoc, serverTimestamp, doc, getDoc, onSnapshot, setDoc, updateDoc } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
 import { DS } from "../design-system";
 import { IS_DEV } from "../../shared/gate";
 import { getDevMap, getDefaultMap, MAP_REGISTRY } from "../../shared/maps/map-registry";
 import { hasCachedBlob, getCachedOrFetchUrl, ensureAssetsDownloaded, getAssetUrl } from "../asset-cache";
 import { EXTENDED_SOUNDS, EXTENDED_TEXTURES } from "./splash";
+import offersData from "../data/offers.json";
+import catalogData from "../data/catalog.json";
+import challengesDataList from "../data/challenges.json";
+import { validatePurchase, validateClaim, calculateLevelMetrics } from "../../shared/validation/validator";
+import { CatalogItem } from "../../shared/validation/types";
 
 let styleInjected = false;
 let activeCardId: string | null = null;
@@ -336,6 +341,8 @@ export function initMainMenu() {
 
   // Center Profile Block: Unified horizontal layout containing avatar, vertical progress bar, and name/lvl
   const profileCenterBox = document.createElement('div');
+  profileCenterBox.style.cursor = 'pointer';
+  profileCenterBox.onclick = () => openProfileAuthModal();
   Object.assign(profileCenterBox.style, {
     position: 'relative',
     display: 'flex',
@@ -378,7 +385,7 @@ export function initMainMenu() {
     width: '3px',
     height: '28px',
     background: 'rgba(255, 255, 255, 0.18)',
-    borderRadius: '1.5px',
+    borderRadius: '0px',
     overflow: 'hidden',
     display: 'flex',
     flexDirection: 'column',
@@ -391,8 +398,8 @@ export function initMainMenu() {
   Object.assign(xpFillEl.style, {
     width: '100%',
     height: '65%',
-    background: `linear-gradient(180deg, #FFA000, ${DS.colors.accent})`,
-    borderRadius: '1.5px',
+    background: '#FFFFFF',
+    borderRadius: '0px',
     transition: 'height 0.3s ease'
   });
   xpBarTrack.appendChild(xpFillEl);
@@ -679,7 +686,8 @@ export function initMainMenu() {
     padding: '8px 20px',
     fontFamily: DS.typography.fontFamily, fontWeight: DS.typography.weightBold,
     fontSize: 'clamp(16px, 4cqi, 24px)', cursor: 'pointer', pointerEvents: 'auto',
-    borderRadius: '2px', textAlign: 'center', whiteSpace: 'nowrap', boxShadow: '0 2px 6px rgba(0,0,0,0.5)', zIndex: '5'
+    borderRadius: '2px', textAlign: 'center', whiteSpace: 'nowrap', boxShadow: '0 2px 6px rgba(0,0,0,0.5)', zIndex: '5',
+    marginTop: 'auto'
   });
   qmBtn.onclick = (e) => {
       e.stopPropagation();
@@ -1412,10 +1420,130 @@ function renderRightPanel() {
        }, true));
     }
     else if (currentRightPanelMode === 'STORE') {
-        rightPanelContent.appendChild(createPanelBlock('STORE', c => {
-            const val = document.createElement('div'); val.textContent = 'OFFLINE';
-            Object.assign(val.style, { fontFamily: DS.typography.fontFamily, fontSize: 'clamp(14px, 2.5vh, 18px)', color: '#888888' });
-            c.appendChild(val);
+        rightPanelContent.appendChild(createPanelBlock('ARMORY & CATALOG', c => {
+            const grid = document.createElement('div');
+            Object.assign(grid.style, {
+                display: 'grid',
+                gridTemplateColumns: '1fr',
+                gap: '12px',
+                padding: '4px'
+            });
+
+            const currentCredits = registeredUserData?.credits ?? 100;
+            const currentLevel = registeredUserData?.battlePass ?? 1;
+            const unlockedItems: string[] = registeredUserData?.unlockedItems || [];
+
+            (catalogData as CatalogItem[]).forEach(item => {
+                const card = document.createElement('div');
+                card.className = 'mm-glass';
+                const isUnlocked = unlockedItems.includes(item.id);
+                const isLevelLocked = currentLevel < item.requiredLevel;
+
+                Object.assign(card.style, {
+                    padding: '12px 16px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '8px',
+                    borderLeft: `3px solid ${isUnlocked ? '#00FF88' : isLevelLocked ? DS.colors.textMuted : DS.colors.accent}`
+                });
+
+                card.innerHTML = `
+                  <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <div style="font-family:${DS.typography.fontFamily}; font-size:14px; font-weight:bold; color:${DS.colors.text}; letter-spacing:1px;">${item.title.toUpperCase()}</div>
+                    <div style="font-family:${DS.typography.fontFamily}; font-size:11px; color:${DS.colors.accent}; font-weight:bold;">${item.priceCredits} CR</div>
+                  </div>
+                  <div style="font-family:${DS.typography.fontFamily}; font-size:10px; color:${DS.colors.textMuted}; text-transform:none;">${item.description}</div>
+                  <div style="display:flex; justify-content:space-between; align-items:center; margin-top:4px;">
+                    <div style="font-family:${DS.typography.fontFamily}; font-size:10px; color:${DS.colors.textMuted};">REQ. LEVEL ${item.requiredLevel} | ${item.category.toUpperCase()}</div>
+                  </div>
+                `;
+
+                const actionBtn = document.createElement('button');
+                if (isUnlocked) {
+                    actionBtn.textContent = 'UNLOCKED';
+                    actionBtn.disabled = true;
+                    Object.assign(actionBtn.style, {
+                        padding: '8px', background: 'rgba(0, 255, 136, 0.1)', border: '1px solid #00FF88',
+                        color: '#00FF88', fontFamily: DS.typography.fontFamily, fontSize: '11px', fontWeight: 'bold'
+                    });
+                } else if (isLevelLocked) {
+                    actionBtn.textContent = `LOCKED (REACH LVL ${item.requiredLevel})`;
+                    actionBtn.disabled = true;
+                    Object.assign(actionBtn.style, {
+                        padding: '8px', background: 'rgba(255,255,255,0.05)', border: DS.glass.border,
+                        color: DS.colors.textMuted, fontFamily: DS.typography.fontFamily, fontSize: '11px'
+                    });
+                } else {
+                    actionBtn.textContent = `PURCHASE (${item.priceCredits} CREDITS)`;
+                    Object.assign(actionBtn.style, {
+                        padding: '8px', background: DS.colors.accent, border: 'none',
+                        color: DS.colors.background, fontFamily: DS.typography.fontFamily, fontSize: '11px',
+                        fontWeight: 'bold', cursor: 'pointer'
+                    });
+
+                    actionBtn.onclick = async () => {
+                        const auth = getAuth();
+                        if (!auth.currentUser) {
+                            showMenuNotification("PLEASE SIGN IN TO PURCHASE ITEMS", "warning");
+                            openProfileAuthModal();
+                            return;
+                        }
+
+                        const req = {
+                            playerId: auth.currentUser.uid,
+                            itemId: item.id,
+                            currentCredits: registeredUserData?.credits ?? 100,
+                            currentLevel: registeredUserData?.battlePass ?? 1,
+                            unlockedItems: registeredUserData?.unlockedItems || []
+                        };
+
+                        const valResult = validatePurchase(req, item);
+                        if (!valResult.isApproved) {
+                            const errDesc = valResult.error?.message || valResult.error?.code || 'UNKNOWN_ERROR';
+                            showMenuNotification(`PURCHASE FAILED: ${errDesc}`, "warning");
+                            return;
+                        }
+
+                        // Save previous state for rollback
+                        const prevCredits = registeredUserData?.credits ?? 100;
+                        const prevUnlocked = [...(registeredUserData?.unlockedItems || [])];
+
+                        // Optimistic state update
+                        if (registeredUserData) {
+                            registeredUserData.credits = valResult.remainingCredits;
+                            registeredUserData.unlockedItems = [...prevUnlocked, item.id];
+                        }
+                        updateProfileBox();
+                        renderRightPanel();
+
+                        // Execute Firestore transaction
+                        try {
+                            const db = getFirestore();
+                            const userRef = doc(db, 'Users', auth.currentUser.uid);
+                            await updateDoc(userRef, {
+                                credits: valResult.remainingCredits,
+                                unlockedItems: [...prevUnlocked, item.id]
+                            });
+                            showMenuNotification(`UNLOCKED: ${item.title.toUpperCase()}`);
+                        } catch (err) {
+                            console.warn("Purchase transaction failed:", err);
+                            // Rollback optimistic update
+                            if (registeredUserData) {
+                                registeredUserData.credits = prevCredits;
+                                registeredUserData.unlockedItems = prevUnlocked;
+                            }
+                            updateProfileBox();
+                            renderRightPanel();
+                            showMenuNotification("Connection Error: Unable to validate request. Please check your connection and try again.", "warning");
+                        }
+                    };
+                }
+
+                card.appendChild(actionBtn);
+                grid.appendChild(card);
+            });
+
+            c.appendChild(grid);
         }));
     }
     else if (currentRightPanelMode === 'MAP_EDITOR') {
@@ -2103,5 +2231,236 @@ function openSquadFriendsModal() {
 
   document.body.appendChild(overlay);
   renderTabContent();
+}
+
+export function openProfileAuthModal() {
+  const auth = getAuth();
+  const db = getFirestore();
+  const user = auth.currentUser;
+
+  const overlay = document.createElement('div');
+  overlay.id = 'vex-profile-auth-modal';
+  Object.assign(overlay.style, {
+    position: 'fixed', inset: '0', zIndex: '5000',
+    backgroundColor: 'rgba(5, 5, 5, 0.88)',
+    backdropFilter: 'blur(12px)',
+    display: 'flex', alignItems: 'center', justifyContent: 'center',
+    fontFamily: DS.typography.fontFamily, color: DS.colors.text
+  });
+
+  const box = document.createElement('div');
+  box.className = 'mm-glass';
+  Object.assign(box.style, {
+    width: 'clamp(340px, 92vw, 520px)',
+    maxHeight: '90vh', overflowY: 'auto',
+    padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px',
+    borderRadius: '4px', position: 'relative'
+  });
+
+  const closeBtn = document.createElement('button');
+  closeBtn.textContent = '✕';
+  Object.assign(closeBtn.style, {
+    position: 'absolute', top: '12px', right: '16px',
+    background: 'none', border: 'none', color: DS.colors.textMuted,
+    fontSize: '18px', cursor: 'pointer'
+  });
+  closeBtn.onclick = () => overlay.remove();
+  box.appendChild(closeBtn);
+
+  const title = document.createElement('div');
+  title.textContent = 'ACCOUNT & AUTHENTICATION';
+  Object.assign(title.style, {
+    fontFamily: DS.typography.fontFamilyWordmark, fontSize: '18px',
+    color: DS.colors.accent, letterSpacing: '3px', fontWeight: 'bold'
+  });
+  box.appendChild(title);
+
+  const statusBox = document.createElement('div');
+  statusBox.className = 'mm-glass';
+  Object.assign(statusBox.style, { padding: '12px', display: 'flex', flexDirection: 'column', gap: '6px' });
+
+  const currentUid = user ? user.uid : 'NOT_LOGGED_IN';
+  const isAnon = user ? user.isAnonymous : true;
+  const authProvider = isAnon ? 'GUEST SESSION' : (user?.providerData[0]?.providerId || 'EMAIL / PASSWORD');
+
+  statusBox.innerHTML = `
+    <div style="font-size:11px; color:${DS.colors.textMuted}; letter-spacing:1px;">CURRENT USER IDENTIFIER</div>
+    <div style="font-size:12px; font-weight:bold; color:${DS.colors.text}; font-family:monospace; word-break:break-all;">${currentUid}</div>
+    <div style="font-size:11px; color:${DS.colors.accent}; margin-top:2px; font-weight:bold;">PROVIDER: ${authProvider.toUpperCase()}</div>
+  `;
+  box.appendChild(statusBox);
+
+  const googleBtn = document.createElement('button');
+  googleBtn.innerHTML = `
+    <svg width="18" height="18" viewBox="0 0 24 24" style="vertical-align:middle; margin-right:8px;"><path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17z"/><path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.11-6.72-4.96H1.29v3.15C3.26 21.3 7.31 24 12 24z"/><path fill="#FBBC05" d="M5.28 14.24c-.25-.72-.38-1.49-.38-2.24s.13-1.52.38-2.24V6.61H1.29C.47 8.24 0 10.06 0 12s.47 3.76 1.29 5.39l3.99-3.15z"/><path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.31 0 3.26 2.7 1.29 6.61l3.99 3.15c.95-2.85 3.6-4.96 6.72-4.96z"/></svg>
+    SIGN IN WITH GOOGLE
+  `;
+  Object.assign(googleBtn.style, {
+    width: '100%', padding: '12px', background: '#FFFFFF', color: '#000000',
+    fontFamily: DS.typography.fontFamily, fontSize: '12px', fontWeight: 'bold',
+    border: 'none', borderRadius: '2px', cursor: 'pointer', display: 'flex',
+    alignItems: 'center', justifyContent: 'center'
+  });
+
+  googleBtn.onclick = async () => {
+    try {
+      const { GoogleAuthProvider, signInWithPopup } = await import('firebase/auth');
+      const provider = new GoogleAuthProvider();
+      const credential = await signInWithPopup(auth, provider);
+      const loggedUser = credential.user;
+
+      const userRef = doc(db, 'Users', loggedUser.uid);
+      const snap = await getDoc(userRef);
+      if (!snap.exists()) {
+        await setDoc(userRef, {
+          displayName: (loggedUser.displayName || 'OPERATIVE').toUpperCase(),
+          photoURL: loggedUser.photoURL || null,
+          faction: 'VIBE CO.',
+          credits: 100,
+          energy: 100,
+          score: 0,
+          kills: 0,
+          battlePass: 1,
+          unlockedItems: [],
+          createdAt: serverTimestamp(),
+          dailyRefreshedAt: serverTimestamp()
+        });
+      }
+      showMenuNotification(`SIGNED IN AS ${loggedUser.displayName || loggedUser.email}`);
+      overlay.remove();
+    } catch (err: any) {
+      console.warn("Google Auth error:", err);
+      showMenuNotification("Connection Error: Unable to validate request. Please check your connection and try again.", "warning");
+    }
+  };
+  box.appendChild(googleBtn);
+
+  const divOr = document.createElement('div');
+  divOr.textContent = '— OR USE EMAIL / PASSWORD —';
+  Object.assign(divOr.style, { fontSize: '10px', color: DS.colors.textMuted, textAlign: 'center', margin: '4px 0' });
+  box.appendChild(divOr);
+
+  const emailInput = document.createElement('input');
+  emailInput.type = 'email'; emailInput.placeholder = 'EMAIL ADDRESS';
+  Object.assign(emailInput.style, {
+    width: '100%', padding: '10px', background: 'rgba(0,0,0,0.5)', border: DS.glass.border,
+    color: DS.colors.text, fontFamily: DS.typography.fontFamily, fontSize: '12px', outline: 'none'
+  });
+
+  const passInput = document.createElement('input');
+  passInput.type = 'password'; passInput.placeholder = 'PASSWORD';
+  Object.assign(passInput.style, {
+    width: '100%', padding: '10px', background: 'rgba(0,0,0,0.5)', border: DS.glass.border,
+    color: DS.colors.text, fontFamily: DS.typography.fontFamily, fontSize: '12px', outline: 'none'
+  });
+
+  box.appendChild(emailInput);
+  box.appendChild(passInput);
+
+  const btnRow = document.createElement('div');
+  Object.assign(btnRow.style, { display: 'flex', gap: '8px' });
+
+  const loginBtn = document.createElement('button');
+  loginBtn.textContent = 'EMAIL LOGIN';
+  Object.assign(loginBtn.style, {
+    flex: '1', padding: '10px', background: DS.colors.accent, color: DS.colors.background,
+    fontFamily: DS.typography.fontFamily, fontSize: '11px', fontWeight: 'bold', border: 'none', cursor: 'pointer'
+  });
+
+  loginBtn.onclick = async () => {
+    const email = emailInput.value.trim();
+    const pass = passInput.value.trim();
+    if (!email || !pass) {
+      showMenuNotification("ENTER EMAIL AND PASSWORD", "warning");
+      return;
+    }
+    try {
+      const { signInWithEmailAndPassword } = await import('firebase/auth');
+      await signInWithEmailAndPassword(auth, email, pass);
+      showMenuNotification("EMAIL LOGIN SUCCESSFUL");
+      overlay.remove();
+    } catch (e: any) {
+      console.warn("Email login failed:", e);
+      showMenuNotification("Connection Error: Unable to validate request. Please check your connection and try again.", "warning");
+    }
+  };
+
+  const registerBtn = document.createElement('button');
+  registerBtn.textContent = 'CREATE ACCOUNT';
+  Object.assign(registerBtn.style, {
+    flex: '1', padding: '10px', background: 'rgba(255,255,255,0.1)', color: DS.colors.text,
+    fontFamily: DS.typography.fontFamily, fontSize: '11px', fontWeight: 'bold', border: DS.glass.border, cursor: 'pointer'
+  });
+
+  registerBtn.onclick = async () => {
+    const email = emailInput.value.trim();
+    const pass = passInput.value.trim();
+    if (!email || !pass) {
+      showMenuNotification("ENTER EMAIL AND PASSWORD", "warning");
+      return;
+    }
+    try {
+      const { createUserWithEmailAndPassword } = await import('firebase/auth');
+      const cred = await createUserWithEmailAndPassword(auth, email, pass);
+      const userRef = doc(db, 'Users', cred.user.uid);
+      await setDoc(userRef, {
+        displayName: email.split('@')[0].toUpperCase(),
+        faction: 'VIBE CO.',
+        credits: 100,
+        energy: 100,
+        score: 0,
+        kills: 0,
+        battlePass: 1,
+        unlockedItems: [],
+        createdAt: serverTimestamp(),
+        dailyRefreshedAt: serverTimestamp()
+      });
+      showMenuNotification("NEW ACCOUNT CREATED");
+      overlay.remove();
+    } catch (e: any) {
+      console.warn("Account creation failed:", e);
+      showMenuNotification("Connection Error: Unable to validate request. Please check your connection and try again.", "warning");
+    }
+  };
+
+  btnRow.appendChild(loginBtn);
+  btnRow.appendChild(registerBtn);
+  box.appendChild(btnRow);
+
+  const bottomActions = document.createElement('div');
+  Object.assign(bottomActions.style, { display: 'flex', justifyContent: 'space-between', marginTop: '8px' });
+
+  if (user && !user.isAnonymous) {
+    const signOutBtn = document.createElement('button');
+    signOutBtn.textContent = 'SIGN OUT';
+    Object.assign(signOutBtn.style, {
+      padding: '8px 12px', background: 'rgba(255, 68, 0, 0.2)', border: '1px solid #FF4400',
+      color: '#FF4400', fontFamily: DS.typography.fontFamily, fontSize: '11px', cursor: 'pointer'
+    });
+    signOutBtn.onclick = async () => {
+      await auth.signOut();
+      showMenuNotification("SIGNED OUT");
+      overlay.remove();
+    };
+    bottomActions.appendChild(signOutBtn);
+  } else {
+    const guestBtn = document.createElement('button');
+    guestBtn.textContent = 'CONTINUE AS GUEST';
+    Object.assign(guestBtn.style, {
+      padding: '8px 12px', background: 'none', border: '1px solid rgba(255,255,255,0.2)',
+      color: DS.colors.textMuted, fontFamily: DS.typography.fontFamily, fontSize: '11px', cursor: 'pointer'
+    });
+    guestBtn.onclick = async () => {
+      const { signInAnonymously } = await import('firebase/auth');
+      await signInAnonymously(auth);
+      showMenuNotification("GUEST SESSION ACTIVATED");
+      overlay.remove();
+    };
+    bottomActions.appendChild(guestBtn);
+  }
+
+  box.appendChild(bottomActions);
+  overlay.appendChild(box);
+  document.body.appendChild(overlay);
 }
 
