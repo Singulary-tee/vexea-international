@@ -1,4 +1,4 @@
-name: VEXEA Continuous Deployment
+name: VEXEA Continuous Deployment to Firebase Hosting
 
 on:
   push:
@@ -6,29 +6,30 @@ on:
       - main
 
 jobs:
-  deploy:
-    name: Deploy to DigitalOcean
+  build_and_deploy:
+    name: Build and Deploy
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Deploy via SSH
-        uses: appleboy/ssh-action@v1.0.3
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
         with:
-          host: ${{ secrets.DROPLET_IP }}
-          username: ${{ secrets.DROPLET_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          script: |
-            cd /var/www/vexea || exit
-            git pull origin main
-            
-            # Install production dependencies
-            npm ci
-            
-            # Compile client and server
-            npm run build
-            
-            # Restart PM2 ecosystem
-            pm2 reload ecosystem.config.js --update-env
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build client
+        run: npx vite build
+
+      - name: Deploy to Firebase Hosting
+        uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          repoToken: ${{ secrets.GITHUB_TOKEN }}
+          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_VEXEA_E0A37 }}
+          projectId: vexea-e0a37
+          channelId: live
+
