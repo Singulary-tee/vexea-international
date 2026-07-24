@@ -451,7 +451,7 @@
       "source": "Release"
     },
     {
-      "name": "file_00000000cdd071f48495d22753c89fa1.png",
+      "name": "file_00000000cdd071f48495d22753c89fa1.webp",
       "category": "Image",
       "source": "Release"
     },
@@ -466,7 +466,7 @@
       "source": "Release"
     },
     {
-      "name": "splash_screen.png",
+      "name": "splash_screen.webp",
       "category": "Image",
       "source": "Release"
     },
@@ -492,7 +492,7 @@
       "category": "Audio"
     },
     {
-      "name": "click.mp3",
+      "name": "click.opus",
       "category": "Audio"
     },
     {
@@ -508,7 +508,7 @@
       "category": "Audio"
     },
     {
-      "name": "iron_march.mp3",
+      "name": "iron_march.opus",
       "category": "Audio"
     },
     {
@@ -532,7 +532,7 @@
       "category": "Audio"
     },
     {
-      "name": "vexea_theme.mp3",
+      "name": "vexea_theme.opus",
       "category": "Audio"
     },
     {

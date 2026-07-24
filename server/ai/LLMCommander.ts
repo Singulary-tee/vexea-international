@@ -80,7 +80,7 @@ Topological graph adjacency (Zones):
                 },
                 {
                   name: "merge_groups",
-                  description: "Unifies two active tactical control groups.",
+                  description: "Unifies two active control groups.",
                   parameters: {
                     type: Type.OBJECT,
                     properties: {
@@ -105,7 +105,7 @@ Topological graph adjacency (Zones):
                 },
                 {
                   name: "spawn_units",
-                  description: "Requests local tactical unit deployment.",
+                  description: "Requests local swarm unit deployment.",
                   parameters: {
                     type: Type.OBJECT,
                     properties: {

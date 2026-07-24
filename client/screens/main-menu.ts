@@ -11,6 +11,11 @@ import catalogData from "../data/catalog.json";
 import challengesDataList from "../data/challenges.json";
 import { validatePurchase, validateClaim, calculateLevelMetrics } from "../../shared/validation/validator";
 import { CatalogItem } from "../../shared/validation/types";
+import { renderArmoryScreen } from "./armory-screen";
+import { renderStatsScreen } from "./stats-screen";
+import { renderFactionScreen } from "./faction-screen";
+import { renderStoreScreen } from "./store-screen";
+import { StudioPreviewManager } from "../StudioPreviewManager";
 
 let styleInjected = false;
 let activeCardId: string | null = null;
@@ -25,28 +30,26 @@ let playCardTitleEl: HTMLElement | null = null;
 let playCardEl: HTMLElement | null = null;
 const GAME_MODES = [
   { id: 'INFILTRATION', label: 'INFILTRATION', desc: 'Standard covert ops' },
-  { id: 'HARDCORE', label: 'HARDCORE', desc: 'High damage tactical combat' },
+  { id: 'HARDCORE', label: 'HARDCORE', desc: 'High damage high-stakes combat' },
   { id: 'ARENA', label: 'ARENA', desc: 'Fast-paced close quarters' }
 ];
 
 let squadMembers: string[] = [];
-let friendsList = [
-  { codename: 'VALKYRIE', status: 'ONLINE' },
-  { codename: 'SPECTER', status: 'ONLINE' },
-  { codename: 'GHOST', status: 'IN-GAME' },
-  { codename: 'APEX', status: 'OFFLINE' }
-];
+let friendsList: Array<{ codename: string; status: string }> = [];
 
 const cardImages = [
-    'faction_card_1.jpg',
-    'infiltration_card_1.png',
-    'intel_card_1.jpg',
-    'leaderboard_card_1.jpg',
-    'squad_card_1.jpg',
-    'promo_rifle_1.jpg',
-    'promo_pistol_1.jpg',
-    'promo_shotgun_1.jpg',
-    'main_menu_1.jpg'
+    'update_card_1.webp',
+    'infiltration_card_1.webp',
+    'intel_card_1.webp',
+    'leaderboard_card_1.webp',
+    'squad_card_1.webp',
+    'promo_rifle_1.webp',
+    'promo_pistol_1.webp',
+    'promo_shotgun_1.webp',
+    'armory_1.webp',
+    'faction_1.webp',
+    'stats_1.webp',
+    'store_1.webp'
 ];
 
 // Element References
@@ -60,9 +63,15 @@ let profileNameText: HTMLElement;
 
 function getPlayCardImageForMode(modeId: string): string {
   if (modeId === 'INFILTRATION') {
-    return 'infiltration_card_1.png';
+    return 'infiltration_card_1.webp';
   }
-  return 'infiltration_card_1.png'; // Fallback to infiltration mode image
+  if (modeId === 'HARDCORE') {
+    return 'update_card_1.webp';
+  }
+  if (modeId === 'ARENA') {
+    return 'squad_card_1.webp';
+  }
+  return 'infiltration_card_1.webp'; // Fallback to infiltration mode image
 }
 
 function updatePlayCardBackground() {
@@ -242,12 +251,56 @@ export function initMainMenu() {
   Object.assign(el.style, {
     position: 'fixed', inset: '0', zIndex: '900', display: 'none',
     backgroundColor: DS.colors.background,
-    backgroundImage: `url('${getAssetUrl("main_menu_1.jpg")}')`,
-    backgroundSize: 'cover',
-    backgroundPosition: 'center',
     opacity: '0', transition: `opacity ${DS.transitions.panel}`,
     overflow: 'hidden'
   });
+
+  // Create Video Background element
+  const videoBg = document.createElement('video');
+  videoBg.id = 'main-menu-video-bg';
+  videoBg.autoplay = true;
+  videoBg.loop = true;
+  videoBg.muted = true;
+  (videoBg as any).playsInline = true;
+  Object.assign(videoBg.style, {
+    position: 'absolute',
+    top: '50%',
+    left: '50%',
+    minWidth: '100%',
+    minHeight: '100%',
+    width: 'auto',
+    height: 'auto',
+    transform: 'translate(-50%, -50%)',
+    objectFit: 'cover',
+    zIndex: '0',
+    pointerEvents: 'none',
+    display: 'block'
+  });
+
+  getCachedOrFetchUrl("main_menu_1.webm", "Video").then(url => {
+    videoBg.src = url;
+  }).catch(err => {
+    console.error("Failed to load main menu video background:", err);
+  });
+
+  el.appendChild(videoBg);
+
+  // Create Tab Background Overlay element
+  const tabBgOverlay = document.createElement('div');
+  tabBgOverlay.id = 'main-menu-tab-bg-overlay';
+  Object.assign(tabBgOverlay.style, {
+    position: 'absolute',
+    inset: '0',
+    backgroundSize: 'cover',
+    backgroundPosition: 'center',
+    backgroundRepeat: 'no-repeat',
+    zIndex: '1',
+    pointerEvents: 'none',
+    opacity: '0',
+    transition: 'opacity 400ms cubic-bezier(0.4, 0, 0.2, 1)'
+  });
+
+  el.appendChild(tabBgOverlay);
 
   const fisheyeWrap = document.createElement('div');
   fisheyeWrap.className = 'mm-fisheye-wrap';
@@ -288,9 +341,9 @@ export function initMainMenu() {
   Object.assign(navContainer.style, {
     display: 'flex',
     alignItems: 'center',
-    gap: 'clamp(6px, 1.2vw, 16px)',
+    gap: 'clamp(10px, 1.6vw, 24px)',
     zIndex: '15',
-    justifySelf: 'center'
+    flexShrink: '0'
   });
 
   const navItems = [
@@ -308,15 +361,16 @@ export function initMainMenu() {
     btn.textContent = item.label;
     Object.assign(btn.style, {
       fontFamily: DS.typography.fontFamily,
-      fontSize: 'clamp(11px, 1.4vh, 14px)',
+      fontSize: 'clamp(11px, 1.2vw, 13px)',
       fontWeight: 'bold',
-      letterSpacing: '2px',
+      letterSpacing: '1.5px',
       color: item.id === 'DEFAULT' ? DS.colors.accent : 'rgba(255, 255, 255, 0.6)',
       cursor: 'pointer',
       padding: '4px 8px',
       borderBottom: item.id === 'DEFAULT' ? `2px solid ${DS.colors.accent}` : '2px solid transparent',
       transition: 'all 0.2s ease',
-      userSelect: 'none'
+      userSelect: 'none',
+      whiteSpace: 'nowrap'
     });
 
     btn.addEventListener('mouseenter', () => {
@@ -443,7 +497,7 @@ export function initMainMenu() {
 
   profileCenterBox.appendChild(profileInfoCol);
 
-  // Energy & Credits Display stacked vertically, RIGHT of the profile
+  // Energy & Credits Display stacked vertically
   const crDisplay = document.createElement('div');
   crDisplay.id = 'profile-cr-display';
   Object.assign(crDisplay.style, {
@@ -457,8 +511,6 @@ export function initMainMenu() {
     fontWeight: 'bold',
     letterSpacing: '0.5px',
     pointerEvents: 'none',
-    borderLeft: '1px solid rgba(255, 255, 255, 0.15)',
-    paddingLeft: '10px',
     height: '28px',
     flexShrink: '0'
   });
@@ -546,42 +598,100 @@ export function initMainMenu() {
   pGear.addEventListener('mouseleave', () => { pGear.style.color = DS.colors.textMuted; });
   utilityBox.appendChild(pGear);
 
-  // Left Group: Wordmark on the far left, Credits & Energy right of it, separated by a vertical line border
+  // Left Group: Wordmark far left, with CR&EN centered in the in-between space
   const leftGroup = document.createElement('div');
   Object.assign(leftGroup.style, {
     display: 'flex',
     alignItems: 'center',
-    gap: 'clamp(10px, 1.5vw, 18px)',
     flex: '1',
     flexBasis: '0',
     minWidth: '0'
   });
   leftGroup.appendChild(wordmark);
-  leftGroup.appendChild(crDisplay);
+
+  const leftInBetween = document.createElement('div');
+  Object.assign(leftInBetween.style, {
+    flex: '1',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    minWidth: '0',
+    gap: 'clamp(8px, 1.2vw, 16px)'
+  });
+
+  const sepLeft1 = document.createElement('div');
+  Object.assign(sepLeft1.style, {
+    width: '1px',
+    height: '18px',
+    background: 'rgba(255, 255, 255, 0.15)',
+    flexShrink: '0'
+  });
+  leftInBetween.appendChild(sepLeft1);
+  leftInBetween.appendChild(crDisplay);
+
+  const sepLeft2 = document.createElement('div');
+  Object.assign(sepLeft2.style, {
+    width: '1px',
+    height: '18px',
+    background: 'rgba(255, 255, 255, 0.15)',
+    flexShrink: '0'
+  });
+  leftInBetween.appendChild(sepLeft2);
+
+  leftGroup.appendChild(leftInBetween);
   topRow.appendChild(leftGroup);
 
   // Center: Navigation options
   Object.assign(navContainer.style, {
     display: 'flex',
     alignItems: 'center',
-    gap: 'clamp(6px, 1.2vw, 16px)',
+    gap: 'clamp(10px, 1.6vw, 24px)',
     zIndex: '15',
     flexShrink: '0'
   });
   topRow.appendChild(navContainer);
 
-  // Right Controls Container: Profile Center Box on the left of utility, between nav and utility
+  // Right Controls Container: Profile centered in in-between space, Utility far right
   const rightControlsContainer = document.createElement('div');
   Object.assign(rightControlsContainer.style, {
     display: 'flex',
     alignItems: 'center',
-    gap: 'clamp(10px, 1.8vw, 18px)',
     justifyContent: 'flex-end',
     flex: '1',
     flexBasis: '0',
     minWidth: '0'
   });
-  rightControlsContainer.appendChild(profileCenterBox);
+
+  const rightInBetween = document.createElement('div');
+  Object.assign(rightInBetween.style, {
+    flex: '1',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    minWidth: '0',
+    gap: 'clamp(8px, 1.2vw, 16px)'
+  });
+
+  const sepRight1 = document.createElement('div');
+  Object.assign(sepRight1.style, {
+    width: '1px',
+    height: '18px',
+    background: 'rgba(255, 255, 255, 0.15)',
+    flexShrink: '0'
+  });
+  rightInBetween.appendChild(sepRight1);
+  rightInBetween.appendChild(profileCenterBox);
+
+  const sepRight2 = document.createElement('div');
+  Object.assign(sepRight2.style, {
+    width: '1px',
+    height: '18px',
+    background: 'rgba(255, 255, 255, 0.15)',
+    flexShrink: '0'
+  });
+  rightInBetween.appendChild(sepRight2);
+
+  rightControlsContainer.appendChild(rightInBetween);
   rightControlsContainer.appendChild(utilityBox);
 
   topRow.appendChild(rightControlsContainer);
@@ -715,7 +825,7 @@ export function initMainMenu() {
   });
 
   // 1. UPDATES CARD
-  const updatesObj = createNewCard('UPDATES', 'faction_card_1.jpg');
+  const updatesObj = createNewCard('UPDATES', 'update_card_1.webp');
   const updatesCard = updatesObj.card;
   updatesCard.id = 'mm-updates-card';
   updatesCard.style.flex = '1';
@@ -758,7 +868,7 @@ export function initMainMenu() {
   updatesCard.appendChild(updatesSubtext);
 
   // 2. LEADERBOARD CARD
-  const leaderboardObj = createNewCard('LEADERBOARD', 'leaderboard_card_1.jpg');
+  const leaderboardObj = createNewCard('LEADERBOARD', 'leaderboard_card_1.webp');
   const leaderboardCard = leaderboardObj.card;
   leaderboardCard.id = 'leaderboard-card';
   leaderboardCard.style.flex = '1';
@@ -771,7 +881,7 @@ export function initMainMenu() {
   };
 
   // 3. INTEL CARD
-  const intelObj = createNewCard('INTEL', 'intel_card_1.jpg');
+  const intelObj = createNewCard('INTEL', 'intel_card_1.webp');
   const intelCard = intelObj.card;
   intelCard.style.flex = '1';
   intelCard.style.height = '100%';
@@ -782,7 +892,7 @@ export function initMainMenu() {
   };
 
   // 4. SQUAD RAID CARD
-  const squadRaidObj = createNewCard('SQUAD RAID', 'squad_card_1.jpg');
+  const squadRaidObj = createNewCard('SQUAD RAID', 'squad_card_1.webp');
   const squadRaidCard = squadRaidObj.card;
   squadRaidCard.style.flex = '1';
   squadRaidCard.style.height = '100%';
@@ -805,7 +915,7 @@ export function initMainMenu() {
   });
 
   // 1. STORE CARD (Offers Carousel)
-  const storeObj = createNewCard('OFFERS', 'promo_rifle_1.jpg');
+  const storeObj = createNewCard('OFFERS', 'promo_rifle_1.webp');
   const storeCard = storeObj.card;
   storeCard.style.flex = '1';
   storeCard.style.height = '100%';
@@ -836,9 +946,9 @@ export function initMainMenu() {
   storeCard.appendChild(promoTextEl);
 
   const OFFERS = [
-    { image: 'promo_rifle_1.jpg', promo: 'M4-HAZARD SKIN: 400 CR' },
-    { image: 'promo_pistol_1.jpg', promo: 'SILENT ASSASSIN: 350 CR' },
-    { image: 'promo_shotgun_1.jpg', promo: 'BREACHER SPECIAL: 450 CR' }
+    { image: 'promo_rifle_1.webp', promo: 'M4-HAZARD SKIN: 400 CR' },
+    { image: 'promo_pistol_1.webp', promo: 'SILENT ASSASSIN: 350 CR' },
+    { image: 'promo_shotgun_1.webp', promo: 'BREACHER SPECIAL: 450 CR' }
   ];
   let currentOfferIdx = 0;
 
@@ -984,36 +1094,79 @@ export function initMainMenu() {
   const tabContentLayout = document.createElement('div');
   tabContentLayout.id = 'mm-tab-layout';
   Object.assign(tabContentLayout.style, {
-    position: 'absolute', top: 'clamp(40px, 7.5vh, 60px)', bottom: 'clamp(15px, 2.5vh, 30px)', 
-    left: 'clamp(15px, 2.5vw, 30px)', right: 'clamp(15px, 2.5vw, 30px)', zIndex: '3',
+    position: 'absolute', top: 'clamp(38px, 6.5vh, 52px)', bottom: 'clamp(12px, 2vh, 24px)', 
+    left: 'clamp(12px, 2vw, 24px)', right: 'clamp(12px, 2vw, 24px)', zIndex: '3',
     display: 'none', flexDirection: 'column',
-    maxWidth: '600px', margin: '0 auto'
+    maxWidth: '1400px', margin: '0 auto',
+    background: 'radial-gradient(ellipse at center, rgba(3, 3, 5, 0.98) 0%, rgba(3, 3, 5, 0.85) 65%, rgba(3, 3, 5, 0.3) 85%, rgba(3, 3, 5, 0) 100%)',
+    backdropFilter: 'blur(20px)',
+    webkitBackdropFilter: 'blur(20px)',
+    border: 'none',
+    borderRadius: '0px',
+    padding: 'clamp(10px, 1.8vh, 18px)',
+    boxSizing: 'border-box',
+    overflow: 'hidden'
   });
 
-  const backBtn = document.createElement('div');
-  backBtn.textContent = 'BACK TO MENU';
-  Object.assign(backBtn.style, {
-    fontFamily: DS.typography.fontFamily, fontSize: 'clamp(14px, 2.5vh, 18px)',
-    color: DS.colors.warning, cursor: 'pointer', marginBottom: '20px', fontWeight: 'bold'
+  const tabHeaderRow = document.createElement('div');
+  Object.assign(tabHeaderRow.style, {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '10px',
+    width: '100%',
+    marginBottom: 'clamp(6px, 1.2vh, 12px)',
+    flexShrink: '0'
   });
-  backBtn.onclick = () => {
-    setActiveCard('DEFAULT');
-  };
-  tabContentLayout.appendChild(backBtn);
 
   const tabTitle = document.createElement('div');
   tabTitle.id = 'dynamic-panel-title';
   Object.assign(tabTitle.style, {
-    fontFamily: DS.typography.fontFamily, fontSize: 'clamp(24px, 4vh, 48px)',
-    color: DS.colors.text, textTransform: 'uppercase', fontWeight: 'bold', marginBottom: '20px',
+    fontFamily: DS.typography.fontFamily,
+    fontSize: 'clamp(16px, 2.2vh, 24px)',
+    color: DS.colors.text,
+    textTransform: 'uppercase',
+    fontWeight: 'bold',
     textShadow: DS.shadows.text
   });
-  tabContentLayout.appendChild(tabTitle);
+
+  const backBtn = document.createElement('div');
+  backBtn.innerHTML = `<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:block;"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>`;
+  Object.assign(backBtn.style, {
+    cursor: 'pointer',
+    border: 'none',
+    borderRadius: '50%',
+    width: '28px',
+    height: '28px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    background: 'rgba(5, 5, 5, 0.92)',
+    backdropFilter: 'blur(16px)',
+    webkitBackdropFilter: 'blur(16px)',
+    color: '#FFFFFF',
+    transition: 'all 0.15s ease',
+    flexShrink: '0'
+  });
+  backBtn.onmouseenter = () => {
+    backBtn.style.background = 'rgba(25, 25, 25, 0.95)';
+    backBtn.style.color = '#FF4500';
+  };
+  backBtn.onmouseleave = () => {
+    backBtn.style.background = 'rgba(5, 5, 5, 0.92)';
+    backBtn.style.color = '#FFFFFF';
+  };
+  backBtn.onclick = () => {
+    setActiveCard('DEFAULT');
+  };
+
+  tabHeaderRow.appendChild(backBtn);
+  tabHeaderRow.appendChild(tabTitle);
+  tabContentLayout.appendChild(tabHeaderRow);
 
   rightPanelContent = document.createElement('div');
   Object.assign(rightPanelContent.style, {
-    display: 'flex', flexDirection: 'column', gap: '8px', overflowY: 'auto',
-    flex: '1', scrollbarWidth: 'none', msOverflowStyle: 'none'
+    display: 'flex', flexDirection: 'column', gap: '6px', overflow: 'hidden',
+    flex: '1', minHeight: '0', height: '100%'
   });
   tabContentLayout.appendChild(rightPanelContent);
   fisheyeWrap.appendChild(tabContentLayout);
@@ -1031,7 +1184,7 @@ function updateProfileBox() {
   const leaderboardCard = document.getElementById('leaderboard-card');
   if (leaderboardCard) {
     import('../asset-cache').then(({ getAssetUrl }) => {
-      leaderboardCard.style.backgroundImage = `url('${getAssetUrl('faction_card_1.jpg')}')`;
+      leaderboardCard.style.backgroundImage = `url('${getAssetUrl('leaderboard_card_1.webp')}')`;
     });
   }
 
@@ -1110,7 +1263,10 @@ function setActiveCard(id: string) {
   currentRightPanelMode = id as any;
   const titleEl = document.getElementById('dynamic-panel-title');
   if (titleEl) {
-    titleEl.textContent = id === 'DEFAULT' ? 'INTEL' : id;
+    let displayTitle = id;
+    if (id === 'DEFAULT') displayTitle = 'INTEL';
+    else if (id === 'LOADOUT') displayTitle = 'ARMORY';
+    titleEl.textContent = displayTitle;
   }
   
   const mainLayout = document.getElementById('mm-main-layout');
@@ -1121,8 +1277,70 @@ function setActiveCard(id: string) {
     if (tabLayout) tabLayout.style.display = 'none';
   } else {
     if (mainLayout) mainLayout.style.display = 'none';
-    if (tabLayout) tabLayout.style.display = 'flex';
+    if (tabLayout) {
+      tabLayout.style.display = 'flex';
+      
+      if (id === 'LOADOUT') {
+        tabLayout.style.background = 'none';
+        tabLayout.style.boxShadow = 'none';
+        tabLayout.style.backdropFilter = 'none';
+        tabLayout.style.setProperty('-webkit-backdrop-filter', 'none');
+      } else {
+        tabLayout.style.background = 'rgba(3, 3, 5, 0.9)';
+        tabLayout.style.boxShadow = '0 0 50px 30px rgba(3, 3, 5, 0.95)';
+        tabLayout.style.backdropFilter = 'blur(15px)';
+        tabLayout.style.setProperty('-webkit-backdrop-filter', 'blur(15px)');
+      }
+    }
+    
+    // Restricted overflow to prevent entire layout vertical scrolling
+    if (rightPanelContent) {
+      rightPanelContent.style.overflow = 'hidden';
+    }
+
     renderRightPanel();
+  }
+
+  // Update background overlays and video playback control
+  const tabBgOverlay = document.getElementById('main-menu-tab-bg-overlay');
+  const videoBg = document.getElementById('main-menu-video-bg') as HTMLVideoElement | null;
+
+  if (id === 'DEFAULT' || id === 'PLAY') {
+    if (tabBgOverlay) {
+      tabBgOverlay.style.opacity = '0';
+    }
+    if (videoBg) {
+      videoBg.style.display = 'block';
+      videoBg.play().catch(() => {});
+    }
+  } else {
+    let bgFile = '';
+    if (id === 'LOADOUT') bgFile = 'armory_1.webp';
+    else if (id === 'INTEL') bgFile = 'stats_1.webp';
+    else if (id === 'FACTION') bgFile = 'faction_1.webp';
+    else if (id === 'STORE') bgFile = 'store_1.webp';
+
+    if (bgFile && tabBgOverlay) {
+      tabBgOverlay.style.backgroundImage = `url('${getAssetUrl(bgFile)}')`;
+      tabBgOverlay.style.opacity = '1';
+      if (videoBg) {
+        // Hide and pause video after the cross-fade animation completes to save GPU/CPU cycles
+        setTimeout(() => {
+          if (currentRightPanelMode !== 'DEFAULT' && currentRightPanelMode !== 'PLAY') {
+            videoBg.style.display = 'none';
+            videoBg.pause();
+          }
+        }, 400);
+      }
+    } else {
+      if (tabBgOverlay) {
+        tabBgOverlay.style.opacity = '0';
+      }
+      if (videoBg) {
+        videoBg.style.display = 'block';
+        videoBg.play().catch(() => {});
+      }
+    }
   }
 
   // Update active state of top-bar navigation buttons
@@ -1169,14 +1387,33 @@ function renderRightPanel() {
   // Right Column Overflow Logic
   const rightCol = document.getElementById('mm-right-col');
   if (rightCol) {
-     rightCol.style.overflowY = 'auto';
+     rightCol.style.overflow = 'hidden';
   }
 
   setTimeout(() => {
     rightPanelContent.innerHTML = '';
     
-    if (currentRightPanelMode === 'DEFAULT' || currentRightPanelMode === 'INTEL') {
-       rightPanelContent.appendChild(createPanelBlock(currentRightPanelMode === 'DEFAULT' ? 'INTEL SUMMARY' : 'LIFETIME STATS', c => {
+    if (currentRightPanelMode === 'DEFAULT') {
+       // Embed 3D Studio Viewport in the Main Menu right panel
+       const studioBlock = document.createElement('div');
+       studioBlock.id = 'mm-3d-viewport';
+       Object.assign(studioBlock.style, {
+         width: '100%',
+         height: '240px',
+         background: '#08080c',
+         border: '1px solid rgba(255, 69, 0, 0.4)',
+         borderRadius: '4px',
+         position: 'relative',
+         overflow: 'hidden',
+         marginBottom: '12px'
+       });
+       rightPanelContent.appendChild(studioBlock);
+
+       requestAnimationFrame(() => {
+         StudioPreviewManager.attachTo(studioBlock, 'MAIN_MENU');
+       });
+
+       rightPanelContent.appendChild(createPanelBlock('INTEL SUMMARY', c => {
          const stats = [
            { l: 'MATCHES', v: registeredUserData ? String(registeredUserData.totalMatches || 0) : '—' },
            { l: 'WINS', v: registeredUserData ? String(registeredUserData.totalWins || 0) : '—' },
@@ -1196,184 +1433,404 @@ function renderRightPanel() {
            Object.assign(val.style, { fontFamily: DS.typography.fontFamily, fontSize: 'clamp(14px, 2.5vh, 18px)', color: DS.colors.text, fontWeight: DS.typography.weightBold });
            row.appendChild(lbl); row.appendChild(val); c.appendChild(row);
          });
-
-         if (IS_DEV) {
-           const devBlock = document.createElement('div');
-           Object.assign(devBlock.style, {
-             marginTop: '24px',
-             borderTop: '1px dashed rgba(255,255,255,0.1)',
-             paddingTop: '16px',
-             fontFamily: DS.typography.fontFamily
-           });
-           
-           const devTitle = document.createElement('div');
-           devTitle.textContent = 'DEV DIAGNOSTICS';
-           Object.assign(devTitle.style, {
-             fontSize: '11px',
-             letterSpacing: '3px',
-             color: DS.colors.dev,
-             marginBottom: '8px'
-           });
-           devBlock.appendChild(devTitle);
-           
-           const devNote = document.createElement('div');
-           devNote.textContent = 'NOTE: Standard 100-credit allotment is arbitrary and subject to game balance review.';
-           Object.assign(devNote.style, {
-             fontSize: '10px',
-             color: DS.colors.textMuted,
-             marginBottom: '12px',
-             textTransform: 'none'
-           });
-           devBlock.appendChild(devNote);
-           
-           const refillBtn = document.createElement('button');
-           refillBtn.textContent = 'REFILL CREDITS & ENERGY [DEV SERVER AUTH]';
-           Object.assign(refillBtn.style, {
-             width: '100%',
-             padding: '8px',
-             background: 'rgba(255, 0, 100, 0.15)',
-             border: '1px solid rgba(255, 0, 100, 0.4)',
-             color: DS.colors.dev,
-             fontSize: '11px',
-             fontWeight: 'bold',
-             letterSpacing: '2px',
-             cursor: 'pointer'
-           });
-           refillBtn.onclick = () => {
-             const auth = getAuth();
-             import('../main').then(({ getSocketChannel }) => {
-               const chan = getSocketChannel();
-               if (chan && registeredUserData) {
-                 chan.emit('refill_credits', { uid: auth.currentUser?.uid });
-                 showMenuNotification("CREDITS REFILL REQUEST EMITTED.");
-               } else {
-                 showMenuNotification("CHANNEL INACTIVE. OFFLINE FALLBACK EMULATING REFILL.", "warning");
-                 const uid = auth.currentUser?.uid;
-                 if (uid) {
-                   import('firebase/firestore').then(({ updateDoc }) => {
-                     updateDoc(doc(getFirestore(), 'Users', uid), {
-                       credits: 1000,
-                       energy: 1000
-                     });
-                   });
-                 }
-               }
-             });
-           };
-           devBlock.appendChild(refillBtn);
-           c.appendChild(devBlock);
-         }
        }));
        rightPanelContent.appendChild(createPanelBlock('LAST MATCH', c => {
          const lbl = document.createElement('div'); lbl.textContent = 'NO DATA AVAILABLE';
          Object.assign(lbl.style, { fontFamily: DS.typography.fontFamily, fontSize: 'clamp(10px, 1.5vh, 14px)', color: DS.colors.textMuted });
          c.appendChild(lbl);
        }, true));
-    } 
-    else if (currentRightPanelMode === 'PLAY') {
-      rightPanelContent.appendChild(createPanelBlock('GAME MODE', c => {
-         GAME_MODES.forEach(mode => {
-            const btn = document.createElement('div');
-            btn.textContent = mode.label;
-            const isSelected = lastChosenGameMode === mode.id;
-            Object.assign(btn.style, {
-              fontFamily: DS.typography.fontFamily,
-              fontSize: 'clamp(14px, 2.5vh, 18px)',
-              padding: 'clamp(4px, 0.8vh, 8px) clamp(6px, 1vw, 12px)',
-              marginBottom: 'clamp(2px, 0.5vh, 4px)',
-              cursor: 'pointer',
-              borderLeft: isSelected ? '2px solid ' + DS.colors.accent : '2px solid transparent',
-              background: isSelected ? 'rgba(255, 69, 0, 0.08)' : 'transparent',
-              color: isSelected ? DS.colors.text : DS.colors.textMuted,
-              transition: 'all 0.2s ease'
-            });
-
-            btn.onclick = () => {
-                lastChosenGameMode = mode.id;
-                localStorage.setItem('lastChosenGameMode', mode.id);
-                if (playCardTitleEl) {
-                    playCardTitleEl.textContent = mode.id;
-                }
-                updatePlayCardBackground();
-                import('../audio').then(({ audioManager }) => audioManager.play('click'));
-                renderRightPanel();
-            };
-            c.appendChild(btn);
-         });
-      }));
-      rightPanelContent.appendChild(createPanelBlock('MATCH TYPE', c => {
-         const opActive = document.createElement('div'); opActive.textContent = 'OPEN MATCH';
-         Object.assign(opActive.style, { fontFamily: DS.typography.fontFamily, fontSize: 'clamp(14px, 2.5vh, 18px)', color: DS.colors.text, borderLeft: '2px solid ' + DS.colors.accent, background: 'rgba(255, 69, 0, 0.08)', padding: 'clamp(2px, 0.5vh, 4px) clamp(4px, 1vw, 8px)', marginBottom: 'clamp(2px, 0.5vh, 4px)' });
-         const op2 = document.createElement('div'); op2.textContent = 'PRIVATE MATCH';
-         Object.assign(op2.style, { fontFamily: DS.typography.fontFamily, fontSize: 'clamp(14px, 2.5vh, 18px)', color: DS.colors.text, opacity: '0.6', padding: 'clamp(2px, 0.5vh, 4px) clamp(4px, 1vw, 8px)' });
-         c.appendChild(opActive); c.appendChild(op2);
-      }));
-      rightPanelContent.appendChild(createPanelBlock('CONTRACTORS', c => {
-         const val = document.createElement('div'); val.textContent = '1 / 10';
-         Object.assign(val.style, { fontFamily: DS.typography.fontFamily, fontSize: 'clamp(14px, 2.5vh, 18px)', color: DS.colors.text });
-         c.appendChild(val);
-      }));
-      rightPanelContent.appendChild(createPanelBlock('', c => {
-         const btn = document.createElement('button');
-         btn.textContent = 'QUICK MATCH';
-         Object.assign(btn.style, {
-           width: '100%', height: 'clamp(32px, 6vh, 48px)', background: DS.colors.accent, color: DS.colors.background, border: 'none',
-           fontFamily: DS.typography.fontFamily, fontSize: 'clamp(16px, 3vh, 24px)', fontWeight: DS.typography.weightBold, textTransform: 'uppercase',
-           cursor: 'pointer'
-         });
-         btn.addEventListener('click', () => { 
-             if (registeredUserData && (registeredUserData.energy || 0) < 10) {
-                 showMenuNotification("DEPLOYMENT REJECTED: INSUFFICIENT ENERGY. REFILL DEV CREDITS IN INTEL.", "warning");
-                 return;
-             }
-             ensureAssetsDownloaded(() => screenManager.showLobby(), getDefaultMap().id); 
-         });
-         c.appendChild(btn);
-      }, true));
+    }
+    else if (currentRightPanelMode === 'INTEL') {
+      renderStatsScreen(rightPanelContent, registeredUserData);
     }
     else if (currentRightPanelMode === 'LOADOUT') {
-        rightPanelContent.appendChild(createPanelBlock('LOADOUT', c => {
-            const val = document.createElement('div'); val.textContent = 'EQUIPMENT SYSTEM OFFLINE';
-            Object.assign(val.style, { fontFamily: DS.typography.fontFamily, fontSize: 'clamp(14px, 2.5vh, 18px)', color: '#888888' });
-            c.appendChild(val);
-        }));
+      renderArmoryScreen(rightPanelContent);
     }
     else if (currentRightPanelMode === 'FACTION') {
-      const auth = getAuth();
-      const isGuest = !auth.currentUser || auth.currentUser.isAnonymous;
-      rightPanelContent.appendChild(createPanelBlock('CURRENT FACTION', c => {
-         const val = document.createElement('div'); val.textContent = isGuest ? 'UNAFFILIATED' : (userFaction || 'UNASSIGNED');
-         Object.assign(val.style, { fontFamily: DS.typography.fontFamily, fontSize: 'clamp(14px, 2.5vh, 18px)', color: DS.colors.text });
-         c.appendChild(val);
-      }));
-      rightPanelContent.appendChild(createPanelBlock('ENLIST', c => {
-         ['VIBE CO.', 'SLOP INC.'].forEach((f, i) => {
-            const btn = document.createElement('div'); btn.textContent = f;
-            const isSelected = userFaction === f;
-            Object.assign(btn.style, {
-              fontFamily: DS.typography.fontFamily, fontSize: 'clamp(14px, 2.5vh, 18px)', padding: 'clamp(6px, 1.5vh, 12px)', marginBottom: 'clamp(4px, 1vh, 8px)', cursor: isGuest ? 'default' : 'pointer',
-              borderLeft: isSelected ? '2px solid ' + DS.colors.accent : '2px solid transparent',
-              background: isSelected ? 'rgba(255, 69, 0, 0.08)' : 'transparent',
-              color: isSelected ? DS.colors.text : DS.colors.textMuted
-            });
-            c.appendChild(btn);
-         });
-      }));
-      rightPanelContent.appendChild(createPanelBlock('', c => {
-         const btn = document.createElement('button');
-         btn.textContent = 'CONFIRM';
-         Object.assign(btn.style, {
-           width: '100%', height: 'clamp(32px, 6vh, 48px)', background: isGuest ? '#333' : DS.colors.accent, color: isGuest ? '#666' : DS.colors.background, border: 'none',
-           fontFamily: DS.typography.fontFamily, fontSize: 'clamp(16px, 3vh, 24px)', fontWeight: DS.typography.weightBold, textTransform: 'uppercase', cursor: isGuest ? 'default' : 'pointer'
-         });
-         if (isGuest) btn.disabled = true;
-         c.appendChild(btn);
-         if (isGuest) {
-            const sub = document.createElement('div'); sub.textContent = 'Sign in to save faction.';
-            Object.assign(sub.style, { fontFamily: DS.typography.fontFamily, fontSize: 'clamp(10px, 1.5vh, 13px)', color: DS.colors.textMuted, textAlign: 'center', marginTop: 'clamp(4px, 1vh, 8px)' });
-            c.appendChild(sub);
-         }
-      }, true));
+      renderFactionScreen(rightPanelContent, registeredUserData);
+    }
+    else if (currentRightPanelMode === 'STORE') {
+      renderStoreScreen(rightPanelContent, registeredUserData);
+    } 
+    else if (currentRightPanelMode === 'PLAY') {
+      rightPanelContent.style.overflow = 'hidden';
+
+      // Play Tab Content Dashboard
+      const playDashboard = document.createElement('div');
+      Object.assign(playDashboard.style, {
+        display: 'grid',
+        gridTemplateColumns: window.innerWidth < 850 ? '1fr' : '1.2fr 1fr 1fr',
+        gap: '8px',
+        width: '100%',
+        height: '100%',
+        boxSizing: 'border-box',
+        overflow: 'hidden'
+      });
+
+      // Column 1: Operational Directives Selector
+      const leftCol = document.createElement('div');
+      Object.assign(leftCol.style, {
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '4px',
+        minHeight: '0'
+      });
+
+      const leftTitle = document.createElement('div');
+      leftTitle.textContent = 'SELECT OPERATIONAL DIRECTIVE';
+      Object.assign(leftTitle.style, {
+        fontFamily: DS.typography.fontFamily,
+        fontSize: '8.5px',
+        color: DS.colors.textMuted,
+        letterSpacing: '1.5px',
+        fontWeight: 'bold',
+        textTransform: 'uppercase'
+      });
+      leftCol.appendChild(leftTitle);
+
+      const modesContainer = document.createElement('div');
+      Object.assign(modesContainer.style, {
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '6px',
+        flex: '1',
+        minHeight: '0'
+      });
+
+      GAME_MODES.forEach(mode => {
+        const isSelected = lastChosenGameMode === mode.id;
+        const card = document.createElement('div');
+        card.className = 'mm-glass';
+        Object.assign(card.style, {
+          background: isSelected ? 'rgba(255, 69, 0, 0.05)' : 'rgba(255, 255, 255, 0.01)',
+          border: isSelected ? `1px solid ${DS.colors.accent}` : '1px solid rgba(255, 255, 255, 0.05)',
+          borderRadius: '4px',
+          padding: '6px 10px',
+          cursor: 'pointer',
+          position: 'relative',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          transition: 'all 0.15s ease-out'
+        });
+
+        // Left highlight strip
+        const strip = document.createElement('div');
+        Object.assign(strip.style, {
+          position: 'absolute',
+          left: '0',
+          top: '0',
+          bottom: '0',
+          width: '3px',
+          background: isSelected ? DS.colors.accent : 'transparent'
+        });
+        card.appendChild(strip);
+
+        const textGroup = document.createElement('div');
+        Object.assign(textGroup.style, {
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '1px'
+        });
+
+        const nameEl = document.createElement('div');
+        nameEl.textContent = mode.label;
+        Object.assign(nameEl.style, {
+          fontFamily: DS.typography.fontFamily,
+          fontSize: '11.5px',
+          fontWeight: 'bold',
+          color: isSelected ? DS.colors.text : 'rgba(255, 255, 255, 0.6)',
+          letterSpacing: '0.8px'
+        });
+
+        const descEl = document.createElement('div');
+        descEl.textContent = mode.desc.toUpperCase();
+        Object.assign(descEl.style, {
+          fontFamily: DS.typography.fontFamily,
+          fontSize: '8px',
+          color: isSelected ? 'rgba(255, 255, 255, 0.6)' : 'rgba(255, 255, 255, 0.3)',
+          letterSpacing: '0.5px'
+        });
+
+        textGroup.appendChild(nameEl);
+        textGroup.appendChild(descEl);
+        card.appendChild(textGroup);
+
+        const statusEl = document.createElement('div');
+        statusEl.textContent = isSelected ? 'ACTIVE' : 'READY';
+        Object.assign(statusEl.style, {
+          fontFamily: DS.typography.fontFamily,
+          fontSize: '7.5px',
+          fontWeight: 'bold',
+          letterSpacing: '0.8px',
+          padding: '2px 6px',
+          borderRadius: '2px',
+          background: isSelected ? 'rgba(255, 69, 0, 0.15)' : 'rgba(255, 255, 255, 0.03)',
+          color: isSelected ? DS.colors.accent : 'rgba(255, 255, 255, 0.4)',
+          border: isSelected ? `1px solid rgba(255, 69, 0, 0.3)` : 'none'
+        });
+        card.appendChild(statusEl);
+
+        card.onclick = () => {
+          lastChosenGameMode = mode.id;
+          localStorage.setItem('lastChosenGameMode', mode.id);
+          if (playCardTitleEl) {
+            playCardTitleEl.textContent = mode.id;
+          }
+          updatePlayCardBackground();
+          import('../audio').then(({ audioManager }) => audioManager.play('click'));
+          renderRightPanel();
+        };
+
+        modesContainer.appendChild(card);
+      });
+
+      leftCol.appendChild(modesContainer);
+      playDashboard.appendChild(leftCol);
+
+      // Column 2: Tactical Zone & Intelligence Preview
+      const centerCol = document.createElement('div');
+      Object.assign(centerCol.style, {
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '4px',
+        minHeight: '0'
+      });
+
+      const centerTitle = document.createElement('div');
+      centerTitle.textContent = 'ZONE INTEL & SECTOR MAP';
+      Object.assign(centerTitle.style, {
+        fontFamily: DS.typography.fontFamily,
+        fontSize: '8.5px',
+        color: DS.colors.textMuted,
+        letterSpacing: '1.5px',
+        fontWeight: 'bold',
+        textTransform: 'uppercase'
+      });
+      centerCol.appendChild(centerTitle);
+
+      const zoneCard = document.createElement('div');
+      zoneCard.className = 'mm-glass';
+      Object.assign(zoneCard.style, {
+        background: 'rgba(255, 255, 255, 0.015)',
+        border: '1px solid rgba(255, 255, 255, 0.05)',
+        borderRadius: '4px',
+        padding: '8px 10px',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '6px',
+        flex: '1',
+        justifyContent: 'space-between',
+        minHeight: '0'
+      });
+
+      zoneCard.innerHTML = `
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <span style="font-family:${DS.typography.fontFamily}; font-size:10px; font-weight:bold; color:${DS.colors.text}; letter-spacing:0.8px;">FACILITY SECTOR 01</span>
+          <span style="font-family:${DS.typography.fontFamily}; font-size:7.5px; font-weight:bold; color:#00FF88; background:rgba(0,255,136,0.08); padding:1px 5px; border:1px solid rgba(0,255,136,0.2);">SECURE</span>
+        </div>
+
+        <!-- Tactical Blueprint Map SVG Preview -->
+        <div style="width:100%; height:clamp(60px, 11vh, 90px); background:rgba(0,0,0,0.4); border:1px solid rgba(255,255,255,0.06); border-radius:3px; display:flex; align-items:center; justify-content:center; position:relative; overflow:hidden;">
+          <svg width="100%" height="100%" viewBox="0 0 200 120" preserveAspectRatio="xMidYMid meet">
+            <rect width="200" height="120" fill="#050508"/>
+            <path d="M20,20 L180,20 L180,100 L20,100 Z" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="1" stroke-dasharray="4 2"/>
+            <path d="M50,35 L150,35 L150,85 L50,85 Z" fill="none" stroke="${DS.colors.accent}" stroke-width="1.5"/>
+            <line x1="100" y1="20" x2="100" y2="100" stroke="rgba(255,255,255,0.15)" stroke-width="1"/>
+            <line x1="20" y1="60" x2="180" y2="60" stroke="rgba(255,255,255,0.15)" stroke-width="1"/>
+            <circle cx="100" cy="60" r="15" fill="none" stroke="${DS.colors.accent}" stroke-width="1"/>
+            <circle cx="100" cy="60" r="3" fill="${DS.colors.accent}"/>
+            <circle cx="65" cy="45" r="4" fill="#00F0FF"/>
+            <circle cx="135" cy="75" r="4" fill="#00FF88"/>
+          </svg>
+          <div style="position:absolute; bottom:4px; left:6px; font-family:${DS.typography.fontFamily}; font-size:6.5px; color:${DS.colors.textMuted}; letter-spacing:0.8px;">TACTICAL BLUEPRINT v2.1</div>
+        </div>
+
+        <div style="display:flex; flex-direction:column; gap:2px;">
+          <div style="font-family:${DS.typography.fontFamily}; font-size:7.5px; color:${DS.colors.textMuted}; font-weight:bold; letter-spacing:0.8px;">SECTOR THREAT LEVEL: CLASS-4</div>
+          <div style="font-family:${DS.typography.fontFamily}; font-size:8.5px; color:${DS.colors.text}; line-height:1.3;">
+            Industrial corridor facilities equipped with auto-turrets and high-frequency jammer zones.
+          </div>
+        </div>
+      `;
+      centerCol.appendChild(zoneCard);
+      playDashboard.appendChild(centerCol);
+
+      // Column 3: Deployment Parameters & Execution
+      const rightCol = document.createElement('div');
+      Object.assign(rightCol.style, {
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '4px',
+        minHeight: '0'
+      });
+
+      const rightTitle = document.createElement('div');
+      rightTitle.textContent = 'DEPLOYMENT PARAMETERS';
+      Object.assign(rightTitle.style, {
+        fontFamily: DS.typography.fontFamily,
+        fontSize: '8.5px',
+        color: DS.colors.textMuted,
+        letterSpacing: '1.5px',
+        fontWeight: 'bold',
+        textTransform: 'uppercase'
+      });
+      rightCol.appendChild(rightTitle);
+
+      const paramsCard = document.createElement('div');
+      paramsCard.className = 'mm-glass';
+      Object.assign(paramsCard.style, {
+        background: 'rgba(255, 255, 255, 0.015)',
+        border: '1px solid rgba(255, 255, 255, 0.05)',
+        borderRadius: '4px',
+        padding: '8px 10px',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '6px',
+        flex: '1',
+        justifyContent: 'space-between',
+        minHeight: '0'
+      });
+
+      // Match type
+      const matchTypeGroup = document.createElement('div');
+      Object.assign(matchTypeGroup.style, {
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '4px'
+      });
+
+      const matchTypeLabel = document.createElement('div');
+      matchTypeLabel.textContent = 'MATCH TYPE';
+      Object.assign(matchTypeLabel.style, {
+        fontFamily: DS.typography.fontFamily,
+        fontSize: '8px',
+        color: DS.colors.textMuted,
+        letterSpacing: '1.5px',
+        fontWeight: 'bold'
+      });
+      matchTypeGroup.appendChild(matchTypeLabel);
+
+      const matchTypeToggle = document.createElement('div');
+      Object.assign(matchTypeToggle.style, {
+        display: 'flex',
+        gap: '4px'
+      });
+
+      const openBtn = document.createElement('div');
+      openBtn.textContent = 'OPEN MATCH';
+      Object.assign(openBtn.style, {
+        flex: '1',
+        textAlign: 'center',
+        padding: '6px 3px',
+        fontSize: '9px',
+        fontWeight: 'bold',
+        fontFamily: DS.typography.fontFamily,
+        letterSpacing: '0.8px',
+        borderRadius: '0px',
+        background: 'rgba(255, 69, 0, 0.08)',
+        border: `1px solid ${DS.colors.accent}`,
+        color: DS.colors.text,
+        cursor: 'default'
+      });
+
+      const privateBtn = document.createElement('div');
+      privateBtn.textContent = 'PRIVATE MATCH';
+      Object.assign(privateBtn.style, {
+        flex: '1',
+        textAlign: 'center',
+        padding: '6px 3px',
+        fontSize: '9px',
+        fontWeight: 'bold',
+        fontFamily: DS.typography.fontFamily,
+        letterSpacing: '0.8px',
+        borderRadius: '0px',
+        background: 'rgba(255, 255, 255, 0.01)',
+        border: 'none',
+        color: 'rgba(255, 255, 255, 0.3)',
+        cursor: 'not-allowed',
+        opacity: '0.6'
+      });
+
+      matchTypeToggle.appendChild(openBtn);
+      matchTypeToggle.appendChild(privateBtn);
+      matchTypeGroup.appendChild(matchTypeToggle);
+      paramsCard.appendChild(matchTypeGroup);
+
+      // Contractors indicator
+      const contrGroup = document.createElement('div');
+      Object.assign(contrGroup.style, {
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '4px',
+        padding: '6px 8px',
+        background: 'rgba(255, 255, 255, 0.01)',
+        border: 'none',
+        borderRadius: '0px'
+      });
+
+      const contrLabel = document.createElement('div');
+      contrLabel.textContent = 'ACTIVE CONTRACTORS IN SECTOR';
+      Object.assign(contrLabel.style, {
+        fontFamily: DS.typography.fontFamily,
+        fontSize: '8px',
+        color: DS.colors.textMuted,
+        letterSpacing: '0.8px',
+        fontWeight: 'bold'
+      });
+
+      const contrValue = document.createElement('div');
+      contrValue.textContent = '1 / 10 OPERATIVES';
+      Object.assign(contrValue.style, {
+        fontFamily: DS.typography.fontFamily,
+        fontSize: '11px',
+        color: DS.colors.text,
+        fontWeight: 'bold',
+        letterSpacing: '0.5px'
+      });
+
+      contrGroup.appendChild(contrLabel);
+      contrGroup.appendChild(contrValue);
+      paramsCard.appendChild(contrGroup);
+
+      // Deploy Button
+      const deployBtn = document.createElement('button');
+      deployBtn.textContent = 'DEPLOY TO SECTOR';
+      Object.assign(deployBtn.style, {
+        width: '100%',
+        height: 'clamp(32px, 4.5vh, 42px)',
+        background: DS.colors.accent,
+        color: DS.colors.background,
+        border: 'none',
+        fontFamily: DS.typography.fontFamily,
+        fontSize: 'clamp(12px, 1.8vh, 15px)',
+        fontWeight: DS.typography.weightBold,
+        textTransform: 'uppercase',
+        cursor: 'pointer',
+        borderRadius: '0px',
+        transition: 'all 0.15s ease'
+      });
+
+      deployBtn.addEventListener('mouseenter', () => {
+        deployBtn.style.background = '#FF6347';
+      });
+      deployBtn.addEventListener('mouseleave', () => {
+        deployBtn.style.background = DS.colors.accent;
+      });
+
+      deployBtn.onclick = () => {
+        if (registeredUserData && (registeredUserData.energy || 0) < 10) {
+          showMenuNotification("DEPLOYMENT REJECTED: INSUFFICIENT ENERGY. REFILL DEV CREDITS IN INTEL.", "warning");
+          return;
+        }
+        ensureAssetsDownloaded(() => screenManager.showLobby(), getDefaultMap().id);
+      };
+
+      paramsCard.appendChild(deployBtn);
+      rightCol.appendChild(paramsCard);
+      playDashboard.appendChild(rightCol);
+
+      rightPanelContent.appendChild(playDashboard);
     }
     else if (currentRightPanelMode === 'FEEDBACK') {
        let sr = 0;
@@ -1418,133 +1875,6 @@ function renderRightPanel() {
          };
          c.appendChild(btn);
        }, true));
-    }
-    else if (currentRightPanelMode === 'STORE') {
-        rightPanelContent.appendChild(createPanelBlock('ARMORY & CATALOG', c => {
-            const grid = document.createElement('div');
-            Object.assign(grid.style, {
-                display: 'grid',
-                gridTemplateColumns: '1fr',
-                gap: '12px',
-                padding: '4px'
-            });
-
-            const currentCredits = registeredUserData?.credits ?? 100;
-            const currentLevel = registeredUserData?.battlePass ?? 1;
-            const unlockedItems: string[] = registeredUserData?.unlockedItems || [];
-
-            (catalogData as CatalogItem[]).forEach(item => {
-                const card = document.createElement('div');
-                card.className = 'mm-glass';
-                const isUnlocked = unlockedItems.includes(item.id);
-                const isLevelLocked = currentLevel < item.requiredLevel;
-
-                Object.assign(card.style, {
-                    padding: '12px 16px',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '8px',
-                    borderLeft: `3px solid ${isUnlocked ? '#00FF88' : isLevelLocked ? DS.colors.textMuted : DS.colors.accent}`
-                });
-
-                card.innerHTML = `
-                  <div style="display:flex; justify-content:space-between; align-items:center;">
-                    <div style="font-family:${DS.typography.fontFamily}; font-size:14px; font-weight:bold; color:${DS.colors.text}; letter-spacing:1px;">${item.title.toUpperCase()}</div>
-                    <div style="font-family:${DS.typography.fontFamily}; font-size:11px; color:${DS.colors.accent}; font-weight:bold;">${item.priceCredits} CR</div>
-                  </div>
-                  <div style="font-family:${DS.typography.fontFamily}; font-size:10px; color:${DS.colors.textMuted}; text-transform:none;">${item.description}</div>
-                  <div style="display:flex; justify-content:space-between; align-items:center; margin-top:4px;">
-                    <div style="font-family:${DS.typography.fontFamily}; font-size:10px; color:${DS.colors.textMuted};">REQ. LEVEL ${item.requiredLevel} | ${item.category.toUpperCase()}</div>
-                  </div>
-                `;
-
-                const actionBtn = document.createElement('button');
-                if (isUnlocked) {
-                    actionBtn.textContent = 'UNLOCKED';
-                    actionBtn.disabled = true;
-                    Object.assign(actionBtn.style, {
-                        padding: '8px', background: 'rgba(0, 255, 136, 0.1)', border: '1px solid #00FF88',
-                        color: '#00FF88', fontFamily: DS.typography.fontFamily, fontSize: '11px', fontWeight: 'bold'
-                    });
-                } else if (isLevelLocked) {
-                    actionBtn.textContent = `LOCKED (REACH LVL ${item.requiredLevel})`;
-                    actionBtn.disabled = true;
-                    Object.assign(actionBtn.style, {
-                        padding: '8px', background: 'rgba(255,255,255,0.05)', border: DS.glass.border,
-                        color: DS.colors.textMuted, fontFamily: DS.typography.fontFamily, fontSize: '11px'
-                    });
-                } else {
-                    actionBtn.textContent = `PURCHASE (${item.priceCredits} CREDITS)`;
-                    Object.assign(actionBtn.style, {
-                        padding: '8px', background: DS.colors.accent, border: 'none',
-                        color: DS.colors.background, fontFamily: DS.typography.fontFamily, fontSize: '11px',
-                        fontWeight: 'bold', cursor: 'pointer'
-                    });
-
-                    actionBtn.onclick = async () => {
-                        const auth = getAuth();
-                        if (!auth.currentUser) {
-                            showMenuNotification("PLEASE SIGN IN TO PURCHASE ITEMS", "warning");
-                            openProfileAuthModal();
-                            return;
-                        }
-
-                        const req = {
-                            playerId: auth.currentUser.uid,
-                            itemId: item.id,
-                            currentCredits: registeredUserData?.credits ?? 100,
-                            currentLevel: registeredUserData?.battlePass ?? 1,
-                            unlockedItems: registeredUserData?.unlockedItems || []
-                        };
-
-                        const valResult = validatePurchase(req, item);
-                        if (!valResult.isApproved) {
-                            const errDesc = valResult.error?.message || valResult.error?.code || 'UNKNOWN_ERROR';
-                            showMenuNotification(`PURCHASE FAILED: ${errDesc}`, "warning");
-                            return;
-                        }
-
-                        // Save previous state for rollback
-                        const prevCredits = registeredUserData?.credits ?? 100;
-                        const prevUnlocked = [...(registeredUserData?.unlockedItems || [])];
-
-                        // Optimistic state update
-                        if (registeredUserData) {
-                            registeredUserData.credits = valResult.remainingCredits;
-                            registeredUserData.unlockedItems = [...prevUnlocked, item.id];
-                        }
-                        updateProfileBox();
-                        renderRightPanel();
-
-                        // Execute Firestore transaction
-                        try {
-                            const db = getFirestore();
-                            const userRef = doc(db, 'Users', auth.currentUser.uid);
-                            await updateDoc(userRef, {
-                                credits: valResult.remainingCredits,
-                                unlockedItems: [...prevUnlocked, item.id]
-                            });
-                            showMenuNotification(`UNLOCKED: ${item.title.toUpperCase()}`);
-                        } catch (err) {
-                            console.warn("Purchase transaction failed:", err);
-                            // Rollback optimistic update
-                            if (registeredUserData) {
-                                registeredUserData.credits = prevCredits;
-                                registeredUserData.unlockedItems = prevUnlocked;
-                            }
-                            updateProfileBox();
-                            renderRightPanel();
-                            showMenuNotification("Connection Error: Unable to validate request. Please check your connection and try again.", "warning");
-                        }
-                    };
-                }
-
-                card.appendChild(actionBtn);
-                grid.appendChild(card);
-            });
-
-            c.appendChild(grid);
-        }));
     }
     else if (currentRightPanelMode === 'MAP_EDITOR') {
         rightPanelContent.appendChild(createPanelBlock('AVAILABLE MAPS', c => {
@@ -1621,7 +1951,7 @@ function checkDailyRefresh(userData: any, userDocRef: any) {
   }
 }
 
-function showMenuNotification(msg: string, type: 'info' | 'warning' = 'info') {
+export function showMenuNotification(msg: string, type: 'info' | 'warning' = 'info') {
   const container = document.getElementById('vex-menu-notification-container') || document.createElement('div');
   if (!container.parentElement) {
     container.id = 'vex-menu-notification-container';
@@ -1682,265 +2012,515 @@ function enableLeftColumnMenu(enabled: boolean) {
   });
 }
 
-function showEnlistmentOverlay(db: any, auth: any) {
-  let overlay = document.getElementById('vex-enlistment-overlay');
-  if (overlay) return;
-  
-  overlay = document.createElement('div');
-  overlay.id = 'vex-enlistment-overlay';
+function createUnifiedAuthOverlay(db: any, auth: any, defaultTab: 'GUEST' | 'AUTH' = 'GUEST') {
+  const existingModal = document.getElementById('vex-unified-auth-modal') || document.getElementById('vex-enlistment-overlay') || document.getElementById('vex-profile-auth-modal');
+  if (existingModal) existingModal.remove();
+
+  const user = auth.currentUser;
+  let activeTab: 'GUEST' | 'AUTH' = defaultTab;
+
+  const overlay = document.createElement('div');
+  overlay.id = 'vex-unified-auth-modal';
   Object.assign(overlay.style, {
-    position: 'absolute',
-    inset: '0',
-    zIndex: '4000',
-    background: 'rgba(10, 10, 10, 0.95)',
-    backdropFilter: 'blur(12px)',
+    position: 'fixed', inset: '0', zIndex: '5000',
+    background: 'radial-gradient(circle at center, rgba(3, 3, 5, 0.98) 0%, rgba(3, 3, 5, 0.9) 60%, rgba(3, 3, 5, 0.4) 90%, rgba(3, 3, 5, 0) 100%)',
+    backdropFilter: 'blur(15px)',
+    display: 'flex', alignItems: 'center', justifyContent: 'center',
+    padding: '16px',
+    fontFamily: DS.typography.fontFamily, color: DS.colors.text
+  });
+
+  const box = document.createElement('div');
+  box.className = 'mm-glass';
+  Object.assign(box.style, {
+    width: 'clamp(640px, 80vw, 920px)',
+    height: 'clamp(420px, 75vh, 600px)',
+    maxHeight: '85vh',
+    overflow: 'hidden',
+    background: 'linear-gradient(180deg, rgba(14, 14, 18, 0.98) 0%, rgba(6, 6, 9, 0.99) 100%)',
+    border: `1px solid rgba(255, 69, 0, 0.25)`,
+    boxShadow: '0 0 35px rgba(0, 0, 0, 0.8), 0 0 15px rgba(255, 69, 0, 0.15)',
+    padding: '20px 24px',
+    position: 'relative',
     display: 'flex',
     flexDirection: 'column',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: '24px',
-    animation: 'fade-in 400ms ease-out'
+    gap: '12px',
+    borderRadius: '6px'
   });
-  
-  const widthContainer = document.createElement('div');
-  Object.assign(widthContainer.style, {
-    width: '100%',
-    maxWidth: '520px',
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '20px'
+
+  const closeBtn = document.createElement('button');
+  closeBtn.textContent = '✕';
+  Object.assign(closeBtn.style, {
+    position: 'absolute', top: '14px', right: '16px',
+    background: 'none', border: 'none', color: DS.colors.textMuted,
+    fontSize: '18px', cursor: 'pointer', zIndex: '10'
   });
-  
+  closeBtn.onclick = () => overlay.remove();
+  box.appendChild(closeBtn);
+
+  // Header Branding
   const branding = document.createElement('div');
   Object.assign(branding.style, {
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    textAlign: 'center',
-    marginBottom: '8px'
+    display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center'
   });
-  const logoStar = document.createElement('div');
-  logoStar.textContent = '✧';
-  Object.assign(logoStar.style, {
-    fontSize: '44px',
-    color: DS.colors.accent,
-    lineHeight: '1',
-    animation: 'pulse 2s infinite ease-in-out'
-  });
-  branding.appendChild(logoStar);
-  
+
   const word = document.createElement('div');
   word.textContent = 'VEXEΛ SECURE PORTAL';
   Object.assign(word.style, {
     fontFamily: DS.typography.fontFamilyWordmark,
-    fontSize: '24px',
-    fontWeight: '800',
-    letterSpacing: '6px',
-    color: DS.colors.text,
-    marginTop: '8px'
-  });
-  branding.appendChild(word);
-  
-  const sub = document.createElement('div');
-  sub.textContent = 'RESTRICTED SYSTEM ACCESS — REGISTER CODENAME';
-  Object.assign(sub.style, {
-    fontFamily: DS.typography.fontFamily,
-    fontSize: '11px',
-    letterSpacing: '3px',
-    color: DS.colors.textMuted,
-    marginTop: '4px'
-  });
-  branding.appendChild(sub);
-  widthContainer.appendChild(branding);
-  
-  const inputGroup = document.createElement('div');
-  Object.assign(inputGroup.style, { display: 'flex', flexDirection: 'column', gap: '6px' });
-  
-  const inputLabel = document.createElement('div');
-  inputLabel.textContent = 'CONTRACTOR CODENAME';
-  Object.assign(inputLabel.style, {
-    fontFamily: DS.typography.fontFamily,
-    fontSize: '11px',
-    letterSpacing: '3px',
+    fontSize: '20px', fontWeight: '800', letterSpacing: '5px',
     color: DS.colors.accent
   });
-  inputGroup.appendChild(inputLabel);
-  
-  const input = document.createElement('input');
-  input.type = 'text';
-  input.placeholder = 'ENTER CODENAME [3-16 ALPHANUMERIC]';
-  Object.assign(input.style, {
-    width: '100%',
-    padding: '12px',
-    background: 'rgba(0, 0, 0, 0.4)',
-    border: DS.glass.border,
-    color: DS.colors.text,
+  branding.appendChild(word);
+
+  const sub = document.createElement('div');
+  sub.textContent = 'RESTRICTED SYSTEM ACCESS — OPERATIVE IDENTIFICATION';
+  Object.assign(sub.style, {
     fontFamily: DS.typography.fontFamily,
-    fontSize: '14px',
-    letterSpacing: '2px',
-    outline: 'none',
-    textAlign: 'center'
+    fontSize: '10px', letterSpacing: '2px', color: DS.colors.textMuted, marginTop: '2px'
   });
-  input.onfocus = () => { input.style.border = DS.glass.borderAccentFull; };
-  input.onblur = () => { input.style.border = DS.glass.border; };
-  inputGroup.appendChild(input);
-  widthContainer.appendChild(inputGroup);
-  
-  const factionLabel = document.createElement('div');
-  factionLabel.textContent = 'FACTION AFFILIATION [COSMETIC ONLY]';
-  Object.assign(factionLabel.style, {
-    fontFamily: DS.typography.fontFamily,
-    fontSize: '11px',
-    letterSpacing: '3px',
-    color: DS.colors.textMuted,
-    marginBottom: '-10px'
+  branding.appendChild(sub);
+  box.appendChild(branding);
+
+  // Mode Switcher Tabs
+  const navRow = document.createElement('div');
+  Object.assign(navRow.style, {
+    display: 'flex', borderBottom: '1px solid rgba(255, 255, 255, 0.1)', gap: '4px', marginTop: '4px'
   });
-  widthContainer.appendChild(factionLabel);
-  
-  const factionsGrid = document.createElement('div');
-  Object.assign(factionsGrid.style, {
-    display: 'grid',
-    gridTemplateColumns: '1fr 1fr',
-    gap: '12px'
-  });
-  
-  let selectedFaction: string | null = null;
-  
-  const vibeCard = document.createElement('div');
-  vibeCard.className = 'mm-glass';
-  Object.assign(vibeCard.style, {
-    padding: '16px',
-    cursor: 'pointer',
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    textAlign: 'center',
-    transition: 'all 250ms ease'
-  });
-  vibeCard.innerHTML = `
-    <div style="font-family:${DS.typography.fontFamily}; font-size:16px; font-weight:bold; letter-spacing:2px; color:${DS.colors.factions.vibe.primary};">VIBE CO.</div>
-    <div style="font-family:${DS.typography.fontFamily}; font-size:9px; letter-spacing:1px; color:${DS.colors.factions.vibe.muted}; margin-top:4px;">SILENT & PRECISE</div>
-    <div style="font-family:${DS.typography.fontFamily}; font-size:10px; color:${DS.colors.textMuted}; text-transform:none; margin-top:8px; line-height:1.4;">Corporate infiltrators specialized in speed, stealth, and facility breaches.</div>
-  `;
-  vibeCard.onclick = () => {
-    selectedFaction = 'VIBE CO.';
-    vibeCard.style.border = `1px solid ${DS.colors.factions.vibe.primary}`;
-    vibeCard.style.boxShadow = `0 0 15px ${DS.colors.factions.vibe.shadow}`;
-    slopCard.style.border = DS.glass.border;
-    slopCard.style.boxShadow = 'none';
+
+  const tabGuestBtn = document.createElement('button');
+  const tabAuthBtn = document.createElement('button');
+
+  const updateTabStyles = () => {
+    Object.assign(tabGuestBtn.style, {
+      flex: '1', padding: '10px', background: 'none', border: 'none',
+      borderBottom: activeTab === 'GUEST' ? `2px solid ${DS.colors.accent}` : '2px solid transparent',
+      color: activeTab === 'GUEST' ? DS.colors.text : DS.colors.textMuted,
+      fontFamily: DS.typography.fontFamily, fontSize: '11px', fontWeight: 'bold',
+      letterSpacing: '1px', cursor: 'pointer', transition: 'all 0.2s'
+    });
+    tabGuestBtn.textContent = '1. GUEST ENLISTMENT';
+
+    Object.assign(tabAuthBtn.style, {
+      flex: '1', padding: '10px', background: 'none', border: 'none',
+      borderBottom: activeTab === 'AUTH' ? `2px solid ${DS.colors.accent}` : '2px solid transparent',
+      color: activeTab === 'AUTH' ? DS.colors.text : DS.colors.textMuted,
+      fontFamily: DS.typography.fontFamily, fontSize: '11px', fontWeight: 'bold',
+      letterSpacing: '1px', cursor: 'pointer', transition: 'all 0.2s'
+    });
+    tabAuthBtn.textContent = '2. ACCOUNT ACCESS';
   };
-  factionsGrid.appendChild(vibeCard);
-  
-  const slopCard = document.createElement('div');
-  slopCard.className = 'mm-glass';
-  Object.assign(slopCard.style, {
-    padding: '16px',
-    cursor: 'pointer',
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    textAlign: 'center',
-    transition: 'all 250ms ease'
-  });
-  slopCard.innerHTML = `
-    <div style="font-family:${DS.typography.fontFamily}; font-size:16px; font-weight:bold; letter-spacing:2px; color:${DS.colors.factions.slop.primary};">SLOP INC.</div>
-    <div style="font-family:${DS.typography.fontFamily}; font-size:9px; letter-spacing:1px; color:${DS.colors.factions.slop.muted}; margin-top:4px;">BRUTALIST & UTILITY</div>
-    <div style="font-family:${DS.typography.fontFamily}; font-size:10px; color:${DS.colors.textMuted}; text-transform:none; margin-top:8px; line-height:1.4;">Heavy sweeper division specialized in maximum attrition and hardware pacification.</div>
-  `;
-  slopCard.onclick = () => {
-    selectedFaction = 'SLOP INC.';
-    slopCard.style.border = `1px solid ${DS.colors.factions.slop.primary}`;
-    slopCard.style.boxShadow = `0 0 15px ${DS.colors.factions.slop.shadow}`;
-    vibeCard.style.border = DS.glass.border;
-    vibeCard.style.boxShadow = 'none';
-  };
-  factionsGrid.appendChild(slopCard);
-  widthContainer.appendChild(factionsGrid);
-  
-  const errText = document.createElement('div');
-  Object.assign(errText.style, {
-    fontFamily: DS.typography.fontFamily,
-    fontSize: '11px',
-    letterSpacing: '1px',
-    color: DS.colors.danger,
-    textAlign: 'center',
-    height: '14px',
-    margin: '-4px 0'
-  });
-  widthContainer.appendChild(errText);
-  
-  const enlistBtn = document.createElement('button');
-  enlistBtn.textContent = 'ENLIST CONTRACTOR';
-  Object.assign(enlistBtn.style, {
-    width: '100%',
-    padding: '12px',
-    background: DS.colors.accent,
-    color: DS.colors.background,
-    fontFamily: DS.typography.fontFamily,
-    fontSize: '16px',
-    fontWeight: 'bold',
-    letterSpacing: '3px',
-    border: 'none',
-    cursor: 'pointer',
-    transition: 'all 200ms ease'
-  });
-  
-  enlistBtn.onclick = async () => {
-    const codename = input.value.trim().toUpperCase();
-    if (codename.length < 3 || codename.length > 16) {
-      errText.textContent = 'ERROR: CODENAME MUST BE 3 - 16 CHARACTERS';
-      return;
-    }
-    if (!/^[A-Z0-9]+$/.test(codename)) {
-      errText.textContent = 'ERROR: ONLY ALPHANUMERIC CHARACTERS ALLOWED';
-      return;
-    }
-    if (!selectedFaction) {
-      errText.textContent = 'ERROR: FACTION AFFILIATION REQUIRED';
-      return;
-    }
-    
-    enlistBtn.disabled = true;
-    enlistBtn.textContent = 'PROCESSING ENLISTMENT...';
-    errText.textContent = '';
-    
-    try {
-      await setDoc(doc(db, 'Users', auth.currentUser.uid), {
-        displayName: codename,
-        faction: selectedFaction,
-        credits: 100,
-        energy: 100,
-        createdAt: serverTimestamp(),
-        dailyRefreshedAt: serverTimestamp(),
+
+  navRow.appendChild(tabGuestBtn);
+  navRow.appendChild(tabAuthBtn);
+  box.appendChild(navRow);
+
+  const contentContainer = document.createElement('div');
+  Object.assign(contentContainer.style, { display: 'flex', flexDirection: 'column', gap: '14px' });
+  box.appendChild(contentContainer);
+
+  let pendingAuthAction: (() => Promise<void>) | null = null;
+
+  const renderContent = () => {
+    updateTabStyles();
+    contentContainer.innerHTML = '';
+
+    if (activeTab === 'GUEST') {
+      if (registeredUserData && registeredUserData.displayName) {
+        const activeCard = document.createElement('div');
+        activeCard.className = 'mm-glass';
+        Object.assign(activeCard.style, {
+          padding: '16px', display: 'flex', flexDirection: 'column', gap: '8px',
+          borderLeft: `3px solid ${DS.colors.accent}`
+        });
+        activeCard.innerHTML = `
+          <div style="font-size:10px; color:${DS.colors.accent}; letter-spacing:2px; font-weight:bold;">ACTIVE GUEST SESSION</div>
+          <div style="font-size:16px; font-weight:bold; letter-spacing:2px; color:${DS.colors.text};">${registeredUserData.displayName}</div>
+          <div style="font-size:11px; color:${DS.colors.textMuted};">FACTION: <span style="color:#FFF;">${registeredUserData.faction || 'UNAFFILIATED'}</span></div>
+          <div style="font-size:10px; color:${DS.colors.textMuted}; line-height:1.4; margin-top:4px;">
+            You are logged in under a guest session. Progress is saved locally. Switch to the Account Access tab to link a permanent Google or Email account.
+          </div>
+        `;
+        contentContainer.appendChild(activeCard);
+      } else {
+        // Enlistment form
+        const inputGroup = document.createElement('div');
+        Object.assign(inputGroup.style, { display: 'flex', flexDirection: 'column', gap: '6px' });
         
-        totalMatches: 0,
-        totalWins: 0,
-        totalDroneEliminations: 0,
-        totalDeaths: 0,
-        totalObjectiveTimeHeld: 0,
-        totalRevivesPerformed: 0,
-        highestIndividualScore: 0,
-        winRate: 0,
-        score: 0,
-        kills: 0,
-        battlePass: 1
+        const inputLabel = document.createElement('div');
+        inputLabel.textContent = 'CONTRACTOR CODENAME';
+        Object.assign(inputLabel.style, {
+          fontSize: '11px', letterSpacing: '2px', color: DS.colors.accent
+        });
+        inputGroup.appendChild(inputLabel);
+        
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.placeholder = 'ENTER CODENAME [3-16 ALPHANUMERIC]';
+        Object.assign(input.style, {
+          width: '100%', padding: '10px 12px', background: 'rgba(0, 0, 0, 0.5)',
+          border: DS.glass.border, color: DS.colors.text, fontFamily: DS.typography.fontFamily,
+          fontSize: '13px', letterSpacing: '2px', outline: 'none', textAlign: 'center',
+          boxSizing: 'border-box'
+        });
+        inputGroup.appendChild(input);
+        contentContainer.appendChild(inputGroup);
+
+        const factionLabel = document.createElement('div');
+        factionLabel.textContent = 'FACTION AFFILIATION';
+        Object.assign(factionLabel.style, {
+          fontSize: '11px', letterSpacing: '2px', color: DS.colors.textMuted
+        });
+        contentContainer.appendChild(factionLabel);
+
+        const factionsGrid = document.createElement('div');
+        Object.assign(factionsGrid.style, {
+          display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px'
+        });
+
+        let selectedFaction: string | null = null;
+
+        const vibeCard = document.createElement('div');
+        vibeCard.className = 'mm-glass';
+        Object.assign(vibeCard.style, {
+          padding: '12px', cursor: 'pointer', display: 'flex', flexDirection: 'column',
+          alignItems: 'center', textAlign: 'center', transition: 'all 200ms ease'
+        });
+        vibeCard.innerHTML = `
+          <div style="font-size:14px; font-weight:bold; letter-spacing:1px; color:${DS.colors.factions.vibe.primary};">VIBE CO.</div>
+          <div style="font-size:9px; letter-spacing:1px; color:${DS.colors.factions.vibe.muted}; margin-top:2px;">SILENT & PRECISE</div>
+        `;
+        vibeCard.onclick = () => {
+          selectedFaction = 'VIBE CO.';
+          vibeCard.style.border = `1px solid ${DS.colors.factions.vibe.primary}`;
+          slopCard.style.border = DS.glass.border;
+        };
+
+        const slopCard = document.createElement('div');
+        slopCard.className = 'mm-glass';
+        Object.assign(slopCard.style, {
+          padding: '12px', cursor: 'pointer', display: 'flex', flexDirection: 'column',
+          alignItems: 'center', textAlign: 'center', transition: 'all 200ms ease'
+        });
+        slopCard.innerHTML = `
+          <div style="font-size:14px; font-weight:bold; letter-spacing:1px; color:${DS.colors.factions.slop.primary};">SLOP INC.</div>
+          <div style="font-size:9px; letter-spacing:1px; color:${DS.colors.factions.slop.muted}; margin-top:2px;">BRUTALIST & UTILITY</div>
+        `;
+        slopCard.onclick = () => {
+          selectedFaction = 'SLOP INC.';
+          slopCard.style.border = `1px solid ${DS.colors.factions.slop.primary}`;
+          vibeCard.style.border = DS.glass.border;
+        };
+
+        factionsGrid.appendChild(vibeCard);
+        factionsGrid.appendChild(slopCard);
+        contentContainer.appendChild(factionsGrid);
+
+        const errText = document.createElement('div');
+        Object.assign(errText.style, {
+          fontSize: '11px', color: DS.colors.danger, textAlign: 'center', height: '14px'
+        });
+        contentContainer.appendChild(errText);
+
+        const enlistBtn = document.createElement('button');
+        enlistBtn.textContent = 'ENLIST AS GUEST';
+        Object.assign(enlistBtn.style, {
+          width: '100%', padding: '12px', background: DS.colors.accent, color: DS.colors.background,
+          fontFamily: DS.typography.fontFamily, fontSize: '14px', fontWeight: 'bold',
+          letterSpacing: '2px', border: 'none', cursor: 'pointer'
+        });
+
+        enlistBtn.onclick = async () => {
+          const codename = input.value.trim().toUpperCase();
+          if (codename.length < 3 || codename.length > 16 || !/^[A-Z0-9]+$/.test(codename)) {
+            errText.textContent = 'ERROR: CODENAME MUST BE 3-16 ALPHANUMERIC CHARS';
+            return;
+          }
+          if (!selectedFaction) {
+            errText.textContent = 'ERROR: FACTION AFFILIATION REQUIRED';
+            return;
+          }
+          enlistBtn.disabled = true;
+          enlistBtn.textContent = 'PROCESSING...';
+          try {
+            if (!auth.currentUser) {
+              const { signInAnonymously } = await import('firebase/auth');
+              await signInAnonymously(auth);
+            }
+            const uid = auth.currentUser.uid;
+            const docData = {
+              displayName: codename,
+              faction: selectedFaction,
+              credits: 100, energy: 100,
+              createdAt: serverTimestamp(), dailyRefreshedAt: serverTimestamp(),
+              totalMatches: 0, totalWins: 0, totalDroneEliminations: 0, totalDeaths: 0,
+              score: 0, kills: 0, battlePass: 1
+            };
+            await setDoc(doc(db, 'Users', uid), docData);
+            registeredUserData = docData;
+            showMenuNotification("ENLISTMENT COMPLETE. WELCOME TO VEXEΛ.");
+            overlay.remove();
+          } catch (e: any) {
+            console.warn("Enlistment failed:", e);
+            enlistBtn.disabled = false;
+            enlistBtn.textContent = 'ENLIST AS GUEST';
+            errText.textContent = 'ERROR: TRANSACTION REJECTED BY SYSTEM';
+          }
+        };
+        contentContainer.appendChild(enlistBtn);
+      }
+    } else {
+      // Tab AUTH
+      if (pendingAuthAction) {
+        // Confirmation prompt for guest progress overwrite
+        const warnBox = document.createElement('div');
+        warnBox.className = 'mm-glass';
+        Object.assign(warnBox.style, {
+          padding: '16px', display: 'flex', flexDirection: 'column', gap: '12px',
+          border: `1px solid ${DS.colors.accent}`, background: 'rgba(255, 68, 0, 0.08)'
+        });
+        warnBox.innerHTML = `
+          <div style="font-size:12px; font-weight:bold; color:${DS.colors.accent}; letter-spacing:1px;">⚠️ OVERWRITE GUEST SESSION WARNING</div>
+          <div style="font-size:11px; color:${DS.colors.text}; line-height:1.5;">
+            Logging into an existing account will end your current guest session <strong style="color:${DS.colors.accent}">${registeredUserData?.displayName || 'GUEST'}</strong> and discard unlinked progress.
+          </div>
+          <div style="font-size:10px; color:${DS.colors.textMuted};">Are you sure you want to proceed with account authentication?</div>
+        `;
+
+        const warnBtnRow = document.createElement('div');
+        Object.assign(warnBtnRow.style, { display: 'flex', gap: '10px' });
+
+        const confirmBtn = document.createElement('button');
+        confirmBtn.textContent = 'YES, LOG IN NOW';
+        Object.assign(confirmBtn.style, {
+          flex: '1', padding: '10px', background: DS.colors.accent, color: DS.colors.background,
+          fontFamily: DS.typography.fontFamily, fontSize: '11px', fontWeight: 'bold', border: 'none', cursor: 'pointer'
+        });
+
+        const cancelBtn = document.createElement('button');
+        cancelBtn.textContent = 'CANCEL';
+        Object.assign(cancelBtn.style, {
+          flex: '1', padding: '10px', background: 'rgba(255,255,255,0.1)', color: DS.colors.text,
+          fontFamily: DS.typography.fontFamily, fontSize: '11px', fontWeight: 'bold', border: DS.glass.border, cursor: 'pointer'
+        });
+
+        confirmBtn.onclick = async () => {
+          const action = pendingAuthAction;
+          pendingAuthAction = null;
+          if (action) await action();
+        };
+
+        cancelBtn.onclick = () => {
+          pendingAuthAction = null;
+          renderContent();
+        };
+
+        warnBtnRow.appendChild(confirmBtn);
+        warnBtnRow.appendChild(cancelBtn);
+        warnBox.appendChild(warnBtnRow);
+        contentContainer.appendChild(warnBox);
+        return;
+      }
+
+      // Status box
+      const statusBox = document.createElement('div');
+      statusBox.className = 'mm-glass';
+      Object.assign(statusBox.style, { padding: '10px 12px', display: 'flex', flexDirection: 'column', gap: '4px' });
+      const currentUid = user ? user.uid : 'NOT_LOGGED_IN';
+      const isAnon = user ? user.isAnonymous : true;
+      const authProvider = isAnon ? 'GUEST SESSION' : (user?.providerData[0]?.providerId || 'EMAIL / PASSWORD');
+      statusBox.innerHTML = `
+        <div style="font-size:10px; color:${DS.colors.textMuted}; letter-spacing:1px;">CURRENT USER IDENTIFIER</div>
+        <div style="font-size:11px; font-weight:bold; color:${DS.colors.text}; font-family:monospace; word-break:break-all;">${currentUid}</div>
+        <div style="font-size:10px; color:${DS.colors.accent}; font-weight:bold; margin-top:2px;">PROVIDER: ${authProvider.toUpperCase()}</div>
+      `;
+      contentContainer.appendChild(statusBox);
+
+      // Google Auth button
+      const googleBtn = document.createElement('button');
+      googleBtn.innerHTML = `
+        <svg width="16" height="16" viewBox="0 0 24 24" style="vertical-align:middle; margin-right:8px;"><path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17z"/><path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.11-6.72-4.96H1.29v3.15C3.26 21.3 7.31 24 12 24z"/><path fill="#FBBC05" d="M5.28 14.24c-.25-.72-.38-1.49-.38-2.24s.13-1.52.38-2.24V6.61H1.29C.47 8.24 0 10.06 0 12s.47 3.76 1.29 5.39l3.99-3.15z"/><path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.31 0 3.26 2.7 1.29 6.61l3.99 3.15c.95-2.85 3.6-4.96 6.72-4.96z"/></svg>
+        SIGN IN WITH GOOGLE
+      `;
+      Object.assign(googleBtn.style, {
+        width: '100%', padding: '11px', background: '#FFFFFF', color: '#000000',
+        fontFamily: DS.typography.fontFamily, fontSize: '12px', fontWeight: 'bold',
+        border: 'none', borderRadius: '2px', cursor: 'pointer', display: 'flex',
+        alignItems: 'center', justifyContent: 'center'
       });
-      showMenuNotification("ENLISTMENT COMPLETE. WELCOME TO VEXEΛ, CONTRACTOR.");
-    } catch (e: any) {
-      console.warn("Enlistment failed:", e);
-      enlistBtn.disabled = false;
-      enlistBtn.textContent = 'ENLIST CONTRACTOR';
-      errText.textContent = 'ERROR: TRANSACTION REJECTED BY SYSTEM';
+
+      const execGoogleAuth = async () => {
+        try {
+          const { GoogleAuthProvider, signInWithPopup } = await import('firebase/auth');
+          const provider = new GoogleAuthProvider();
+          const credential = await signInWithPopup(auth, provider);
+          const loggedUser = credential.user;
+
+          const userRef = doc(db, 'Users', loggedUser.uid);
+          const snap = await getDoc(userRef);
+          if (!snap.exists()) {
+            await setDoc(userRef, {
+              displayName: (loggedUser.displayName || 'OPERATIVE').toUpperCase(),
+              photoURL: loggedUser.photoURL || null,
+              faction: 'VIBE CO.', credits: 100, energy: 100, score: 0, kills: 0, battlePass: 1,
+              createdAt: serverTimestamp(), dailyRefreshedAt: serverTimestamp()
+            });
+          }
+          showMenuNotification(`SIGNED IN AS ${loggedUser.displayName || loggedUser.email}`);
+          overlay.remove();
+        } catch (err: any) {
+          console.warn("Google Auth error:", err);
+          showMenuNotification("Connection Error: Unable to validate request.", "warning");
+        }
+      };
+
+      googleBtn.onclick = () => {
+        if (auth.currentUser?.isAnonymous && registeredUserData?.displayName) {
+          pendingAuthAction = execGoogleAuth;
+          renderContent();
+        } else {
+          execGoogleAuth();
+        }
+      };
+      contentContainer.appendChild(googleBtn);
+
+      const divOr = document.createElement('div');
+      divOr.textContent = '— OR USE EMAIL / PASSWORD —';
+      Object.assign(divOr.style, { fontSize: '10px', color: DS.colors.textMuted, textAlign: 'center' });
+      contentContainer.appendChild(divOr);
+
+      const emailInput = document.createElement('input');
+      emailInput.type = 'email'; emailInput.placeholder = 'EMAIL ADDRESS';
+      Object.assign(emailInput.style, {
+        width: '100%', padding: '10px', background: 'rgba(0,0,0,0.5)', border: DS.glass.border,
+        color: DS.colors.text, fontFamily: DS.typography.fontFamily, fontSize: '12px', outline: 'none', boxSizing: 'border-box'
+      });
+
+      const passInput = document.createElement('input');
+      passInput.type = 'password'; passInput.placeholder = 'PASSWORD';
+      Object.assign(passInput.style, {
+        width: '100%', padding: '10px', background: 'rgba(0,0,0,0.5)', border: DS.glass.border,
+        color: DS.colors.text, fontFamily: DS.typography.fontFamily, fontSize: '12px', outline: 'none', boxSizing: 'border-box'
+      });
+
+      contentContainer.appendChild(emailInput);
+      contentContainer.appendChild(passInput);
+
+      const btnRow = document.createElement('div');
+      Object.assign(btnRow.style, { display: 'flex', gap: '8px' });
+
+      const loginBtn = document.createElement('button');
+      loginBtn.textContent = 'EMAIL LOGIN';
+      Object.assign(loginBtn.style, {
+        flex: '1', padding: '10px', background: DS.colors.accent, color: DS.colors.background,
+        fontFamily: DS.typography.fontFamily, fontSize: '11px', fontWeight: 'bold', border: 'none', cursor: 'pointer'
+      });
+
+      const execEmailLogin = async () => {
+        const email = emailInput.value.trim();
+        const pass = passInput.value.trim();
+        if (!email || !pass) {
+          showMenuNotification("ENTER EMAIL AND PASSWORD", "warning");
+          return;
+        }
+        try {
+          const { signInWithEmailAndPassword } = await import('firebase/auth');
+          await signInWithEmailAndPassword(auth, email, pass);
+          showMenuNotification("EMAIL LOGIN SUCCESSFUL");
+          overlay.remove();
+        } catch (e: any) {
+          console.warn("Email login failed:", e);
+          showMenuNotification("Authentication Error: Invalid credentials.", "warning");
+        }
+      };
+
+      loginBtn.onclick = () => {
+        if (auth.currentUser?.isAnonymous && registeredUserData?.displayName) {
+          pendingAuthAction = execEmailLogin;
+          renderContent();
+        } else {
+          execEmailLogin();
+        }
+      };
+
+      const registerBtn = document.createElement('button');
+      registerBtn.textContent = 'CREATE ACCOUNT';
+      Object.assign(registerBtn.style, {
+        flex: '1', padding: '10px', background: 'rgba(255,255,255,0.1)', color: DS.colors.text,
+        fontFamily: DS.typography.fontFamily, fontSize: '11px', fontWeight: 'bold', border: DS.glass.border, cursor: 'pointer'
+      });
+
+      const execCreateAccount = async () => {
+        const email = emailInput.value.trim();
+        const pass = passInput.value.trim();
+        if (!email || !pass) {
+          showMenuNotification("ENTER EMAIL AND PASSWORD", "warning");
+          return;
+        }
+        try {
+          const { createUserWithEmailAndPassword } = await import('firebase/auth');
+          const cred = await createUserWithEmailAndPassword(auth, email, pass);
+          const userRef = doc(db, 'Users', cred.user.uid);
+          await setDoc(userRef, {
+            displayName: email.split('@')[0].toUpperCase(),
+            faction: 'VIBE CO.', credits: 100, energy: 100, score: 0, kills: 0, battlePass: 1,
+            createdAt: serverTimestamp(), dailyRefreshedAt: serverTimestamp()
+          });
+          showMenuNotification("NEW ACCOUNT CREATED");
+          overlay.remove();
+        } catch (e: any) {
+          console.warn("Account creation failed:", e);
+          showMenuNotification("Account Creation Error.", "warning");
+        }
+      };
+
+      registerBtn.onclick = () => {
+        if (auth.currentUser?.isAnonymous && registeredUserData?.displayName) {
+          pendingAuthAction = execCreateAccount;
+          renderContent();
+        } else {
+          execCreateAccount();
+        }
+      };
+
+      btnRow.appendChild(loginBtn);
+      btnRow.appendChild(registerBtn);
+      contentContainer.appendChild(btnRow);
+
+      if (user && !user.isAnonymous) {
+        const signOutBtn = document.createElement('button');
+        signOutBtn.textContent = 'SIGN OUT OF ACCOUNT';
+        Object.assign(signOutBtn.style, {
+          width: '100%', padding: '10px', background: 'rgba(255, 68, 0, 0.15)',
+          border: '1px solid #FF4400', color: '#FF4400', fontFamily: DS.typography.fontFamily,
+          fontSize: '11px', fontWeight: 'bold', cursor: 'pointer', marginTop: '6px'
+        });
+        signOutBtn.onclick = async () => {
+          await auth.signOut();
+          showMenuNotification("SIGNED OUT");
+          overlay.remove();
+        };
+        contentContainer.appendChild(signOutBtn);
+      }
     }
   };
-  widthContainer.appendChild(enlistBtn);
-  widthContainer.appendChild(errText);
-  overlay.appendChild(widthContainer);
-  
-  const menuScreen = document.getElementById('main-menu-screen');
-  if (menuScreen) {
-    menuScreen.appendChild(overlay);
-  }
+
+  tabGuestBtn.onclick = () => { activeTab = 'GUEST'; renderContent(); };
+  tabAuthBtn.onclick = () => { activeTab = 'AUTH'; renderContent(); };
+
+  renderContent();
+  overlay.appendChild(box);
+  document.body.appendChild(overlay);
+}
+
+function showEnlistmentOverlay(db: any, auth: any) {
+  createUnifiedAuthOverlay(db, auth, 'GUEST');
+}
+
+export function openProfileAuthModal() {
+  const auth = getAuth();
+  const db = getFirestore();
+  createUnifiedAuthOverlay(db, auth, 'AUTH');
 }
 
 function openSquadFriendsModal() {
@@ -1950,9 +2530,9 @@ function openSquadFriendsModal() {
   Object.assign(overlay.style, {
     position: 'fixed',
     top: '0', left: '0', width: '100vw', height: '100vh',
-    background: 'rgba(5, 5, 5, 0.85)',
-    backdropFilter: 'blur(10px)',
-    zIndex: '1000',
+    background: 'radial-gradient(circle at center, rgba(3, 3, 5, 0.98) 0%, rgba(3, 3, 5, 0.9) 60%, rgba(3, 3, 5, 0.4) 90%, rgba(3, 3, 5, 0) 100%)',
+    backdropFilter: 'blur(15px)',
+    zIndex: '4000',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
@@ -1962,16 +2542,19 @@ function openSquadFriendsModal() {
   });
 
   const container = document.createElement('div');
+  container.className = 'mm-glass';
   Object.assign(container.style, {
-    width: 'clamp(320px, 90vw, 540px)',
-    background: '#0a0a0a',
-    border: `1px solid ${DS.colors.accent}`,
-    boxShadow: `0 0 20px rgba(255, 68, 0, 0.25)`,
-    padding: 'clamp(16px, 3vh, 24px)',
+    width: 'clamp(680px, 80vw, 920px)',
+    height: 'clamp(420px, 75vh, 600px)',
+    maxHeight: '85vh',
+    overflow: 'hidden',
+    background: 'linear-gradient(180deg, rgba(12, 12, 15, 0.98) 0%, rgba(6, 6, 8, 0.99) 100%)',
+    border: `1px solid rgba(255, 69, 0, 0.25)`,
+    padding: '20px 24px',
     display: 'flex',
     flexDirection: 'column',
-    gap: '16px',
-    borderRadius: '4px',
+    gap: '12px',
+    borderRadius: '6px',
     position: 'relative'
   });
 
@@ -1998,12 +2581,12 @@ function openSquadFriendsModal() {
   const title = document.createElement('div');
   title.textContent = 'SQUAD & FRIENDS';
   Object.assign(title.style, {
-    fontSize: 'clamp(18px, 3vh, 24px)',
+    fontSize: '18px',
     fontWeight: 'bold',
     letterSpacing: '2px',
     borderBottom: `2px solid ${DS.colors.accent}`,
-    paddingBottom: '8px',
-    marginBottom: '4px'
+    paddingBottom: '6px',
+    color: DS.colors.text
   });
   container.appendChild(title);
 
@@ -2013,7 +2596,7 @@ function openSquadFriendsModal() {
     display: 'flex',
     gap: '16px',
     borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
-    paddingBottom: '8px'
+    paddingBottom: '6px'
   });
 
   const squadTab = document.createElement('div');
@@ -2024,7 +2607,7 @@ function openSquadFriendsModal() {
   const styleTab = (tab: HTMLElement, isActive: boolean) => {
     Object.assign(tab.style, {
       cursor: 'pointer',
-      fontSize: 'clamp(11px, 1.8vh, 13px)',
+      fontSize: '11px',
       fontWeight: 'bold',
       letterSpacing: '1px',
       color: isActive ? DS.colors.accent : DS.colors.textMuted,
@@ -2034,10 +2617,12 @@ function openSquadFriendsModal() {
 
   const contentArea = document.createElement('div');
   Object.assign(contentArea.style, {
-    minHeight: '240px',
+    flex: '1',
+    minHeight: '0',
     display: 'flex',
     flexDirection: 'column',
-    gap: '12px'
+    gap: '8px',
+    overflow: 'hidden'
   });
 
   const renderTabContent = () => {
@@ -2233,234 +2818,9 @@ function openSquadFriendsModal() {
   renderTabContent();
 }
 
-export function openProfileAuthModal() {
-  const auth = getAuth();
-  const db = getFirestore();
-  const user = auth.currentUser;
-
-  const overlay = document.createElement('div');
-  overlay.id = 'vex-profile-auth-modal';
-  Object.assign(overlay.style, {
-    position: 'fixed', inset: '0', zIndex: '5000',
-    backgroundColor: 'rgba(5, 5, 5, 0.88)',
-    backdropFilter: 'blur(12px)',
-    display: 'flex', alignItems: 'center', justifyContent: 'center',
-    fontFamily: DS.typography.fontFamily, color: DS.colors.text
+if (typeof window !== 'undefined') {
+  window.addEventListener('show-main-menu', () => {
+    renderRightPanel();
   });
-
-  const box = document.createElement('div');
-  box.className = 'mm-glass';
-  Object.assign(box.style, {
-    width: 'clamp(340px, 92vw, 520px)',
-    maxHeight: '90vh', overflowY: 'auto',
-    padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px',
-    borderRadius: '4px', position: 'relative'
-  });
-
-  const closeBtn = document.createElement('button');
-  closeBtn.textContent = '✕';
-  Object.assign(closeBtn.style, {
-    position: 'absolute', top: '12px', right: '16px',
-    background: 'none', border: 'none', color: DS.colors.textMuted,
-    fontSize: '18px', cursor: 'pointer'
-  });
-  closeBtn.onclick = () => overlay.remove();
-  box.appendChild(closeBtn);
-
-  const title = document.createElement('div');
-  title.textContent = 'ACCOUNT & AUTHENTICATION';
-  Object.assign(title.style, {
-    fontFamily: DS.typography.fontFamilyWordmark, fontSize: '18px',
-    color: DS.colors.accent, letterSpacing: '3px', fontWeight: 'bold'
-  });
-  box.appendChild(title);
-
-  const statusBox = document.createElement('div');
-  statusBox.className = 'mm-glass';
-  Object.assign(statusBox.style, { padding: '12px', display: 'flex', flexDirection: 'column', gap: '6px' });
-
-  const currentUid = user ? user.uid : 'NOT_LOGGED_IN';
-  const isAnon = user ? user.isAnonymous : true;
-  const authProvider = isAnon ? 'GUEST SESSION' : (user?.providerData[0]?.providerId || 'EMAIL / PASSWORD');
-
-  statusBox.innerHTML = `
-    <div style="font-size:11px; color:${DS.colors.textMuted}; letter-spacing:1px;">CURRENT USER IDENTIFIER</div>
-    <div style="font-size:12px; font-weight:bold; color:${DS.colors.text}; font-family:monospace; word-break:break-all;">${currentUid}</div>
-    <div style="font-size:11px; color:${DS.colors.accent}; margin-top:2px; font-weight:bold;">PROVIDER: ${authProvider.toUpperCase()}</div>
-  `;
-  box.appendChild(statusBox);
-
-  const googleBtn = document.createElement('button');
-  googleBtn.innerHTML = `
-    <svg width="18" height="18" viewBox="0 0 24 24" style="vertical-align:middle; margin-right:8px;"><path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17z"/><path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.11-6.72-4.96H1.29v3.15C3.26 21.3 7.31 24 12 24z"/><path fill="#FBBC05" d="M5.28 14.24c-.25-.72-.38-1.49-.38-2.24s.13-1.52.38-2.24V6.61H1.29C.47 8.24 0 10.06 0 12s.47 3.76 1.29 5.39l3.99-3.15z"/><path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.31 0 3.26 2.7 1.29 6.61l3.99 3.15c.95-2.85 3.6-4.96 6.72-4.96z"/></svg>
-    SIGN IN WITH GOOGLE
-  `;
-  Object.assign(googleBtn.style, {
-    width: '100%', padding: '12px', background: '#FFFFFF', color: '#000000',
-    fontFamily: DS.typography.fontFamily, fontSize: '12px', fontWeight: 'bold',
-    border: 'none', borderRadius: '2px', cursor: 'pointer', display: 'flex',
-    alignItems: 'center', justifyContent: 'center'
-  });
-
-  googleBtn.onclick = async () => {
-    try {
-      const { GoogleAuthProvider, signInWithPopup } = await import('firebase/auth');
-      const provider = new GoogleAuthProvider();
-      const credential = await signInWithPopup(auth, provider);
-      const loggedUser = credential.user;
-
-      const userRef = doc(db, 'Users', loggedUser.uid);
-      const snap = await getDoc(userRef);
-      if (!snap.exists()) {
-        await setDoc(userRef, {
-          displayName: (loggedUser.displayName || 'OPERATIVE').toUpperCase(),
-          photoURL: loggedUser.photoURL || null,
-          faction: 'VIBE CO.',
-          credits: 100,
-          energy: 100,
-          score: 0,
-          kills: 0,
-          battlePass: 1,
-          unlockedItems: [],
-          createdAt: serverTimestamp(),
-          dailyRefreshedAt: serverTimestamp()
-        });
-      }
-      showMenuNotification(`SIGNED IN AS ${loggedUser.displayName || loggedUser.email}`);
-      overlay.remove();
-    } catch (err: any) {
-      console.warn("Google Auth error:", err);
-      showMenuNotification("Connection Error: Unable to validate request. Please check your connection and try again.", "warning");
-    }
-  };
-  box.appendChild(googleBtn);
-
-  const divOr = document.createElement('div');
-  divOr.textContent = '— OR USE EMAIL / PASSWORD —';
-  Object.assign(divOr.style, { fontSize: '10px', color: DS.colors.textMuted, textAlign: 'center', margin: '4px 0' });
-  box.appendChild(divOr);
-
-  const emailInput = document.createElement('input');
-  emailInput.type = 'email'; emailInput.placeholder = 'EMAIL ADDRESS';
-  Object.assign(emailInput.style, {
-    width: '100%', padding: '10px', background: 'rgba(0,0,0,0.5)', border: DS.glass.border,
-    color: DS.colors.text, fontFamily: DS.typography.fontFamily, fontSize: '12px', outline: 'none'
-  });
-
-  const passInput = document.createElement('input');
-  passInput.type = 'password'; passInput.placeholder = 'PASSWORD';
-  Object.assign(passInput.style, {
-    width: '100%', padding: '10px', background: 'rgba(0,0,0,0.5)', border: DS.glass.border,
-    color: DS.colors.text, fontFamily: DS.typography.fontFamily, fontSize: '12px', outline: 'none'
-  });
-
-  box.appendChild(emailInput);
-  box.appendChild(passInput);
-
-  const btnRow = document.createElement('div');
-  Object.assign(btnRow.style, { display: 'flex', gap: '8px' });
-
-  const loginBtn = document.createElement('button');
-  loginBtn.textContent = 'EMAIL LOGIN';
-  Object.assign(loginBtn.style, {
-    flex: '1', padding: '10px', background: DS.colors.accent, color: DS.colors.background,
-    fontFamily: DS.typography.fontFamily, fontSize: '11px', fontWeight: 'bold', border: 'none', cursor: 'pointer'
-  });
-
-  loginBtn.onclick = async () => {
-    const email = emailInput.value.trim();
-    const pass = passInput.value.trim();
-    if (!email || !pass) {
-      showMenuNotification("ENTER EMAIL AND PASSWORD", "warning");
-      return;
-    }
-    try {
-      const { signInWithEmailAndPassword } = await import('firebase/auth');
-      await signInWithEmailAndPassword(auth, email, pass);
-      showMenuNotification("EMAIL LOGIN SUCCESSFUL");
-      overlay.remove();
-    } catch (e: any) {
-      console.warn("Email login failed:", e);
-      showMenuNotification("Connection Error: Unable to validate request. Please check your connection and try again.", "warning");
-    }
-  };
-
-  const registerBtn = document.createElement('button');
-  registerBtn.textContent = 'CREATE ACCOUNT';
-  Object.assign(registerBtn.style, {
-    flex: '1', padding: '10px', background: 'rgba(255,255,255,0.1)', color: DS.colors.text,
-    fontFamily: DS.typography.fontFamily, fontSize: '11px', fontWeight: 'bold', border: DS.glass.border, cursor: 'pointer'
-  });
-
-  registerBtn.onclick = async () => {
-    const email = emailInput.value.trim();
-    const pass = passInput.value.trim();
-    if (!email || !pass) {
-      showMenuNotification("ENTER EMAIL AND PASSWORD", "warning");
-      return;
-    }
-    try {
-      const { createUserWithEmailAndPassword } = await import('firebase/auth');
-      const cred = await createUserWithEmailAndPassword(auth, email, pass);
-      const userRef = doc(db, 'Users', cred.user.uid);
-      await setDoc(userRef, {
-        displayName: email.split('@')[0].toUpperCase(),
-        faction: 'VIBE CO.',
-        credits: 100,
-        energy: 100,
-        score: 0,
-        kills: 0,
-        battlePass: 1,
-        unlockedItems: [],
-        createdAt: serverTimestamp(),
-        dailyRefreshedAt: serverTimestamp()
-      });
-      showMenuNotification("NEW ACCOUNT CREATED");
-      overlay.remove();
-    } catch (e: any) {
-      console.warn("Account creation failed:", e);
-      showMenuNotification("Connection Error: Unable to validate request. Please check your connection and try again.", "warning");
-    }
-  };
-
-  btnRow.appendChild(loginBtn);
-  btnRow.appendChild(registerBtn);
-  box.appendChild(btnRow);
-
-  const bottomActions = document.createElement('div');
-  Object.assign(bottomActions.style, { display: 'flex', justifyContent: 'space-between', marginTop: '8px' });
-
-  if (user && !user.isAnonymous) {
-    const signOutBtn = document.createElement('button');
-    signOutBtn.textContent = 'SIGN OUT';
-    Object.assign(signOutBtn.style, {
-      padding: '8px 12px', background: 'rgba(255, 68, 0, 0.2)', border: '1px solid #FF4400',
-      color: '#FF4400', fontFamily: DS.typography.fontFamily, fontSize: '11px', cursor: 'pointer'
-    });
-    signOutBtn.onclick = async () => {
-      await auth.signOut();
-      showMenuNotification("SIGNED OUT");
-      overlay.remove();
-    };
-    bottomActions.appendChild(signOutBtn);
-  } else {
-    const guestBtn = document.createElement('button');
-    guestBtn.textContent = 'CONTINUE AS GUEST';
-    Object.assign(guestBtn.style, {
-      padding: '8px 12px', background: 'none', border: '1px solid rgba(255,255,255,0.2)',
-      color: DS.colors.textMuted, fontFamily: DS.typography.fontFamily, fontSize: '11px', cursor: 'pointer'
-    });
-    guestBtn.onclick = async () => {
-      const { signInAnonymously } = await import('firebase/auth');
-      await signInAnonymously(auth);
-      showMenuNotification("GUEST SESSION ACTIVATED");
-      overlay.remove();
-    };
-    bottomActions.appendChild(guestBtn);
-  }
-
-  box.appendChild(bottomActions);
-  overlay.appendChild(box);
-  document.body.appendChild(overlay);
 }
 

@@ -265,10 +265,10 @@ export const MAP_1_ASSETS = [
 ];
 
 export const REQUIRED_SOUNDS = [
-  "vexea_theme.mp3",
+  "vexea_theme.opus",
   "bass_scratch.mp3",
-  "iron_march.mp3",
-  "click.mp3",
+  "iron_march.opus",
+  "click.opus",
   "error.mp3",
   "metal_ricochet.mp3",
   "wood_walk.mp3",
@@ -361,20 +361,24 @@ export async function getCachedOrFetchUrl(
 
     // 3. Download from appropriate GitHub Release CDN
     const r2Map: Record<string, string> = {
-      "main_menu_1.jpg": "Images/Backgrounds/main_menu_1.jpg",
-      "faction_card_1.jpg": "Images/Cards/faction_card_1.jpg",
-      "infiltration_card_1.png": "Images/Cards/infiltration_card_1.png",
-      "intel_card_1.jpg": "Images/Cards/intel_card_1.jpg",
-      "leaderboard_card_1.jpg": "Images/Cards/leaderboard_card_1.jpg",
-      "squad_card_1.jpg": "Images/Cards/squad_card_1.jpg",
-      "promo_rifle_1.jpg": "Images/promotional/promo_rifle_1.jpg",
-      "promo_pistol_1.jpg": "Images/promotional/promo_pistol_1.jpg",
-      "promo_shotgun_1.jpg": "Images/promotional/promo_shotgun_1.jpg",
-      "splash_screen.png": "Images/Backgrounds/splash_screen.png",
-      "file_00000000cdd071f48495d22753c89fa1.png": "Images/Backgrounds/file_00000000cdd071f48495d22753c89fa1.png",
-      "click.mp3": "Audio/Sfx/click.mp3",
-      "vexea_theme.mp3": "Audio/Music/vexea_theme.mp3",
-      "iron_march.mp3": "Audio/Music/iron_march.mp3"
+      "main_menu_1.webm": "Video/Backgrounds/main_menu_1.webm",
+      "click.opus": "Audio/Sfx/click.opus",
+      "vexea_theme.opus": "Audio/Music/vexea_theme.opus",
+      "iron_march.opus": "Audio/Music/iron_march.opus",
+      "armory_1.webp": "Images/Backgrounds/armory_1.webp",
+      "faction_1.webp": "Images/Backgrounds/faction_1.webp",
+      "stats_1.webp": "Images/Backgrounds/stats_1.webp",
+      "store_1.webp": "Images/Backgrounds/store_1.webp",
+      "splash_screen.webp": "Images/Backgrounds/splash_screen.webp",
+      "file_00000000cdd071f48495d22753c89fa1.webp": "Images/Backgrounds/file_00000000cdd071f48495d22753c89fa1.webp",
+      "infiltration_card_1.webp": "Images/Cards/infiltration_card_1.webp",
+      "intel_card_1.webp": "Images/Cards/intel_card_1.webp",
+      "leaderboard_card_1.webp": "Images/Cards/leaderboard_card_1.webp",
+      "squad_card_1.webp": "Images/Cards/squad_card_1.webp",
+      "update_card_1.webp": "Images/Cards/update_card_1.webp",
+      "promo_rifle_1.webp": "Images/promotional/promo_rifle_1.webp",
+      "promo_pistol_1.webp": "Images/promotional/promo_pistol_1.webp",
+      "promo_shotgun_1.webp": "Images/promotional/promo_shotgun_1.webp"
     };
 
     let downloadUrl = "";
@@ -456,11 +460,11 @@ export async function getCachedOrFetchUrl(
 
     const mime =
       category === "Sound"
-        ? "audio/mp3"
+        ? (baseName.toLowerCase().endsWith(".opus") ? "audio/ogg" : "audio/mp3")
         : category === "Video"
-        ? "video/mp4"
+        ? (baseName.toLowerCase().endsWith(".webm") ? "video/webm" : "video/mp4")
         : category === "Image"
-        ? (baseName.toLowerCase().endsWith(".jpg") || baseName.toLowerCase().endsWith(".jpeg") ? "image/jpeg" : "image/png")
+        ? (baseName.toLowerCase().endsWith(".webp") ? "image/webp" : baseName.toLowerCase().endsWith(".jpg") || baseName.toLowerCase().endsWith(".jpeg") ? "image/jpeg" : "image/png")
         : "application/octet-stream";
     const blob = new Blob([fullBuffer], { type: mime });
 

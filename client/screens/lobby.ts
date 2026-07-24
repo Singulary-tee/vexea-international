@@ -3,6 +3,7 @@ import { getDefaultMap } from "../../shared/maps/map-registry";
 import { ensureAssetsDownloaded } from "../asset-cache";
 import { IS_DESKTOP } from "../platform-gate";
 import { DS } from "../design-system";
+import { StudioPreviewManager } from "../StudioPreviewManager";
 
 export function initLobby() {
   let el = document.getElementById('lobby-screen');
@@ -114,14 +115,20 @@ export function initLobby() {
 
     el.appendChild(topRow);
 
-    // 3. MIDDLE AREA (Grow container to reserve space for the 3D model)
+    // 3. MIDDLE AREA (Hosts persistent 3D Studio Canvas Backdrop)
     const middleSpacer = document.createElement('div');
+    middleSpacer.id = 'lobby-3d-backdrop';
     Object.assign(middleSpacer.style, {
       flex: '1',
       width: '100%',
-      pointerEvents: 'none'
+      position: 'relative',
+      pointerEvents: 'auto'
     });
     el.appendChild(middleSpacer);
+
+    requestAnimationFrame(() => {
+      StudioPreviewManager.attachTo(middleSpacer, 'LOBBY');
+    });
 
     // 4. BOTTOM CONTAINER (Cards on the left, Ready on the right)
     const bottomRow = document.createElement('div');
@@ -134,15 +141,16 @@ export function initLobby() {
       pointerEvents: 'none'
     });
 
-    // Class cards list (separated, scrollable horizontal row)
+    // Class cards list (4-column grid layout across available width, no horizontal scrolling)
     const cardsContainer = document.createElement('div');
     Object.assign(cardsContainer.style, {
-      display: 'flex',
-      gap: '16px',
-      overflowX: 'auto',
+      display: 'grid',
+      gridTemplateColumns: 'repeat(4, 1fr)',
+      gap: '12px',
       pointerEvents: 'auto',
       flex: '1',
-      maxWidth: 'calc(100% - clamp(160px, 18vw, 220px) - 24px)'
+      maxWidth: 'calc(100% - clamp(160px, 18vw, 220px) - 24px)',
+      overflow: 'hidden'
     });
 
     let selectedClassIdx = 0;
@@ -151,15 +159,14 @@ export function initLobby() {
     const createClassCard = (idx: number, name: string, desc: string, utils: string[]) => {
       const card = document.createElement('div');
       Object.assign(card.style, {
-        flex: '0 0 auto',
-        width: 'clamp(180px, 16vw, 240px)',
-        height: 'clamp(150px, 22vh, 210px)',
+        width: '100%',
+        height: 'clamp(130px, 20vh, 190px)',
         background: 'rgba(10, 10, 10, 0.75)',
         backdropFilter: DS.glass.blur,
         webkitBackdropFilter: DS.glass.blur,
         border: '1px solid rgba(255, 255, 255, 0.05)',
         borderRadius: '4px',
-        padding: '16px',
+        padding: '12px',
         boxSizing: 'border-box',
         cursor: 'pointer',
         display: 'flex',
@@ -238,10 +245,10 @@ export function initLobby() {
       cardsContainer.appendChild(card);
     };
 
-    createClassCard(0, "ASSAULT", "Frontline breach. Fast maneuverability.", ["Frag Grenade", "Sprint Stim"]);
-    createClassCard(1, "MEDIC", "Sustainment and AoE healing.", ["Healing Drone", "Revive Dart"]);
-    createClassCard(2, "RECON", "Map visibility and tactical scans.", ["Sensor Mine", "Radar Pulse"]);
-    createClassCard(3, "DEMOLITIONS", "Anti-armor and structural denial.", ["C4 Charge", "Deployable Shield"]);
+    createClassCard(0, "ASSAULT", "Baseline combat. Highest damage output.", ["M4 Battle Rifle", "Viper Pistol", "Frag Grenade", "Flashbang"]);
+    createClassCard(1, "MEDIC", "Team sustain and survival support.", ["M4 Battle Rifle", "Viper Pistol", "Medkit", "Revive Tool"]);
+    createClassCard(2, "RECON", "Intelligence gathering and disruption.", ["M4 Battle Rifle", "Viper Pistol", "Field Radio", "Signal Disruptor"]);
+    createClassCard(3, "DEMOLITIONS", "Zone control and structural demolition.", ["M4 Battle Rifle", "Viper Pistol", "EMP Charge", "C4 Explosive"]);
 
     const updateSelection = () => {
       cards.forEach((c, i) => {

@@ -406,6 +406,27 @@ Every file change in the VEXEA codebase must follow this strict three-step proto
         4. Renamed both Main Menu **DEPLOY** buttons (the quick-start button on the left Play Card and the lobby-launch button in the right-hand panel block) to **QUICK MATCH** to align with the revised game-loop terminology.
 *   **Verification:** `compile_applet` and `lint_applet` completed with zero errors.
 
+### Cycle 2026-07-23-01: Firebase Account Linking Functions
+*   **Target Files:** `/client/firebase.ts` & `/CODEBASE_INDEX.md`
+*   **Status:** Verified & Finalized
+*   **Modifications:**
+    *   `/client/firebase.ts`: Exported `linkAnonymousAccount(email, password)` and `signInWithLinkedAccount(email, password)` functions using `linkWithCredential`, `EmailAuthProvider`, and `signInWithEmailAndPassword` from `firebase/auth`. Logged attempts and exact result objects before and after calls. Exception handling catches all errors without throwing.
+*   **Verification:** `lint_applet` passed successfully, `compile_applet` completed with zero errors.
+
+### Cycle 2026-07-23-02: Friends (Firestore graph) + Presence (Realtime Database)
+*   **Target Files:** `/client/screens/main-menu.ts`, `/client/firebase.ts`, `/client/social.ts`, `/firestore.rules`, `/database.rules.json`, `/firebase.json`, `/client/main.ts`, `/CODEBASE_INDEX.md`
+*   **Status:** Verified & Finalized
+*   **Modifications:**
+    *   `/client/screens/main-menu.ts`: Deleted dead `friendsList` mock array.
+    *   `/client/firebase.ts`: Added Realtime Database initialization (`getDatabase`) and exported `rtdb`.
+    *   `/client/social.ts`: Implemented `sendFriendRequest`, `respondToFriendRequest`, `getFriendsList`, `initPresence`, `getPresence`, and dev verification test runner `runSocialDevVerification`.
+    *   `/firestore.rules`: Added scoped security rules for `Users/{userId}/friends/{friendId}` with explicit explanatory comments.
+    *   `/database.rules.json`: Created RTDB security rules restricting `presence/{uid}` writes to auth owner and reads to authenticated users.
+    *   `/firebase.json`: Referenced `database.rules.json` under `database` key.
+    *   `/client/main.ts`: Connected dev verification run on app startup under `IS_DEV` flag.
+*   **Verification:** `lint_applet` and `compile_applet` passed cleanly with zero errors.
+
+
 
 
 

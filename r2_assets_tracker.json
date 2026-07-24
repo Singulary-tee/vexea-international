@@ -2,47 +2,114 @@
   "baseUrl": "https://vexea-r2-asset-guard.alte.workers.dev",
   "assets": [
     {
-      "name": "main_menu_1.jpg",
-      "category": "Image",
+      "name": "main_menu_1.webm",
+      "category": "Video",
       "source": "CloudflareR2",
-      "path": "Images/Backgrounds/main_menu_1.jpg"
+      "path": "Video/Backgrounds/main_menu_1.webm"
     },
     {
-      "name": "faction_card_1.jpg",
+      "name": "armory_1.webp",
       "category": "Image",
       "source": "CloudflareR2",
-      "path": "Images/Cards/faction_card_1.jpg"
+      "path": "Images/Backgrounds/armory_1.webp"
     },
     {
-      "name": "infiltration_card_1.png",
+      "name": "faction_1.webp",
       "category": "Image",
       "source": "CloudflareR2",
-      "path": "Images/Cards/infiltration_card_1.png"
+      "path": "Images/Backgrounds/faction_1.webp"
     },
     {
-      "name": "intel_card_1.jpg",
+      "name": "stats_1.webp",
       "category": "Image",
       "source": "CloudflareR2",
-      "path": "Images/Cards/intel_card_1.jpg"
+      "path": "Images/Backgrounds/stats_1.webp"
     },
     {
-      "name": "leaderboard_card_1.jpg",
+      "name": "store_1.webp",
       "category": "Image",
       "source": "CloudflareR2",
-      "path": "Images/Cards/leaderboard_card_1.jpg"
+      "path": "Images/Backgrounds/store_1.webp"
     },
     {
-      "name": "squad_card_1.jpg",
+      "name": "splash_screen.webp",
       "category": "Image",
       "source": "CloudflareR2",
-      "path": "Images/Cards/squad_card_1.jpg"
+      "path": "Images/Backgrounds/splash_screen.webp"
     },
     {
-      "name": "promo_rifle_1.jpg",
+      "name": "file_00000000cdd071f48495d22753c89fa1.webp",
       "category": "Image",
       "source": "CloudflareR2",
-      "path": "Images/promotional/promo_rifle_1.jpg"
+      "path": "Images/Backgrounds/file_00000000cdd071f48495d22753c89fa1.webp"
+    },
+    {
+      "name": "infiltration_card_1.webp",
+      "category": "Image",
+      "source": "CloudflareR2",
+      "path": "Images/Cards/infiltration_card_1.webp"
+    },
+    {
+      "name": "intel_card_1.webp",
+      "category": "Image",
+      "source": "CloudflareR2",
+      "path": "Images/Cards/intel_card_1.webp"
+    },
+    {
+      "name": "leaderboard_card_1.webp",
+      "category": "Image",
+      "source": "CloudflareR2",
+      "path": "Images/Cards/leaderboard_card_1.webp"
+    },
+    {
+      "name": "squad_card_1.webp",
+      "category": "Image",
+      "source": "CloudflareR2",
+      "path": "Images/Cards/squad_card_1.webp"
+    },
+    {
+      "name": "update_card_1.webp",
+      "category": "Image",
+      "source": "CloudflareR2",
+      "path": "Images/Cards/update_card_1.webp"
+    },
+    {
+      "name": "promo_rifle_1.webp",
+      "category": "Image",
+      "source": "CloudflareR2",
+      "path": "Images/promotional/promo_rifle_1.webp"
+    },
+    {
+      "name": "promo_pistol_1.webp",
+      "category": "Image",
+      "source": "CloudflareR2",
+      "path": "Images/promotional/promo_pistol_1.webp"
+    },
+    {
+      "name": "promo_shotgun_1.webp",
+      "category": "Image",
+      "source": "CloudflareR2",
+      "path": "Images/promotional/promo_shotgun_1.webp"
     }
   ],
-  "sounds": []
+  "sounds": [
+    {
+      "name": "click.opus",
+      "category": "Sound",
+      "source": "CloudflareR2",
+      "path": "Audio/Sfx/click.opus"
+    },
+    {
+      "name": "vexea_theme.opus",
+      "category": "Sound",
+      "source": "CloudflareR2",
+      "path": "Audio/Music/vexea_theme.opus"
+    },
+    {
+      "name": "iron_march.opus",
+      "category": "Sound",
+      "source": "CloudflareR2",
+      "path": "Audio/Music/iron_march.opus"
+    }
+  ]
 }

@@ -817,7 +817,7 @@ export const initUIEditor = () => {
 
     (window as any).vexeaEditUI = () => {
     	const s = (window as any).vexeaSettings || {};
-        const refImg = s.referenceImage || getAssetUrl("file_00000000cdd071f48495d22753c89fa1.png");
+        const refImg = s.referenceImage || getAssetUrl("file_00000000cdd071f48495d22753c89fa1.webp");
         bgImage.style.backgroundImage = `url('${refImg}')`;
         hudContainer.style.setProperty("display", "block", "important");
         if (settingsModal) settingsModal.style.display = "none";

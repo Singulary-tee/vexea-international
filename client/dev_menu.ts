@@ -1630,7 +1630,7 @@ function renderPanel() {
                         <button id="cheat-tp-custom" style="padding:${DS.spacing.md}; background:#f0f; color:${DS.colors.text}; font-weight:bold; border:none; cursor:pointer; border-radius:${DS.borders.radius.sm}; width:100%;">TELEPORT</button>
                     </div>
 
-                    <h3 style="margin:10px 0 0 0; color:${DS.colors.danger}; border-bottom:1px solid #522; padding-bottom:5px;">Tactical Operations</h3>
+                    <h3 style="margin:10px 0 0 0; color:${DS.colors.danger}; border-bottom:1px solid #522; padding-bottom:5px;">Combat Operations</h3>
                     <div style="display:flex; flex-direction:column; gap:8px;">
                         <button id="cheat-nuke-drones" style="padding:${DS.spacing.md}; background:#a00; color:${DS.colors.text}; font-weight:bold; border:none; cursor:pointer; border-radius:${DS.borders.radius.sm}; width:100%; font-family:${DS.typography.fontFamilyMono};">NUKE ALL DRONES</button>
                         <button id="cheat-kill-self" style="padding:${DS.spacing.md}; background:#c50; color:${DS.colors.text}; font-weight:bold; border:none; cursor:pointer; border-radius:${DS.borders.radius.sm}; width:100%; font-family:${DS.typography.fontFamilyMono};">KILL SELF (TEST RESPAWN)</button>

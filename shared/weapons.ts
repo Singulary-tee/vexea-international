@@ -321,7 +321,7 @@ export const DETAILED_WEAPONS: Record<string, WeaponPerformance> = {
   },
 
   radio: {
-    name: "Tactical Radio",
+    name: "Field Radio",
     fireRateHz: 0.5,
     damage: 0,
     capacity: 1,

@@ -56,11 +56,11 @@ class AudioManager {
     public async loadAll(): Promise<void> {
         const audioFiles = {
             // Music
-            vexea_theme: 'vexea_theme.mp3',
+            vexea_theme: 'vexea_theme.opus',
             bass_scratch: 'bass_scratch.mp3',
-            iron_march: 'iron_march.mp3',
+            iron_march: 'iron_march.opus',
             // SFX menu
-            click: 'click.mp3',
+            click: 'click.opus',
             error: 'error.mp3',
             // Footsteps / Materials
             metal_ricochet: 'metal_ricochet.mp3',
@@ -81,10 +81,12 @@ class AudioManager {
         const loadPromises = Object.entries(audioFiles).map(async ([key, filename]) => {
             const isFootstep = ['concrete_walk', 'concrete_run', 'wood_walk'].includes(key);
             const cachedUrl = await getCachedOrFetchUrl(filename, 'Sound');
+            const ext = filename.substring(filename.lastIndexOf('.') + 1);
+            const formats = ext === 'opus' ? ['opus', 'ogg'] : [ext];
             return new Promise<void>((resolve, reject) => {
                 const howl = new Howl({
                     src: [cachedUrl],
-                    format: ['mp3'],
+                    format: formats,
                     preload: true,
                     loop: isFootstep,
                     onplayerror: function() {
