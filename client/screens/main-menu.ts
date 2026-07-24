@@ -35,7 +35,6 @@ const GAME_MODES = [
 ];
 
 let squadMembers: string[] = [];
-let friendsList: Array<{ codename: string; status: string }> = [];
 
 const cardImages = [
     'update_card_1.webp',
@@ -2717,6 +2716,7 @@ function openSquadFriendsModal() {
       };
       contentArea.appendChild(deployBtn);
     } else {
+      const friendsList: Array<{ codename: string; status: string }> = [];
       const searchBox = document.createElement('div');
       Object.assign(searchBox.style, {
         display: 'flex', gap: '8px', marginBottom: '8px'
