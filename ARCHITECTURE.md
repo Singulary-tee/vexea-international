@@ -178,3 +178,8 @@
 ## 9. Codebase Index and Audit Protocol
 *   **Unified Index File:** The complete layout, purpose, and export structure of every directory and source file is cataloged inside `/CODEBASE_INDEX.md`. This index serves as the strict, single-source authority for file purposes to prevent assumptions.
 *   **Audit Protocol:** Any modification to the codebase must consult `/CODEBASE_INDEX.md` first to confirm system-wide impacts. Changes must be registered in the active log section of the index prior to execution, and finalized with testing results upon completion. No unindexed file edits are permitted.
+
+---
+
+## 10. Barred Terminology & Themes
+*   **Barred Words:** The words **"neon"**, **"scifi"**, **"tactical"**, **"futuristic"**, **"cyberpunk"**, and **"mecha"** are strictly barred from this workspace. They must not be used in the design, UI text, labels, descriptors, code comments, or architecture. All content, aesthetic choices, and lighting must remain completely grounded, neutral, and clean without leaning into speculative or stylized subgenres.

@@ -4,33 +4,37 @@ import { IS_DESKTOP } from "../platform-gate";
 import { DS } from "../design-system";
 
 const SOUNDS_TO_PRELOAD = [
-  'click.mp3', 'vexea_theme.mp3'
+  'click.opus', 'vexea_theme.opus'
 ];
 
 const TEXTURES_TO_PRELOAD: string[] = [
 ];
 
 const IMAGES_TO_PRELOAD = [
-  'splash_screen.png',
-  'infiltration_card_1.png',
-  'intel_card_1.jpg',
-  'leaderboard_card_1.jpg',
-  'squad_card_1.jpg',
-  'promo_rifle_1.jpg',
-  'promo_pistol_1.jpg',
-  'promo_shotgun_1.jpg',
-  'file_00000000cdd071f48495d22753c89fa1.png',
-  'main_menu_1.jpg',
-  'faction_card_1.jpg'
+  'splash_screen.webp',
+  'infiltration_card_1.webp',
+  'intel_card_1.webp',
+  'leaderboard_card_1.webp',
+  'squad_card_1.webp',
+  'promo_rifle_1.webp',
+  'promo_pistol_1.webp',
+  'promo_shotgun_1.webp',
+  'file_00000000cdd071f48495d22753c89fa1.webp',
+  'update_card_1.webp',
+  'armory_1.webp',
+  'faction_1.webp',
+  'stats_1.webp',
+  'store_1.webp'
 ];
 
 const VIDEOS_TO_PRELOAD: string[] = [
+  'main_menu_1.webm'
 ];
 
 // The rest of the game assets
 export const EXTENDED_SOUNDS = [
   'bass_scratch.mp3', 'concrete_run.mp3', 'concrete_walk.mp3',
-  'error.mp3', 'iron_march.mp3', 'metal_ricochet.mp3', 'pistol_fire.mp3',
+  'error.mp3', 'iron_march.opus', 'metal_ricochet.mp3', 'pistol_fire.mp3',
   'pistol_reload.mp3', 'rifle_fire.mp3', 'rifle_reload.mp3',
   'wood_walk.mp3'
 ];
@@ -140,7 +144,7 @@ export function initSplash() {
   // Attempt to resolve from cache immediately. If cached, apply background.
   populateBlobUrlMap().then(() => {
     if (el) {
-      el.style.backgroundImage = `url('${getAssetUrl("splash_screen.png")}')`;
+      el.style.backgroundImage = `url('${getAssetUrl("splash_screen.webp")}')`;
     }
   });
 
@@ -240,7 +244,7 @@ export function initSplash() {
       await populateBlobUrlMap();
 
       if (el) {
-        el.style.backgroundImage = `url('${getAssetUrl("splash_screen.png")}')`;
+        el.style.backgroundImage = `url('${getAssetUrl("splash_screen.webp")}')`;
       }
 
       loadingBarInner.style.width = '120px';

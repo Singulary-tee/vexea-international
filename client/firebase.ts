@@ -11,8 +11,16 @@ import {
   getFirestore,
   Firestore
 } from "firebase/firestore";
-import { getAuth, signInAnonymously, Auth } from "firebase/auth";
+import {
+  getAuth,
+  signInAnonymously,
+  linkWithCredential,
+  EmailAuthProvider,
+  signInWithEmailAndPassword,
+  Auth
+} from "firebase/auth";
 import { getStorage, FirebaseStorage } from "firebase/storage";
+import type { Database } from "firebase/database";
 
 export enum OperationType {
   CREATE = "create",
@@ -43,6 +51,7 @@ export interface FirestoreErrorInfo {
 export let db: Firestore | null = null;
 export let auth: Auth | null = null;
 export let storage: FirebaseStorage | null = null;
+export let rtdb: Database | null = null;
 export let isFirebaseReady = false;
 
 function handleFirestoreError(error: unknown, operationType: OperationType, path: string | null) {
@@ -72,10 +81,17 @@ import firebaseConfig from "../firebase-applet-config.json";
 export async function initFirebase(): Promise<boolean> {
   try {
     const { initializeApp } = await import("firebase/app");
+    const { getDatabase } = await import("firebase/database");
     const app = initializeApp(firebaseConfig);
     db = getFirestore(app, firebaseConfig.firestoreDatabaseId);
     auth = getAuth(app);
     storage = getStorage(app);
+    try {
+      rtdb = getDatabase(app);
+    } catch {
+      const dbUrl = (firebaseConfig as any).databaseURL || `https://${firebaseConfig.projectId}-default-rtdb.firebaseio.com`;
+      rtdb = getDatabase(app, dbUrl);
+    }
     isFirebaseReady = true;
     console.log("Firebase initialized successfully with configuration credentials.");
     return true;
@@ -94,6 +110,62 @@ export async function authenticateAnonymously(): Promise<string | null> {
   } catch (error) {
     console.error("Firebase Anonymous Auth failed:", error);
     return null;
+  }
+}
+
+export async function linkAnonymousAccount(
+  email: string,
+  password: string
+): Promise<{ success: boolean; uid: string | null; error: string | null }> {
+  if (!auth || !auth.currentUser || auth.currentUser.isAnonymous === false) {
+    const res = { success: false, uid: null, error: "No anonymous session to link" };
+    console.log("[Account Link Attempt] Check failed: No anonymous user active.", {
+      authInitialized: !!auth,
+      hasUser: !!auth?.currentUser,
+      isAnonymous: auth?.currentUser?.isAnonymous ?? null
+    });
+    console.log("[Account Link Result]", res);
+    return res;
+  }
+
+  const currentUser = auth.currentUser;
+  console.log("[Account Link Attempt] Linking anonymous UID:", currentUser.uid, "with email:", email);
+  try {
+    const credential = EmailAuthProvider.credential(email, password);
+    const result = await linkWithCredential(currentUser, credential);
+    const res = { success: true, uid: result.user.uid, error: null };
+    console.log("[Account Link Result]", res);
+    return res;
+  } catch (error: any) {
+    const errorMsg = error?.message ? String(error.message) : "Unknown link error";
+    const res = { success: false, uid: null, error: errorMsg };
+    console.log("[Account Link Result]", res);
+    return res;
+  }
+}
+
+export async function signInWithLinkedAccount(
+  email: string,
+  password: string
+): Promise<{ success: boolean; uid: string | null; error: string | null }> {
+  if (!auth) {
+    const res = { success: false, uid: null, error: "Firebase Auth not initialized" };
+    console.log("[Sign-In Attempt] Check failed: Auth not initialized for email:", email);
+    console.log("[Sign-In Result]", res);
+    return res;
+  }
+
+  console.log("[Sign-In Attempt] Signing in with linked account for email:", email);
+  try {
+    const userCredential = await signInWithEmailAndPassword(auth, email, password);
+    const res = { success: true, uid: userCredential.user.uid, error: null };
+    console.log("[Sign-In Result]", res);
+    return res;
+  } catch (error: any) {
+    const errorMsg = error?.message ? String(error.message) : "Unknown sign-in error";
+    const res = { success: false, uid: null, error: errorMsg };
+    console.log("[Sign-In Result]", res);
+    return res;
   }
 }
 

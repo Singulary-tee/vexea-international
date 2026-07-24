@@ -21,12 +21,14 @@ if ((import.meta as any).env?.DEV) {
   import("./dev_menu");
 }
 import { initPlatformGate, IS_MOBILE } from "./platform-gate";
+import { IS_DEV } from "../shared/gate";
 import { initSplash } from "./screens/splash";
 import map1Spec from "../shared/maps/map_1_facility.spec.json";
 import { initMainMenu } from "./screens/main-menu";
 import { initLobby } from "./screens/lobby";
 import { initMapViewerGlobally } from "./screens/map_viewer";
 import * as screenManager from "./screens/screen-manager";
+import { StudioPreviewManager } from "./StudioPreviewManager";
 import { audioManager } from "./audio";
 import { MapLoader } from "./src/map/MapLoader";
 import { getMapById } from "../shared/maps/map-registry";
@@ -548,6 +550,11 @@ const initClient = async () => {
       fetchPlayerStats(cloudUid).then((stats) => {
         if (stats) (window as any).vexCloudStats = stats;
       });
+      if (IS_DEV) {
+        import("./social").then(({ runSocialDevVerification }) => {
+          runSocialDevVerification(cloudUid);
+        });
+      }
     }
   }
 
@@ -691,6 +698,7 @@ const setup3DStage = async () => {
       antialias: false,
       powerPreference: "high-performance",
       forceWebGL: forceWebGL,
+      alpha: true,
     });
     await renderer.init();
     (window as any).isWebGPU = !forceWebGL;
@@ -715,6 +723,7 @@ const setup3DStage = async () => {
           antialias: false,
           powerPreference: "high-performance",
           forceWebGL: true,
+          alpha: true,
         });
         await renderer.init();
         (window as any).isWebGPU = false;
@@ -875,8 +884,16 @@ let animationFrameId = 0;
 
 const animateFrame = async () => {
   const match = getMatch();
-  if (!match) {
+  if (!match || (window as any).gameState !== "ACTIVE_MATCH") {
     animationFrameId = requestAnimationFrame(animateFrame);
+    const now = performance.now();
+    const dt = Math.min(Math.max((now - lastTime) / 1000, 0.001), 0.1);
+    lastTime = now;
+
+    StudioPreviewManager.update(dt);
+    if (renderer) {
+      renderer.render(StudioPreviewManager.getStudioScene(), StudioPreviewManager.getStudioCamera());
+    }
     return;
   }
   (window as any).devSubsystems = (window as any).devSubsystems || { physics:0, droneInterp:0, vfx:0, minimap:0, weapons:0 };

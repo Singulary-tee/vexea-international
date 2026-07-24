@@ -1,3 +1,36 @@
+/**
+ * ============================================================================
+ * DESIGN SYSTEM COMPLIANCE & RE-ORDER MANUAL (SENIOR IMPLEMENTER RULES)
+ * ============================================================================
+ * 1. ROUNDED CORNERS AND GLASSMORPHISM ARE STRICTLY FORBIDDEN.
+ *    - All containers, cards, tabs, buttons, and interactive components must use
+ *      perfectly sharp, orthogonal edges (no border-radius, i.e., 0px).
+ *    - No fuzzy frosted glass panels or complex radial-gradient reflections.
+ *
+ * 2. BORDERS ARE ONLY SELECTIVELY USED.
+ *    - Do not outline everything. Minimize visual clutter. Only use highly selective,
+ *      thin borders or status accent indicators to group critical systems.
+ *
+ * 3. DARK BACKGROUNDS MUST ALWAYS USE TRANSPARENCY AND SMOKE-LIKE BLURRY EDGES.
+ *    - Never use hard dark blocks, rigid card boundaries, or stark light-dark dividing walls.
+ *    - Dark backgrounds must merge seamlessly with the scene using smooth, transparent,
+ *      smoke-like radial/linear gradients fading gently to 100% transparent.
+ *
+ * 4. GRADIENTS ARE SELECTIVELY USED AND ARE VERY SUBTLE.
+ *    - Bright high-contrast gradients are banned. Use only extremely low-contrast,
+ *      nearly invisible fusions of adjacent tones or soft neutral darkness.
+ *
+ * 5. AREA MANAGEMENT & ABSOLUTE NO SCROLLING RULE (STRICT RULE).
+ *    - NO SCROLLING is permitted unless explicitly allowed by the user.
+ *    - Posting a cut or cropped screenshot DOES NOT WARRANT USING SCROLLING.
+ *      A cut screenshot means you failed to make the items adapt correctly to the viewport.
+ *    - Screens and UI elements MUST dynamically adapt, scale, and utilize available horizontal
+ *      and vertical space (multi-column grids, responsive font/padding scaling, flex layouts)
+ *      so that all content fits within the viewport without clipping or scrollbars.
+ *    - Converting unoptimized layouts into scrollable containers or tiny scroll strips is strictly prohibited.
+ * ============================================================================
+ */
+
 export const DS = {
   colors: {
     background: '#0A0A0A',

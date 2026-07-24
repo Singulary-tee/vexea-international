@@ -1,6 +1,7 @@
 import { DS } from "../design-system";
 import { audioManager } from "../audio";
 import { IS_DEV } from "../../shared/gate";
+import { StudioPreviewManager } from "../StudioPreviewManager";
 
 const screens = ['splash-screen', 'main-menu-screen', 'lobby-screen', 'dev-map-editor-screen', 'dev-entities-screen'];
 let transitionTimers: number[] = [];
@@ -52,10 +53,15 @@ export function showSplash() {
 
 export function showMainMenu() {
   showScreen('main-menu-screen', 500, false);
+  window.dispatchEvent(new CustomEvent('show-main-menu'));
 }
 
 export function showLobby() {
   showScreen('lobby-screen', 500, false);
+  const backdrop = document.getElementById('lobby-3d-backdrop');
+  if (backdrop) {
+    StudioPreviewManager.attachTo(backdrop, 'LOBBY');
+  }
 }
 
 export function showDevMapEditor() {
