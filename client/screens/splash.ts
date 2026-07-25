@@ -98,7 +98,7 @@ export function initSplash() {
     });
     
     const docEl = document.documentElement as any;
-    if (!IS_DESKTOP && !document.fullscreenElement && !(document as any).webkitFullscreenElement) {
+    if (!document.fullscreenElement && !(document as any).webkitFullscreenElement) {
         if (docEl.requestFullscreen) docEl.requestFullscreen().catch(() => {});
         else if (docEl.webkitRequestFullscreen) docEl.webkitRequestFullscreen().catch(() => {});
     }
