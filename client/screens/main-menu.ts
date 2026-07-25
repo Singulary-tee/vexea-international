@@ -1,6 +1,6 @@
 import * as screenManager from "./screen-manager";
 import { getFirestore, collection, addDoc, serverTimestamp, doc, getDoc, onSnapshot, setDoc, updateDoc } from "firebase/firestore";
-import { getAuth } from "firebase/auth";
+import { getAuth, onAuthStateChanged } from "firebase/auth";
 import { DS } from "../design-system";
 import { IS_DEV } from "../../shared/gate";
 import { getDevMap, getDefaultMap, MAP_REGISTRY } from "../../shared/maps/map-registry";
@@ -92,37 +92,64 @@ export function initMainMenu() {
   });
 
   const auth = getAuth();
-  if (auth.currentUser) {
-    const db = getFirestore();
-    const uid = auth.currentUser.uid;
-    
+  const db = getFirestore();
+
+  onAuthStateChanged(auth, (user) => {
     if (userSubscriptionUnsubscribe) {
       userSubscriptionUnsubscribe();
+      userSubscriptionUnsubscribe = null;
     }
-    
-    userSubscriptionUnsubscribe = onSnapshot(doc(db, 'Users', uid), (snapshot) => {
-      if (snapshot.exists()) {
-        registeredUserData = snapshot.data();
-        userFaction = registeredUserData.faction || null;
-        
-        const overlay = document.getElementById('vex-enlistment-overlay');
-        if (overlay) overlay.remove();
-        
-        checkDailyRefresh(registeredUserData, doc(db, 'Users', uid));
-        enableLeftColumnMenu(true);
-      } else {
-        registeredUserData = null;
-        userFaction = null;
-        enableLeftColumnMenu(false);
-        showEnlistmentOverlay(db, auth);
-      }
-      
+
+    if (user) {
+      const uid = user.uid;
+      (window as any).vexPlayerUid = uid;
+
+      userSubscriptionUnsubscribe = onSnapshot(doc(db, 'Users', uid), async (snapshot) => {
+        if (snapshot.exists()) {
+          registeredUserData = snapshot.data();
+          userFaction = registeredUserData.faction || null;
+
+          const overlay = document.getElementById('vex-unified-auth-modal') || document.getElementById('vex-enlistment-overlay');
+          if (overlay) overlay.remove();
+
+          checkDailyRefresh(registeredUserData, doc(db, 'Users', uid));
+          enableLeftColumnMenu(true);
+        } else {
+          if (!user.isAnonymous) {
+            const newProfile = {
+              displayName: (user.displayName || user.email?.split('@')[0] || 'OPERATIVE').toUpperCase(),
+              photoURL: user.photoURL || null,
+              email: user.email || null,
+              faction: 'VIBE CO.', credits: 100, energy: 100, score: 0, kills: 0, battlePass: 1,
+              createdAt: serverTimestamp(), dailyRefreshedAt: serverTimestamp(),
+              totalMatches: 0, totalWins: 0, totalDroneEliminations: 0, totalDeaths: 0
+            };
+            try {
+              await setDoc(doc(db, 'Users', uid), newProfile);
+            } catch (err) {
+              console.warn("Auto-provision profile failed:", err);
+            }
+          } else {
+            registeredUserData = null;
+            userFaction = null;
+            enableLeftColumnMenu(false);
+            showEnlistmentOverlay(db, auth);
+          }
+        }
+
+        updateProfileBox();
+        renderRightPanel();
+      }, (err) => {
+        console.warn("User state subscription failed:", err);
+      });
+    } else {
+      registeredUserData = null;
+      userFaction = null;
+      enableLeftColumnMenu(false);
       updateProfileBox();
       renderRightPanel();
-    }, (err) => {
-      console.warn("User state subscription failed:", err);
-    });
-  }
+    }
+  });
 
   let el = document.getElementById('main-menu-screen');
   if (el) el.remove();
@@ -2026,25 +2053,27 @@ function createUnifiedAuthOverlay(db: any, auth: any, defaultTab: 'GUEST' | 'AUT
     backdropFilter: 'blur(15px)',
     display: 'flex', alignItems: 'center', justifyContent: 'center',
     padding: '16px',
-    fontFamily: DS.typography.fontFamily, color: DS.colors.text
+    fontFamily: DS.typography.fontFamily, color: DS.colors.text,
+    overflowY: 'auto'
   });
 
   const box = document.createElement('div');
   box.className = 'mm-glass';
   Object.assign(box.style, {
-    width: 'clamp(640px, 80vw, 920px)',
-    height: 'clamp(420px, 75vh, 600px)',
-    maxHeight: '85vh',
-    overflow: 'hidden',
+    width: 'min(92vw, 680px)',
+    maxHeight: '90vh',
+    overflowY: 'auto',
+    WebkitOverflowScrolling: 'touch',
     background: 'linear-gradient(180deg, rgba(14, 14, 18, 0.98) 0%, rgba(6, 6, 9, 0.99) 100%)',
     border: `1px solid rgba(255, 69, 0, 0.25)`,
     boxShadow: '0 0 35px rgba(0, 0, 0, 0.8), 0 0 15px rgba(255, 69, 0, 0.15)',
-    padding: '20px 24px',
+    padding: '20px 20px',
     position: 'relative',
     display: 'flex',
     flexDirection: 'column',
     gap: '12px',
-    borderRadius: '6px'
+    borderRadius: '6px',
+    boxSizing: 'border-box'
   });
 
   const closeBtn = document.createElement('button');
@@ -2355,21 +2384,24 @@ function createUnifiedAuthOverlay(db: any, auth: any, defaultTab: 'GUEST' | 'AUT
           const credential = await signInWithPopup(auth, provider);
           const loggedUser = credential.user;
 
+          (window as any).vexPlayerUid = loggedUser.uid;
           const userRef = doc(db, 'Users', loggedUser.uid);
           const snap = await getDoc(userRef);
           if (!snap.exists()) {
             await setDoc(userRef, {
-              displayName: (loggedUser.displayName || 'OPERATIVE').toUpperCase(),
+              displayName: (loggedUser.displayName || loggedUser.email?.split('@')[0] || 'OPERATIVE').toUpperCase(),
               photoURL: loggedUser.photoURL || null,
+              email: loggedUser.email || null,
               faction: 'VIBE CO.', credits: 100, energy: 100, score: 0, kills: 0, battlePass: 1,
-              createdAt: serverTimestamp(), dailyRefreshedAt: serverTimestamp()
+              createdAt: serverTimestamp(), dailyRefreshedAt: serverTimestamp(),
+              totalMatches: 0, totalWins: 0, totalDroneEliminations: 0, totalDeaths: 0
             });
           }
-          showMenuNotification(`SIGNED IN AS ${loggedUser.displayName || loggedUser.email}`);
+          showMenuNotification(`SIGNED IN AS ${(loggedUser.displayName || loggedUser.email || 'OPERATIVE').toUpperCase()}`);
           overlay.remove();
         } catch (err: any) {
           console.warn("Google Auth error:", err);
-          showMenuNotification("Connection Error: Unable to validate request.", "warning");
+          showMenuNotification(`SIGN IN ERROR: ${err?.message || 'Unable to authenticate'}`, "warning");
         }
       };
 
@@ -2513,7 +2545,13 @@ function createUnifiedAuthOverlay(db: any, auth: any, defaultTab: 'GUEST' | 'AUT
 }
 
 function showEnlistmentOverlay(db: any, auth: any) {
-  createUnifiedAuthOverlay(db, auth, 'GUEST');
+  const splashEl = document.getElementById('splash-screen');
+  const isSplashActive = splashEl && splashEl.style.display !== 'none' && splashEl.style.opacity !== '0';
+  if ((window as any).interactionStarted && !isSplashActive) {
+    if (!document.getElementById('vex-unified-auth-modal')) {
+      createUnifiedAuthOverlay(db, auth, 'GUEST');
+    }
+  }
 }
 
 export function openProfileAuthModal() {
@@ -2543,18 +2581,19 @@ function openSquadFriendsModal() {
   const container = document.createElement('div');
   container.className = 'mm-glass';
   Object.assign(container.style, {
-    width: 'clamp(680px, 80vw, 920px)',
-    height: 'clamp(420px, 75vh, 600px)',
-    maxHeight: '85vh',
-    overflow: 'hidden',
+    width: 'min(92vw, 720px)',
+    maxHeight: '90vh',
+    overflowY: 'auto',
+    WebkitOverflowScrolling: 'touch',
     background: 'linear-gradient(180deg, rgba(12, 12, 15, 0.98) 0%, rgba(6, 6, 8, 0.99) 100%)',
     border: `1px solid rgba(255, 69, 0, 0.25)`,
-    padding: '20px 24px',
+    padding: '20px 20px',
     display: 'flex',
     flexDirection: 'column',
     gap: '12px',
     borderRadius: '6px',
-    position: 'relative'
+    position: 'relative',
+    boxSizing: 'border-box'
   });
 
   const closeBtn = document.createElement('div');
@@ -2821,6 +2860,11 @@ function openSquadFriendsModal() {
 if (typeof window !== 'undefined') {
   window.addEventListener('show-main-menu', () => {
     renderRightPanel();
+    const auth = getAuth();
+    const db = getFirestore();
+    if (auth.currentUser && auth.currentUser.isAnonymous && !registeredUserData) {
+      showEnlistmentOverlay(db, auth);
+    }
   });
 }
 
