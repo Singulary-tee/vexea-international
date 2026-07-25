@@ -29,15 +29,24 @@ service cloud.firestore {
 
     // Friends subcollection: Users/{userId}/friends/{friendId}
     match /Users/{userId}/friends/{friendId} {
-      // PERMISSION REASON: A user is explicitly permitted to read their own friends subcollection to view friend statuses and pending requests.
-      allow read: if request.auth != null && request.auth.uid == userId;
+      // PERMISSION REASON: Strict user-only access. A user may read or write only within their own subcollection (request.auth.uid == userId).
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
 
-      // PERMISSION REASON: A user is permitted to write under their own subcollection (request.auth.uid == userId) for sending pending_sent, accepting, or deleting requests.
-      // A user is also permitted to write under a target's subcollection strictly for their own friend entry (request.auth.uid == friendId) to deliver a pending_received request, set accepted status, or delete on decline.
-      allow write: if request.auth != null && (
-        request.auth.uid == userId ||
-        request.auth.uid == friendId
-      );
+    // Incoming Friend Requests Inbox: incomingRequests/{targetUid}/requests/{senderUid}
+    match /incomingRequests/{targetUid}/requests/{senderUid} {
+      // PERMISSION REASON: The recipient (targetUid) may read and delete incoming requests in their inbox.
+      allow read, delete: if request.auth != null && request.auth.uid == targetUid;
+      // PERMISSION REASON: The sender may create or update an incoming request entry in the target's inbox, provided senderUid matches their auth UID and they are not sending to themselves.
+      allow create, update: if request.auth != null && request.resource.data.senderUid == request.auth.uid && targetUid != request.auth.uid;
+    }
+
+    // Outcome Notifications Inbox: outcomes/{senderUid}/notifications/{recipientUid}
+    match /outcomes/{senderUid}/notifications/{recipientUid} {
+      // PERMISSION REASON: The original sender (senderUid) may read and delete notifications in their outcome inbox once synced.
+      allow read, delete: if request.auth != null && request.auth.uid == senderUid;
+      // PERMISSION REASON: The recipient may create or update an outcome notification in the sender's inbox, provided from matches their auth UID and senderUid is not themselves.
+      allow create, update: if request.auth != null && request.resource.data.from == request.auth.uid && senderUid != request.auth.uid;
     }
 
     // Server Authoritative: MatchInProgress tracking
