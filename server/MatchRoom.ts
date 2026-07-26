@@ -36,6 +36,7 @@ import {
   DroneIntelConfig
 } from "../shared/constants";
 import { ChannelAdapter } from "./transport/adapter";
+import { CLASSES, ClassId } from "../shared/classes.js";
 import { getMapById } from "../shared/maps/map-registry";
 import { ZoneRegistry } from "./map/ZoneRegistry";
 import { CollisionSystem } from "../shared/collision";
@@ -82,6 +83,7 @@ export interface PlayerState {
   yaw: number;
   hp: number;
   score: number;
+  classId?: ClassId;
   weapon?: string;
   weaponState: {
     primary: {
@@ -659,17 +661,33 @@ export class MatchRoom {
 
 
 
+  public applyPlayerClassLoadout(pStateOrId: PlayerState | string, classId: ClassId): void {
+    const pState = typeof pStateOrId === 'string' ? this.players.get(pStateOrId) : pStateOrId;
+    if (!pState) return;
+    const classDef = CLASSES[classId] || CLASSES.ASSAULT;
+
+    pState.classId = classDef.id;
+    pState.weapon = classDef.primaryWeapon.toLowerCase();
+    pState.hp = 100;
+    pState.maxHp = PLAYER_MAX_HP;
+    console.log(`[MATCH] Applied class ${classDef.id} loadout to player ${pState.id}: Primary=${classDef.primaryWeapon}, Secondary=${classDef.secondaryWeapon}, Utility1=${classDef.utility1}, Utility2=${classDef.utility2}`);
+  }
+
   public registerPlayer(
     playerId: string,
     channel: ChannelAdapter,
     stats: any,
+    playerClass?: ClassId,
   ): PlayerState {
-    console.log(`[SERVER registerPlayer] playerId: "${playerId}", mapId: "${this.mapId}"`);
+    console.log(`[SERVER registerPlayer] playerId: "${playerId}", mapId: "${this.mapId}", class: "${playerClass || 'ASSAULT'}"`);
 
     // Handle Reconnection: If player already exists, rebind channel and return state
     if (this.players.has(playerId)) {
       const existing = this.players.get(playerId)!;
       existing.channel = channel;
+      if (playerClass && CLASSES[playerClass]) {
+        this.applyPlayerClassLoadout(existing, playerClass);
+      }
       console.log(`[MATCH] Player ${playerId} reconnected. Rebinding to existing session state at [${existing.posX.toFixed(2)}, ${existing.posY.toFixed(2)}, ${existing.posZ.toFixed(2)}]`);
       
       // Force an immediate handshake to the client with the current state
@@ -681,6 +699,7 @@ export class MatchRoom {
         posZ: existing.posZ,
         hp: existing.hp,
         weapon: existing.weapon,
+        classId: existing.classId,
         stats: existing.stats
       });
       
@@ -691,6 +710,9 @@ export class MatchRoom {
     const spawnX = this.specJson?.playerSpawn?.position?.x ?? ((Math.random() - 0.5) * 40);
     const spawnY = (this.specJson?.playerSpawn?.position?.y ?? 0) + 5.0;
     const spawnZ = this.specJson?.playerSpawn?.position?.z ?? (120 + (Math.random() - 0.5) * 10);
+
+    const chosenClassId: ClassId = (playerClass && CLASSES[playerClass]) ? playerClass : 'ASSAULT';
+    const classDef = CLASSES[chosenClassId];
 
     const pState: PlayerState = {
       id: playerId,
@@ -713,7 +735,8 @@ export class MatchRoom {
       yaw: 0,
       hp: 100,
       score: 0,
-      weapon: "rifle",
+      classId: chosenClassId,
+      weapon: classDef.primaryWeapon.toLowerCase(),
       weaponState: {
         primary: {
           currentMag: 40,

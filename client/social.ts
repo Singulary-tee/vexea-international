@@ -185,6 +185,32 @@ export async function getFriendsList(
 }
 
 /**
+ * Reads all incoming friend requests for a user from incomingRequests/{myUid}/requests.
+ */
+export async function getIncomingRequests(
+  myUid: string
+): Promise<Array<{ senderUid: string; createdAt: any }>> {
+  if (!myUid || !db) return [];
+
+  try {
+    const colRef = collection(db, "incomingRequests", myUid, "requests");
+    const snap = await getDocs(colRef);
+    const list: Array<{ senderUid: string; createdAt: any }> = [];
+    snap.forEach((docSnap) => {
+      const data = docSnap.data();
+      list.push({
+        senderUid: data.senderUid || docSnap.id,
+        createdAt: data.createdAt ?? null
+      });
+    });
+    return list;
+  } catch (error) {
+    console.error("Error in getIncomingRequests:", error);
+    return [];
+  }
+}
+
+/**
  * Claims a unique display name for a user.
  * Validation (checked in order):
  * 1. rawName length 3-20 characters -> 'Name must be 3-20 characters'
@@ -357,6 +383,149 @@ export async function getPresence(uid: string): Promise<any> {
     console.error("Error in getPresence:", error);
     return null;
   }
+}
+
+/* =========================================================================
+ * LOBBY INVITES (PART 2)
+ * ========================================================================= */
+
+export interface LobbyInvite {
+  id: string;
+  lobbyId: string;
+  fromUid: string;
+  fromName: string;
+  createdAt: any;
+}
+
+/**
+ * Sends a lobby invite to a friend.
+ * Writes to lobbyInvites/{invitedUid}/pending/{lobbyId}
+ * Payload: { fromUid, fromName, lobbyId, createdAt: serverTimestamp() }
+ */
+export async function sendLobbyInvite(
+  myUid: string,
+  myName: string,
+  invitedUid: string,
+  lobbyId: string
+): Promise<{ success: boolean; error: string | null }> {
+  if (!db || !myUid || !invitedUid || !lobbyId) {
+    return { success: false, error: "Invalid parameters or database offline" };
+  }
+  try {
+    const inviteRef = doc(db, "lobbyInvites", invitedUid, "pending", lobbyId);
+    await setDoc(inviteRef, {
+      fromUid: myUid,
+      fromName: myName || "Agent",
+      lobbyId: lobbyId,
+      createdAt: serverTimestamp()
+    });
+    return { success: true, error: null };
+  } catch (err: any) {
+    console.error("Error in sendLobbyInvite:", err);
+    return { success: false, error: err.message || "Failed to send lobby invite" };
+  }
+}
+
+/**
+ * Queries incoming lobby invites for myUid at lobbyInvites/{myUid}/pending.
+ * Performs read-time expiration check: if createdAt is older than 5 minutes,
+ * asynchronously deletes the invite and excludes it from the returned list.
+ */
+export async function getLobbyInvites(myUid: string): Promise<LobbyInvite[]> {
+  if (!db || !myUid) return [];
+  try {
+    const collRef = collection(db, "lobbyInvites", myUid, "pending");
+    const snap = await getDocs(collRef);
+    const results: LobbyInvite[] = [];
+    const nowMs = Date.now();
+    const FIVE_MIN_MS = 5 * 60 * 1000;
+
+    for (const docSnap of snap.docs) {
+      const data = docSnap.data();
+      let createdMs = nowMs;
+      if (data.createdAt?.toMillis) {
+        createdMs = data.createdAt.toMillis();
+      } else if (data.createdAt?.seconds) {
+        createdMs = data.createdAt.seconds * 1000;
+      }
+
+      if (nowMs - createdMs > FIVE_MIN_MS) {
+        deleteDoc(docSnap.ref).catch((e) =>
+          console.warn("Failed to delete expired lobby invite:", e)
+        );
+      } else {
+        results.push({
+          id: docSnap.id,
+          lobbyId: data.lobbyId || docSnap.id,
+          fromUid: data.fromUid || "",
+          fromName: data.fromName || "Unknown Player",
+          createdAt: data.createdAt
+        });
+      }
+    }
+    return results;
+  } catch (err) {
+    console.error("Error in getLobbyInvites:", err);
+    return [];
+  }
+}
+
+/**
+ * Responds to a lobby invite.
+ * - Deletes the document from lobbyInvites/{invitedUid}/pending/{lobbyId}.
+ * - If accept is true, joins the lobby via joinLobby(lobbyId).
+ */
+export async function respondToLobbyInvite(
+  invitedUid: string,
+  lobbyId: string,
+  accept: boolean
+): Promise<{ success: boolean; error: string | null }> {
+  if (!db || !invitedUid || !lobbyId) {
+    return { success: false, error: "Invalid parameters" };
+  }
+  try {
+    const inviteRef = doc(db, "lobbyInvites", invitedUid, "pending", lobbyId);
+    await deleteDoc(inviteRef);
+
+    if (accept) {
+      await joinLobby(lobbyId);
+    }
+    return { success: true, error: null };
+  } catch (err: any) {
+    console.error("Error in respondToLobbyInvite:", err);
+    return { success: false, error: err.message || "Failed to process lobby invite" };
+  }
+}
+
+/**
+ * Cancels or cleans up lobby invites for a given lobbyId.
+ * Used when a lobby host/member leaves or when match starts.
+ */
+export async function cancelLobbyInvites(myUid: string, lobbyId: string, invitedUids?: string[]): Promise<void> {
+  if (!db || !myUid || !lobbyId) return;
+  try {
+    if (invitedUids && invitedUids.length > 0) {
+      const batch = writeBatch(db);
+      for (const targetUid of invitedUids) {
+        const inviteRef = doc(db, "lobbyInvites", targetUid, "pending", lobbyId);
+        batch.delete(inviteRef);
+      }
+      await batch.commit();
+    }
+  } catch (err) {
+    console.warn("Error in cancelLobbyInvites:", err);
+  }
+}
+
+/**
+ * Joins a lobby by setting current lobby ID state and transitioning to the lobby screen.
+ */
+export async function joinLobby(lobbyId: string): Promise<{ success: boolean; error?: string }> {
+  if (!lobbyId) return { success: false, error: "Invalid lobby ID" };
+  (window as any).vexLobbyId = lobbyId;
+  const { showLobby } = await import("./screens/screen-manager");
+  showLobby();
+  return { success: true };
 }
 
 /* =========================================================================
