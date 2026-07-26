@@ -16,6 +16,7 @@ import { renderStatsScreen } from "./stats-screen";
 import { renderFactionScreen } from "./faction-screen";
 import { renderStoreScreen } from "./store-screen";
 import { StudioPreviewManager } from "../StudioPreviewManager";
+import { resolveDisplayName, sendFriendRequest, getFriendsList } from "../social";
 
 let styleInjected = false;
 let activeCardId: string | null = null;
@@ -2755,7 +2756,6 @@ function openSquadFriendsModal() {
       };
       contentArea.appendChild(deployBtn);
     } else {
-      const friendsList: Array<{ codename: string; status: string }> = [];
       const searchBox = document.createElement('div');
       Object.assign(searchBox.style, {
         display: 'flex', gap: '8px', marginBottom: '8px'
@@ -2765,74 +2765,133 @@ function openSquadFriendsModal() {
       Object.assign(input.style, {
         flex: '1', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.15)', color: '#FFF', padding: '6px 12px', fontSize: '12px', fontFamily: DS.typography.fontFamily, outline: 'none'
       });
-      input.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') addBtn.click();
-      });
 
       const addBtn = document.createElement('div');
       addBtn.textContent = 'ADD';
       Object.assign(addBtn.style, {
         background: DS.colors.accent, color: DS.colors.background, padding: '6px 16px', fontWeight: 'bold', fontSize: '12px', cursor: 'pointer', display: 'flex', alignItems: 'center'
       });
-      addBtn.onclick = () => {
-        const val = input.value.trim().toUpperCase();
-        if (val) {
-          import('../audio').then(({ audioManager }) => audioManager.play('click'));
-          if (!friendsList.some(f => f.codename === val)) {
-            friendsList.push({ codename: val, status: 'ONLINE' });
-          }
+
+      const feedbackMsg = document.createElement('div');
+      Object.assign(feedbackMsg.style, {
+        fontSize: '11px', marginBottom: '8px', minHeight: '14px'
+      });
+
+      const handleAddFriend = async () => {
+        const rawName = input.value.trim();
+        if (!rawName) return;
+
+        import('../audio').then(({ audioManager }) => audioManager.play('click'));
+
+        const auth = getAuth();
+        const myUid = auth.currentUser ? auth.currentUser.uid : null;
+        if (!myUid) {
+          feedbackMsg.style.color = DS.colors.danger;
+          feedbackMsg.textContent = 'MUST BE SIGNED IN TO SEND FRIEND REQUESTS';
+          return;
+        }
+
+        feedbackMsg.style.color = DS.colors.textMuted;
+        feedbackMsg.textContent = 'LOOKING UP CODENAME...';
+
+        // 1. Resolve typed display name to UID first
+        const { uid: resolvedUid, error: resolveError } = await resolveDisplayName(rawName);
+        if (!resolvedUid) {
+          feedbackMsg.style.color = DS.colors.danger;
+          feedbackMsg.textContent = resolveError || 'No user found with that name';
+          return;
+        }
+
+        feedbackMsg.style.color = DS.colors.textMuted;
+        feedbackMsg.textContent = 'SENDING FRIEND REQUEST...';
+
+        // 2. Call sendFriendRequest with the resolved UID
+        const sendRes = await sendFriendRequest(myUid, resolvedUid);
+        if (sendRes.success) {
+          feedbackMsg.style.color = '#44ff44';
+          feedbackMsg.textContent = 'FRIEND REQUEST SENT!';
           input.value = '';
-          renderTabContent();
+          refreshFriendsList();
+        } else {
+          feedbackMsg.style.color = DS.colors.danger;
+          feedbackMsg.textContent = sendRes.error || 'Failed to send friend request';
         }
       };
+
+      input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') handleAddFriend();
+      });
+      addBtn.onclick = () => handleAddFriend();
+
       searchBox.appendChild(input);
       searchBox.appendChild(addBtn);
       contentArea.appendChild(searchBox);
+      contentArea.appendChild(feedbackMsg);
 
       const listContainer = document.createElement('div');
       Object.assign(listContainer.style, {
         display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '180px', overflowY: 'auto', paddingRight: '4px'
       });
 
-      friendsList.forEach(friend => {
-        const friendRow = document.createElement('div');
-        Object.assign(friendRow.style, {
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '6px 8px', background: 'rgba(255,255,255,0.02)'
-        });
+      const refreshFriendsList = async () => {
+        listContainer.innerHTML = '';
+        const auth = getAuth();
+        const myUid = auth.currentUser ? auth.currentUser.uid : null;
+        if (!myUid) return;
 
-        const nameLabel = document.createElement('div');
-        const statusColor = friend.status === 'ONLINE' ? '#44ff44' : (friend.status === 'IN-GAME' ? '#ffaa00' : '#888888');
-        nameLabel.innerHTML = `<span style="font-weight:bold;">${friend.codename}</span> <span style="font-size:9px; color:${statusColor}; margin-left:6px;">● ${friend.status}</span>`;
-        Object.assign(nameLabel.style, { fontSize: '12px' });
-        friendRow.appendChild(nameLabel);
-
-        const inviteBtn = document.createElement('div');
-        const isAlreadyInSquad = squadMembers.includes(friend.codename);
-        inviteBtn.textContent = isAlreadyInSquad ? 'INVITED' : 'INVITE';
-        Object.assign(inviteBtn.style, {
-          fontSize: '10px',
-          fontWeight: 'bold',
-          color: isAlreadyInSquad ? '#888888' : DS.colors.accent,
-          cursor: isAlreadyInSquad ? 'default' : 'pointer',
-          padding: '2px 6px',
-          border: `1px solid ${isAlreadyInSquad ? '#444' : DS.colors.accent}`,
-          borderRadius: '2px'
-        });
-
-        if (!isAlreadyInSquad && friend.status !== 'OFFLINE') {
-          inviteBtn.onclick = () => {
-            import('../audio').then(({ audioManager }) => audioManager.play('click'));
-            if (squadMembers.length < 3) {
-              squadMembers.push(friend.codename);
-              renderTabContent();
-            } else {
-              alert('SQUAD IS FULL (MAX 4 PLAYERS)');
-            }
-          };
+        const friendsList = await getFriendsList(myUid);
+        if (friendsList.length === 0) {
+          const emptyLabel = document.createElement('div');
+          emptyLabel.textContent = 'NO FRIENDS ADDED YET';
+          Object.assign(emptyLabel.style, { fontSize: '11px', color: DS.colors.textMuted, fontStyle: 'italic', padding: '6px 0' });
+          listContainer.appendChild(emptyLabel);
+          return;
         }
-        friendRow.appendChild(inviteBtn);
-        listContainer.appendChild(friendRow);
-      });
+
+        friendsList.forEach(friend => {
+          const friendRow = document.createElement('div');
+          Object.assign(friendRow.style, {
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '6px 8px', background: 'rgba(255,255,255,0.02)'
+          });
+
+          const friendName = friend.displayName || friend.codename || friend.uid;
+          const nameLabel = document.createElement('div');
+          const statusColor = friend.status === 'accepted' ? '#44ff44' : '#ffaa00';
+          const statusText = friend.status === 'accepted' ? 'FRIEND' : 'PENDING';
+          nameLabel.innerHTML = `<span style="font-weight:bold;">${friendName}</span> <span style="font-size:9px; color:${statusColor}; margin-left:6px;">● ${statusText}</span>`;
+          Object.assign(nameLabel.style, { fontSize: '12px' });
+          friendRow.appendChild(nameLabel);
+
+          const inviteBtn = document.createElement('div');
+          const isAlreadyInSquad = squadMembers.includes(friendName);
+          inviteBtn.textContent = isAlreadyInSquad ? 'INVITED' : 'INVITE';
+          Object.assign(inviteBtn.style, {
+            fontSize: '10px',
+            fontWeight: 'bold',
+            color: isAlreadyInSquad ? '#888888' : DS.colors.accent,
+            cursor: isAlreadyInSquad ? 'default' : 'pointer',
+            padding: '2px 6px',
+            border: `1px solid ${isAlreadyInSquad ? '#444' : DS.colors.accent}`,
+            borderRadius: '2px'
+          });
+
+          if (!isAlreadyInSquad && friend.status === 'accepted') {
+            inviteBtn.onclick = () => {
+              import('../audio').then(({ audioManager }) => audioManager.play('click'));
+              if (squadMembers.length < 3) {
+                squadMembers.push(friendName);
+                renderTabContent();
+              } else {
+                alert('SQUAD IS FULL (MAX 4 PLAYERS)');
+              }
+            };
+          }
+          friendRow.appendChild(inviteBtn);
+          listContainer.appendChild(friendRow);
+        });
+      };
+
+      refreshFriendsList();
       contentArea.appendChild(listContainer);
     }
   };
