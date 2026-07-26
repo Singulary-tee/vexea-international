@@ -64,5 +64,15 @@ service cloud.firestore {
       // PERMISSION REASON: No update or delete permitted by any client, ever.
       allow update, delete: if false;
     }
+
+    // Lobby Invites: lobbyInvites/{invitedUid}/pending/{lobbyId}
+    match /lobbyInvites/{invitedUid}/pending/{lobbyId} {
+      // PERMISSION REASON: The recipient (invitedUid) can read pending invites sent to them.
+      allow read: if request.auth != null && request.auth.uid == invitedUid;
+      // PERMISSION REASON: The inviter can create an invite in the recipient's inbox.
+      allow create: if request.auth != null && request.resource.data.fromUid == request.auth.uid;
+      // PERMISSION REASON: The recipient or the inviter can delete the invite (for accepting/declining/expiring or cancelling).
+      allow delete: if request.auth != null && (request.auth.uid == invitedUid || resource.data.fromUid == request.auth.uid);
+    }
   }
 }

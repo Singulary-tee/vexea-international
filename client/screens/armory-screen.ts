@@ -2,6 +2,7 @@ import { DS } from "../design-system";
 import { DETAILED_WEAPONS } from "../../shared/weapons";
 import { audioManager } from "../audio";
 import { StudioPreviewManager, AVAILABLE_SKINS } from "../StudioPreviewManager";
+import { CLASSES, ClassId } from "../../shared/classes";
 
 export interface LoadoutSlotItem {
   id: string;
@@ -53,7 +54,7 @@ function setEquippedSkin(itemId: string, skinId: string): void {
   localStorage.setItem('vex_armory_item_skins', JSON.stringify(savedSkinSelections));
 }
 
-let activeCategory: 'ASSAULT' | 'MEDIC' | 'RECON' | 'DEMOLITIONS' = 'ASSAULT';
+let activeCategory: ClassId = 'ASSAULT';
 let selectedItemIdx = 0;
 
 export function renderArmoryScreen(container: HTMLElement): void {
@@ -102,12 +103,10 @@ export function renderArmoryScreen(container: HTMLElement): void {
     padding: '0px'
   });
 
-  const categories: { id: 'ASSAULT' | 'MEDIC' | 'RECON' | 'DEMOLITIONS'; label: string }[] = [
-    { id: 'ASSAULT', label: 'ASSAULT' },
-    { id: 'MEDIC', label: 'MEDIC' },
-    { id: 'RECON', label: 'RECON' },
-    { id: 'DEMOLITIONS', label: 'DEMO' }
-  ];
+  const categories: { id: ClassId; label: string }[] = Object.values(CLASSES).map(c => ({
+    id: c.id,
+    label: c.id === 'DEMOLITIONS' ? 'DEMO' : c.displayName
+  }));
 
   categories.forEach(cat => {
     const tabBtn = document.createElement('button');

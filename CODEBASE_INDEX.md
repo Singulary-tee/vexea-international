@@ -435,6 +435,16 @@ Every file change in the VEXEA codebase must follow this strict three-step proto
     *   `/client/screens/main-menu.ts`: Wired send-friend UI input to resolve display name with `resolveDisplayName` prior to calling `sendFriendRequest`.
 *   **Verification:** `lint_applet` passed cleanly, `compile_applet` completed with zero errors, rules deployed successfully.
 
+### Cycle 2026-07-25-02: Separate Squad Raid from Friends Modal and Implement Lobby-Based Invites
+*   **Target Files:** `/firestore.rules`, `/client/social.ts`, `/client/screens/main-menu.ts`, `/client/screens/lobby.ts`, `/CODEBASE_INDEX.md`
+*   **Status:** Completed
+*   **Modifications:**
+    *   `/client/screens/main-menu.ts`: Removed 'SQUAD' tab and all `squadMembers` UI from `openSquadFriendsModal()`. Renamed modal to Friends Manager. Renamed 'Squad & Friends' button to 'Friends'. Made 'SQUAD RAID' card navigate to lobby screen. Updated REQUESTS tab to query and render incoming lobby invites via `getLobbyInvites(myUid)`.
+    *   `/client/social.ts`: Added `getLobbyInvites`, `sendLobbyInvite`, `respondToLobbyInvite`, `cancelLobbyInvites`, and `joinLobby`. Implemented 5-minute read-time invite expiration logic.
+    *   `/firestore.rules`: Added security rule for `lobbyInvites/{invitedUid}/pending/{lobbyId}` allowing recipient to read/delete and inviter to create/delete.
+    *   `/client/screens/lobby.ts`: Added 'INVITE FRIENDS' button to lobby bottom action row. Implemented `openLobbyInvitePopup()` showing friends list with 'INVITE' buttons. Added lobby cleanup on back button click and match launch.
+*   **Verification:** `lint_applet` passed cleanly, `compile_applet` completed with zero errors, rules deployed successfully.
+
 
 
 

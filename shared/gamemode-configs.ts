@@ -1,3 +1,5 @@
+import { ClassId, CLASSES } from './classes';
+
 export interface GameModeConfig {
   id: string;
   displayName: string;
@@ -33,7 +35,7 @@ export interface GameModeConfig {
   objectiveProximityRadius: number;
   objectiveTerminalDamageable: boolean;
 
-  availableClasses: ('ASSAULT' | 'MEDIC' | 'RECON' | 'DEMOLITIONS')[];
+  availableClasses: ClassId[];
   classLoadoutsLocked: boolean;
 
   utilityCooldownMultiplier: number;

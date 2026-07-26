@@ -8,6 +8,7 @@ import { ZONE_BOUNDS, WAYPOINTS, ZONES_ARRAY } from "../shared/constants";
 import { GlobalState } from "./state";
 import { getMatch } from "./MatchController";
 import { DS } from "./design-system";
+import { CLASSES, ClassId } from "../shared/classes";
 import { PanZoomSurface } from "./src/ui/PanZoomSurface";
 import { CAMERA_EFFECTS_CONFIG } from "./src/camera/constants";
 
@@ -746,10 +747,7 @@ function renderPanel() {
         c.innerHTML = `
             <h3>Player Class</h3>
             <div id="dev-loadout-buttons" style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom: 20px;">
-                <button data-class="assault" style="padding:${DS.spacing.sm};">Assault</button>
-                <button data-class="medic" style="padding:${DS.spacing.sm};">Medic</button>
-                <button data-class="recon" style="padding:${DS.spacing.sm};">Recon</button>
-                <button data-class="demolitions" style="padding:${DS.spacing.sm};">Demolitions</button>
+                ${Object.values(CLASSES).map(c => `<button data-class="${c.id}" style="padding:${DS.spacing.sm};">${c.displayName}</button>`).join('')}
             </div>
             <h3>LLM Commander</h3>
             <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom: 20px;">

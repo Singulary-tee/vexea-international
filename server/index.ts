@@ -16,6 +16,7 @@ import { getFirestore, FieldValue } from "firebase-admin/firestore";
 
 import { createTransport, ChannelAdapter } from "./transport/adapter";
 import { matchManager } from "./MatchManager";
+import { CLASSES, ClassId } from "../shared/classes.js";
 import {
   ZONES,
   DroneType,
@@ -438,9 +439,10 @@ io.onConnection((channel: ChannelAdapter) => {
     const matchId =
       args?.matchId || `M_AUTO_${Math.floor(Math.random() * 100000)}`;
     const reqMap = args?.mapId || "map_0_dev";
+    const reqClass = (args?.class || args?.playerClass || "ASSAULT") as ClassId;
 
     console.log(
-      `[VEXEA SERVER] Moving player ${pState.id} from ${currentRoom.roomId} -> MatchRoom: ${matchId} (Map: ${reqMap})`,
+      `[VEXEA SERVER] Moving player ${pState.id} from ${currentRoom.roomId} -> MatchRoom: ${matchId} (Map: ${reqMap}, Class: ${reqClass})`,
     );
 
     // Unregister from current room
@@ -454,7 +456,7 @@ io.onConnection((channel: ChannelAdapter) => {
     );
 
     // Complete room transfer registration
-    pState = targetRoom.registerPlayer(reqUid, channel, null);
+    pState = targetRoom.registerPlayer(reqUid, channel, null, reqClass);
     if (reqMap === "map_0_dev") {
       targetRoom.triggerStartMatch();
     }
@@ -641,8 +643,10 @@ io.onConnection((channel: ChannelAdapter) => {
   channel.on("dev_set_class", (args: any) => {
     if (!IS_DEV) return;
     if (args.playerClass && pState) {
-      pState.weapon = "rifle";
-      pState.hp = 100;
+      const classId = (args.playerClass as string).toUpperCase() as ClassId;
+      if (CLASSES[classId]) {
+        currentRoom.applyPlayerClassLoadout(pState.id, classId);
+      }
     }
   });
 
