@@ -20,8 +20,8 @@ import { DS } from "./design-system";
 if ((import.meta as any).env?.DEV) {
   import("./dev_menu");
 }
-import { initPlatformGate, IS_MOBILE } from "./platform-gate";
-import { IS_DEV } from "../shared/gate";
+import { initPlatformGate, IS_MOBILE } from "./gates/platform.gate";
+import { IS_DEV } from "../shared/gates/production.gate";
 import { initSplash } from "./screens/splash";
 import map1Spec from "../shared/maps/map_1_facility.spec.json";
 import { initMainMenu } from "./screens/main-menu";

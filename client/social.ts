@@ -11,7 +11,8 @@ import {
   writeBatch,
   deleteDoc,
   serverTimestamp,
-  runTransaction
+  runTransaction,
+  setDoc
 } from "firebase/firestore";
 import {
   ref as rtdbRef,
@@ -21,7 +22,7 @@ import {
   serverTimestamp as rtdbServerTimestamp
 } from "firebase/database";
 import { db, rtdb } from "./firebase";
-import { IS_DEV } from "../shared/gate";
+import { IS_DEV } from "../shared/gates/production.gate";
 
 /**
  * PART 1 — Friends (Firestore)
@@ -254,6 +255,36 @@ export async function claimDisplayName(
       : (error?.message || "Failed to claim display name");
     return { success: false, error: errorMsg };
   }
+}
+
+/**
+ * Ensures the usernames/{key} index document exists for a user's display name.
+ * Called automatically when an account is created, enlisted, or loaded.
+ */
+export async function ensureUsernameMapped(
+  myUid: string,
+  rawName: string
+): Promise<boolean> {
+  if (!myUid || !rawName || !db) return false;
+  const sanitized = rawName.trim();
+  const key = sanitized.toLowerCase();
+  if (!key || key.length < 3 || key.length > 20) return false;
+  if (!/^[a-zA-Z0-9_]+$/.test(sanitized)) return false;
+
+  try {
+    const usernameRef = doc(db, "usernames", key);
+    const snap = await getDoc(usernameRef);
+    if (!snap.exists()) {
+      await setDoc(usernameRef, {
+        uid: myUid,
+        displayName: sanitized
+      });
+      return true;
+    }
+  } catch (err) {
+    console.warn("Failed to map username in usernames collection:", err);
+  }
+  return false;
 }
 
 /**

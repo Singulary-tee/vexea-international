@@ -1,6 +1,6 @@
 import * as screenManager from "./screen-manager";
 import { getCachedOrFetchUrl, getAssetUrl, populateBlobUrlMap } from "../asset-cache";
-import { IS_DESKTOP } from "../platform-gate";
+import { IS_DESKTOP } from "../gates/platform.gate";
 import { DS } from "../design-system";
 
 const SOUNDS_TO_PRELOAD = [

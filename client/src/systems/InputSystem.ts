@@ -27,7 +27,7 @@ import {
   setWeaponReloading 
 } from "../../weapons_model";
 
-import { IS_DESKTOP } from "../../platform-gate";
+import { IS_DESKTOP } from "../../gates/platform.gate";
 
 export class InputSystem {
   private camera: THREE.PerspectiveCamera;
