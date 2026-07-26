@@ -1,8 +1,8 @@
 import * as THREE from 'three';
 import { DS } from './design-system';
 import { listCachedFiles, deleteCachedFile, clearCache } from './asset-cache';
-import { IS_DEV } from '../shared/gate';
-import { IS_MOBILE } from './platform-gate';
+import { IS_DEV } from '../shared/gates/production.gate';
+import { IS_MOBILE } from './gates/platform.gate';
 
 export interface VexeaSettingsData {
     joySens: number;

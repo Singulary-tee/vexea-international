@@ -1,6 +1,6 @@
 import { DS } from "../design-system";
 import { audioManager } from "../audio";
-import { IS_DEV } from "../../shared/gate";
+import { IS_DEV } from "../../shared/gates/production.gate";
 import { StudioPreviewManager } from "../StudioPreviewManager";
 
 const screens = ['splash-screen', 'main-menu-screen', 'lobby-screen', 'dev-map-editor-screen', 'dev-entities-screen'];

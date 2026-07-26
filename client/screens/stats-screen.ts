@@ -3,7 +3,7 @@ import challengesDataList from "../data/challenges.json";
 import { getAuth } from "firebase/auth";
 import { getFirestore, doc, updateDoc } from "firebase/firestore";
 import { audioManager } from "../audio";
-import { IS_DEV } from "../../shared/gate";
+import { IS_DEV } from "../../shared/gates/production.gate";
 
 let activeStatsSubTab: 'PROFILE' | 'INTEL' | 'CHALLENGES' | 'LEADERBOARD' = 'PROFILE';
 

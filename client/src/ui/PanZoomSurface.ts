@@ -1,4 +1,4 @@
-import { IS_DESKTOP, IS_MOBILE } from '../../platform-gate';
+import { IS_DESKTOP, IS_MOBILE } from '../../gates/platform.gate';
 
 export class PanZoomSurface {
   private element: HTMLElement;

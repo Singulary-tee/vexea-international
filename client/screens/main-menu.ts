@@ -2,21 +2,22 @@ import * as screenManager from "./screen-manager";
 import { getFirestore, collection, addDoc, serverTimestamp, doc, getDoc, onSnapshot, setDoc, updateDoc } from "firebase/firestore";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
 import { DS } from "../design-system";
-import { IS_DEV } from "../../shared/gate";
+import { IS_DEV } from "../../shared/gates/production.gate";
 import { getDevMap, getDefaultMap, MAP_REGISTRY } from "../../shared/maps/map-registry";
 import { hasCachedBlob, getCachedOrFetchUrl, ensureAssetsDownloaded, getAssetUrl } from "../asset-cache";
 import { EXTENDED_SOUNDS, EXTENDED_TEXTURES } from "./splash";
 import offersData from "../data/offers.json";
 import catalogData from "../data/catalog.json";
 import challengesDataList from "../data/challenges.json";
-import { validatePurchase, validateClaim, calculateLevelMetrics } from "../../shared/validation/validator";
-import { CatalogItem } from "../../shared/validation/types";
+import { verifyPurchase, verifyClaim, calculateLevelMetrics } from "../../shared/verification/verifier";
+import { CatalogItem } from "../../shared/verification/types";
+import { ValidatorGate } from "../../shared/gates/validator.gate";
 import { renderArmoryScreen } from "./armory-screen";
 import { renderStatsScreen } from "./stats-screen";
 import { renderFactionScreen } from "./faction-screen";
 import { renderStoreScreen } from "./store-screen";
 import { StudioPreviewManager } from "../StudioPreviewManager";
-import { resolveDisplayName, sendFriendRequest, getFriendsList } from "../social";
+import { resolveDisplayName, sendFriendRequest, getFriendsList, ensureUsernameMapped } from "../social";
 
 let styleInjected = false;
 let activeCardId: string | null = null;
@@ -115,6 +116,9 @@ export function initMainMenu() {
 
           checkDailyRefresh(registeredUserData, doc(db, 'Users', uid));
           enableLeftColumnMenu(true);
+          if (registeredUserData.displayName) {
+            ensureUsernameMapped(uid, registeredUserData.displayName);
+          }
         } else {
           if (!user.isAnonymous) {
             const newProfile = {
@@ -127,6 +131,7 @@ export function initMainMenu() {
             };
             try {
               await setDoc(doc(db, 'Users', uid), newProfile);
+              await ensureUsernameMapped(uid, newProfile.displayName);
             } catch (err) {
               console.warn("Auto-provision profile failed:", err);
             }
@@ -2286,6 +2291,7 @@ function createUnifiedAuthOverlay(db: any, auth: any, defaultTab: 'GUEST' | 'AUT
               score: 0, kills: 0, battlePass: 1
             };
             await setDoc(doc(db, 'Users', uid), docData);
+            await ensureUsernameMapped(uid, codename);
             registeredUserData = docData;
             showMenuNotification("ENLISTMENT COMPLETE. WELCOME TO VEXEΛ.");
             overlay.remove();
@@ -2450,14 +2456,23 @@ function createUnifiedAuthOverlay(db: any, auth: any, defaultTab: 'GUEST' | 'AUT
 
       const execEmailLogin = async () => {
         const email = emailInput.value.trim();
-        const pass = passInput.value.trim();
-        if (!email || !pass) {
-          showMenuNotification("ENTER EMAIL AND PASSWORD", "warning");
+        const pass = passInput.value;
+
+        const emailCheck = ValidatorGate.validate('email', email);
+        if (!emailCheck.isValid) {
+          showMenuNotification(emailCheck.error || "INVALID EMAIL FORMAT", "warning");
           return;
         }
+
+        const passCheck = ValidatorGate.validate('password', pass);
+        if (!passCheck.isValid) {
+          showMenuNotification(passCheck.error || "INVALID PASSWORD FORMAT", "warning");
+          return;
+        }
+
         try {
           const { signInWithEmailAndPassword } = await import('firebase/auth');
-          await signInWithEmailAndPassword(auth, email, pass);
+          await signInWithEmailAndPassword(auth, emailCheck.sanitizedValue, pass);
           showMenuNotification("EMAIL LOGIN SUCCESSFUL");
           overlay.remove();
         } catch (e: any) {
@@ -2484,35 +2499,57 @@ function createUnifiedAuthOverlay(db: any, auth: any, defaultTab: 'GUEST' | 'AUT
 
       const execCreateAccount = async () => {
         const email = emailInput.value.trim();
-        const pass = passInput.value.trim();
-        if (!email || !pass) {
-          showMenuNotification("ENTER EMAIL AND PASSWORD", "warning");
+        const pass = passInput.value;
+
+        const emailCheck = ValidatorGate.validate('email', email);
+        if (!emailCheck.isValid) {
+          showMenuNotification(emailCheck.error || "INVALID EMAIL FORMAT", "warning");
           return;
         }
+
+        const passCheck = ValidatorGate.validate('password', pass);
+        if (!passCheck.isValid) {
+          showMenuNotification(passCheck.error || "INVALID PASSWORD FORMAT", "warning");
+          return;
+        }
+
         try {
           const { createUserWithEmailAndPassword } = await import('firebase/auth');
-          const cred = await createUserWithEmailAndPassword(auth, email, pass);
+          const guestData = registeredUserData;
+          const cred = await createUserWithEmailAndPassword(auth, emailCheck.sanitizedValue, pass);
           const userRef = doc(db, 'Users', cred.user.uid);
+          
+          const newDisplayName = (emailCheck.sanitizedValue.split('@')[0] || 'OPERATIVE').toUpperCase();
+          
+          // Preserve guest progress seamlessly during signup
           await setDoc(userRef, {
-            displayName: email.split('@')[0].toUpperCase(),
-            faction: 'VIBE CO.', credits: 100, energy: 100, score: 0, kills: 0, battlePass: 1,
-            createdAt: serverTimestamp(), dailyRefreshedAt: serverTimestamp()
+            displayName: newDisplayName,
+            email: emailCheck.sanitizedValue,
+            faction: guestData?.faction || 'VIBE CO.',
+            credits: guestData?.credits ?? 100,
+            energy: guestData?.energy ?? 100,
+            score: guestData?.score ?? 0,
+            kills: guestData?.kills ?? 0,
+            battlePass: guestData?.battlePass ?? 1,
+            createdAt: serverTimestamp(),
+            dailyRefreshedAt: serverTimestamp(),
+            totalMatches: guestData?.totalMatches ?? 0,
+            totalWins: guestData?.totalWins ?? 0,
+            totalDroneEliminations: guestData?.totalDroneEliminations ?? 0,
+            totalDeaths: guestData?.totalDeaths ?? 0
           });
-          showMenuNotification("NEW ACCOUNT CREATED");
+          await ensureUsernameMapped(cred.user.uid, newDisplayName);
+          showMenuNotification("NEW ACCOUNT CREATED — PROGRESS LINKED");
           overlay.remove();
         } catch (e: any) {
           console.warn("Account creation failed:", e);
-          showMenuNotification("Account Creation Error.", "warning");
+          showMenuNotification(`Account Creation Error: ${e?.message || 'Failed to create account'}`, "warning");
         }
       };
 
+      // Creating an account directly registers without false guest loss warning
       registerBtn.onclick = () => {
-        if (auth.currentUser?.isAnonymous && registeredUserData?.displayName) {
-          pendingAuthAction = execCreateAccount;
-          renderContent();
-        } else {
-          execCreateAccount();
-        }
+        execCreateAccount();
       };
 
       btnRow.appendChild(loginBtn);
@@ -2533,6 +2570,29 @@ function createUnifiedAuthOverlay(db: any, auth: any, defaultTab: 'GUEST' | 'AUT
           overlay.remove();
         };
         contentContainer.appendChild(signOutBtn);
+      }
+
+      if (IS_DEV) {
+        const devWipeBtn = document.createElement('button');
+        devWipeBtn.textContent = '[DEV] WIPE GUEST & RESET ONBOARDING';
+        Object.assign(devWipeBtn.style, {
+          width: '100%', padding: '10px', background: DS.colors.danger,
+          border: 'none', color: '#FFFFFF', fontFamily: DS.typography.fontFamily,
+          fontSize: '11px', fontWeight: 'bold', cursor: 'pointer', marginTop: '10px'
+        });
+        devWipeBtn.onclick = async () => {
+          if (auth) {
+            try {
+              await auth.signOut();
+            } catch (e) {
+              console.warn("SignOut error during dev wipe:", e);
+            }
+          }
+          localStorage.clear();
+          sessionStorage.clear();
+          window.location.reload();
+        };
+        contentContainer.appendChild(devWipeBtn);
       }
     }
   };

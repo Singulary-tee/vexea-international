@@ -1,6 +1,6 @@
 import { getVisualDiagnosisHTML } from "./dev_visual_diagnosis";
 (window as any).getVisualDiagnosisHTML = getVisualDiagnosisHTML;
-import { IS_DEV } from "../shared/gate";
+import { IS_DEV } from "../shared/gates/production.gate";
 export const isDev = IS_DEV;
 import * as THREE from "three";
 import { camera } from "./main";
@@ -752,12 +752,33 @@ function renderPanel() {
                 <button data-class="demolitions" style="padding:${DS.spacing.sm};">Demolitions</button>
             </div>
             <h3>LLM Commander</h3>
-            <div style="display:flex; gap:10px; flex-wrap:wrap;">
+            <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom: 20px;">
                 <button id="dev-toggle-llm" style="padding:${DS.spacing.sm};">${devLlmDisabled ? "ENABLE LLM COMMANDER" : "DISABLE LLM COMMANDER"}</button>
+            </div>
+            <h3 style="color:${DS.colors.danger};">[DEV] ONBOARDING & ACCOUNT RESET</h3>
+            <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                <button id="dev-wipe-guest-btn" style="padding:${DS.spacing.sm} ${DS.spacing.md}; background:${DS.colors.danger}; color:white; font-weight:bold; border:none; cursor:pointer;">[DEV] WIPE GUEST & RESET ONBOARDING</button>
             </div>
         `;
         
         // Add event listeners programmatically
+        const wipeGuestBtn = document.getElementById('dev-wipe-guest-btn');
+        if (wipeGuestBtn) {
+            wipeGuestBtn.addEventListener('click', async () => {
+                const { auth } = await import('./firebase');
+                if (auth) {
+                    try {
+                        await auth.signOut();
+                    } catch (e) {
+                        console.warn("SignOut error during dev wipe:", e);
+                    }
+                }
+                localStorage.clear();
+                sessionStorage.clear();
+                window.location.reload();
+            });
+        }
+
         const loadoutButtons = c.querySelectorAll('#dev-loadout-buttons button');
         loadoutButtons.forEach(btn => {
             btn.addEventListener('click', (e) => {

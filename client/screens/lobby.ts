@@ -1,7 +1,7 @@
 import * as screenManager from "./screen-manager";
 import { getDefaultMap } from "../../shared/maps/map-registry";
 import { ensureAssetsDownloaded } from "../asset-cache";
-import { IS_DESKTOP } from "../platform-gate";
+import { IS_DESKTOP } from "../gates/platform.gate";
 import { DS } from "../design-system";
 import { StudioPreviewManager } from "../StudioPreviewManager";
 

@@ -28,7 +28,7 @@ import {
   DETAILED_WEAPONS,
   calculateDamageWithFalloff,
 } from "../shared/weapons";
-import { IS_DEV } from "../shared/gate";
+import { IS_DEV } from "../shared/gates/production.gate";
 
 export const HISTORICAL_SAMPLES_MAX = 120;
 export const HISTORIC_BLOCK_SIZE = 2 + MAX_DRONES * 4;
