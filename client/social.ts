@@ -10,7 +10,8 @@ import {
   collection,
   writeBatch,
   deleteDoc,
-  serverTimestamp
+  serverTimestamp,
+  runTransaction
 } from "firebase/firestore";
 import {
   ref as rtdbRef,
@@ -179,6 +180,111 @@ export async function getFriendsList(
   } catch (error) {
     console.error("Error in getFriendsList:", error);
     return [];
+  }
+}
+
+/**
+ * Claims a unique display name for a user.
+ * Validation (checked in order):
+ * 1. rawName length 3-20 characters -> 'Name must be 3-20 characters'
+ * 2. rawName matches /^[a-zA-Z0-9_]+$/ -> 'Name may only contain letters, numbers, and underscores'
+ * 3. Normalize to lowercase key = rawName.toLowerCase()
+ * 
+ * Check Users/{myUid}.displayName first (outside transaction). If present -> 'You have already claimed a display name'.
+ * Transaction (runTransaction): Read usernames/{key}.
+ * - If exists -> abort & return 'Name already taken'
+ * - If not exists -> write usernames/{key} as {uid: myUid, displayName: rawName} AND write Users/{myUid} merge {displayName: rawName}.
+ */
+export async function claimDisplayName(
+  myUid: string,
+  rawName: string
+): Promise<{ success: boolean; error: string | null }> {
+  if (!myUid) {
+    return { success: false, error: "Invalid user ID provided" };
+  }
+  if (!db) {
+    return { success: false, error: "Firestore database not initialized" };
+  }
+
+  // 1. Length validation (3-20 characters)
+  if (!rawName || rawName.length < 3 || rawName.length > 20) {
+    return { success: false, error: "Name must be 3-20 characters" };
+  }
+
+  // 2. Character validation
+  if (!/^[a-zA-Z0-9_]+$/.test(rawName)) {
+    return { success: false, error: "Name may only contain letters, numbers, and underscores" };
+  }
+
+  // 3. Lowercase storage key
+  const key = rawName.toLowerCase();
+
+  try {
+    // Pre-transaction check: check if user already claimed a display name
+    const userRef = doc(db, "Users", myUid);
+    const userSnap = await getDoc(userRef);
+    if (userSnap.exists() && userSnap.data()?.displayName) {
+      return { success: false, error: "You have already claimed a display name" };
+    }
+
+    // Run Firestore transaction
+    await runTransaction(db, async (transaction) => {
+      const usernameRef = doc(db, "usernames", key);
+      const usernameSnap = await transaction.get(usernameRef);
+      if (usernameSnap.exists()) {
+        throw new Error("Name already taken");
+      }
+
+      transaction.set(usernameRef, {
+        uid: myUid,
+        displayName: rawName
+      });
+
+      transaction.set(
+        userRef,
+        { displayName: rawName },
+        { merge: true }
+      );
+    });
+
+    return { success: true, error: null };
+  } catch (error: any) {
+    const errorMsg = error?.message === "Name already taken"
+      ? "Name already taken"
+      : (error?.message || "Failed to claim display name");
+    return { success: false, error: errorMsg };
+  }
+}
+
+/**
+ * Resolves a display name to a user UID.
+ * Lowercases input, reads usernames/{key} directly via single getDoc.
+ */
+export async function resolveDisplayName(
+  rawName: string
+): Promise<{ uid: string | null; error: string | null }> {
+  if (!rawName || !rawName.trim()) {
+    return { uid: null, error: "No user found with that name" };
+  }
+  if (!db) {
+    return { uid: null, error: "Firestore database not initialized" };
+  }
+
+  const key = rawName.trim().toLowerCase();
+
+  try {
+    const usernameRef = doc(db, "usernames", key);
+    const docSnap = await getDoc(usernameRef);
+
+    if (docSnap.exists()) {
+      const data = docSnap.data();
+      return { uid: data?.uid || null, error: null };
+    } else {
+      return { uid: null, error: "No user found with that name" };
+    }
+  } catch (error: any) {
+    console.error("Error in resolveDisplayName:", error);
+    return { uid: null, error: "No user found with that name" };
   }
 }
 

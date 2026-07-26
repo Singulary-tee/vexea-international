@@ -54,5 +54,15 @@ service cloud.firestore {
       allow read: if request.auth != null && request.auth.uid == playerId;
       allow write: if false; // Only manageable server-side via Firebase Admin SDK
     }
+
+    // Unique display name claim-and-lookup table: usernames/{key}
+    match /usernames/{key} {
+      // PERMISSION REASON: Public lookup for any authenticated user.
+      allow read: if request.auth != null;
+      // PERMISSION REASON: One-time claim. Create allowed only if doc does not exist and claimed UID matches auth UID.
+      allow create: if request.auth != null && resource == null && request.resource.data.uid == request.auth.uid;
+      // PERMISSION REASON: No update or delete permitted by any client, ever.
+      allow update, delete: if false;
+    }
   }
 }

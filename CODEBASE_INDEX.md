@@ -426,6 +426,16 @@ Every file change in the VEXEA codebase must follow this strict three-step proto
     *   `/client/main.ts`: Connected dev verification run on app startup under `IS_DEV` flag.
 *   **Verification:** `lint_applet` and `compile_applet` passed cleanly with zero errors.
 
+### Cycle 2026-07-25-01: Display Name Claim, Lookup, and Friend Request Flow Integration
+*   **Target Files:** `/client/social.ts`, `/firestore.rules`, `/client/screens/main-menu.ts`, `/CODEBASE_INDEX.md`
+*   **Status:** Verified & Finalized
+*   **Modifications:**
+    *   `/client/social.ts`: Implemented `claimDisplayName` with 3-20 length check, regex validation, lowercase keying, pre-transaction user check, and atomic `runTransaction` write to `usernames/{key}` and `Users/{myUid}`. Implemented `resolveDisplayName` with lowercase key lookup on `usernames/{key}`.
+    *   `/firestore.rules`: Added `usernames/{key}` match block with create-only permissions for owner and public authenticated read. Deployed rules to Firebase.
+    *   `/client/screens/main-menu.ts`: Wired send-friend UI input to resolve display name with `resolveDisplayName` prior to calling `sendFriendRequest`.
+*   **Verification:** `lint_applet` passed cleanly, `compile_applet` completed with zero errors, rules deployed successfully.
+
+
 
 
 
