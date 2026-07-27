@@ -11,6 +11,9 @@ This file is the authoritative index of all directories and source files within 
 *   **`MatchManager.ts`**
     *   *Purpose:* Orchestrates the lifecycle of all active matches.
     *   *Key Functions/Exports:* `MatchManager` class (exported as default and as `matchManager` instance), `getOrCreateRoom(roomId, geminiKey, mapId)` (returns or provisions rooms), `findMatchmakingRoom(geminiKey)` (allocates players to empty rooms under 10 players), `deleteRoom(roomId)` (initiates cleanup), `getRooms()` and `getRoomCount()`.
+*   **`Matchmaker.ts`**
+    *   *Purpose:* Real player pooling system for matchmaking. Groups players into matches without bot-fill.
+    *   *Key Functions/Exports:* `Matchmaker` class, `matchmaker` default/named export instance, `MATCHMAKER_MAX_WAIT_SECONDS` (45s placeholder constant), `addPlayerToPool`, `removePlayerFromPool`, `signalPlayerLoadingComplete`, `handlePlayerClassChange`.
 *   **`MatchRoom.ts`**
     *   *Purpose:* The complete server-side simulation environment. Manages the 60Hz physics update loop, 20Hz state-synchronization packets, and tactical AI events.
     *   *Key Functions/Exports:* `MatchRoom` class, handles player join/leave, bot integration, collision handling, hitscan/rewind raycasting, objective point timers, score accounting, and shutdown processing.

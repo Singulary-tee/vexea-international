@@ -16,6 +16,7 @@ import { getFirestore, FieldValue } from "firebase-admin/firestore";
 
 import { createTransport, ChannelAdapter } from "./transport/adapter";
 import { matchManager } from "./MatchManager";
+import { matchmaker } from "./Matchmaker";
 import { CLASSES, ClassId } from "../shared/classes.js";
 import {
   ZONES,
@@ -433,37 +434,46 @@ io.onConnection((channel: ChannelAdapter) => {
     startTime: Date.now(),
   }).catch((e) => {});
 
-  // When the client signals playing match
-  channel.on("start_match", (args: any) => {
+  // Matchmaking request: Delegates directly to Matchmaker module
+  const handleMatchmakingRequest = (args: any) => {
     const reqUid = args?.uid || playerId;
-    const matchId =
-      args?.matchId || `M_AUTO_${Math.floor(Math.random() * 100000)}`;
-    const reqMap = args?.mapId || "map_0_dev";
+    const reqMap = args?.mapId || args?.map?.id || "map_0_dev";
     const reqClass = (args?.class || args?.playerClass || "ASSAULT") as ClassId;
 
     console.log(
-      `[VEXEA SERVER] Moving player ${pState.id} from ${currentRoom.roomId} -> MatchRoom: ${matchId} (Map: ${reqMap}, Class: ${reqClass})`,
+      `[VEXEA SERVER] Player ${playerId} requesting matchmaking (Map: ${reqMap}, Class: ${reqClass})`,
     );
 
-    // Unregister from current room
-    currentRoom.removePlayer(pState.id);
-
-    // Get or create targeted MatchRoom
-    const targetRoom = matchManager.getOrCreateRoom(
-      matchId,
-      process.env.GEMINI_API_KEY,
-      reqMap,
-    );
-
-    // Complete room transfer registration
-    pState = targetRoom.registerPlayer(reqUid, channel, null, reqClass);
-    if (reqMap === "map_0_dev") {
-      targetRoom.triggerStartMatch();
+    // Unregister from current lobby room if active
+    if (currentRoom) {
+      currentRoom.removePlayer(pState.id);
     }
-    currentRoom = targetRoom;
 
-    // Re-associate binding pointer
-    currentRoom = targetRoom;
+    matchmaker.addPlayerToPool(playerId, reqUid, channel, reqMap, reqClass);
+  };
+
+  channel.on("start_match", handleMatchmakingRequest);
+  channel.on("request_matchmaking", handleMatchmakingRequest);
+
+  channel.on("cancel_matchmaking", () => {
+    matchmaker.removePlayerFromPool(playerId);
+  });
+
+  channel.on("loading_complete", (args: any) => {
+    if (args?.matchId) {
+      matchmaker.signalPlayerLoadingComplete(args.matchId, playerId);
+    }
+  });
+
+  channel.on("select_class", (args: any) => {
+    const newClassId = (args?.classId || args?.class) as ClassId;
+    if (newClassId && CLASSES[newClassId]) {
+      if (args?.matchId) {
+        matchmaker.handlePlayerClassChange(args.matchId, playerId, newClassId);
+      } else if (currentRoom && currentRoom.roomId !== "lobby") {
+        currentRoom.applyPlayerClassLoadout(playerId, newClassId);
+      }
+    }
   });
 
   channel.on("ping", () => {
@@ -1096,6 +1106,7 @@ io.onConnection((channel: ChannelAdapter) => {
   });
 
   channel.on("PLAYER_QUIT", () => {
+    matchmaker.removePlayerFromPool(playerId);
     if (pState) {
       console.log(`Player quit mission manually: ${pState.id}`);
       currentRoom.removePlayer(pState.id);
@@ -1106,6 +1117,7 @@ io.onConnection((channel: ChannelAdapter) => {
   });
 
   channel.onDisconnect(() => {
+    matchmaker.removePlayerFromPool(playerId);
     if (pState) {
       const pid = pState.id;
       const room = currentRoom;
