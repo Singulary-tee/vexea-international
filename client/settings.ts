@@ -47,6 +47,7 @@ export interface VexeaSettingsData {
     pbrMaterials: boolean;
     instancedProps: boolean;
     pixelRatioMode: '0.75' | '1.0' | '1.5' | 'native';
+    dynamicResolutionEnabled: boolean;
     flashLight: boolean;
 }
 
@@ -93,6 +94,7 @@ const DEFAULT_SETTINGS: VexeaSettingsData = {
     pbrMaterials: !IS_MOBILE,
     instancedProps: !IS_MOBILE,
     pixelRatioMode: IS_MOBILE ? '0.75' : '1.5',
+    dynamicResolutionEnabled: true,
     flashLight: !IS_MOBILE
 };
 
@@ -120,19 +122,21 @@ export function applySettings(s: VexeaSettingsData) {
     }
     
     if (W.renderer) {
-        let targetRatio = 1.0;
-        if (s.pixelRatioMode === '0.75') {
-            targetRatio = 0.75;
-        } else if (s.pixelRatioMode === '1.0') {
-            targetRatio = 1.0;
-        } else if (s.pixelRatioMode === '1.5') {
-            targetRatio = Math.min(window.devicePixelRatio, 1.5);
-        } else if (s.pixelRatioMode === 'native') {
-            targetRatio = window.devicePixelRatio;
-        } else {
-            targetRatio = s.graphicsPreset === 'Low' ? 0.75 : Math.min(window.devicePixelRatio, 1.5);
+        if (!s.dynamicResolutionEnabled) {
+            let targetRatio = 1.0;
+            if (s.pixelRatioMode === '0.75') {
+                targetRatio = 0.75;
+            } else if (s.pixelRatioMode === '1.0') {
+                targetRatio = 1.0;
+            } else if (s.pixelRatioMode === '1.5') {
+                targetRatio = Math.min(window.devicePixelRatio, 1.5);
+            } else if (s.pixelRatioMode === 'native') {
+                targetRatio = window.devicePixelRatio;
+            } else {
+                targetRatio = s.graphicsPreset === 'Low' ? 0.75 : Math.min(window.devicePixelRatio, 1.5);
+            }
+            W.renderer.setPixelRatio(targetRatio);
         }
-        W.renderer.setPixelRatio(targetRatio);
 
         // Apply Tone Mapping & Exposure
         let tm = 0; // THREE.NoToneMapping
@@ -319,7 +323,13 @@ function createOverlayHTML() {
                             </select>
                         </div>
                         <div>
-                            <label class="block text-sm mb-1 text-gray-300">Pixel Ratio Scale (Resolution)</label>
+                            <div class="flex items-center justify-between mb-1">
+                                <label class="text-sm text-gray-300 font-medium">Pixel Ratio Scale (Resolution)</label>
+                                <label class="flex items-center gap-1.5 cursor-pointer text-xs text-gray-300">
+                                    <input type="checkbox" id="inp-dynamicResolutionEnabled" style="width:16px;height:16px;cursor:pointer;">
+                                    <span style="font-weight:600; color:${DS.colors.accent};">Automatic Scaling</span>
+                                </label>
+                            </div>
                             <div class="flex gap-1" id="group-pixelRatio">
                                 <label class="pixel-ratio-label flex-1 text-center py-1.5 text-xs border rounded cursor-pointer font-bold" style="border-color:${DS.utils.rgba(DS.colors.text, 0.15)}">
                                     <input type="radio" name="pixelRatioMode" value="0.75" class="hidden"> 0.75x
@@ -792,6 +802,36 @@ export function openSettings() {
     const chromaticAberrationIntensity = document.getElementById('inp-chromaticAberrationIntensity') as HTMLInputElement;
     const toneMapping = document.getElementById('inp-toneMapping') as HTMLSelectElement;
     const exposure = document.getElementById('inp-exposure') as HTMLInputElement;
+    const dynResCheckbox = document.getElementById('inp-dynamicResolutionEnabled') as HTMLInputElement;
+
+    const updatePixelRatioUIState = () => {
+        const isAuto = s.dynamicResolutionEnabled;
+        const pixelRatioRadios = document.querySelectorAll('input[name="pixelRatioMode"]') as NodeListOf<HTMLInputElement>;
+        pixelRatioRadios.forEach(r => {
+            r.disabled = isAuto;
+            const parent = r.parentElement;
+            if (parent) {
+                if (isAuto) {
+                    parent.style.opacity = '0.35';
+                    parent.style.pointerEvents = 'none';
+                    parent.style.cursor = 'not-allowed';
+                } else {
+                    parent.style.opacity = '1.0';
+                    parent.style.pointerEvents = 'auto';
+                    parent.style.cursor = 'pointer';
+                }
+                if (r.checked && !isAuto) {
+                    parent.style.background = DS.colors.accent;
+                    parent.style.borderColor = DS.colors.accent;
+                    parent.style.color = '#ffffff';
+                } else {
+                    parent.style.background = DS.utils.rgba('#000000', 0.4);
+                    parent.style.borderColor = DS.utils.rgba(DS.colors.text, 0.15);
+                    parent.style.color = DS.colors.textSecondary;
+                }
+            }
+        });
+    };
 
     const populateUIFromSettings = () => {
         if (shadows) shadows.checked = s.shadows;
@@ -808,23 +848,13 @@ export function openSettings() {
         if (chromaticAberrationIntensity) chromaticAberrationIntensity.value = s.chromaticAberrationIntensity.toString();
         if (toneMapping) toneMapping.value = s.toneMapping;
         if (exposure) exposure.value = s.exposure.toString();
+        if (dynResCheckbox) dynResCheckbox.checked = s.dynamicResolutionEnabled;
 
         const pixelRatioRadios = document.querySelectorAll('input[name="pixelRatioMode"]') as NodeListOf<HTMLInputElement>;
         pixelRatioRadios.forEach(r => {
             r.checked = (r.value === s.pixelRatioMode);
-            const parent = r.parentElement;
-            if (parent) {
-                if (r.checked) {
-                    parent.style.background = DS.colors.accent;
-                    parent.style.borderColor = DS.colors.accent;
-                    parent.style.color = '#ffffff';
-                } else {
-                    parent.style.background = DS.utils.rgba('#000000', 0.4);
-                    parent.style.borderColor = DS.utils.rgba(DS.colors.text, 0.15);
-                    parent.style.color = DS.colors.textSecondary;
-                }
-            }
         });
+        updatePixelRatioUIState();
 
         if (document.getElementById('val-bloomStrength')) {
             document.getElementById('val-bloomStrength')!.innerText = s.bloomStrength.toFixed(1);
@@ -877,9 +907,12 @@ export function openSettings() {
         if (chromaticAberrationIntensity) s.chromaticAberrationIntensity = parseFloat(chromaticAberrationIntensity.value);
         if (toneMapping) s.toneMapping = toneMapping.value as any;
         if (exposure) s.exposure = parseFloat(exposure.value);
+        if (dynResCheckbox) s.dynamicResolutionEnabled = dynResCheckbox.checked;
 
         const checkedPixelRatio = document.querySelector('input[name="pixelRatioMode"]:checked') as HTMLInputElement;
         if (checkedPixelRatio) s.pixelRatioMode = checkedPixelRatio.value as any;
+
+        updatePixelRatioUIState();
 
         // Update labels
         if (document.getElementById('val-joySens')) document.getElementById('val-joySens')!.innerText = s.joySens.toFixed(1);
@@ -910,7 +943,7 @@ export function openSettings() {
         applySettings(s);
     };
 
-    [joySens, camSens, invY, fxaa, vol, musicVol, sfxVol, uiVol, voiceVol, spatial, music, ui, hud, crossSize, fov, rendType].forEach(el => {
+    [joySens, camSens, invY, fxaa, vol, musicVol, sfxVol, uiVol, voiceVol, spatial, music, ui, hud, crossSize, fov, rendType, dynResCheckbox].forEach(el => {
         if (!el) return;
         bind(el as HTMLElement, 'input', triggerApply);
         bind(el as HTMLElement, 'change', triggerApply);
