@@ -725,6 +725,8 @@ fill="${DS.colors.text}" stroke="none">
 
   <div id="auto-label">AUTO &rarr;</div>
   <button id="btn-walkie" class="btn-util" style="position: absolute; left: 26vw; bottom: 4vh;">
+    <div id="util-1-badge" style="position: absolute; top: -6px; right: -6px; background: rgba(10, 10, 12, 0.85); color: #FFFFFF; font-size: 11px; font-weight: 700; padding: 2px 6px; border-radius: 0px; border: 1px solid rgba(255,255,255,0.3); font-family: monospace; text-shadow: 0 1px 2px #000;">[G] 2</div>
+    <div id="util-1-cooldown" style="position: absolute; inset: 0; background: rgba(10, 10, 12, 0.75); display: none; align-items: center; justify-content: center; color: #FFFFFF; font-weight: bold; font-size: 13px; border-radius: 0px; font-family: monospace;"></div>
     <svg version="1.0" xmlns="http://www.w3.org/2000/svg"
  viewBox="0 0 74.000000 163.000000"
  preserveAspectRatio="xMidYMid meet">
@@ -816,7 +818,8 @@ fill="currentColor" stroke="none">
     </svg>
   </div>
   <button id="btn-medkit" class="btn-util" style="position: absolute; right: 26vw; bottom: 4vh;">
-    
+    <div id="util-2-badge" style="position: absolute; top: -6px; right: -6px; background: rgba(10, 10, 12, 0.85); color: #FFFFFF; font-size: 11px; font-weight: 700; padding: 2px 6px; border-radius: 0px; border: 1px solid rgba(255,255,255,0.3); font-family: monospace; text-shadow: 0 1px 2px #000;">[F] 2</div>
+    <div id="util-2-cooldown" style="position: absolute; inset: 0; background: rgba(10, 10, 12, 0.75); display: none; align-items: center; justify-content: center; color: #FFFFFF; font-weight: bold; font-size: 13px; border-radius: 0px; font-family: monospace;"></div>
     <svg version="1.0" xmlns="http://www.w3.org/2000/svg"
  viewBox="0 0 128.000000 117.000000"
  preserveAspectRatio="xMidYMid meet">

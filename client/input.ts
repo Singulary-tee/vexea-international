@@ -11,6 +11,8 @@ export enum InputAction {
   RELOAD = "RELOAD",
   SWAP_WEAPON_1 = "SWAP_WEAPON_1",
   SWAP_WEAPON_2 = "SWAP_WEAPON_2",
+  UTILITY_1 = "UTILITY_1",
+  UTILITY_2 = "UTILITY_2",
 }
 
 type InputHandler = (action: InputAction, state: boolean) => void;
@@ -51,6 +53,12 @@ class InputManager {
     'R': InputAction.RELOAD,
     '1': InputAction.SWAP_WEAPON_1,
     '2': InputAction.SWAP_WEAPON_2,
+    'g': InputAction.UTILITY_1,
+    'G': InputAction.UTILITY_1,
+    'f': InputAction.UTILITY_2,
+    'F': InputAction.UTILITY_2,
+    '3': InputAction.UTILITY_1,
+    '4': InputAction.UTILITY_2,
   };
 
   private eventCallbacks: { type: string, handler: any }[] = [];

@@ -749,6 +749,13 @@ io.onConnection((channel: ChannelAdapter) => {
   channel.on("reliable_event", (args: any) => {
     if (!pState || !pState.isAlive) return;
 
+    if (args.type === "USE_UTILITY") {
+      const slot = args.slot as "utility1" | "utility2";
+      if (slot && currentRoom) {
+        currentRoom.useUtility(pState.id, slot);
+      }
+    }
+
     if (args.type === "TOGGLE_FIRE_MODE") {
       const primary = pState.weaponState.primary;
       primary.fireMode = primary.fireMode === "auto" ? "burst" : "auto";
