@@ -4,6 +4,7 @@ import { getAuth } from "firebase/auth";
 import { getFirestore, doc, updateDoc } from "firebase/firestore";
 import { audioManager } from "../audio";
 import { IS_DEV } from "../../shared/gates/production.gate";
+import { GAMEMODES } from "../../shared/gamemode-configs";
 
 let activeStatsSubTab: 'PROFILE' | 'INTEL' | 'CHALLENGES' | 'LEADERBOARD' = 'PROFILE';
 
@@ -224,7 +225,7 @@ function renderProfileView(container: HTMLElement, userData: any): void {
     background: 'rgba(255, 255, 255, 0.02)',
     border: DS.glass.border,
     padding: '8px 12px',
-    borderRadius: '4px',
+    borderRadius: '0px',
     display: 'flex',
     flexDirection: 'column',
     justifyContent: 'space-between',
@@ -243,7 +244,7 @@ function renderProfileView(container: HTMLElement, userData: any): void {
   badgeCard.innerHTML = `
     <div style="display:flex; justify-content:space-between; align-items:center;">
       <div style="display:flex; align-items:center; gap:8px;">
-        <div style="width:30px; height:30px; border:1px solid ${DS.colors.accent}; background:rgba(255,69,0,0.12); display:flex; align-items:center; justify-content:center; color:${DS.colors.accent}; font-family:${DS.typography.fontFamily}; font-size:14px; font-weight:bold; border-radius:2px;">
+        <div style="width:30px; height:30px; border:1px solid ${DS.colors.accent}; background:rgba(255,69,0,0.12); display:flex; align-items:center; justify-content:center; color:${DS.colors.accent}; font-family:${DS.typography.fontFamily}; font-size:14px; font-weight:bold; border-radius:0px;">
           ${callsign.charAt(0)}
         </div>
         <div style="display:flex; flex-direction:column; gap:1px;">
@@ -263,7 +264,7 @@ function renderProfileView(container: HTMLElement, userData: any): void {
 
     <!-- RADAR SPIDER CHART -->
     <div style="flex:1; display:flex; flex-direction:column; justify-content:center; align-items:center; margin:4px 0; min-height:0;">
-      <div style="font-family:${DS.typography.fontFamily}; font-size:7px; color:${DS.colors.textMuted}; font-weight:bold; letter-spacing:0.8px; margin-bottom:2px;">TACTICAL PROFILE RADAR</div>
+      <div style="font-family:${DS.typography.fontFamily}; font-size:7px; color:${DS.colors.textMuted}; font-weight:bold; letter-spacing:0.8px; margin-bottom:2px;">COMBAT PROFILE RADAR</div>
       ${createRadarChartSVG(radarStats)}
     </div>
 
@@ -273,7 +274,7 @@ function renderProfileView(container: HTMLElement, userData: any): void {
         <span>BATTLE PASS PROGRESS</span>
         <span>${xp}%</span>
       </div>
-      <div style="width:100%; height:3px; background:rgba(255,255,255,0.06); border-radius:2px; overflow:hidden;">
+      <div style="width:100%; height:3px; background:rgba(255,255,255,0.06); border-radius:0px; overflow:hidden;">
         <div style="width:${xp}%; height:100%; background:${DS.colors.accent};"></div>
       </div>
     </div>
@@ -287,7 +288,7 @@ function renderProfileView(container: HTMLElement, userData: any): void {
     background: 'rgba(255, 255, 255, 0.01)',
     border: DS.glass.border,
     padding: '8px 12px',
-    borderRadius: '4px',
+    borderRadius: '0px',
     display: 'flex',
     flexDirection: 'column',
     justifyContent: 'space-between',
@@ -316,7 +317,7 @@ function renderProfileView(container: HTMLElement, userData: any): void {
     padding: '4px 0',
     background: 'rgba(0,0,0,0.25)',
     border: '1px solid rgba(255,255,255,0.04)',
-    borderRadius: '4px',
+    borderRadius: '0px',
     flexShrink: '0'
   });
 
@@ -360,7 +361,7 @@ function renderProfileView(container: HTMLElement, userData: any): void {
       display: 'flex',
       flexDirection: 'column',
       justifyContent: 'center',
-      borderRadius: '3px'
+      borderRadius: '0px'
     });
 
     card.innerHTML = `
@@ -370,7 +371,7 @@ function renderProfileView(container: HTMLElement, userData: any): void {
       <div style="font-family:${DS.typography.fontFamily}; font-size:12px; color:${DS.colors.text}; font-weight:bold; letter-spacing:0.5px; margin-top:1px;">
         ${stat.value}
       </div>
-      <div style="width:100%; height:2px; background:rgba(255,255,255,0.06); margin-top:3px; border-radius:1px; overflow:hidden;">
+      <div style="width:100%; height:2px; background:rgba(255,255,255,0.06); margin-top:3px; border-radius:0px; overflow:hidden;">
         <div style="width:${stat.barPct}%; height:100%; background:${DS.colors.accent};"></div>
       </div>
     `;
@@ -393,38 +394,44 @@ function renderIntelView(container: HTMLElement, userData: any): void {
     display: 'flex',
     flexDirection: 'column',
     gap: '8px',
-    borderRadius: '4px',
+    borderRadius: '0px',
     height: '100%',
     boxSizing: 'border-box'
   });
 
+  const stdConfig = GAMEMODES.STANDARD;
+  const cycleSec = (stdConfig.llmCycleInterval / 1000).toFixed(0);
+  const startAp = stdConfig.llmApStartPool;
+  const regenAp = stdConfig.llmApRegenPerCycle;
+
   card.innerHTML = `
     <div style="font-family:${DS.typography.fontFamily}; font-size:12px; font-weight:bold; color:${DS.colors.accent}; letter-spacing:1px; display:flex; justify-content:space-between; align-items:center; flex-shrink:0;">
-      <span>LLM COMMANDER ADAPTIVE ANALYSIS</span>
-      <span style="font-size:8px; color:#00FF88; background:rgba(0,255,136,0.06); padding:2px 6px; border:1px solid rgba(0,255,136,0.2); letter-spacing:1px; font-weight:bold; border-radius:1px;">ACTIVE</span>
+      <span>LLM COMMANDER SPECIFICATIONS</span>
+      <span style="font-size:8px; color:#00FF88; background:rgba(0,255,136,0.06); padding:2px 6px; border:1px solid rgba(0,255,136,0.2); letter-spacing:1px; font-weight:bold; border-radius:0px;">ACTIVE</span>
     </div>
 
-    <!-- Threat Sector Arc Ring HUD Visual -->
-    <div style="display:flex; gap:12px; align-items:center; background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.04); padding:10px; border-radius:2px;">
-      <div style="flex-shrink:0;">
-        ${createArcGaugeSVG(78, 'STEALTH', '78.4%', '#00F0FF')}
-      </div>
-      <div style="display:flex; flexDirection:column; gap:4px;">
-        <div style="font-family:${DS.typography.fontFamily}; font-size:11px; font-weight:bold; color:${DS.colors.text}; letter-spacing:1px;">TACTICAL BIOME: CORRIDORS</div>
+    <!-- LLM Parameters Display -->
+    <div style="display:flex; gap:12px; align-items:center; background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.04); padding:10px; border-radius:0px;">
+      <div style="display:flex; flex-direction:column; gap:4px;">
+        <div style="font-family:${DS.typography.fontFamily}; font-size:11px; font-weight:bold; color:${DS.colors.text}; letter-spacing:1px;">COMMANDER EXECUTION ENGINE</div>
         <div style="font-family:${DS.typography.fontFamily}; font-size:9px; color:${DS.colors.textMuted}; line-height:1.4;">
-          AI Tactical Core calculates a <b style="color:#00FF88;">CLASS-A STEALTH INDEX</b> based on contractor movement vectors and target headshot ratios.
+          Authoritative LLM decision cycle operates on a fixed <b style="color:${DS.colors.accent}">${cycleSec}s interval</b> utilizing action points. Data sourced from <b style="color:${DS.colors.text}">shared/gamemode-configs.ts</b>.
         </div>
       </div>
     </div>
 
-    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:6px; flex:1;">
-      <div style="background:rgba(255,255,255,0.01); border:1px solid rgba(255,255,255,0.04); padding:6px 8px; border-radius:2px; display:flex; flexDirection:column; justifyContent:center;">
-        <div style="font-family:${DS.typography.fontFamily}; font-size:7px; color:${DS.colors.textMuted}; font-weight:bold; letter-spacing:0.5px;">HEADSHOT ACCURACY</div>
-        <div style="font-family:${DS.typography.fontFamily}; font-size:11px; color:${DS.colors.text}; font-weight:bold; margin-top:2px;">34.2% CRITICAL HIT</div>
+    <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:6px; flex:1;">
+      <div style="background:rgba(255,255,255,0.01); border:1px solid rgba(255,255,255,0.04); padding:6px 8px; border-radius:0px; display:flex; flex-direction:column; justify-content:center;">
+        <div style="font-family:${DS.typography.fontFamily}; font-size:7px; color:${DS.colors.textMuted}; font-weight:bold; letter-spacing:0.5px;">DECISION CYCLE</div>
+        <div style="font-family:${DS.typography.fontFamily}; font-size:11px; color:${DS.colors.text}; font-weight:bold; margin-top:2px;">${cycleSec} SECONDS</div>
       </div>
-      <div style="background:rgba(255,255,255,0.01); border:1px solid rgba(255,255,255,0.04); padding:6px 8px; border-radius:2px; display:flex; flexDirection:column; justifyContent:center;">
-        <div style="font-family:${DS.typography.fontFamily}; font-size:7px; color:${DS.colors.textMuted}; font-weight:bold; letter-spacing:0.5px;">COVERT RATING</div>
-        <div style="font-family:${DS.typography.fontFamily}; font-size:11px; color:${DS.colors.accent}; font-weight:bold; margin-top:2px;">MAXIMUM EXPORT</div>
+      <div style="background:rgba(255,255,255,0.01); border:1px solid rgba(255,255,255,0.04); padding:6px 8px; border-radius:0px; display:flex; flex-direction:column; justify-content:center;">
+        <div style="font-family:${DS.typography.fontFamily}; font-size:7px; color:${DS.colors.textMuted}; font-weight:bold; letter-spacing:0.5px;">INITIAL AP POOL</div>
+        <div style="font-family:${DS.typography.fontFamily}; font-size:11px; color:${DS.colors.accent}; font-weight:bold; margin-top:2px;">${startAp} AP</div>
+      </div>
+      <div style="background:rgba(255,255,255,0.01); border:1px solid rgba(255,255,255,0.04); padding:6px 8px; border-radius:0px; display:flex; flex-direction:column; justify-content:center;">
+        <div style="font-family:${DS.typography.fontFamily}; font-size:7px; color:${DS.colors.textMuted}; font-weight:bold; letter-spacing:0.5px;">AP REGEN / CYCLE</div>
+        <div style="font-family:${DS.typography.fontFamily}; font-size:11px; color:#00FF88; font-weight:bold; margin-top:2px;">+${regenAp} AP</div>
       </div>
     </div>
   `;
@@ -435,7 +442,7 @@ function renderIntelView(container: HTMLElement, userData: any): void {
       padding: '6px 10px',
       background: 'rgba(255, 69, 0, 0.02)',
       border: `1px dashed rgba(255, 69, 0, 0.3)`,
-      borderRadius: '2px',
+      borderRadius: '0px',
       flexShrink: '0',
       display: 'flex',
       justifyContent: 'space-between',
@@ -448,7 +455,7 @@ function renderIntelView(container: HTMLElement, userData: any): void {
     refillBtn.textContent = 'REFILL CR & AP';
     Object.assign(refillBtn.style, {
       padding: '3px 8px', background: DS.colors.accent, border: 'none', color: '#000000',
-      fontFamily: DS.typography.fontFamily, fontSize: '8px', fontWeight: 'bold', letterSpacing: '1px', cursor: 'pointer', borderRadius: '1px'
+      fontFamily: DS.typography.fontFamily, fontSize: '8px', fontWeight: 'bold', letterSpacing: '1px', cursor: 'pointer', borderRadius: '0px'
     });
 
     refillBtn.onclick = async () => {
@@ -489,7 +496,7 @@ function renderChallengesView(container: HTMLElement, userData: any): void {
     itemCard.className = 'mm-glass';
     Object.assign(itemCard.style, {
       background: 'rgba(255, 255, 255, 0.02)', border: DS.glass.border, padding: '10px',
-      display: 'flex', flexDirection: 'column', justifyContent: 'space-between', borderRadius: '4px'
+      display: 'flex', flexDirection: 'column', justifyContent: 'space-between', borderRadius: '0px'
     });
 
     const currentVal = Math.floor(ch.target * 0.6);
@@ -505,7 +512,7 @@ function renderChallengesView(container: HTMLElement, userData: any): void {
           <span>+${ch.rewardCredits} CR</span>
           <span>${currentVal}/${ch.target}</span>
         </div>
-        <div style="width:100%; height:2px; background:rgba(255,255,255,0.08); overflow:hidden; border-radius:1px;">
+        <div style="width:100%; height:2px; background:rgba(255,255,255,0.08); overflow:hidden; border-radius:0px;">
           <div style="width:${pct}%; height:100%; background:${DS.colors.accent};"></div>
         </div>
       </div>
@@ -544,7 +551,7 @@ function renderLeaderboardView(container: HTMLElement, userData: any): void {
       background: isUser ? 'rgba(255, 69, 0, 0.05)' : 'rgba(255, 255, 255, 0.01)',
       border: isUser ? `1px solid ${DS.colors.accent}` : DS.glass.border,
       padding: '6px 10px', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-      fontFamily: DS.typography.fontFamily, fontSize: '9px', borderRadius: '2px'
+      fontFamily: DS.typography.fontFamily, fontSize: '9px', borderRadius: '0px'
     });
 
     rowEl.innerHTML = `

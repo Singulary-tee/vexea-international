@@ -2,6 +2,7 @@ import { DS } from "../design-system";
 import { getAuth } from "firebase/auth";
 import { getFirestore, doc, updateDoc } from "firebase/firestore";
 import { audioManager } from "../audio";
+import { getDefaultMap } from "../../shared/maps/map-registry";
 
 function createTerritoryArcSVG(vibePct: number, slopPct: number): string {
   const size = 64;
@@ -41,8 +42,9 @@ export function renderFactionScreen(container: HTMLElement, registeredUserData: 
 
   const auth = getAuth();
   const currentFaction = registeredUserData?.faction || null;
+  const activeMap = getDefaultMap();
 
-  // Header Title & Territory Control Arc (Zero scroll fit)
+  // Header Title & Territory Control Arc
   const headerCard = document.createElement('div');
   headerCard.className = 'mm-glass';
   Object.assign(headerCard.style, {
@@ -52,7 +54,7 @@ export function renderFactionScreen(container: HTMLElement, registeredUserData: 
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'space-between',
-    borderRadius: '4px',
+    borderRadius: '0px',
     flexShrink: '0'
   });
 
@@ -62,15 +64,15 @@ export function renderFactionScreen(container: HTMLElement, registeredUserData: 
         STRATEGIC FACTION WAR
       </div>
       <div style="font-family:${DS.typography.fontFamily}; font-size:8px; font-weight:bold; color:${DS.colors.accent}; letter-spacing:0.8px;">
-        ACTIVE SEASON 1: CONFLICT FOR ZONE 1 (FACILITY OVERLORD)
+        ACTIVE DEPLOYMENT: ${activeMap.displayName.toUpperCase()}
       </div>
     </div>
     <div style="display:flex; align-items:center; gap:12px;">
       <div style="text-align:right; font-family:${DS.typography.fontFamily}; font-size:8px; font-weight:bold;">
-        <div style="color:#00F0FF; letter-spacing:0.8px;">VIBE CO. 52%</div>
-        <div style="color:${DS.colors.accent}; margin-top:2px; letter-spacing:0.8px;">SLOP INC. 48%</div>
+        <div style="color:#00F0FF; letter-spacing:0.8px;">VIBE CO. 50%</div>
+        <div style="color:${DS.colors.accent}; margin-top:2px; letter-spacing:0.8px;">SLOP INC. 50%</div>
       </div>
-      ${createTerritoryArcSVG(52, 48)}
+      ${createTerritoryArcSVG(50, 50)}
     </div>
   `;
   wrap.appendChild(headerCard);
@@ -96,7 +98,7 @@ export function renderFactionScreen(container: HTMLElement, registeredUserData: 
     display: 'flex',
     flexDirection: 'column',
     justifyContent: 'space-between',
-    borderRadius: '4px',
+    borderRadius: '0px',
     transition: 'all 0.15s ease-out',
     minHeight: '0'
   });
@@ -113,19 +115,16 @@ export function renderFactionScreen(container: HTMLElement, registeredUserData: 
             VIBE CO.
           </div>
         </div>
-        ${vibeSelected ? `<div style="background:rgba(0,240,255,0.15); border:1px solid #00F0FF; color:#00F0FF; padding:1px 6px; font-family:${DS.typography.fontFamily}; font-size:7px; font-weight:bold; letter-spacing:0.8px; border-radius:2px;">ACTIVE AFFILIATION</div>` : ''}
+        ${vibeSelected ? `<div style="background:rgba(0,240,255,0.15); border:1px solid #00F0FF; color:#00F0FF; padding:1px 6px; font-family:${DS.typography.fontFamily}; font-size:7px; font-weight:bold; letter-spacing:0.8px; border-radius:0px;">ACTIVE AFFILIATION</div>` : ''}
       </div>
       <div style="font-family:${DS.typography.fontFamily}; font-size:9.5px; color:${DS.colors.textMuted}; letter-spacing:0.5px; line-height:1.3;">
-        Minimalist tech syndicate specializing in clean stealth ops, camera hacking, and high-frequency energy regeneration.
+        Minimalist tech syndicate specializing in clean stealth operations, drone camera override, and rapid reconnaissance.
       </div>
 
-      <div style="background:rgba(0,240,255,0.02); border:1px solid rgba(0,240,255,0.08); padding:8px; display:flex; flex-direction:column; gap:4px; border-radius:3px;">
-        <div style="font-family:${DS.typography.fontFamily}; font-size:7.5px; color:#00F0FF; font-weight:bold; letter-spacing:0.8px; margin-bottom:1px;">ACTIVE SYNDICATE PERKS</div>
-        <div style="font-family:${DS.typography.fontFamily}; font-size:9px; color:${DS.colors.text}; font-weight:bold; display:flex; align-items:center; gap:4px;">
-          <span style="color:#00F0FF;">⚡</span> +10% AP REGEN ON ALL MAPS
-        </div>
-        <div style="font-family:${DS.typography.fontFamily}; font-size:9px; color:${DS.colors.text}; font-weight:bold; display:flex; align-items:center; gap:4px;">
-          <span style="color:#00F0FF;">💎</span> +15% CR BONUS UPON EXTRACTION
+      <div style="background:rgba(0,240,255,0.02); border:1px solid rgba(0,240,255,0.08); padding:8px; display:flex; flex-direction:column; gap:4px; border-radius:0px;">
+        <div style="font-family:${DS.typography.fontFamily}; font-size:7.5px; color:#00F0FF; font-weight:bold; letter-spacing:0.8px; margin-bottom:1px;">SYNDICATE DOCTRINE</div>
+        <div style="font-family:${DS.typography.fontFamily}; font-size:9px; color:${DS.colors.text}; line-height:1.3;">
+          Focuses on high-mobility drone maneuvering, strategic line-of-sight control, and precise asset extraction.
         </div>
       </div>
     </div>
@@ -145,7 +144,7 @@ export function renderFactionScreen(container: HTMLElement, registeredUserData: 
     fontWeight: 'bold',
     letterSpacing: '1px',
     cursor: (vibeSelected || !auth.currentUser) ? 'default' : 'pointer',
-    borderRadius: '2px',
+    borderRadius: '0px',
     flexShrink: '0',
     transition: 'all 0.15s ease'
   });
@@ -175,7 +174,7 @@ export function renderFactionScreen(container: HTMLElement, registeredUserData: 
     display: 'flex',
     flexDirection: 'column',
     justifyContent: 'space-between',
-    borderRadius: '4px',
+    borderRadius: '0px',
     transition: 'all 0.15s ease-out',
     minHeight: '0'
   });
@@ -191,19 +190,16 @@ export function renderFactionScreen(container: HTMLElement, registeredUserData: 
             SLOP INC.
           </div>
         </div>
-        ${slopSelected ? `<div style="background:${DS.utils.rgba(DS.colors.accent, 0.15)}; border:1px solid ${DS.colors.accent}; color:${DS.colors.accent}; padding:1px 6px; font-family:${DS.typography.fontFamily}; font-size:7px; font-weight:bold; letter-spacing:0.8px; border-radius:2px;">ACTIVE AFFILIATION</div>` : ''}
+        ${slopSelected ? `<div style="background:${DS.utils.rgba(DS.colors.accent, 0.15)}; border:1px solid ${DS.colors.accent}; color:${DS.colors.accent}; padding:1px 6px; font-family:${DS.typography.fontFamily}; font-size:7px; font-weight:bold; letter-spacing:0.8px; border-radius:0px;">ACTIVE AFFILIATION</div>` : ''}
       </div>
       <div style="font-family:${DS.typography.fontFamily}; font-size:9.5px; color:${DS.colors.textMuted}; letter-spacing:0.5px; line-height:1.3;">
-        Heavy industrial paramilitary focused on raw ballistic firepower, reinforced armor plating, and area destruction.
+        Industrial defense group focused on ballistic drone chassis, reinforced shielding, and point defense.
       </div>
 
-      <div style="background:${DS.utils.rgba(DS.colors.accent, 0.02)}; border:1px solid ${DS.utils.rgba(DS.colors.accent, 0.08)}; padding:8px; display:flex; flex-direction:column; gap:4px; border-radius:3px;">
-        <div style="font-family:${DS.typography.fontFamily}; font-size:7.5px; color:${DS.colors.accent}; font-weight:bold; letter-spacing:0.8px; margin-bottom:1px;">ACTIVE PARAMILITARY PERKS</div>
-        <div style="font-family:${DS.typography.fontFamily}; font-size:9px; color:${DS.colors.text}; font-weight:bold; display:flex; align-items:center; gap:4px;">
-          <span style="color:${DS.colors.accent};">🛡️</span> +15% BALLISTIC ARMOR RESISTANCE
-        </div>
-        <div style="font-family:${DS.typography.fontFamily}; font-size:9px; color:${DS.colors.text}; font-weight:bold; display:flex; align-items:center; gap:4px;">
-          <span style="color:${DS.colors.accent};">💥</span> +20% EXPLOSIVE BLAST RADIUS
+      <div style="background:${DS.utils.rgba(DS.colors.accent, 0.02)}; border:1px solid ${DS.utils.rgba(DS.colors.accent, 0.08)}; padding:8px; display:flex; flex-direction:column; gap:4px; border-radius:0px;">
+        <div style="font-family:${DS.typography.fontFamily}; font-size:7.5px; color:${DS.colors.accent}; font-weight:bold; letter-spacing:0.8px; margin-bottom:1px;">DEFENSE DOCTRINE</div>
+        <div style="font-family:${DS.typography.fontFamily}; font-size:9px; color:${DS.colors.text}; line-height:1.3;">
+          Prioritizes heavy structural durability, defensive choke point control, and sustained suppressive engagement.
         </div>
       </div>
     </div>
@@ -223,7 +219,7 @@ export function renderFactionScreen(container: HTMLElement, registeredUserData: 
     fontWeight: 'bold',
     letterSpacing: '1px',
     cursor: (slopSelected || !auth.currentUser) ? 'default' : 'pointer',
-    borderRadius: '2px',
+    borderRadius: '0px',
     flexShrink: '0',
     transition: 'all 0.15s ease'
   });
