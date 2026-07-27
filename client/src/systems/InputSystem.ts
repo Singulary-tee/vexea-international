@@ -106,6 +106,8 @@ export class InputSystem {
         if (action === InputAction.RELOAD) this.requestReload();
         if (action === InputAction.SWAP_WEAPON_1) this.selectWeapon(1);
         if (action === InputAction.SWAP_WEAPON_2) this.selectWeapon(2);
+        if (action === InputAction.UTILITY_1) this.useUtility('utility1');
+        if (action === InputAction.UTILITY_2) this.useUtility('utility2');
       }
     });
 
@@ -149,6 +151,16 @@ export class InputSystem {
       this.match.updateWeaponUI();
     } else if (slot === 1) {
       if (this.match.transport) this.match.transport.emit("reliable_event", { type: "TOGGLE_FIRE_MODE" });
+    }
+  }
+
+  public useUtility(slot: 'utility1' | 'utility2') {
+    if (!this.match || this.match.isLocalPlayerDead) return;
+    if (this.match.transport) {
+      this.match.transport.emit("reliable_event", {
+        type: "USE_UTILITY",
+        slot: slot
+      });
     }
   }
 
@@ -303,6 +315,8 @@ export class InputSystem {
     }
 
     this.safeBindTouch("btn-reload", () => { this.requestReload(); });
+    this.safeBindTouch("btn-walkie", () => { this.useUtility('utility1'); });
+    this.safeBindTouch("btn-medkit", () => { this.useUtility('utility2'); });
 
     const ws1 = document.getElementById("weapon-slot-1");
     if (ws1) {

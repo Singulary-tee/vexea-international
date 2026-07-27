@@ -1,5 +1,6 @@
 import { MatchController } from "../../MatchController";
 import { ACTIVE_GAMEMODE } from "../../../shared/gamemode-configs";
+import { PlayerUtilityState } from "../../../shared/utilities";
 
 export class HUDSystem {
   private match: MatchController;
@@ -125,5 +126,69 @@ export class HUDSystem {
   public updateRespawnCountdown(remaining: number) {
     const countdown = document.getElementById("death-countdown");
     if (countdown) countdown.innerText = String(remaining);
+  }
+
+  public updateUtilities(state: PlayerUtilityState) {
+    if (!state) return;
+
+    // Utility 1
+    const u1Badge = document.getElementById("util-1-badge");
+    const u1Cooldown = document.getElementById("util-1-cooldown");
+    if (u1Badge && state.utility1) {
+      u1Badge.innerText = `[G] ${state.utility1.charges}`;
+      u1Badge.style.opacity = state.utility1.charges > 0 ? "1" : "0.4";
+    }
+    if (u1Cooldown && state.utility1) {
+      if (state.utility1.cooldownRemaining > 0 && state.utility1.charges === 0) {
+        u1Cooldown.style.display = "flex";
+        u1Cooldown.innerText = `${Math.ceil(state.utility1.cooldownRemaining)}s`;
+      } else {
+        u1Cooldown.style.display = "none";
+      }
+    }
+
+    // Utility 2
+    const u2Badge = document.getElementById("util-2-badge");
+    const u2Cooldown = document.getElementById("util-2-cooldown");
+    if (u2Badge && state.utility2) {
+      u2Badge.innerText = `[F] ${state.utility2.charges}`;
+      u2Badge.style.opacity = state.utility2.charges > 0 ? "1" : "0.4";
+    }
+    if (u2Cooldown && state.utility2) {
+      if (state.utility2.cooldownRemaining > 0 && state.utility2.charges === 0) {
+        u2Cooldown.style.display = "flex";
+        u2Cooldown.innerText = `${Math.ceil(state.utility2.cooldownRemaining)}s`;
+      } else {
+        u2Cooldown.style.display = "none";
+      }
+    }
+  }
+
+  public triggerWhiteoutFlash(duration: number = 3.5, intensity: number = 1.0) {
+    let whiteout = document.getElementById("ui-flashbang-whiteout");
+    if (!whiteout) {
+      whiteout = document.createElement("div");
+      whiteout.id = "ui-flashbang-whiteout";
+      Object.assign(whiteout.style, {
+        position: "fixed",
+        inset: "0",
+        pointerEvents: "none",
+        zIndex: "9999",
+        background: "rgb(255, 255, 255)",
+        opacity: "0",
+        transition: "opacity 0.05s ease-out",
+      });
+      document.body.appendChild(whiteout);
+    }
+    const maxOpacity = Math.min(1.0, Math.max(0.2, intensity));
+    whiteout.style.transition = "opacity 0.05s ease-out";
+    whiteout.style.opacity = String(maxOpacity);
+
+    setTimeout(() => {
+      if (whiteout) {
+        whiteout.style.transition = `opacity ${duration}s ease-out`;
+        whiteout.style.opacity = "0";
+      }
+    }, 100);
   }
 }

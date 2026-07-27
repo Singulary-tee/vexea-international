@@ -440,6 +440,37 @@ export class NetworkSyncSystem {
       if (typeof (window as any).removeMatchTab === "function") (window as any).removeMatchTab();
       // Additional match end logic handled by main.ts or MatchController
     }
+
+    if (msg.type === "UTILITY_STATE") {
+      if (match.hud) {
+        match.hud.updateUtilities(msg.state);
+      }
+    }
+
+    if (msg.type === "UTILITY_ACTIVATED") {
+      // VISUAL STUB - Trigger server-confirmed utility activation animation / sound
+      // Console or animation stub for confirmed utility usage
+    }
+
+    if (msg.type === "UTILITY_EFFECT") {
+      // VISUAL STUB - Trigger explosion / impact VFX at resolved origin
+      if (msg.utilityId === "Grenade" && msg.origin) {
+        _droneDeathPos.set(msg.origin.x, msg.origin.y, msg.origin.z);
+        if (typeof (window as any).triggerExplosion === "function") {
+          (window as any).triggerExplosion(_droneDeathPos);
+        }
+      }
+    }
+
+    if (msg.type === "FLASHBANG_DETONATED") {
+      // VISUAL STUB - Flashbang burst visual at origin
+    }
+
+    if (msg.type === "FLASHBANG_HIT") {
+      if (match.hud) {
+        match.hud.triggerWhiteoutFlash(msg.duration ?? 3.5, msg.intensity ?? 1.0);
+      }
+    }
   }
 
   private handleStateSync(json: any) {

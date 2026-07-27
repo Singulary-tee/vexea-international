@@ -37,6 +37,15 @@ import {
 } from "../shared/constants";
 import { ChannelAdapter } from "./transport/adapter";
 import { CLASSES, ClassId } from "../shared/classes.js";
+import {
+  createInitialUtilityState,
+  PlayerUtilityState,
+  GRENADE_DAMAGE,
+  GRENADE_RADIUS,
+  GRENADE_FUSE_TIME,
+  FLASHBANG_RADIUS,
+  FLASHBANG_DURATION
+} from "../shared/utilities";
 import { getMapById } from "../shared/maps/map-registry";
 import { ZoneRegistry } from "./map/ZoneRegistry";
 import { CollisionSystem } from "../shared/collision";
@@ -105,6 +114,7 @@ export interface PlayerState {
       leakyBucket: number;
     };
   };
+  utilityState?: PlayerUtilityState;
   ping: number;
   lastSequence: number;
   leakyRateLimit: number;
@@ -670,6 +680,11 @@ export class MatchRoom {
     pState.weapon = classDef.primaryWeapon.toLowerCase();
     pState.hp = 100;
     pState.maxHp = PLAYER_MAX_HP;
+    pState.utilityState = createInitialUtilityState(classDef.id, ACTIVE_GAMEMODE.utilityCooldownMultiplier);
+    pState.channel.emit("reliable_event", {
+      type: "UTILITY_STATE",
+      state: pState.utilityState,
+    });
     console.log(`[MATCH] Applied class ${classDef.id} loadout to player ${pState.id}: Primary=${classDef.primaryWeapon}, Secondary=${classDef.secondaryWeapon}, Utility1=${classDef.utility1}, Utility2=${classDef.utility2}`);
   }
 
@@ -785,6 +800,7 @@ export class MatchRoom {
         scoreIndividual: 0,
       },
       lastFallStartY: 1.2,
+      utilityState: createInitialUtilityState(chosenClassId, ACTIVE_GAMEMODE.utilityCooldownMultiplier),
     };
 
     if (stats) {
@@ -817,6 +833,11 @@ export class MatchRoom {
       id: playerId,
       zones: Object.values(ZONES),
       position: { x: pState.posX, y: pState.posY, z: pState.posZ },
+    });
+
+    channel.emit("reliable_event", {
+      type: "UTILITY_STATE",
+      state: pState.utilityState,
     });
     return pState;
   }
@@ -1151,6 +1172,14 @@ export class MatchRoom {
                 player.weaponState.secondary.isReloading = false;
                 player.weaponState.secondary.reloadTimer = 0;
                 
+                if (ACTIVE_GAMEMODE.utilityResetsOnRespawn && player.utilityState) {
+                  player.utilityState = createInitialUtilityState(player.classId || "ASSAULT", ACTIVE_GAMEMODE.utilityCooldownMultiplier);
+                  player.channel.emit("reliable_event", {
+                    type: "UTILITY_STATE",
+                    state: player.utilityState,
+                  });
+                }
+                
                 const spawnX = this.specJson?.playerSpawn?.position?.x ?? ((Math.random() - 0.5) * 40);
                 const spawnY = (this.specJson?.playerSpawn?.position?.y ?? 0) + 5.0;
                 const spawnZ = this.specJson?.playerSpawn?.position?.z ?? (120 + (Math.random() - 0.5) * 10);
@@ -1210,7 +1239,36 @@ export class MatchRoom {
               }
             });
 
-            // Player movement ticks
+            // Utility cooldown tick
+            if (player.utilityState) {
+              const dt = 0.016666;
+              let stateChanged = false;
+              for (const slotKey of ["utility1", "utility2"] as const) {
+                const uSlot = player.utilityState[slotKey];
+                if (uSlot.cooldownRemaining > 0) {
+                  uSlot.cooldownRemaining -= dt;
+                  if (uSlot.cooldownRemaining <= 0) {
+                    uSlot.cooldownRemaining = 0;
+                    if (uSlot.charges < uSlot.maxCharges) {
+                      uSlot.charges += 1;
+                      stateChanged = true;
+                      if (uSlot.charges < uSlot.maxCharges) {
+                        uSlot.cooldownRemaining = uSlot.baseCooldown;
+                      }
+                    }
+                  }
+                  if (this.serverTick % 10 === 0) {
+                    stateChanged = true;
+                  }
+                }
+              }
+              if (stateChanged) {
+                player.channel.emit("reliable_event", {
+                  type: "UTILITY_STATE",
+                  state: player.utilityState,
+                });
+              }
+            }
             // console.log('[MOVEMENT DEBUG] player.kcc:', !!player.kcc, 'player.body:', !!player.body, 'player.collider:', !!player.collider, 'playerId:', player.id);
             if (player.kcc && player.body && player.collider) {
               
@@ -3317,6 +3375,166 @@ export class MatchRoom {
 
     if (telemetry.length > 0) {
       this.broadcastReliableEvent({ type: "dev_test_entity_telemetry", data: telemetry });
+    }
+  }
+
+  public useUtility(playerId: string, slot: "utility1" | "utility2") {
+    const player = this.players.get(playerId);
+    if (!player || !player.isAlive || !player.utilityState) return;
+
+    const uSlot = player.utilityState[slot];
+    if (!uSlot || uSlot.charges <= 0) return;
+
+    // Deduct charge & set cooldown
+    uSlot.charges -= 1;
+    if (uSlot.cooldownRemaining <= 0) {
+      uSlot.cooldownRemaining = uSlot.baseCooldown;
+    }
+
+    // Send updated utility state to player
+    player.channel.emit("reliable_event", {
+      type: "UTILITY_STATE",
+      state: player.utilityState,
+    });
+
+    // Broadcast activation confirmation (zero client prediction)
+    this.broadcastReliableEvent({
+      type: "UTILITY_ACTIVATED",
+      playerId: player.id,
+      utilityId: uSlot.id,
+      slot: slot,
+    });
+
+    const throwOrigin = { x: player.posX, y: player.posY + 1.6, z: player.posZ };
+    const dirX = -Math.sin(player.yaw) * Math.cos(player.pitch);
+    const dirY = Math.sin(player.pitch);
+    const dirZ = -Math.cos(player.yaw) * Math.cos(player.pitch);
+
+    switch (uSlot.id) {
+      case "Grenade": {
+        const throwDist = 12.0;
+        const targetPos = {
+          x: throwOrigin.x + dirX * throwDist,
+          y: Math.max(0, throwOrigin.y + dirY * throwDist),
+          z: throwOrigin.z + dirZ * throwDist,
+        };
+        setTimeout(() => {
+          this.resolveGrenadeExplosion(player.id, targetPos);
+        }, GRENADE_FUSE_TIME * 1000);
+        break;
+      }
+      case "Flashbang": {
+        const throwDist = 10.0;
+        const targetPos = {
+          x: throwOrigin.x + dirX * throwDist,
+          y: Math.max(0, throwOrigin.y + dirY * throwDist),
+          z: throwOrigin.z + dirZ * throwDist,
+        };
+        setTimeout(() => {
+          this.resolveFlashbangDetonation(player.id, targetPos);
+        }, 1.5 * 1000);
+        break;
+      }
+      case "Med Kit":
+      case "Revive Tool":
+      case "Radio":
+      case "Signal Disruptor":
+      case "EMP":
+      case "C4": {
+        // Pipeline architectural stub for remaining utilities - logic to be added in future update
+        break;
+      }
+    }
+  }
+
+  public resolveGrenadeExplosion(attackerId: string, origin: { x: number; y: number; z: number }) {
+    if (this.isShutdown) return;
+
+    // Broadcast server-authoritative explosion event
+    this.broadcastReliableEvent({
+      type: "UTILITY_EFFECT",
+      utilityId: "Grenade",
+      origin: origin,
+      radius: GRENADE_RADIUS,
+    });
+
+    // Authoritative explosion damage against drones
+    for (let i = 0; i < this.drones.length; i++) {
+      const d = this.drones[i];
+      if (d.state === DroneState.DEAD) continue;
+      const dx = d.posX - origin.x;
+      const dy = d.posY - origin.y;
+      const dz = d.posZ - origin.z;
+      const dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
+      if (dist <= GRENADE_RADIUS) {
+        const falloff = 1.0 - (dist / GRENADE_RADIUS) * 0.5;
+        const dmg = GRENADE_DAMAGE * falloff;
+        d.hp -= dmg;
+        if (d.hp <= 0) {
+          this.despawnDrone(d);
+          const attacker = this.players.get(attackerId);
+          if (attacker) {
+            attacker.score += 100;
+            attacker.stats.droneEliminations += 1;
+            attacker.stats.scoreIndividual += 100;
+          }
+        }
+      }
+    }
+
+    // Authoritative explosion damage against players
+    for (const p of this.players.values()) {
+      if (!p.isAlive) continue;
+      const dx = p.posX - origin.x;
+      const dy = p.posY - origin.y;
+      const dz = p.posZ - origin.z;
+      const dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
+      if (dist <= GRENADE_RADIUS) {
+        const falloff = 1.0 - (dist / GRENADE_RADIUS) * 0.5;
+        const dmg = GRENADE_DAMAGE * falloff;
+        p.hp -= dmg;
+        p.channel.emit("reliable_event", {
+          type: "PLAYER_HIT",
+          hp: p.hp,
+          rawDamage: dmg,
+        });
+        if (p.hp <= 0) {
+          p.isAlive = false;
+          p.isDead = true;
+          p.respawnTimer = 5;
+          p.stats.deaths += 1;
+          p.channel.emit("reliable_event", {
+            type: "YOU_DIED",
+            respawnTimer: 5,
+          });
+        }
+      }
+    }
+  }
+
+  public resolveFlashbangDetonation(attackerId: string, origin: { x: number; y: number; z: number }) {
+    if (this.isShutdown) return;
+
+    this.broadcastReliableEvent({
+      type: "FLASHBANG_DETONATED",
+      origin: origin,
+      radius: FLASHBANG_RADIUS,
+    });
+
+    for (const p of this.players.values()) {
+      if (!p.isAlive) continue;
+      const dx = p.posX - origin.x;
+      const dy = p.posY - origin.y;
+      const dz = p.posZ - origin.z;
+      const dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
+      if (dist <= FLASHBANG_RADIUS) {
+        const intensity = Math.max(0.2, 1.0 - (dist / FLASHBANG_RADIUS) * 0.7);
+        p.channel.emit("reliable_event", {
+          type: "FLASHBANG_HIT",
+          duration: FLASHBANG_DURATION,
+          intensity: intensity,
+        });
+      }
     }
   }
 
