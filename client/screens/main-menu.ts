@@ -168,10 +168,9 @@ export function initMainMenu() {
         box-sizing: border-box;
       }
       .mm-glass {
-        background: ${DS.glass.background};
-        backdrop-filter: ${DS.glass.blur};
-        -webkit-backdrop-filter: ${DS.glass.blur};
+        background: rgba(10, 10, 10, 0.85);
         border: ${DS.glass.border};
+        border-radius: 0px;
       }
       .mm-wordmark { font-size: clamp(18px, 3vw, 36px); }
       .mm-right-panel-content {
@@ -444,7 +443,7 @@ export function initMainMenu() {
     width: 'clamp(28px, 3.5vh, 34px)',
     height: 'clamp(28px, 3.5vh, 34px)',
     aspectRatio: '1 / 1',
-    borderRadius: '4px',
+    borderRadius: '0px',
     border: `1px solid ${DS.colors.accent}`,
     overflow: 'hidden',
     background: 'rgba(0, 0, 0, 0.6)',
@@ -521,7 +520,7 @@ export function initMainMenu() {
     fontSize: 'clamp(8px, 1vh, 9px)',
     fontWeight: DS.typography.weightBold,
     color: DS.colors.background,
-    borderRadius: '2px',
+    borderRadius: '0px',
     lineHeight: '1',
     alignSelf: 'start',
     marginTop: '1px'
@@ -796,7 +795,7 @@ export function initMainMenu() {
         Object.assign(btn.style, {
             color: '#000000', border: 'none', background: DS.colors.accent,
             padding: '3px 8px', fontFamily: DS.typography.fontFamily, fontSize: 'clamp(10px, 2.25cqi, 14px)', cursor: 'pointer',
-            fontWeight: 'bold', textShadow: 'none', borderRadius: '2px', whiteSpace: 'nowrap', lineHeight: '1.2'
+            fontWeight: 'bold', textShadow: 'none', borderRadius: '0px', whiteSpace: 'nowrap', lineHeight: '1.2'
         });
         btn.onclick = onClick;
         devContainer.appendChild(btn);
@@ -829,7 +828,7 @@ export function initMainMenu() {
     padding: '8px 20px',
     fontFamily: DS.typography.fontFamily, fontWeight: DS.typography.weightBold,
     fontSize: 'clamp(16px, 4cqi, 24px)', cursor: 'pointer', pointerEvents: 'auto',
-    borderRadius: '2px', textAlign: 'center', whiteSpace: 'nowrap', boxShadow: '0 2px 6px rgba(0,0,0,0.5)', zIndex: '5',
+    borderRadius: '0px', textAlign: 'center', whiteSpace: 'nowrap', boxShadow: '0 2px 6px rgba(0,0,0,0.5)', zIndex: '5',
     marginTop: 'auto'
   });
   qmBtn.onclick = (e) => {
@@ -1011,7 +1010,7 @@ export function initMainMenu() {
     position: 'relative', flex: '1', height: '100%', minHeight: '0', zIndex: '2',
     display: 'flex', flexDirection: 'column', padding: 'clamp(4px, 0.8vh, 8px)',
     gap: 'clamp(1px, 0.3vh, 3px)', overflow: 'hidden', background: 'rgba(0, 0, 0, 0.8)',
-    boxShadow: '0 0 25px 15px rgba(0, 0, 0, 0.85)', borderRadius: '4px', cursor: 'default',
+    boxShadow: '0 0 25px 15px rgba(0, 0, 0, 0.85)', borderRadius: '0px', cursor: 'default',
     transition: 'opacity 0.3s'
   });
 
@@ -1085,13 +1084,13 @@ export function initMainMenu() {
 
     const barBg = document.createElement('div');
     Object.assign(barBg.style, {
-      flex: '1', height: '2px', background: 'rgba(255,255,255,0.15)', borderRadius: '1px', overflow: 'hidden'
+      flex: '1', height: '2px', background: 'rgba(255,255,255,0.15)', borderRadius: '0px', overflow: 'hidden'
     });
 
     const pct = Math.min(100, Math.round((ch.current / ch.target) * 100));
     const barFill = document.createElement('div');
     Object.assign(barFill.style, {
-      width: `${pct}%`, height: '100%', background: '#FFFFFF', borderRadius: '1px'
+      width: `${pct}%`, height: '100%', background: '#FFFFFF', borderRadius: '0px'
     });
     barBg.appendChild(barFill);
 
@@ -1132,8 +1131,6 @@ export function initMainMenu() {
     display: 'none', flexDirection: 'column',
     maxWidth: '1400px', margin: '0 auto',
     background: 'radial-gradient(ellipse at center, rgba(3, 3, 5, 0.98) 0%, rgba(3, 3, 5, 0.85) 65%, rgba(3, 3, 5, 0.3) 85%, rgba(3, 3, 5, 0) 100%)',
-    backdropFilter: 'blur(20px)',
-    webkitBackdropFilter: 'blur(20px)',
     border: 'none',
     borderRadius: '0px',
     padding: 'clamp(10px, 1.8vh, 18px)',
@@ -1167,7 +1164,7 @@ export function initMainMenu() {
   Object.assign(backBtn.style, {
     cursor: 'pointer',
     border: 'none',
-    borderRadius: '50%',
+    borderRadius: '0px',
     width: '28px',
     height: '28px',
     display: 'flex',
@@ -1435,7 +1432,7 @@ function renderRightPanel() {
          height: '240px',
          background: '#08080c',
          border: '1px solid rgba(255, 69, 0, 0.4)',
-         borderRadius: '4px',
+         borderRadius: '0px',
          position: 'relative',
          overflow: 'hidden',
          marginBottom: '12px'
@@ -1537,7 +1534,7 @@ function renderRightPanel() {
         Object.assign(card.style, {
           background: isSelected ? 'rgba(255, 69, 0, 0.05)' : 'rgba(255, 255, 255, 0.01)',
           border: isSelected ? `1px solid ${DS.colors.accent}` : '1px solid rgba(255, 255, 255, 0.05)',
-          borderRadius: '4px',
+          borderRadius: '0px',
           padding: '6px 10px',
           cursor: 'pointer',
           position: 'relative',
@@ -1597,7 +1594,7 @@ function renderRightPanel() {
           fontWeight: 'bold',
           letterSpacing: '0.8px',
           padding: '2px 6px',
-          borderRadius: '2px',
+          borderRadius: '0px',
           background: isSelected ? 'rgba(255, 69, 0, 0.15)' : 'rgba(255, 255, 255, 0.03)',
           color: isSelected ? DS.colors.accent : 'rgba(255, 255, 255, 0.4)',
           border: isSelected ? `1px solid rgba(255, 69, 0, 0.3)` : 'none'
@@ -1621,7 +1618,7 @@ function renderRightPanel() {
       leftCol.appendChild(modesContainer);
       playDashboard.appendChild(leftCol);
 
-      // Column 2: Tactical Zone & Intelligence Preview
+      // Column 2: Zone & Intelligence Preview
       const centerCol = document.createElement('div');
       Object.assign(centerCol.style, {
         display: 'flex',
@@ -1647,7 +1644,7 @@ function renderRightPanel() {
       Object.assign(zoneCard.style, {
         background: 'rgba(255, 255, 255, 0.015)',
         border: '1px solid rgba(255, 255, 255, 0.05)',
-        borderRadius: '4px',
+        borderRadius: '0px',
         padding: '8px 10px',
         display: 'flex',
         flexDirection: 'column',
@@ -1659,12 +1656,12 @@ function renderRightPanel() {
 
       zoneCard.innerHTML = `
         <div style="display:flex; justify-content:space-between; align-items:center;">
-          <span style="font-family:${DS.typography.fontFamily}; font-size:10px; font-weight:bold; color:${DS.colors.text}; letter-spacing:0.8px;">FACILITY SECTOR 01</span>
+          <span style="font-family:${DS.typography.fontFamily}; font-size:10px; font-weight:bold; color:${DS.colors.text}; letter-spacing:0.8px;">${getDefaultMap().displayName.toUpperCase()}</span>
           <span style="font-family:${DS.typography.fontFamily}; font-size:7.5px; font-weight:bold; color:#00FF88; background:rgba(0,255,136,0.08); padding:1px 5px; border:1px solid rgba(0,255,136,0.2);">SECURE</span>
         </div>
 
-        <!-- Tactical Blueprint Map SVG Preview -->
-        <div style="width:100%; height:clamp(60px, 11vh, 90px); background:rgba(0,0,0,0.4); border:1px solid rgba(255,255,255,0.06); border-radius:3px; display:flex; align-items:center; justify-content:center; position:relative; overflow:hidden;">
+        <!-- Zone Blueprint Map SVG Preview -->
+        <div style="width:100%; height:clamp(60px, 11vh, 90px); background:rgba(0,0,0,0.4); border:1px solid rgba(255,255,255,0.06); border-radius:0px; display:flex; align-items:center; justify-content:center; position:relative; overflow:hidden;">
           <svg width="100%" height="100%" viewBox="0 0 200 120" preserveAspectRatio="xMidYMid meet">
             <rect width="200" height="120" fill="#050508"/>
             <path d="M20,20 L180,20 L180,100 L20,100 Z" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="1" stroke-dasharray="4 2"/>
@@ -1676,14 +1673,7 @@ function renderRightPanel() {
             <circle cx="65" cy="45" r="4" fill="#00F0FF"/>
             <circle cx="135" cy="75" r="4" fill="#00FF88"/>
           </svg>
-          <div style="position:absolute; bottom:4px; left:6px; font-family:${DS.typography.fontFamily}; font-size:6.5px; color:${DS.colors.textMuted}; letter-spacing:0.8px;">TACTICAL BLUEPRINT v2.1</div>
-        </div>
-
-        <div style="display:flex; flex-direction:column; gap:2px;">
-          <div style="font-family:${DS.typography.fontFamily}; font-size:7.5px; color:${DS.colors.textMuted}; font-weight:bold; letter-spacing:0.8px;">SECTOR THREAT LEVEL: CLASS-4</div>
-          <div style="font-family:${DS.typography.fontFamily}; font-size:8.5px; color:${DS.colors.text}; line-height:1.3;">
-            Industrial corridor facilities equipped with auto-turrets and high-frequency jammer zones.
-          </div>
+          <div style="position:absolute; bottom:4px; left:6px; font-family:${DS.typography.fontFamily}; font-size:6.5px; color:${DS.colors.textMuted}; letter-spacing:0.8px;">BLUEPRINT v2.1</div>
         </div>
       `;
       centerCol.appendChild(zoneCard);
@@ -1715,7 +1705,7 @@ function renderRightPanel() {
       Object.assign(paramsCard.style, {
         background: 'rgba(255, 255, 255, 0.015)',
         border: '1px solid rgba(255, 255, 255, 0.05)',
-        borderRadius: '4px',
+        borderRadius: '0px',
         padding: '8px 10px',
         display: 'flex',
         flexDirection: 'column',
@@ -2079,7 +2069,7 @@ function createUnifiedAuthOverlay(db: any, auth: any, defaultTab: 'GUEST' | 'AUT
     display: 'flex',
     flexDirection: 'column',
     gap: '12px',
-    borderRadius: '6px',
+    borderRadius: '0px',
     boxSizing: 'border-box'
   });
 
@@ -2381,7 +2371,7 @@ function createUnifiedAuthOverlay(db: any, auth: any, defaultTab: 'GUEST' | 'AUT
       Object.assign(googleBtn.style, {
         width: '100%', padding: '11px', background: '#FFFFFF', color: '#000000',
         fontFamily: DS.typography.fontFamily, fontSize: '12px', fontWeight: 'bold',
-        border: 'none', borderRadius: '2px', cursor: 'pointer', display: 'flex',
+        border: 'none', borderRadius: '0px', cursor: 'pointer', display: 'flex',
         alignItems: 'center', justifyContent: 'center'
       });
 
@@ -2653,7 +2643,7 @@ function openSquadFriendsModal() {
     display: 'flex',
     flexDirection: 'column',
     gap: '12px',
-    borderRadius: '6px',
+    borderRadius: '0px',
     position: 'relative',
     boxSizing: 'border-box'
   });
@@ -2829,7 +2819,7 @@ function openSquadFriendsModal() {
           const acceptBtn = document.createElement('div');
           acceptBtn.textContent = 'ACCEPT';
           Object.assign(acceptBtn.style, {
-            fontSize: '10px', fontWeight: 'bold', color: '#44ff44', cursor: 'pointer', padding: '2px 6px', border: '1px solid #44ff44', borderRadius: '2px'
+            fontSize: '10px', fontWeight: 'bold', color: '#44ff44', cursor: 'pointer', padding: '2px 6px', border: '1px solid #44ff44', borderRadius: '0px'
           });
           acceptBtn.onclick = async () => {
             import('../audio').then(({ audioManager }) => audioManager.play('click'));
@@ -2840,7 +2830,7 @@ function openSquadFriendsModal() {
           const declineBtn = document.createElement('div');
           declineBtn.textContent = 'DECLINE';
           Object.assign(declineBtn.style, {
-            fontSize: '10px', fontWeight: 'bold', color: '#ff4444', cursor: 'pointer', padding: '2px 6px', border: '1px solid #ff4444', borderRadius: '2px'
+            fontSize: '10px', fontWeight: 'bold', color: '#ff4444', cursor: 'pointer', padding: '2px 6px', border: '1px solid #ff4444', borderRadius: '0px'
           });
           declineBtn.onclick = async () => {
             import('../audio').then(({ audioManager }) => audioManager.play('click'));
@@ -2871,7 +2861,7 @@ function openSquadFriendsModal() {
           const acceptBtn = document.createElement('div');
           acceptBtn.textContent = 'JOIN LOBBY';
           Object.assign(acceptBtn.style, {
-            fontSize: '10px', fontWeight: 'bold', color: '#44ff44', cursor: 'pointer', padding: '2px 6px', border: '1px solid #44ff44', borderRadius: '2px'
+            fontSize: '10px', fontWeight: 'bold', color: '#44ff44', cursor: 'pointer', padding: '2px 6px', border: '1px solid #44ff44', borderRadius: '0px'
           });
           acceptBtn.onclick = async () => {
             import('../audio').then(({ audioManager }) => audioManager.play('click'));
@@ -2882,7 +2872,7 @@ function openSquadFriendsModal() {
           const declineBtn = document.createElement('div');
           declineBtn.textContent = 'DECLINE';
           Object.assign(declineBtn.style, {
-            fontSize: '10px', fontWeight: 'bold', color: '#ff4444', cursor: 'pointer', padding: '2px 6px', border: '1px solid #ff4444', borderRadius: '2px'
+            fontSize: '10px', fontWeight: 'bold', color: '#ff4444', cursor: 'pointer', padding: '2px 6px', border: '1px solid #ff4444', borderRadius: '0px'
           });
           declineBtn.onclick = async () => {
             import('../audio').then(({ audioManager }) => audioManager.play('click'));
