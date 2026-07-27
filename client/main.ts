@@ -28,6 +28,7 @@ import { initMainMenu } from "./screens/main-menu";
 import { initLobby } from "./screens/lobby";
 import { initMapViewerGlobally } from "./screens/map_viewer";
 import * as screenManager from "./screens/screen-manager";
+import { dynamicResolutionSystem } from "./src/systems/DynamicResolutionSystem";
 import { StudioPreviewManager } from "./StudioPreviewManager";
 import { audioManager } from "./audio";
 import { MapLoader } from "./src/map/MapLoader";
@@ -894,6 +895,7 @@ const animateFrame = async () => {
     if (renderer) {
       renderer.render(StudioPreviewManager.getStudioScene(), StudioPreviewManager.getStudioCamera());
     }
+    dynamicResolutionSystem.update(now);
     return;
   }
   (window as any).devSubsystems = (window as any).devSubsystems || { physics:0, droneInterp:0, vfx:0, minimap:0, weapons:0 };
@@ -1161,6 +1163,8 @@ const animateFrame = async () => {
 
     const logicTime = tLogicEnd - t0;
     const renderTime = tRenderEnd - tLogicEnd;
+
+    dynamicResolutionSystem.update(performance.now(), logicTime + renderTime);
 
     if (typeof (window as any).updateDevPerf === "function")
       (window as any).updateDevPerf(renderer, lastTime, performance.now(), logicTime, renderTime);

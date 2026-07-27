@@ -123,6 +123,7 @@ This file is the authoritative index of all directories and source files within 
         *   **`DiagnosisSystem.ts`**: Interactive debug box rendering, rendering coordinates, ping monitors, and tick metrics.
         *   **`DroneProcedural.ts`**: Drives local visual loops like rotor spins, wheel rolling, hover bob, and yaw/pitch tracking of turrets.
         *   **`DroneSystem.ts`**: Manages local models, instancing, and material updates for active drones.
+        *   **`DynamicResolutionSystem.ts`**: Manages automatic resolution scaling based on frame time performance budgets.
         *   **`HUDSystem.ts`**: Injects real-time status telemetry into the HTML HUD (HP, Ammo, score, and active hold progress).
         *   **`InputSystem.ts`**: Processes inputs, sets rotation values, and triggers the `InputSynchronizer` stream.
         *   **`MinimapSystem.ts`**: Manages the 2D visual radar map tracking captured zone boundaries and detected targets.
@@ -444,6 +445,15 @@ Every file change in the VEXEA codebase must follow this strict three-step proto
     *   `/firestore.rules`: Added security rule for `lobbyInvites/{invitedUid}/pending/{lobbyId}` allowing recipient to read/delete and inviter to create/delete.
     *   `/client/screens/lobby.ts`: Added 'INVITE FRIENDS' button to lobby bottom action row. Implemented `openLobbyInvitePopup()` showing friends list with 'INVITE' buttons. Added lobby cleanup on back button click and match launch.
 *   **Verification:** `lint_applet` passed cleanly, `compile_applet` completed with zero errors, rules deployed successfully.
+
+### Cycle 2026-07-26-01: Automatic Dynamic Resolution Scaling Subsystem
+*   **Target Files:** `/client/src/systems/DynamicResolutionSystem.ts`, `/client/settings.ts`, `/client/main.ts`, `/CODEBASE_INDEX.md`
+*   **Status:** Completed
+*   **Modifications:**
+    *   `/client/src/systems/DynamicResolutionSystem.ts`: Created new subsystem managing automatic pixel ratio scaling within DYNAMIC_RES_MIN (0.6) and DYNAMIC_RES_MAX (1.5) bounds. Evaluates frame times (>20ms for 3 consecutive frames triggers 0.1 step down; <14ms for 60 consecutive frames triggers 0.1 step up).
+    *   `/client/settings.ts`: Added `dynamicResolutionEnabled` setting (default true), added 'Automatic Scaling' UI toggle next to Pixel Ratio Scale control, greyed out manual radio buttons when active, and updated `applySettings` to yield pixel ratio control to automatic system when enabled.
+    *   `/client/main.ts`: Integrated `dynamicResolutionSystem.update()` into render frame loop.
+*   **Verification:** `lint_applet` passed cleanly, `compile_applet` completed with zero errors.
 
 
 
