@@ -158,6 +158,9 @@ Topological graph adjacency (Zones):
       });
 
       const calls = response.functionCalls;
+      if (calls && calls.length > 0) {
+        this.room.lastLLMToolCall = JSON.stringify(calls);
+      }
       const llmLatency = Date.now() - _llmStartTime;
       this.room.broadcastReliableEvent.bind(this.room)({
         type: "dev_llm_feed",

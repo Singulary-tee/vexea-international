@@ -44,7 +44,17 @@ import {
   GRENADE_RADIUS,
   GRENADE_FUSE_TIME,
   FLASHBANG_RADIUS,
-  FLASHBANG_DURATION
+  FLASHBANG_DURATION,
+  MEDKIT_HEAL_AMOUNT,
+  MEDKIT_TARGET_RADIUS,
+  REVIVE_HEALTH_RESTORED,
+  REVIVE_TARGET_RADIUS,
+  RADIO_MAX_CHARGES,
+  SIGNAL_DISRUPTOR_DURATION,
+  EMP_RADIUS,
+  EMP_DURATION,
+  C4_DAMAGE,
+  C4_RADIUS,
 } from "../shared/utilities";
 import { getMapById } from "../shared/maps/map-registry";
 import { ZoneRegistry } from "./map/ZoneRegistry";
@@ -127,6 +137,7 @@ export interface PlayerState {
   firedThisTick?: boolean;
   godMode?: boolean;
   infiniteAmmo?: boolean;
+  signalDisruptorUntil?: number;
 
   maxHp: number;
   isAlive: boolean;
@@ -210,6 +221,7 @@ export interface ServerCamera {
   hp: number;
   detectionRadius: number;
   cooldown: number;
+  disabledUntil?: number;
 }
 
 export interface ServerZoneState {
@@ -327,6 +339,8 @@ export class MatchRoom {
   public llmCommander: LLMCommander | null = null;
   public aiCommanderActive = false;
   public llmCommanderDisabled = false;
+  public lastLLMToolCall: string | null = null;
+  public activeC4Map: Map<string, { x: number; y: number; z: number }> = new Map();
 
   // Sockets pre-allocated pack write buffers
   private preallocatedBuffer = new ArrayBuffer(TOTAL_STATE_BUFFER_SIZE);
@@ -1893,9 +1907,12 @@ export class MatchRoom {
         }
       }
 
-      // Camera checks LOS
+      // Camera checks LOS (skip if camera disabled by EMP)
       for (let c = 0; c < this.cameras.length; c++) {
-        if (this.cameras[c].isActive) {
+        if (
+          this.cameras[c].isActive &&
+          (!this.cameras[c].disabledUntil || this.cameras[c].disabledUntil! <= nowMs)
+        ) {
           const dx = targetPlayer.posX - this.cameras[c].posX;
           const dy = targetPlayer.posY - this.cameras[c].posY;
           const dz = targetPlayer.posZ - this.cameras[c].posZ;
@@ -1947,9 +1964,18 @@ export class MatchRoom {
         }
       }
 
+      // Signal Disruptor suppresses detection & degrades zone presence to UNKNOWN
+      const isSignalDisrupted =
+        targetPlayer.signalDisruptorUntil && targetPlayer.signalDisruptorUntil > nowMs;
+      if (isSignalDisrupted) {
+        detectedZones.clear();
+      }
+
       for (const zoneId of ZONES_ARRAY) {
         const z = this.zoneSummary[zoneId];
-        if (detectedZones.has(zoneId)) {
+        if (isSignalDisrupted && zoneId === playerZone) {
+          z.playerPresence = "unknown";
+        } else if (detectedZones.has(zoneId)) {
           z.playerPresence = "confirmed";
           z.lastSeenTimestamp = nowMs;
         } else {
@@ -3435,13 +3461,158 @@ export class MatchRoom {
         }, 1.5 * 1000);
         break;
       }
-      case "Med Kit":
-      case "Revive Tool":
-      case "Radio":
-      case "Signal Disruptor":
-      case "EMP":
+      case "Med Kit": {
+        let targetPlayer = player;
+        let minDist = MEDKIT_TARGET_RADIUS;
+        for (const otherPlayer of this.players.values()) {
+          if (otherPlayer.id === player.id || !otherPlayer.isAlive) continue;
+          const dx = otherPlayer.posX - player.posX;
+          const dy = otherPlayer.posY - player.posY;
+          const dz = otherPlayer.posZ - player.posZ;
+          const dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
+          if (dist <= minDist) {
+            minDist = dist;
+            targetPlayer = otherPlayer;
+          }
+        }
+        const oldHp = targetPlayer.hp;
+        targetPlayer.hp = Math.min(PLAYER_MAX_HP, targetPlayer.hp + MEDKIT_HEAL_AMOUNT);
+        const actualHealed = targetPlayer.hp - oldHp;
+
+        targetPlayer.channel.emit("reliable_event", {
+          type: "PLAYER_HIT",
+          hp: targetPlayer.hp,
+          rawDamage: -actualHealed,
+        });
+
+        this.broadcastReliableEvent({
+          type: "UTILITY_EFFECT",
+          utilityId: "Med Kit",
+          playerId: player.id,
+          targetId: targetPlayer.id,
+          healedAmount: actualHealed,
+          newHp: targetPlayer.hp,
+        });
+        break;
+      }
+      case "Revive Tool": {
+        let targetDownedPlayer: PlayerState | null = null;
+        let minDist = REVIVE_TARGET_RADIUS;
+        for (const otherPlayer of this.players.values()) {
+          if (otherPlayer.id === player.id || otherPlayer.isAlive) continue;
+          const dx = otherPlayer.posX - player.posX;
+          const dy = otherPlayer.posY - player.posY;
+          const dz = otherPlayer.posZ - player.posZ;
+          const dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
+          if (dist <= minDist) {
+            minDist = dist;
+            targetDownedPlayer = otherPlayer;
+          }
+        }
+
+        if (targetDownedPlayer) {
+          targetDownedPlayer.isAlive = true;
+          targetDownedPlayer.isDead = false;
+          targetDownedPlayer.respawnTimer = 0;
+          targetDownedPlayer.hp = REVIVE_HEALTH_RESTORED;
+          player.stats.revivesPerformed += 1;
+
+          targetDownedPlayer.channel.emit("reliable_event", {
+            type: "PLAYER_REVIVED",
+            hp: targetDownedPlayer.hp,
+            revivedBy: player.id,
+          });
+
+          this.broadcastReliableEvent({
+            type: "UTILITY_EFFECT",
+            utilityId: "Revive Tool",
+            playerId: player.id,
+            targetId: targetDownedPlayer.id,
+            restoredHp: targetDownedPlayer.hp,
+          });
+        }
+        break;
+      }
+      case "Radio": {
+        uSlot.charges = RADIO_MAX_CHARGES;
+        const interceptedCall = this.lastLLMToolCall || "NO_RECENT_LLM_TRANSMISSIONS";
+        player.channel.emit("reliable_event", {
+          type: "RADIO_INTERCEPT",
+          data: interceptedCall,
+          timestamp: Date.now(),
+        });
+        this.broadcastReliableEvent({
+          type: "UTILITY_EFFECT",
+          utilityId: "Radio",
+          playerId: player.id,
+        });
+        break;
+      }
+      case "Signal Disruptor": {
+        player.signalDisruptorUntil = Date.now() + SIGNAL_DISRUPTOR_DURATION * 1000;
+        this.broadcastReliableEvent({
+          type: "UTILITY_EFFECT",
+          utilityId: "Signal Disruptor",
+          playerId: player.id,
+          duration: SIGNAL_DISRUPTOR_DURATION,
+        });
+        break;
+      }
+      case "EMP": {
+        const nowMs = Date.now();
+        let disabledCount = 0;
+        for (let c = 0; c < this.cameras.length; c++) {
+          const cam = this.cameras[c];
+          if (!cam.isActive) continue;
+          const dx = cam.posX - throwOrigin.x;
+          const dy = cam.posY - throwOrigin.y;
+          const dz = cam.posZ - throwOrigin.z;
+          const dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
+          if (dist <= EMP_RADIUS) {
+            cam.disabledUntil = nowMs + EMP_DURATION * 1000;
+            disabledCount++;
+          }
+        }
+        this.broadcastReliableEvent({
+          type: "UTILITY_EFFECT",
+          utilityId: "EMP",
+          playerId: player.id,
+          origin: throwOrigin,
+          radius: EMP_RADIUS,
+          duration: EMP_DURATION,
+          disabledCameras: disabledCount,
+        });
+        break;
+      }
       case "C4": {
-        // Pipeline architectural stub for remaining utilities - logic to be added in future update
+        const activeC4 = this.activeC4Map.get(player.id);
+        if (activeC4) {
+          this.activeC4Map.delete(player.id);
+          this.applyExplosionDamage(activeC4, C4_RADIUS, C4_DAMAGE, player.id, "player");
+          this.broadcastReliableEvent({
+            type: "UTILITY_EFFECT",
+            utilityId: "C4",
+            action: "detonate",
+            playerId: player.id,
+            origin: activeC4,
+            radius: C4_RADIUS,
+            damage: C4_DAMAGE,
+          });
+        } else {
+          const placePos = {
+            x: throwOrigin.x + dirX * 1.5,
+            y: throwOrigin.y,
+            z: throwOrigin.z + dirZ * 1.5,
+          };
+          this.activeC4Map.set(player.id, placePos);
+          this.broadcastReliableEvent({
+            type: "UTILITY_EFFECT",
+            utilityId: "C4",
+            action: "place",
+            playerId: player.id,
+            origin: placePos,
+          });
+        }
         break;
       }
     }
