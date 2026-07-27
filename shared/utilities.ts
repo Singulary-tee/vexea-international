@@ -9,6 +9,34 @@ export const FLASHBANG_MAX_CHARGES = 2; // 2 charges
 export const FLASHBANG_RADIUS = 8; // PLACEHOLDER - not specified in GAMEPLAY.md, needs playtesting
 export const FLASHBANG_DURATION = 3.5; // PLACEHOLDER - not specified in GAMEPLAY.md, needs playtesting
 
+export const MEDKIT_BASE_COOLDOWN = 45; // 45s base cooldown (GAMEMODE_CONFIG.md)
+export const MEDKIT_MAX_CHARGES = 1; // 1 charge per life
+export const MEDKIT_HEAL_AMOUNT = 50; // PLACEHOLDER - not specified in GAMEPLAY.md, needs playtesting
+export const MEDKIT_TARGET_RADIUS = 5.0; // PLACEHOLDER - not specified in GAMEPLAY.md, needs playtesting
+
+export const REVIVE_BASE_COOLDOWN = 60; // 60s base cooldown
+export const REVIVE_MAX_CHARGES = 1; // 1 charge per life
+export const REVIVE_CHANNEL_DURATION = 2.0; // PLACEHOLDER - not specified in GAMEPLAY.md, needs playtesting
+export const REVIVE_HEALTH_RESTORED = 50; // PLACEHOLDER - not specified in GAMEPLAY.md, needs playtesting
+export const REVIVE_TARGET_RADIUS = 5.0; // PLACEHOLDER - not specified in GAMEPLAY.md, needs playtesting
+
+export const RADIO_BASE_COOLDOWN = 15; // 15s base cooldown
+export const RADIO_MAX_CHARGES = 999; // Unlimited charges
+
+export const SIGNAL_DISRUPTOR_BASE_COOLDOWN = 90; // 90s base cooldown
+export const SIGNAL_DISRUPTOR_MAX_CHARGES = 1; // 1 charge per life
+export const SIGNAL_DISRUPTOR_DURATION = 10.0; // PLACEHOLDER - short duration, not specified in GAMEPLAY.md, needs playtesting
+
+export const EMP_BASE_COOLDOWN = 60; // 60s base cooldown
+export const EMP_MAX_CHARGES = 1; // 1 charge per life
+export const EMP_RADIUS = 15.0; // PLACEHOLDER - not specified in GAMEPLAY.md, needs playtesting
+export const EMP_DURATION = 12.0; // PLACEHOLDER - Duration TBD via playtesting (explicitly in GAMEPLAY.md)
+
+export const C4_BASE_COOLDOWN = 120; // 120s base cooldown
+export const C4_MAX_CHARGES = 1; // 1 charge per life
+export const C4_DAMAGE = 150; // PLACEHOLDER - high damage, not specified in GAMEPLAY.md, needs playtesting
+export const C4_RADIUS = 8.0; // PLACEHOLDER - area of effect, not specified in GAMEPLAY.md, needs playtesting
+
 export type UtilityId =
   | 'Grenade'
   | 'Flashbang'
@@ -53,54 +81,54 @@ export const UTILITIES: Record<UtilityId, UtilityDefinition> = {
     displayName: 'MED KIT',
     classId: 'MEDIC',
     slot: 'utility1',
-    baseCooldown: 20,
-    maxCharges: 1,
-    description: 'Deploys medical station to restore operative health.',
+    baseCooldown: MEDKIT_BASE_COOLDOWN,
+    maxCharges: MEDKIT_MAX_CHARGES,
+    description: 'Deploys medical supply to restore operative health.',
   },
   'Revive Tool': {
     id: 'Revive Tool',
     displayName: 'REVIVE TOOL',
     classId: 'MEDIC',
     slot: 'utility2',
-    baseCooldown: 40,
-    maxCharges: 1,
-    description: 'Defibrillator unit for instant field resuscitation.',
+    baseCooldown: REVIVE_BASE_COOLDOWN,
+    maxCharges: REVIVE_MAX_CHARGES,
+    description: 'Resuscitation unit for field emergency revival.',
   },
   'Radio': {
     id: 'Radio',
     displayName: 'RADIO',
     classId: 'RECON',
     slot: 'utility1',
-    baseCooldown: 30,
-    maxCharges: 1,
-    description: 'Tactical comms array to pinpoint enemy positions.',
+    baseCooldown: RADIO_BASE_COOLDOWN,
+    maxCharges: RADIO_MAX_CHARGES,
+    description: 'Comms array to intercept operational LLM transmissions.',
   },
   'Signal Disruptor': {
     id: 'Signal Disruptor',
     displayName: 'SIGNAL DISRUPTOR',
     classId: 'RECON',
     slot: 'utility2',
-    baseCooldown: 45,
-    maxCharges: 1,
-    description: 'Jammer device to obscure team location from drone sensors.',
+    baseCooldown: SIGNAL_DISRUPTOR_BASE_COOLDOWN,
+    maxCharges: SIGNAL_DISRUPTOR_MAX_CHARGES,
+    description: 'Jammer device to degrade team location reporting to unknown state.',
   },
   'EMP': {
     id: 'EMP',
     displayName: 'EMP',
     classId: 'DEMOLITIONS',
     slot: 'utility1',
-    baseCooldown: 35,
-    maxCharges: 1,
-    description: 'Electromagnetic pulse device disabling nearby drone electronics.',
+    baseCooldown: EMP_BASE_COOLDOWN,
+    maxCharges: EMP_MAX_CHARGES,
+    description: 'Electromagnetic pulse device disabling static cameras in radius.',
   },
   'C4': {
     id: 'C4',
     displayName: 'C4',
     classId: 'DEMOLITIONS',
     slot: 'utility2',
-    baseCooldown: 50,
-    maxCharges: 1,
-    description: 'Remote-detonated high explosive charge.',
+    baseCooldown: C4_BASE_COOLDOWN,
+    maxCharges: C4_MAX_CHARGES,
+    description: 'Remote-detonated explosive charge.',
   },
 };
 
