@@ -988,6 +988,18 @@ export class MatchRoom {
     }
   }
 
+  public triggerStartMatch(): void {
+    if (this.matchActive) return;
+    this.matchActive = true;
+    this.matchStartTime = Date.now();
+    this.startSimulationLoops();
+    this.broadcastReliableEvent({
+      type: "MATCH_START",
+      matchStartTime: this.matchStartTime,
+      duration: ACTIVE_GAMEMODE.matchDuration,
+    });
+  }
+
   private startSimulationLoops() {
     const PHYSICS_TICK_RATE = 60n;
     const PHYSICS_TIMESTEP = 1000000000n / PHYSICS_TICK_RATE;
