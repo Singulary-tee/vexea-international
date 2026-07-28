@@ -438,7 +438,10 @@ export class NetworkSyncSystem {
 
     if (msg.type === "MATCH_END") {
       if (typeof (window as any).removeMatchTab === "function") (window as any).removeMatchTab();
-      // Additional match end logic handled by main.ts or MatchController
+      if (document.exitPointerLock) document.exitPointerLock();
+      import("../../screens/screen-manager").then((sm) => {
+        sm.showPostMatch(msg);
+      });
     }
 
     if (msg.type === "UTILITY_STATE") {

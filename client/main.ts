@@ -26,6 +26,7 @@ import { initSplash } from "./screens/splash";
 import map1Spec from "../shared/maps/map_1_facility.spec.json";
 import { initMainMenu } from "./screens/main-menu";
 import { initLobby } from "./screens/lobby";
+import { initPostMatch } from "./screens/post-match-screen";
 import { initMapViewerGlobally } from "./screens/map_viewer";
 import * as screenManager from "./screens/screen-manager";
 import { dynamicResolutionSystem } from "./src/systems/DynamicResolutionSystem";
@@ -568,6 +569,7 @@ const initClient = async () => {
 
   initMainMenu();
   initLobby();
+  initPostMatch();
   // initDevEntities(); deferred until activation
 
   // 2. Setup Three.js Stage Pipeline
