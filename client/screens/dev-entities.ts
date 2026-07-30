@@ -2054,7 +2054,7 @@ async function loadActiveGLB() {
         modelGroup = loadedGLBsCache.get(urlName)!.clone();
     } else {
         try {
-            const assetUrl = await getAssetUrl(urlName);
+            const assetUrl = await getCachedOrFetchUrl(urlName, "Asset");
             console.log(`[DevEntities] Sourcing GLB: ${urlName} from ${assetUrl}`);
             const gltf = await loader.loadAsync(assetUrl);
             
@@ -2189,28 +2189,38 @@ async function loadActiveGLB() {
     }
 
     if (modelGroup) {
-        // Compute normalization scale factor based on the bounding sphere of the body mesh (the same way the match is doing it)
+        // Compute normalization scale factor based on the overall bounding sphere of the model
         let scaleFactor = 1.0;
         const targetRadius = DRONE_CONFIGS[schema.type]?.visualRadius ?? 1.0;
         
-        const meshes: THREE.Mesh[] = [];
-        modelGroup.traverse((node: any) => {
-            if (node.isMesh && node.geometry) {
-                meshes.push(node as THREE.Mesh);
+        try {
+            const meshes: THREE.Mesh[] = [];
+            modelGroup.traverse((node: any) => {
+                if (node && node.isMesh && node.geometry) {
+                    meshes.push(node as THREE.Mesh);
+                }
+            });
+            
+            if (meshes.length > 0) {
+                // Look for an explicitly named body mesh or fallback to total bounding box of modelGroup
+                const bodyMesh = meshes.find(m => m.name && (m.name.toLowerCase().includes('body') || m.name.toLowerCase().includes('chassis') || m.name.toLowerCase().includes('torso')));
+                const bboxObj = bodyMesh || modelGroup;
+                const box = new THREE.Box3().setFromObject(bboxObj);
+                if (!box.isEmpty()) {
+                    const sphere = new THREE.Sphere();
+                    box.getBoundingSphere(sphere);
+                    const currentRadius = sphere.radius;
+                    if (typeof currentRadius === 'number' && isFinite(currentRadius) && currentRadius > 0.0001) {
+                        scaleFactor = targetRadius / currentRadius;
+                    }
+                }
             }
-        });
-        
-        let bodyMesh = meshes.find(m => m.name === 'body' || m.name.toLowerCase().includes('body')) || meshes[0];
-        if (bodyMesh && bodyMesh.geometry) {
-            if (!bodyMesh.geometry.boundingBox) {
-                bodyMesh.geometry.computeBoundingBox();
-            }
-            const sphere = new THREE.Sphere();
-            if (bodyMesh.geometry.boundingBox) {
-                bodyMesh.geometry.boundingBox.getBoundingSphere(sphere);
-            }
-            const currentRadius = sphere.radius || 1.0;
-            scaleFactor = targetRadius / currentRadius;
+        } catch (err) {
+            console.warn("[DevEntities] Scaling computation warning:", err);
+        }
+
+        if (typeof scaleFactor !== 'number' || !isFinite(scaleFactor) || scaleFactor <= 0) {
+            scaleFactor = 1.0;
         }
         
         modelGroup.scale.set(scaleFactor, scaleFactor, scaleFactor);
@@ -2223,13 +2233,17 @@ async function loadActiveGLB() {
         // Bake pivots and base matrices onto each node's userData of the active instance to prevent GC re-allocation in tickLoop
         const invModelWorld = modelGroup.matrixWorld.clone().invert();
         modelGroup.traverse((child: any) => {
-            child.userData.baseLocalMatrix = child.matrix.clone();
+            if (!child) return;
+            child.userData = child.userData || {};
+            child.userData.baseLocalMatrix = child.matrix ? child.matrix.clone() : new THREE.Matrix4();
             
             let pivot = new THREE.Vector3();
-            const b = new THREE.Box3().setFromObject(child);
-            if (!b.isEmpty()) {
-                b.getCenter(pivot);
-            }
+            try {
+                const b = new THREE.Box3().setFromObject(child);
+                if (!b.isEmpty()) {
+                    b.getCenter(pivot);
+                }
+            } catch (err) {}
             
             const modelPivot = pivot.clone();
             modelPivot.applyMatrix4(invModelWorld);
@@ -2242,7 +2256,7 @@ async function loadActiveGLB() {
                 localPivot.applyMatrix4(invWorld);
             }
 
-            const parentNameLower = child.parent && child.parent !== modelGroup ? child.parent.name.toLowerCase() : '';
+            const parentNameLower = child.parent && child.parent !== modelGroup && child.parent.name ? child.parent.name.toLowerCase() : '';
             const isPropellerMesh = child.isMesh && (parentNameLower.includes('prop') && parentNameLower !== 'prop');
             if (isPropellerMesh) {
                 const config = DRONE_CONFIGS[schema.type];
@@ -3675,7 +3689,7 @@ async function loadPlayerCalibrationScene() {
 
     const loader = createConfiguredGLTFLoader();
     try {
-        const url = await getAssetUrl('Player_one-optimized.glb');
+        const url = await getCachedOrFetchUrl('Player_one-optimized.glb', 'Asset');
         console.log(`[DevEntities] Sourcing Player GLB: ${url}`);
         const gltf = await loader.loadAsync(url);
         if (gltf && gltf.scene) {
