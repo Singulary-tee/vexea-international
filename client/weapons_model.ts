@@ -1,7 +1,7 @@
 import * as THREE from "three/webgpu";
 import { DETAILED_WEAPONS } from "../shared/weapons";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
-import { getCachedOrFetchUrl } from "./asset-cache";
+import { getCachedOrFetchUrl, createConfiguredGLTFLoader } from "./asset-cache";
 import { CAMERA_EFFECTS_CONFIG } from "./src/camera/constants";
 import { getMatch } from "./MatchController";
 
@@ -109,7 +109,7 @@ export async function initPlayerWeapons(scene: THREE.Scene, camera: THREE.Camera
   pistolGroup.visible = false;
   weaponsContainer.add(pistolGroup);
 
-  const loader = new GLTFLoader();
+  const loader = createConfiguredGLTFLoader();
 
   // Load SMG (Rifle slot)
   const loadRiflePromise = (async () => {

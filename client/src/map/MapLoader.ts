@@ -4,7 +4,7 @@ import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
 import { HDRLoader } from 'three/examples/jsm/loaders/HDRLoader.js';
 import * as BufferGeometryUtils from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { MapRegistryEntry } from '../../../shared/maps/map-registry';
-import { getCachedOrFetchUrl, blobUrlMap } from '../../asset-cache';
+import { getCachedOrFetchUrl, blobUrlMap, createConfiguredGLTFLoader } from '../../asset-cache';
 import { texture, uv, normalMap, uniform, parallaxUV } from 'three/tsl';
 import { getSettings } from '../../settings';
 import { DS } from '../../design-system';
@@ -68,10 +68,7 @@ export class MapLoader {
       return url;
     });
 
-    const loader = new GLTFLoader(manager);
-    const dracoLoader = new DRACOLoader();
-    dracoLoader.setDecoderPath('/draco/');
-    loader.setDRACOLoader(dracoLoader);
+    const loader = createConfiguredGLTFLoader(manager);
 
     let loaded = 0;
     const total = uniqueMeshes.size;

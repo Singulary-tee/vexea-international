@@ -34,7 +34,7 @@ import { StudioPreviewManager } from "./StudioPreviewManager";
 import { audioManager } from "./audio";
 import { MapLoader } from "./src/map/MapLoader";
 import { getMapById } from "../shared/maps/map-registry";
-import { getAssetUrl } from "./asset-cache";
+import { getAssetUrl, createConfiguredGLTFLoader } from "./asset-cache";
 import { inputManager, InputAction } from "./input";
 import { GlobalState } from "./state";
 import { keys, tempInputBuffer, tempInputView, incrementInputSequence } from "./src/input/InputSynchronizer";
@@ -412,7 +412,7 @@ const initClient = async () => {
 
     (window as any)._serverMatchReady = false;
 
-    const gltfLoader = new GLTFLoader();
+    const gltfLoader = createConfiguredGLTFLoader();
     gltfLoader.load(getAssetUrl('Player_one-optimized.glb'), (gltf) => {
       riflemanModel = gltf.scene;
       riflemanModel.traverse((child) => {

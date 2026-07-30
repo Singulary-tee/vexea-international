@@ -6,6 +6,10 @@
  * preloading, holding them as blobs to avoid cross-origin and memory leak overheads.
  */
 
+import * as THREE from "three";
+import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+import { DRACOLoader } from "three/addons/loaders/DRACOLoader.js";
+import { KTX2Loader } from "three/addons/loaders/KTX2Loader.js";
 import { getSettings } from "./settings";
 import { DS } from "./design-system";
 
@@ -606,4 +610,26 @@ export async function ensureAssetsDownloaded(onComplete: () => void, mapId: stri
   dialog.appendChild(btnWrap);
   modal.appendChild(dialog);
   document.body.appendChild(modal);
+}
+
+/**
+ * Factory function to create a fully configured GLTFLoader instance with Draco
+ * and KTX2 transcoder support attached.
+ */
+export function createConfiguredGLTFLoader(manager?: THREE.LoadingManager, rendererInstance?: any): GLTFLoader {
+  const loader = new GLTFLoader(manager);
+
+  const dracoLoader = new DRACOLoader();
+  dracoLoader.setDecoderPath('/draco/gltf/');
+  loader.setDRACOLoader(dracoLoader);
+
+  const ktx2Loader = new KTX2Loader();
+  ktx2Loader.setTranscoderPath('/basis/');
+  const activeRenderer = rendererInstance || (typeof window !== 'undefined' ? (window as any).renderer : null);
+  if (activeRenderer) {
+    ktx2Loader.detectSupport(activeRenderer);
+  }
+  loader.setKTX2Loader(ktx2Loader);
+
+  return loader;
 }

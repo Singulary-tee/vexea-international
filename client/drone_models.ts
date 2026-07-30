@@ -1,7 +1,7 @@
 import * as THREE from "three/webgpu";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { DS } from "./design-system";
-import { getCachedOrFetchUrl } from "./asset-cache";
+import { getCachedOrFetchUrl, createConfiguredGLTFLoader } from "./asset-cache";
 import * as SkeletonUtils from "three/addons/utils/SkeletonUtils.js";
 import { DRONE_CONFIGS, DroneType } from "../shared/constants";
 
@@ -37,7 +37,7 @@ export async function initDroneModels(scene: THREE.Scene): Promise<void> {
           getCachedOrFetchUrl(urlName, "Asset"),
           new Promise<string>((_, reject) => setTimeout(() => reject(new Error("Timeout caching " + urlName)), 2000))
       ]);
-      const loader = new GLTFLoader();
+      const loader = createConfiguredGLTFLoader();
       const gltf = await Promise.race([
           loader.loadAsync(url),
           new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout loading " + urlName)), 2000))

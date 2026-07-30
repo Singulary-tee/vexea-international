@@ -1,6 +1,6 @@
 import * as THREE from "three/webgpu";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
-import { getAssetUrl, getCachedOrFetchUrl } from "../asset-cache";
+import { getAssetUrl, getCachedOrFetchUrl, createConfiguredGLTFLoader } from "../asset-cache";
 import * as screenManager from "./screen-manager";
 import { DS } from "../design-system";
 import { audioManager } from "../audio";
@@ -2046,7 +2046,7 @@ async function loadActiveGLB() {
     if (!schema) return;
 
     const urlName = schema.glbUrl;
-    const loader = new GLTFLoader();
+    const loader = createConfiguredGLTFLoader();
     
     let modelGroup: THREE.Group | null = null;
 
@@ -3673,7 +3673,7 @@ async function loadPlayerCalibrationScene() {
     playerModelMesh.name = "PlayerModelGroup";
     scene.add(playerModelMesh);
 
-    const loader = new GLTFLoader();
+    const loader = createConfiguredGLTFLoader();
     try {
         const url = await getAssetUrl('Player_one-optimized.glb');
         console.log(`[DevEntities] Sourcing Player GLB: ${url}`);
