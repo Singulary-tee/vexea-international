@@ -413,7 +413,7 @@ const initClient = async () => {
     (window as any)._serverMatchReady = false;
 
     const gltfLoader = new GLTFLoader();
-    gltfLoader.load(getAssetUrl('bpre_rifleman.glb'), (gltf) => {
+    gltfLoader.load(getAssetUrl('Player_one-optimized.glb'), (gltf) => {
       riflemanModel = gltf.scene;
       riflemanModel.traverse((child) => {
         if ((child as any).isMesh) {

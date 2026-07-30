@@ -90,6 +90,48 @@
       "category": "Image",
       "source": "CloudflareR2",
       "path": "Images/promotional/promo_shotgun_1.webp"
+    },
+    {
+      "name": "Player_one-optimized.glb",
+      "category": "Asset",
+      "source": "CloudflareR2",
+      "path": "Models/Entities/Player_one-optimized.glb"
+    },
+    {
+      "name": "humanoid-optimized.glb",
+      "category": "Asset",
+      "source": "CloudflareR2",
+      "path": "Models/Entities/humanoid-optimized.glb"
+    },
+    {
+      "name": "quadcopter_bmb-optimized.glb",
+      "category": "Asset",
+      "source": "CloudflareR2",
+      "path": "Models/Entities/quadcopter_bmb-optimized.glb"
+    },
+    {
+      "name": "quadcopter_cam-optimized.glb",
+      "category": "Asset",
+      "source": "CloudflareR2",
+      "path": "Models/Entities/quadcopter_cam-optimized.glb"
+    },
+    {
+      "name": "quadcopter_rifle-optimized.glb",
+      "category": "Asset",
+      "source": "CloudflareR2",
+      "path": "Models/Entities/quadcopter_rifle-optimized.glb"
+    },
+    {
+      "name": "uav-optimized.glb",
+      "category": "Asset",
+      "source": "CloudflareR2",
+      "path": "Models/Entities/uav-optimized.glb"
+    },
+    {
+      "name": "ugv-optimized.glb",
+      "category": "Asset",
+      "source": "CloudflareR2",
+      "path": "Models/Entities/ugv-optimized.glb"
     }
   ],
   "sounds": [

@@ -20,4 +20,11 @@
 | `leaderboard_card_1.jpg` | Image | `Images/Cards/leaderboard_card_1.jpg` |
 | `squad_card_1.jpg` | Image | `Images/Cards/squad_card_1.jpg` |
 | `promo_rifle_1.jpg` | Image | `Images/promotional/promo_rifle_1.jpg` |
+| `Player_one-optimized.glb` | Asset | `Models/Entities/Player_one-optimized.glb` |
+| `humanoid-optimized.glb` | Asset | `Models/Entities/humanoid-optimized.glb` |
+| `quadcopter_bmb-optimized.glb` | Asset | `Models/Entities/quadcopter_bmb-optimized.glb` |
+| `quadcopter_cam-optimized.glb` | Asset | `Models/Entities/quadcopter_cam-optimized.glb` |
+| `quadcopter_rifle-optimized.glb` | Asset | `Models/Entities/quadcopter_rifle-optimized.glb` |
+| `uav-optimized.glb` | Asset | `Models/Entities/uav-optimized.glb` |
+| `ugv-optimized.glb` | Asset | `Models/Entities/ugv-optimized.glb` |
 

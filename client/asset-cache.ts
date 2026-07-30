@@ -224,13 +224,14 @@ export async function populateBlobUrlMap(): Promise<void> {
  */
 export const MAP_1_ASSETS = [
   "grenade.glb",
-  "bpre_rifleman.glb",
+  "Player_one-optimized.glb",
+  "humanoid-optimized.glb",
   "concrete_fence_low-poly.glb",
-  "quadcopter_rifle.glb",
-  "quadcopter_bomb.glb",
-  "wheeled_drone.glb",
-  "fixed_wing_drone.glb",
-  "quadcopter_camera.glb",
+  "quadcopter_rifle-optimized.glb",
+  "quadcopter_bmb-optimized.glb",
+  "ugv-optimized.glb",
+  "uav-optimized.glb",
+  "quadcopter_cam-optimized.glb",
   "security_camera_01_1k.gltf.glb",
   "security_camera_02_1k.gltf.glb",
   "concrete_block_low_poly.glb",
@@ -378,7 +379,14 @@ export async function getCachedOrFetchUrl(
       "update_card_1.webp": "Images/Cards/update_card_1.webp",
       "promo_rifle_1.webp": "Images/promotional/promo_rifle_1.webp",
       "promo_pistol_1.webp": "Images/promotional/promo_pistol_1.webp",
-      "promo_shotgun_1.webp": "Images/promotional/promo_shotgun_1.webp"
+      "promo_shotgun_1.webp": "Images/promotional/promo_shotgun_1.webp",
+      "Player_one-optimized.glb": "Models/Entities/Player_one-optimized.glb",
+      "humanoid-optimized.glb": "Models/Entities/humanoid-optimized.glb",
+      "quadcopter_bmb-optimized.glb": "Models/Entities/quadcopter_bmb-optimized.glb",
+      "quadcopter_cam-optimized.glb": "Models/Entities/quadcopter_cam-optimized.glb",
+      "quadcopter_rifle-optimized.glb": "Models/Entities/quadcopter_rifle-optimized.glb",
+      "uav-optimized.glb": "Models/Entities/uav-optimized.glb",
+      "ugv-optimized.glb": "Models/Entities/ugv-optimized.glb"
     };
 
     let downloadUrl = "";

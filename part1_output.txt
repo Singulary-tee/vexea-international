@@ -1,0 +1,320 @@
+
+==================================================
+ASSET: Player character model (Player_one-optimized.glb)
+==================================================
+Materials count: 2
+Textures count: 5
+Images count: 5
+
+Animations:
+  [0] "Fullreos_RESET" (time range: 0s to 0.0000s)
+  [1] "Fullreos_rig_rig_jump_end" (time range: 0s to 0.6333s)
+  [2] "Fullreos_rig_rig_jump_fall" (time range: 0s to 1.0333s)
+  [3] "Fullreos_rig_rig_jump_start" (time range: 0s to 0.3333s)
+  [4] "Fullreos_rig_rig_run" (time range: 0s to 0.5000s)
+  [5] "Fullreos_rig_rig_walk" (time range: 0s to 1.0333s)
+  [6] "Fullreos_rig|rig|idle" (time range: 0s to 5.4000s)
+  [7] "Fullreos_rig|rig|jump" (time range: 0s to 0.9333s)
+
+Node Hierarchy & Bounding Boxes:
+  Node [0] "Aphase1basebody_idle" (depth: 0, parent: "ROOT" [root])
+    Node [1] "rig" (depth: 1, parent: "Aphase1basebody_idle" [0])
+      Node [2] "root" (depth: 2, parent: "rig" [1])
+        Node [3] "body" (depth: 3, parent: "root" [2])
+          Node [4] "body_top0" (depth: 4, parent: "body" [3])
+            Node [5] "body_top1" (depth: 5, parent: "body_top0" [4])
+              Node [6] "body_top2" (depth: 6, parent: "body_top1" [5])
+                Node [7] "shoulder_right" (depth: 7, parent: "body_top2" [6])
+                  Node [8] "arm_right_top" (depth: 8, parent: "shoulder_right" [7])
+                    Node [9] "arm_right_bot" (depth: 9, parent: "arm_right_top" [8])
+                      Node [10] "arm_right_hand" (depth: 10, parent: "arm_right_bot" [9])
+                        Node [11] "ring_right0" (depth: 11, parent: "arm_right_hand" [10])
+                          Node [12] "ring_right1" (depth: 12, parent: "ring_right0" [11])
+                            Node [13] "ring_right2" (depth: 13, parent: "ring_right1" [12])
+                              Node [14] "ring_right3" (depth: 14, parent: "ring_right2" [13])
+                        Node [15] "index_right0" (depth: 11, parent: "arm_right_hand" [10])
+                          Node [16] "index_right1" (depth: 12, parent: "index_right0" [15])
+                            Node [17] "index_right2" (depth: 13, parent: "index_right1" [16])
+                              Node [18] "index_right3" (depth: 14, parent: "index_right2" [17])
+                        Node [19] "thumb_right0" (depth: 11, parent: "arm_right_hand" [10])
+                          Node [20] "thumb_right1" (depth: 12, parent: "thumb_right0" [19])
+                            Node [21] "thumb_right2" (depth: 13, parent: "thumb_right1" [20])
+                              Node [22] "thumb_right3" (depth: 14, parent: "thumb_right2" [21])
+                        Node [23] "middle_right0" (depth: 11, parent: "arm_right_hand" [10])
+                          Node [24] "middle_right1" (depth: 12, parent: "middle_right0" [23])
+                            Node [25] "middle_right2" (depth: 13, parent: "middle_right1" [24])
+                              Node [26] "middle_right3" (depth: 14, parent: "middle_right2" [25])
+                Node [27] "neck" (depth: 7, parent: "body_top2" [6])
+                  Node [28] "head" (depth: 8, parent: "neck" [27])
+                Node [29] "shoulder_left" (depth: 7, parent: "body_top2" [6])
+                  Node [30] "arm_left_top" (depth: 8, parent: "shoulder_left" [29])
+                    Node [31] "arm_left_bot" (depth: 9, parent: "arm_left_top" [30])
+                      Node [32] "arm_left_hand" (depth: 10, parent: "arm_left_bot" [31])
+                        Node [33] "ring_left0" (depth: 11, parent: "arm_left_hand" [32])
+                          Node [34] "ring_left1" (depth: 12, parent: "ring_left0" [33])
+                            Node [35] "ring_left2" (depth: 13, parent: "ring_left1" [34])
+                              Node [36] "ring_left3" (depth: 14, parent: "ring_left2" [35])
+                        Node [37] "index_left0" (depth: 11, parent: "arm_left_hand" [32])
+                          Node [38] "index_left1" (depth: 12, parent: "index_left0" [37])
+                            Node [39] "index_left2" (depth: 13, parent: "index_left1" [38])
+                              Node [40] "index_left3" (depth: 14, parent: "index_left2" [39])
+                        Node [41] "thumb_left0" (depth: 11, parent: "arm_left_hand" [32])
+                          Node [42] "thumb_left1" (depth: 12, parent: "thumb_left0" [41])
+                            Node [43] "thumb_left2" (depth: 13, parent: "thumb_left1" [42])
+                              Node [44] "thumb_left3" (depth: 14, parent: "thumb_left2" [43])
+                        Node [45] "middle_left0" (depth: 11, parent: "arm_left_hand" [32])
+                          Node [46] "middle_left1" (depth: 12, parent: "middle_left0" [45])
+                            Node [47] "middle_left2" (depth: 13, parent: "middle_left1" [46])
+                              Node [48] "middle_left3" (depth: 14, parent: "middle_left2" [47])
+                        Node [49] "little_left0" (depth: 11, parent: "arm_left_hand" [32])
+                          Node [50] "little_left1" (depth: 12, parent: "little_left0" [49])
+                            Node [51] "little_left2" (depth: 13, parent: "little_left1" [50])
+                              Node [52] "little_left3" (depth: 14, parent: "little_left2" [51])
+          Node [53] "leg_right_top" (depth: 4, parent: "body" [3])
+            Node [54] "leg_right_bot" (depth: 5, parent: "leg_right_top" [53])
+              Node [55] "leg_right_foot" (depth: 6, parent: "leg_right_bot" [54])
+          Node [56] "leg_left_top" (depth: 4, parent: "body" [3])
+            Node [57] "leg_left_bot" (depth: 5, parent: "leg_left_top" [56])
+              Node [58] "leg_left_foot" (depth: 6, parent: "leg_left_bot" [57])
+      Node [59] "Aphase1basebody" (depth: 2, parent: "rig" [1]) [MESH index=0 name="Aphase1basebody_idle_Aphase1basebody"]
+         -> Bounding Box: min:[-34.6099, -34.7952, -9.5626] max:[34.6099, 34.7952, 9.5626] size:[69.2199, 69.5905, 19.1252]
+
+==================================================
+ASSET: Humanoid Drone (humanoid-optimized.glb)
+==================================================
+Materials count: 1
+Textures count: 3
+Images count: 3
+
+Animations:
+  [0] "Animation" (time range: 0s to 1.0667s)
+  [1] "RESET" (time range: 0s to 0.0000s)
+
+Node Hierarchy & Bounding Boxes:
+  Node [0] "humanoid" (depth: 0, parent: "ROOT" [root])
+    Node [1] "Armature" (depth: 1, parent: "humanoid" [0])
+      Node [2] "mixamorig_Hips" (depth: 2, parent: "Armature" [1])
+        Node [3] "mixamorig_Spine" (depth: 3, parent: "mixamorig_Hips" [2])
+          Node [4] "mixamorig_Spine1" (depth: 4, parent: "mixamorig_Spine" [3])
+            Node [5] "mixamorig_Spine2" (depth: 5, parent: "mixamorig_Spine1" [4])
+              Node [6] "mixamorig_Neck" (depth: 6, parent: "mixamorig_Spine2" [5])
+                Node [7] "mixamorig_Head" (depth: 7, parent: "mixamorig_Neck" [6])
+              Node [8] "mixamorig_LeftShoulder" (depth: 6, parent: "mixamorig_Spine2" [5])
+                Node [9] "mixamorig_LeftArm" (depth: 7, parent: "mixamorig_LeftShoulder" [8])
+                  Node [10] "mixamorig_LeftForeArm" (depth: 8, parent: "mixamorig_LeftArm" [9])
+                    Node [11] "mixamorig_LeftHand" (depth: 9, parent: "mixamorig_LeftForeArm" [10])
+                      Node [12] "mixamorig_LeftHandThumb1" (depth: 10, parent: "mixamorig_LeftHand" [11])
+                        Node [13] "mixamorig_LeftHandThumb2" (depth: 11, parent: "mixamorig_LeftHandThumb1" [12])
+                          Node [14] "mixamorig_LeftHandThumb3" (depth: 12, parent: "mixamorig_LeftHandThumb2" [13])
+                      Node [15] "mixamorig_LeftHandIndex1" (depth: 10, parent: "mixamorig_LeftHand" [11])
+                        Node [16] "mixamorig_LeftHandIndex2" (depth: 11, parent: "mixamorig_LeftHandIndex1" [15])
+                          Node [17] "mixamorig_LeftHandIndex3" (depth: 12, parent: "mixamorig_LeftHandIndex2" [16])
+                      Node [18] "mixamorig_LeftHandMiddle1" (depth: 10, parent: "mixamorig_LeftHand" [11])
+                        Node [19] "mixamorig_LeftHandMiddle2" (depth: 11, parent: "mixamorig_LeftHandMiddle1" [18])
+                          Node [20] "mixamorig_LeftHandMiddle3" (depth: 12, parent: "mixamorig_LeftHandMiddle2" [19])
+                      Node [21] "mixamorig_LeftHandRing1" (depth: 10, parent: "mixamorig_LeftHand" [11])
+                        Node [22] "mixamorig_LeftHandRing2" (depth: 11, parent: "mixamorig_LeftHandRing1" [21])
+                          Node [23] "mixamorig_LeftHandRing3" (depth: 12, parent: "mixamorig_LeftHandRing2" [22])
+                      Node [24] "mixamorig_LeftHandPinky1" (depth: 10, parent: "mixamorig_LeftHand" [11])
+                        Node [25] "mixamorig_LeftHandPinky2" (depth: 11, parent: "mixamorig_LeftHandPinky1" [24])
+                          Node [26] "mixamorig_LeftHandPinky3" (depth: 12, parent: "mixamorig_LeftHandPinky2" [25])
+              Node [27] "mixamorig_RightShoulder" (depth: 6, parent: "mixamorig_Spine2" [5])
+                Node [28] "mixamorig_RightArm" (depth: 7, parent: "mixamorig_RightShoulder" [27])
+                  Node [29] "mixamorig_RightForeArm" (depth: 8, parent: "mixamorig_RightArm" [28])
+                    Node [30] "mixamorig_RightHand" (depth: 9, parent: "mixamorig_RightForeArm" [29])
+                      Node [31] "mixamorig_RightHandThumb1" (depth: 10, parent: "mixamorig_RightHand" [30])
+                        Node [32] "mixamorig_RightHandThumb2" (depth: 11, parent: "mixamorig_RightHandThumb1" [31])
+                          Node [33] "mixamorig_RightHandThumb3" (depth: 12, parent: "mixamorig_RightHandThumb2" [32])
+                      Node [34] "mixamorig_RightHandIndex1" (depth: 10, parent: "mixamorig_RightHand" [30])
+                        Node [35] "mixamorig_RightHandIndex2" (depth: 11, parent: "mixamorig_RightHandIndex1" [34])
+                          Node [36] "mixamorig_RightHandIndex3" (depth: 12, parent: "mixamorig_RightHandIndex2" [35])
+                      Node [37] "mixamorig_RightHandMiddle1" (depth: 10, parent: "mixamorig_RightHand" [30])
+                        Node [38] "mixamorig_RightHandMiddle2" (depth: 11, parent: "mixamorig_RightHandMiddle1" [37])
+                          Node [39] "mixamorig_RightHandMiddle3" (depth: 12, parent: "mixamorig_RightHandMiddle2" [38])
+                      Node [40] "mixamorig_RightHandRing1" (depth: 10, parent: "mixamorig_RightHand" [30])
+                        Node [41] "mixamorig_RightHandRing2" (depth: 11, parent: "mixamorig_RightHandRing1" [40])
+                          Node [42] "mixamorig_RightHandRing3" (depth: 12, parent: "mixamorig_RightHandRing2" [41])
+                      Node [43] "mixamorig_RightHandPinky1" (depth: 10, parent: "mixamorig_RightHand" [30])
+                        Node [44] "mixamorig_RightHandPinky2" (depth: 11, parent: "mixamorig_RightHandPinky1" [43])
+                          Node [45] "mixamorig_RightHandPinky3" (depth: 12, parent: "mixamorig_RightHandPinky2" [44])
+        Node [46] "mixamorig_LeftUpLeg" (depth: 3, parent: "mixamorig_Hips" [2])
+          Node [47] "mixamorig_LeftLeg" (depth: 4, parent: "mixamorig_LeftUpLeg" [46])
+            Node [48] "mixamorig_LeftFoot" (depth: 5, parent: "mixamorig_LeftLeg" [47])
+              Node [49] "mixamorig_LeftToeBase" (depth: 6, parent: "mixamorig_LeftFoot" [48])
+        Node [50] "mixamorig_RightUpLeg" (depth: 3, parent: "mixamorig_Hips" [2])
+          Node [51] "mixamorig_RightLeg" (depth: 4, parent: "mixamorig_RightUpLeg" [50])
+            Node [52] "mixamorig_RightFoot" (depth: 5, parent: "mixamorig_RightLeg" [51])
+              Node [53] "mixamorig_RightToeBase" (depth: 6, parent: "mixamorig_RightFoot" [52])
+      Node [54] "mesh" (depth: 2, parent: "Armature" [1]) [MESH index=0 name="cEsXQckEQVWg-mbDmWDdNTYz2_mesh"]
+         -> Bounding Box: min:[-0.9998, -1.1613, -0.205] max:[0.9998, 0.8723, 0.2343] size:[1.9996, 2.0336, 0.4394]
+
+==================================================
+ASSET: Bomber Drone (quadcopter_bmb-optimized.glb)
+==================================================
+Materials count: 1
+Textures count: 3
+Images count: 3
+
+Animations:
+  none found
+
+Node Hierarchy & Bounding Boxes:
+  Node [0] "quadcopter_bmb" (depth: 0, parent: "ROOT" [root])
+    Node [1] "body" (depth: 1, parent: "quadcopter_bmb" [0])
+      Node [2] "body_mesh" (depth: 2, parent: "body" [1]) [MESH index=0 name="quadcopter_rifle (1)_camquadcopter-opt_camquadcopter-opt_Quad_quadcopter_Sketchfab_Scene_Object_21"]
+         -> Bounding Box: min:[-9.4944, 0.0133, -7.7905] max:[9.4944, 6.6615, 8.2817] size:[18.9889, 6.6482, 16.0722]
+      Node [3] "props" (depth: 2, parent: "body" [1])
+        Node [4] "propFR" (depth: 3, parent: "props" [3])
+          Node [5] "prop_mesh" (depth: 4, parent: "propFR" [4]) [MESH index=1 name="quadcopter_rifle (1)_camquadcopter-opt_camquadcopter-opt_Quad_quadcopter_Sketchfab_Scene_Object_53"]
+             -> Bounding Box: min:[-12.6742, 5.3671, 4.911] max:[-4.2748, 6.4291, 9.9596] size:[8.3994, 1.062, 5.0486]
+        Node [6] "propFL" (depth: 3, parent: "props" [3])
+          Node [7] "prop_mesh2" (depth: 4, parent: "propFL" [6]) [MESH index=2 name="quadcopter_rifle (1)_camquadcopter-opt_camquadcopter-opt_Quad_quadcopter_Sketchfab_Scene_Object_532"]
+             -> Bounding Box: min:[-12.6742, 5.3671, 4.911] max:[-4.2748, 6.4291, 9.9596] size:[8.3994, 1.062, 5.0486]
+        Node [8] "propBL" (depth: 3, parent: "props" [3])
+          Node [9] "prop_mesh3" (depth: 4, parent: "propBL" [8]) [MESH index=3 name="quadcopter_rifle (1)_camquadcopter-opt_camquadcopter-opt_Quad_quadcopter_Sketchfab_Scene_Object_533"]
+             -> Bounding Box: min:[-12.6742, 5.3671, 4.911] max:[-4.2748, 6.4291, 9.9596] size:[8.3994, 1.062, 5.0486]
+        Node [10] "propBR" (depth: 3, parent: "props" [3])
+          Node [11] "prop_mesh4" (depth: 4, parent: "propBR" [10]) [MESH index=4 name="quadcopter_rifle (1)_camquadcopter-opt_camquadcopter-opt_Quad_quadcopter_Sketchfab_Scene_Object_534"]
+             -> Bounding Box: min:[-12.6742, 5.3671, 4.911] max:[-4.2748, 6.4291, 9.9596] size:[8.3994, 1.062, 5.0486]
+      Node [12] "lights" (depth: 2, parent: "body" [1])
+        Node [13] "light_mesh" (depth: 3, parent: "lights" [12]) [MESH index=5 name="quadcopter_rifle (1)_camquadcopter-opt_camquadcopter-opt_mesh"]
+           -> Bounding Box: min:[-0.0005, -0.0005, -0.0005] max:[1.0462, 0.001, 0.0005] size:[1.0467, 0.0015, 0.001]
+    Node [14] "bomb" (depth: 1, parent: "quadcopter_bmb" [0])
+      Node [15] "bomb_mesh" (depth: 2, parent: "bomb" [14]) [MESH index=6 name="Sketchfab_Scene_Object_0"]
+         -> Bounding Box: min:[-3.3828, -6.2923, -0.0687] max:[3.7808, 4.5211, 3.4544] size:[7.1636, 10.8133, 3.5231]
+
+==================================================
+ASSET: Recon Drone (quadcopter_cam-optimized.glb)
+==================================================
+Materials count: 1
+Textures count: 3
+Images count: 3
+
+Animations:
+  none found
+
+Node Hierarchy & Bounding Boxes:
+  Node [0] "quadcopter_cam" (depth: 0, parent: "ROOT" [root])
+    Node [1] "body" (depth: 1, parent: "quadcopter_cam" [0])
+      Node [2] "body_mesh" (depth: 2, parent: "body" [1]) [MESH index=0 name="quadcopter_rifle (1)_camquadcopter-opt_camquadcopter-opt_Quad_quadcopter_Sketchfab_Scene_Object_21"]
+         -> Bounding Box: min:[-9.4944, 0.0133, -7.7905] max:[9.4944, 6.6615, 8.2817] size:[18.9889, 6.6482, 16.0722]
+      Node [3] "props" (depth: 2, parent: "body" [1])
+        Node [4] "propFR" (depth: 3, parent: "props" [3])
+          Node [5] "prop_mesh" (depth: 4, parent: "propFR" [4]) [MESH index=1 name="quadcopter_rifle (1)_camquadcopter-opt_camquadcopter-opt_Quad_quadcopter_Sketchfab_Scene_Object_53"]
+             -> Bounding Box: min:[-12.6742, 5.3671, 4.911] max:[-4.2748, 6.4291, 9.9596] size:[8.3994, 1.062, 5.0486]
+        Node [6] "propFL" (depth: 3, parent: "props" [3])
+          Node [7] "prop_mesh2" (depth: 4, parent: "propFL" [6]) [MESH index=2 name="quadcopter_rifle (1)_camquadcopter-opt_camquadcopter-opt_Quad_quadcopter_Sketchfab_Scene_Object_532"]
+             -> Bounding Box: min:[-12.6742, 5.3671, 4.911] max:[-4.2748, 6.4291, 9.9596] size:[8.3994, 1.062, 5.0486]
+        Node [8] "propBL" (depth: 3, parent: "props" [3])
+          Node [9] "prop_mesh3" (depth: 4, parent: "propBL" [8]) [MESH index=3 name="quadcopter_rifle (1)_camquadcopter-opt_camquadcopter-opt_Quad_quadcopter_Sketchfab_Scene_Object_533"]
+             -> Bounding Box: min:[-12.6742, 5.3671, 4.911] max:[-4.2748, 6.4291, 9.9596] size:[8.3994, 1.062, 5.0486]
+        Node [10] "propBR" (depth: 3, parent: "props" [3])
+          Node [11] "prop_mesh4" (depth: 4, parent: "propBR" [10]) [MESH index=4 name="quadcopter_rifle (1)_camquadcopter-opt_camquadcopter-opt_Quad_quadcopter_Sketchfab_Scene_Object_534"]
+             -> Bounding Box: min:[-12.6742, 5.3671, 4.911] max:[-4.2748, 6.4291, 9.9596] size:[8.3994, 1.062, 5.0486]
+      Node [12] "lights" (depth: 2, parent: "body" [1])
+        Node [13] "light_mesh" (depth: 3, parent: "lights" [12]) [MESH index=5 name="quadcopter_rifle (1)_camquadcopter-opt_camquadcopter-opt_mesh"]
+           -> Bounding Box: min:[-0.0005, -0.0005, -0.0005] max:[1.0462, 0.001, 0.0005] size:[1.0467, 0.0015, 0.001]
+      Node [14] "cam" (depth: 2, parent: "body" [1])
+        Node [15] "cam_mesh" (depth: 3, parent: "cam" [14]) [MESH index=6 name="quadcopter_camera (1)_camquadcopter-opt_camquadcopter-opt_Quad_quadcopter_Sketchfab_Scene_Object_29"]
+           -> Bounding Box: min:[-1.1086, 0.1822, 2.565] max:[1.1104, 2.3026, 5.905] size:[2.219, 2.1204, 3.34]
+
+==================================================
+ASSET: Rotary Shooter (quadcopter_rifle-optimized.glb)
+==================================================
+Materials count: 1
+Textures count: 3
+Images count: 3
+
+Animations:
+  none found
+
+Node Hierarchy & Bounding Boxes:
+  Node [0] "quadcopter_rifle" (depth: 0, parent: "ROOT" [root])
+    Node [1] "body" (depth: 1, parent: "quadcopter_rifle" [0])
+      Node [2] "body_mesh" (depth: 2, parent: "body" [1]) [MESH index=0 name="quadcopter_rifle (1)_camquadcopter-opt_camquadcopter-opt_Quad_quadcopter_Sketchfab_Scene_Object_21"]
+         -> Bounding Box: min:[-9.4944, 0.0133, -7.7905] max:[9.4944, 6.6615, 8.2817] size:[18.9889, 6.6482, 16.0722]
+      Node [3] "props" (depth: 2, parent: "body" [1])
+        Node [4] "propFR" (depth: 3, parent: "props" [3])
+          Node [5] "prop_mesh" (depth: 4, parent: "propFR" [4]) [MESH index=1 name="quadcopter_rifle (1)_camquadcopter-opt_camquadcopter-opt_Quad_quadcopter_Sketchfab_Scene_Object_53"]
+             -> Bounding Box: min:[-12.6742, 5.3671, 4.911] max:[-4.2748, 6.4291, 9.9596] size:[8.3994, 1.062, 5.0486]
+        Node [6] "propFL" (depth: 3, parent: "props" [3])
+          Node [7] "prop_mesh2" (depth: 4, parent: "propFL" [6]) [MESH index=2 name="quadcopter_rifle (1)_camquadcopter-opt_camquadcopter-opt_Quad_quadcopter_Sketchfab_Scene_Object_532"]
+             -> Bounding Box: min:[-12.6742, 5.3671, 4.911] max:[-4.2748, 6.4291, 9.9596] size:[8.3994, 1.062, 5.0486]
+        Node [8] "propBL" (depth: 3, parent: "props" [3])
+          Node [9] "prop_mesh3" (depth: 4, parent: "propBL" [8]) [MESH index=3 name="quadcopter_rifle (1)_camquadcopter-opt_camquadcopter-opt_Quad_quadcopter_Sketchfab_Scene_Object_533"]
+             -> Bounding Box: min:[-12.6742, 5.3671, 4.911] max:[-4.2748, 6.4291, 9.9596] size:[8.3994, 1.062, 5.0486]
+        Node [10] "propBR" (depth: 3, parent: "props" [3])
+          Node [11] "prop_mesh4" (depth: 4, parent: "propBR" [10]) [MESH index=4 name="quadcopter_rifle (1)_camquadcopter-opt_camquadcopter-opt_Quad_quadcopter_Sketchfab_Scene_Object_534"]
+             -> Bounding Box: min:[-12.6742, 5.3671, 4.911] max:[-4.2748, 6.4291, 9.9596] size:[8.3994, 1.062, 5.0486]
+      Node [12] "gun" (depth: 2, parent: "body" [1])
+        Node [13] "rifle_mesh" (depth: 3, parent: "gun" [12]) [MESH index=5 name="quadcopter_rifle (1)_Sketchfab_Scene_defaultMaterial4"]
+           -> Bounding Box: min:[-0.5053, -5.9669, -0.8553] max:[0.5804, 3.1963, 1.0521] size:[1.0858, 9.1632, 1.9073]
+      Node [14] "lights" (depth: 2, parent: "body" [1])
+        Node [15] "light_mesh" (depth: 3, parent: "lights" [14]) [MESH index=6 name="quadcopter_rifle (1)_camquadcopter-opt_camquadcopter-opt_mesh"]
+           -> Bounding Box: min:[-0.0005, -0.0005, -0.0005] max:[1.0462, 0.001, 0.0005] size:[1.0467, 0.0015, 0.001]
+
+==================================================
+ASSET: Fixed Wing (uav-optimized.glb)
+==================================================
+Materials count: 6
+Textures count: 4
+Images count: 4
+
+Animations:
+  [0] "RQ-180_1_rigAction" (time range: 0s to 25.0000s)
+
+Node Hierarchy & Bounding Boxes:
+  Node [0] "UAV" (depth: 0, parent: "ROOT" [root])
+    Node [1] "RQ-180_1_master" (depth: 1, parent: "UAV" [0])
+      Node [2] "RQ-180_1_rig" (depth: 2, parent: "RQ-180_1_master" [1])
+        Node [3] "Root" (depth: 3, parent: "RQ-180_1_rig" [2])
+        Node [4] "suspension" (depth: 3, parent: "RQ-180_1_rig" [2])
+        Node [5] "elevator L" (depth: 3, parent: "RQ-180_1_rig" [2])
+        Node [6] "elevator R" (depth: 3, parent: "RQ-180_1_rig" [2])
+        Node [7] "aileron L" (depth: 3, parent: "RQ-180_1_rig" [2])
+        Node [8] "aileron R" (depth: 3, parent: "RQ-180_1_rig" [2])
+        Node [9] "cover F" (depth: 3, parent: "RQ-180_1_rig" [2])
+        Node [10] "cover L" (depth: 3, parent: "RQ-180_1_rig" [2])
+        Node [11] "cover R" (depth: 3, parent: "RQ-180_1_rig" [2])
+        Node [12] "cover bay 1" (depth: 3, parent: "RQ-180_1_rig" [2])
+        Node [13] "cover bay 2" (depth: 3, parent: "RQ-180_1_rig" [2])
+        Node [14] "wheel F" (depth: 3, parent: "RQ-180_1_rig" [2])
+        Node [15] "wheel L" (depth: 3, parent: "RQ-180_1_rig" [2])
+        Node [16] "wheel R" (depth: 3, parent: "RQ-180_1_rig" [2])
+        Node [17] "cover bay L 1" (depth: 3, parent: "RQ-180_1_rig" [2])
+        Node [18] "cover bay R 1" (depth: 3, parent: "RQ-180_1_rig" [2])
+        Node [19] "cover bay L 2" (depth: 3, parent: "RQ-180_1_rig" [2])
+        Node [20] "cover bay R 2" (depth: 3, parent: "RQ-180_1_rig" [2])
+        Node [21] "UAV_mesh" (depth: 3, parent: "RQ-180_1_rig" [2]) [MESH index=0 name="fixed_wing_drone_animated_recon_fixed-wing_Plane"]
+           -> Bounding Box: min:[-10.8321, -0.0276, -20.1513] max:[7.7046, 4.4305, 19.8686] size:[18.5367, 4.4581, 40.0199]
+
+==================================================
+ASSET: Wheeled Drone (ugv-optimized.glb)
+==================================================
+Materials count: 1
+Textures count: 3
+Images count: 3
+
+Animations:
+  none found
+
+Node Hierarchy & Bounding Boxes:
+  Node [0] "UGV" (depth: 0, parent: "ROOT" [root])
+    Node [1] "Body" (depth: 1, parent: "UGV" [0])
+      Node [2] "Chassis_mesh" (depth: 2, parent: "Body" [1]) [MESH index=0 name="wheeled_drone_supremewheeled-opt-optimized-optimized-opt_thewgeel_wheeled-opt-optimized-optimized_Wheeled_Sketchfab_Scene_Cube_BASE_0"]
+         -> Bounding Box: min:[-1.9835, -1.5944, -0.5455] max:[2.7386, 1.5197, 1.438] size:[4.7221, 3.114, 1.9835]
+      Node [3] "FrontAxel" (depth: 2, parent: "Body" [1])
+        Node [4] "FrontAxel_mesh" (depth: 3, parent: "FrontAxel" [3]) [MESH index=1 name="wheeled_drone_supremewheeled-opt-optimized-optimized-opt_thewgeel_wheeled-opt-optimized-optimized_Wheeled_Sketchfab_Scene_Cylinder_005_Tires_0"]
+           -> Bounding Box: min:[-0.6816, -2.1612, -0.6765] max:[0.685, 2.1612, 0.6765] size:[1.3666, 4.3223, 1.3531]
+      Node [5] "BackAxel" (depth: 2, parent: "Body" [1])
+        Node [6] "BackAxel_mesh" (depth: 3, parent: "BackAxel" [5]) [MESH index=2 name="wheeled_drone_supremewheeled-opt-optimized-optimized-opt_thewgeel_wheeled-opt-optimized-optimized_Wheeled_Sketchfab_Scene_Cylinder_005_Tires_02"]
+           -> Bounding Box: min:[-0.6816, -2.1612, -0.6765] max:[0.685, 2.1612, 0.6765] size:[1.3666, 4.3223, 1.3531]
+      Node [7] "Turret" (depth: 2, parent: "Body" [1])
+        Node [8] "TurretPole_mesh" (depth: 3, parent: "Turret" [7]) [MESH index=3 name="wheeled_drone_supremewheeled-opt-optimized-optimized-opt_thewgeel_wheeled-opt-optimized-optimized_Wheeled_ceramic_pot_1k_PRL_CERAMIC_POT_COMBINED"]
+           -> Bounding Box: min:[-0.9113, -0.0009, -0.8398] max:[0.3281, 0.992, 0.663] size:[1.2394, 0.9929, 1.5028]
+        Node [9] "gun" (depth: 3, parent: "Turret" [7])
+          Node [10] "MountedGun_mesh" (depth: 4, parent: "gun" [9]) [MESH index=4 name="wheeled_drone_supremewheeled-opt-optimized-optimized-opt_thewgeel_wheeled-opt-optimized-optimized_Wheeled_modular_metal_gutter_1k_Cylinder_069"]
+             -> Bounding Box: min:[-0.3418, -1.1602, -0.2618] max:[0.22, 1.6959, 0.0976] size:[0.5618, 2.8561, 0.3593]
+          Node [11] "barrel" (depth: 4, parent: "gun" [9])
+            Node [12] "Barrel_mesh" (depth: 5, parent: "barrel" [11]) [MESH index=5 name="wheeled_drone_supremewheeled-opt-optimized-optimized-opt_thewgeel_wheeled-opt-optimized-optimized_Wheeled_Sketchfab_Scene_Object_4"]
+               -> Bounding Box: min:[-4.4872, 0.2561, -0.7093] max:[3.3277, 0.9108, 0.3874] size:[7.8149, 0.6547, 1.0967]
