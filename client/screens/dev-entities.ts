@@ -695,13 +695,13 @@ const buildSchema = (type: DroneType, name: string, glbUrl: string, baseDefaults
 const DRONE_SCHEMAS: DroneSchema[] = Object.values(DRONE_CONFIGS).map(config => {
     let glbUrl = "";
     let name = DroneType[config.type];
-    if (config.type === DroneType.ROTARY_SHOOTER) glbUrl = "quadcopter_rifle.glb";
-    if (config.type === DroneType.BOMBER) glbUrl = "quadcopter_bomb.glb";
-    if (config.type === DroneType.RECON) glbUrl = "quadcopter_camera.glb";
-    if (config.type === DroneType.FIXED_WING) glbUrl = "fixed_wing_drone.glb";
-    if (config.type === DroneType.WHEELED) glbUrl = "wheeled_drone.glb";
+    if (config.type === DroneType.ROTARY_SHOOTER) glbUrl = "quadcopter_rifle-optimized.glb";
+    if (config.type === DroneType.BOMBER) glbUrl = "quadcopter_bmb-optimized.glb";
+    if (config.type === DroneType.RECON) glbUrl = "quadcopter_cam-optimized.glb";
+    if (config.type === DroneType.FIXED_WING) glbUrl = "uav-optimized.glb";
+    if (config.type === DroneType.WHEELED) glbUrl = "ugv-optimized.glb";
     if (config.type === DroneType.ROBOT_DOG) glbUrl = "robot_dog.glb";
-    if (config.type === DroneType.HUMANOID) glbUrl = "humanoid_drone.glb";
+    if (config.type === DroneType.HUMANOID) glbUrl = "humanoid-optimized.glb";
 
     const baseDefaults: Record<string, any> = {};
     if (config.muzzleOffset) {
@@ -3675,7 +3675,7 @@ async function loadPlayerCalibrationScene() {
 
     const loader = new GLTFLoader();
     try {
-        const url = await getAssetUrl('bpre_rifleman.glb');
+        const url = await getAssetUrl('Player_one-optimized.glb');
         console.log(`[DevEntities] Sourcing Player GLB: ${url}`);
         const gltf = await loader.loadAsync(url);
         if (gltf && gltf.scene) {

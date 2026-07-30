@@ -43,14 +43,14 @@ export async function initDroneModels(scene: THREE.Scene): Promise<void> {
           new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout loading " + urlName)), 2000))
       ]) as any;
 
-      if (urlName === "fixed_wing_drone.glb" && gltf && gltf.animations) {
+      if (urlName === "uav-optimized.glb" && gltf && gltf.animations) {
          (window as any).fixedWingAnimations = gltf.animations;
       }
 
       let typeId: DroneType | null = null;
-      if (urlName === "quadcopter_rifle.glb") typeId = DroneType.ROTARY_SHOOTER;
-      else if (urlName === "quadcopter_bomb.glb") typeId = DroneType.BOMBER;
-      else if (urlName === "quadcopter_camera.glb") typeId = DroneType.RECON;
+      if (urlName === "quadcopter_rifle-optimized.glb") typeId = DroneType.ROTARY_SHOOTER;
+      else if (urlName === "quadcopter_bmb-optimized.glb") typeId = DroneType.BOMBER;
+      else if (urlName === "quadcopter_cam-optimized.glb") typeId = DroneType.RECON;
       const config = typeId !== null ? DRONE_CONFIGS[typeId] : null;
 
       const nodes: DroneNode[] = [];
@@ -170,18 +170,18 @@ export async function initDroneModels(scene: THREE.Scene): Promise<void> {
           });
         });
       }
-      if (urlName === "fixed_wing_drone.glb") (window as any).rawFwGLTF = gltf; return nodes;
+      if (urlName === "uav-optimized.glb") (window as any).rawFwGLTF = gltf; return nodes;
     } catch(e) {
       console.warn("Failed to load drone model:", urlName, e);
     }
     return [];
   };
 
-  const reconParts = await parseGLTF("quadcopter_camera.glb");
-  const rotaryParts = await parseGLTF("quadcopter_rifle.glb");
-  const bomberParts = await parseGLTF("quadcopter_bomb.glb");
-  const wheeledParts = await parseGLTF("wheeled_drone.glb");
-  const fixedWingParts = await parseGLTF("fixed_wing_drone.glb");
+  const reconParts = await parseGLTF("quadcopter_cam-optimized.glb");
+  const rotaryParts = await parseGLTF("quadcopter_rifle-optimized.glb");
+  const bomberParts = await parseGLTF("quadcopter_bmb-optimized.glb");
+  const wheeledParts = await parseGLTF("ugv-optimized.glb");
+  const fixedWingParts = await parseGLTF("uav-optimized.glb");
 
   const mkBatchDirect = (
     nodes: DroneNode[], 
