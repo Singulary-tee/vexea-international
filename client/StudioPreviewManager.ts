@@ -1,7 +1,7 @@
 import * as THREE from "three/webgpu";
 import { DS } from "./design-system";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
-import { getCachedOrFetchUrl } from "./asset-cache";
+import { getCachedOrFetchUrl, createConfiguredGLTFLoader } from "./asset-cache";
 
 export type StudioMode = 'MAIN_MENU' | 'ARMORY' | 'STORE' | 'LOBBY' | 'INACTIVE';
 
@@ -135,7 +135,7 @@ class StudioPreviewManagerImpl {
 
     if (glbName) {
       try {
-        const loader = new GLTFLoader();
+        const loader = createConfiguredGLTFLoader();
         const url = await getCachedOrFetchUrl(glbName, "Asset");
         const gltf = await loader.loadAsync(url);
         
