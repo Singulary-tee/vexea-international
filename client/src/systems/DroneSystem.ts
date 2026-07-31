@@ -432,6 +432,16 @@ export class DroneSystem {
        mixer.update(dt);
     });
 
+    if (droneBatches && Array.isArray(droneBatches)) {
+      for (let b = 0; b < droneBatches.length; b++) {
+        const bObj = droneBatches[b];
+        if (bObj && bObj.mesh) {
+          if (bObj.mesh.instanceMatrix) bObj.mesh.instanceMatrix.needsUpdate = true;
+          if (bObj.mesh.perInstanceMatrix) bObj.mesh.perInstanceMatrix.needsUpdate = true;
+        }
+      }
+    }
+
     match.remotePlayersTargetData.forEach((data, id) => {
       let group = match.remotePlayersMeshes.get(id);
       let mixer = match.remotePlayerMixers.get(id);

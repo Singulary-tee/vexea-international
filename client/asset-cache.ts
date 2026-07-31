@@ -12,6 +12,7 @@ import { DRACOLoader } from "three/addons/loaders/DRACOLoader.js";
 import { KTX2Loader } from "three/addons/loaders/KTX2Loader.js";
 import { getSettings } from "./settings";
 import { DS } from "./design-system";
+import { ASSET_STRUCTURE } from "../shared/asset-structure";
 
 const DB_NAME = "VexeaLocalCache";
 const STORE_NAME = "files";
@@ -228,14 +229,8 @@ export async function populateBlobUrlMap(): Promise<void> {
  */
 export const MAP_1_ASSETS = [
   "grenade.glb",
-  "Player_one-optimized.glb",
-  "humanoid-optimized.glb",
+  ...Object.keys(ASSET_STRUCTURE),
   "concrete_fence_low-poly.glb",
-  "quadcopter_rifle-optimized.glb",
-  "quadcopter_bmb-optimized.glb",
-  "ugv-optimized.glb",
-  "uav-optimized.glb",
-  "quadcopter_cam-optimized.glb",
   "security_camera_01_1k.gltf.glb",
   "security_camera_02_1k.gltf.glb",
   "concrete_block_low_poly.glb",
@@ -384,13 +379,10 @@ export async function getCachedOrFetchUrl(
       "promo_rifle_1.webp": "Images/promotional/promo_rifle_1.webp",
       "promo_pistol_1.webp": "Images/promotional/promo_pistol_1.webp",
       "promo_shotgun_1.webp": "Images/promotional/promo_shotgun_1.webp",
-      "Player_one-optimized.glb": "Models/Entities/Player_one-optimized.glb",
-      "humanoid-optimized.glb": "Models/Entities/humanoid-optimized.glb",
-      "quadcopter_bmb-optimized.glb": "Models/Entities/quadcopter_bmb-optimized.glb",
-      "quadcopter_cam-optimized.glb": "Models/Entities/quadcopter_cam-optimized.glb",
-      "quadcopter_rifle-optimized.glb": "Models/Entities/quadcopter_rifle-optimized.glb",
-      "uav-optimized.glb": "Models/Entities/uav-optimized.glb",
-      "ugv-optimized.glb": "Models/Entities/ugv-optimized.glb"
+      ...Object.keys(ASSET_STRUCTURE).reduce((acc, key) => {
+        acc[key] = `Models/Entities/${key}`;
+        return acc;
+      }, {} as Record<string, string>)
     };
 
     let downloadUrl = "";
@@ -612,24 +604,37 @@ export async function ensureAssetsDownloaded(onComplete: () => void, mapId: stri
   document.body.appendChild(modal);
 }
 
+let sharedDracoLoader: DRACOLoader | null = null;
+let sharedKtx2Loader: KTX2Loader | null = null;
+
+function getSharedDracoLoader(): DRACOLoader {
+  if (!sharedDracoLoader) {
+    sharedDracoLoader = new DRACOLoader();
+    sharedDracoLoader.setDecoderPath('/draco/gltf/');
+  }
+  return sharedDracoLoader;
+}
+
+function getSharedKtx2Loader(rendererInstance?: any): KTX2Loader {
+  if (!sharedKtx2Loader) {
+    sharedKtx2Loader = new KTX2Loader();
+    sharedKtx2Loader.setTranscoderPath('/basis/');
+  }
+  const activeRenderer = rendererInstance || (typeof window !== 'undefined' ? (window as any).renderer : null);
+  if (activeRenderer && !(sharedKtx2Loader as any)._supportDetected) {
+    sharedKtx2Loader.detectSupport(activeRenderer);
+    (sharedKtx2Loader as any)._supportDetected = true;
+  }
+  return sharedKtx2Loader;
+}
+
 /**
  * Factory function to create a fully configured GLTFLoader instance with Draco
  * and KTX2 transcoder support attached.
  */
 export function createConfiguredGLTFLoader(manager?: THREE.LoadingManager, rendererInstance?: any): GLTFLoader {
   const loader = new GLTFLoader(manager);
-
-  const dracoLoader = new DRACOLoader();
-  dracoLoader.setDecoderPath('/draco/gltf/');
-  loader.setDRACOLoader(dracoLoader);
-
-  const ktx2Loader = new KTX2Loader();
-  ktx2Loader.setTranscoderPath('/basis/');
-  const activeRenderer = rendererInstance || (typeof window !== 'undefined' ? (window as any).renderer : null);
-  if (activeRenderer) {
-    ktx2Loader.detectSupport(activeRenderer);
-  }
-  loader.setKTX2Loader(ktx2Loader);
-
+  loader.setDRACOLoader(getSharedDracoLoader());
+  loader.setKTX2Loader(getSharedKtx2Loader(rendererInstance));
   return loader;
 }
