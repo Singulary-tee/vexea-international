@@ -4,6 +4,7 @@ import { DS } from "./design-system";
 import { getCachedOrFetchUrl, createConfiguredGLTFLoader } from "./asset-cache";
 import * as SkeletonUtils from "three/addons/utils/SkeletonUtils.js";
 import { DRONE_CONFIGS, DroneType } from "../shared/constants";
+import { ASSET_STRUCTURE } from "../shared/asset-structure";
 
 function countMeshesInScene(scene: THREE.Object3D): number {
   let count = 0;
@@ -35,22 +36,22 @@ export async function initDroneModels(scene: THREE.Scene): Promise<void> {
     try {
       const url = await Promise.race([
           getCachedOrFetchUrl(urlName, "Asset"),
-          new Promise<string>((_, reject) => setTimeout(() => reject(new Error("Timeout caching " + urlName)), 2000))
+          new Promise<string>((_, reject) => setTimeout(() => reject(new Error("Timeout caching " + urlName)), 20000))
       ]);
       const loader = createConfiguredGLTFLoader();
       const gltf = await Promise.race([
           loader.loadAsync(url),
-          new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout loading " + urlName)), 2000))
+          new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout loading " + urlName)), 20000))
       ]) as any;
 
-      if (urlName === "uav-optimized.glb" && gltf && gltf.animations) {
+      if (urlName === ASSET_STRUCTURE["uav-optimized.glb"].fileName && gltf && gltf.animations) {
          (window as any).fixedWingAnimations = gltf.animations;
       }
 
       let typeId: DroneType | null = null;
-      if (urlName === "quadcopter_rifle-optimized.glb") typeId = DroneType.ROTARY_SHOOTER;
-      else if (urlName === "quadcopter_bmb-optimized.glb") typeId = DroneType.BOMBER;
-      else if (urlName === "quadcopter_cam-optimized.glb") typeId = DroneType.RECON;
+      if (urlName === ASSET_STRUCTURE["quadcopter_rifle-optimized.glb"].fileName) typeId = DroneType.ROTARY_SHOOTER;
+      else if (urlName === ASSET_STRUCTURE["quadcopter_bmb-optimized.glb"].fileName) typeId = DroneType.BOMBER;
+      else if (urlName === ASSET_STRUCTURE["quadcopter_cam-optimized.glb"].fileName) typeId = DroneType.RECON;
       const config = typeId !== null ? DRONE_CONFIGS[typeId] : null;
 
       const nodes: DroneNode[] = [];
@@ -170,18 +171,19 @@ export async function initDroneModels(scene: THREE.Scene): Promise<void> {
           });
         });
       }
-      if (urlName === "uav-optimized.glb") (window as any).rawFwGLTF = gltf; return nodes;
+      if (urlName === ASSET_STRUCTURE["uav-optimized.glb"].fileName) (window as any).rawFwGLTF = gltf; return nodes;
     } catch(e) {
       console.warn("Failed to load drone model:", urlName, e);
     }
     return [];
   };
 
-  const reconParts = await parseGLTF("quadcopter_cam-optimized.glb");
-  const rotaryParts = await parseGLTF("quadcopter_rifle-optimized.glb");
-  const bomberParts = await parseGLTF("quadcopter_bmb-optimized.glb");
-  const wheeledParts = await parseGLTF("ugv-optimized.glb");
-  const fixedWingParts = await parseGLTF("uav-optimized.glb");
+  const reconParts = await parseGLTF(ASSET_STRUCTURE["quadcopter_cam-optimized.glb"].fileName);
+  const rotaryParts = await parseGLTF(ASSET_STRUCTURE["quadcopter_rifle-optimized.glb"].fileName);
+  const bomberParts = await parseGLTF(ASSET_STRUCTURE["quadcopter_bmb-optimized.glb"].fileName);
+  const wheeledParts = await parseGLTF(ASSET_STRUCTURE["ugv-optimized.glb"].fileName);
+  const fixedWingParts = await parseGLTF(ASSET_STRUCTURE["uav-optimized.glb"].fileName);
+  const humanoidParts = await parseGLTF(ASSET_STRUCTURE["humanoid-optimized.glb"].fileName);
 
   const mkBatchDirect = (
     nodes: DroneNode[], 
@@ -317,7 +319,7 @@ export async function initDroneModels(scene: THREE.Scene): Promise<void> {
   (window as any).droneBatches[2] = mkBatchDirect(reconParts, tMatAir, gBase, 50, DRONE_CONFIGS[DroneType.RECON].visualRadius);
   (window as any).droneBatches[4] = mkBatchDirect(wheeledParts, tMatGround, gBox, 50, DRONE_CONFIGS[DroneType.WHEELED].visualRadius);
   (window as any).droneBatches[5] = mkBatchDirect([], tMatGround, gBox, 50, 1.5);
-  (window as any).droneBatches[6] = mkBatchDirect([], tMatGround, gBox, 50, 2.5);
+  (window as any).droneBatches[6] = mkBatchDirect(humanoidParts, tMatGround, gBox, 50, 2.5);
 
   const fixedWingGroup = new THREE.Group();
   fixedWingGroup.name = "FixedWingStandalone";
