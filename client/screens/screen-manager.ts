@@ -76,7 +76,8 @@ if (typeof window !== 'undefined') {
 }
 
 export function showDevEntities() {
-  if (!IS_DEV) return;
+  // TEMP DEPLOYMENT TEST: Commented out IS_DEV check to test in production build. REVERT IMMEDIATELY ONCE TESTED!
+  // if (!IS_DEV) return;
   import("./dev-entities").then(({ initDevEntities, activateScreen }) => {
     initDevEntities().then(() => {
       activateScreen();
