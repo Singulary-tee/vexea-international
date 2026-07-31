@@ -83,6 +83,40 @@ class StudioPreviewManagerImpl {
     return this.currentMode;
   }
 
+  public detach(): void {
+    this.currentMode = 'INACTIVE';
+    this.containerEl = null;
+
+    if (!this.canvasContainerEl) {
+      this.canvasContainerEl = document.getElementById('canvas-container');
+    }
+
+    if (this.canvasContainerEl) {
+      const vexeaView = document.getElementById('vexea-view');
+      const hudContainer = document.getElementById('hud-container');
+      if (vexeaView && this.canvasContainerEl.parentElement !== vexeaView) {
+        if (hudContainer && hudContainer.parentElement === vexeaView) {
+          vexeaView.insertBefore(this.canvasContainerEl, hudContainer);
+        } else {
+          vexeaView.appendChild(this.canvasContainerEl);
+        }
+      }
+      Object.assign(this.canvasContainerEl.style, {
+        position: 'absolute',
+        top: '0',
+        left: '0',
+        width: '100%',
+        height: '100%',
+        display: 'block',
+        zIndex: '0',
+      });
+      const renderer = (window as any).renderer;
+      if (renderer && typeof renderer.setSize === 'function') {
+        renderer.setSize(window.innerWidth, window.innerHeight, false);
+      }
+    }
+  }
+
   public attachTo(container: HTMLElement, mode: StudioMode, options?: { itemKey?: string; skinId?: string }): void {
     this.currentMode = mode;
     this.containerEl = container;

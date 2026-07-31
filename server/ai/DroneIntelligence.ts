@@ -40,8 +40,8 @@ export function processDroneIntelligence(
 ) {
   if (!(global as any).configsLogged) {
     (global as any).configsLogged = true;
-    console.log(`[DIAG_CONFIG] DRONE_CONFIGS: ${JSON.stringify(DRONE_CONFIGS)}`);
-    console.log(`[DIAG_CONFIG] INTEL_CONFIGS: ${JSON.stringify(INTEL_CONFIGS)}`);
+    // console.log(`[DIAG_CONFIG] DRONE_CONFIGS: ${JSON.stringify(DRONE_CONFIGS)}`);
+    // console.log(`[DIAG_CONFIG] INTEL_CONFIGS: ${JSON.stringify(INTEL_CONFIGS)}`);
   }
 
   const livingPlayers: PlayerState[] = [];
@@ -151,7 +151,7 @@ export function processDroneIntelligence(
           const now = Date.now();
           if (!((d as any).lastDiagLog) || now - (d as any).lastDiagLog > 1000) {
             (d as any).lastDiagLog = now;
-            console.log(`[DIAG] Drone ${d.id} | Hit: ${hit ? 'yes' : 'no'} | TOI: ${hit ? hit.timeOfImpact.toFixed(3) : 'N/A'} | Handle: ${hit ? hit.collider.handle : 'N/A'} | Dist: ${dist.toFixed(3)}`);
+            // console.log(`[DIAG] Drone ${d.id} | Hit: ${hit ? 'yes' : 'no'} | TOI: ${hit ? hit.timeOfImpact.toFixed(3) : 'N/A'} | Handle: ${hit ? hit.collider.handle : 'N/A'} | Dist: ${dist.toFixed(3)}`);
           }
           if (hit && hit.timeOfImpact < dist - 0.1) {
             hasLOS = false;
@@ -162,7 +162,7 @@ export function processDroneIntelligence(
       const now = Date.now();
       if (!((d as any).lastDiagLog2) || now - (d as any).lastDiagLog2 > 1000) {
         (d as any).lastDiagLog2 = now;
-        console.log(`[DIAG] Drone ${d.id} | inDist: ${inDistance} | inFOV: ${inFOV} | hasLOS: ${hasLOS} | dist: ${dist.toFixed(3)} | angle: ${angle.toFixed(3)} | halfAngle: ${halfAngle.toFixed(3)} | hit: ${(d as any).lastHit ? 'YES' : 'NO'}`);
+        // console.log(`[DIAG] Drone ${d.id} | inDist: ${inDistance} | inFOV: ${inFOV} | hasLOS: ${hasLOS} | dist: ${dist.toFixed(3)} | angle: ${angle.toFixed(3)} | halfAngle: ${halfAngle.toFixed(3)} | hit: ${(d as any).lastHit ? 'YES' : 'NO'}`);
       }
 
       let detected = inDistance && inFOV && hasLOS;

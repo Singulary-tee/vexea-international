@@ -87,7 +87,7 @@ self.onmessage = async (e) => {
         world.createCollider(b4Desc, staticBody);
 
         // Actual map buildings from INIT message
-        console.log('[MAPSPEC_DIAG] mapSpec exists:', !!mapSpec, 'buildings exists:', !!(mapSpec && (mapSpec as any).buildings), 'buildings length:', mapSpec && (mapSpec as any).buildings ? (mapSpec as any).buildings.length : 'N/A');
+        // console.log('[MAPSPEC_DIAG] mapSpec exists:', !!mapSpec, 'buildings exists:', !!(mapSpec && (mapSpec as any).buildings), 'buildings length:', mapSpec && (mapSpec as any).buildings ? (mapSpec as any).buildings.length : 'N/A');
         const buildings = e.data.buildings;
         if (buildings && Array.isArray(buildings)) {
             console.log(`[Worker INIT] Loading ${buildings.length} buildings from INIT data...`);

@@ -154,19 +154,19 @@ export function applySettings(s: VexeaSettingsData) {
     // Apply TSL graphics uniforms
     const uniforms = W.vexGraphicsUniforms;
     if (uniforms) {
-        uniforms.bloomEnabled.value = s.bloom ? 1.0 : 0.0;
-        uniforms.bloomStrength.value = s.bloomStrength;
-        uniforms.bloomRadius.value = s.bloomRadius;
-        uniforms.bloomThreshold.value = s.bloomThreshold;
-        uniforms.vignetteEnabled.value = s.vignette ? 1.0 : 0.0;
-        uniforms.vignetteIntensity.value = s.vignetteIntensity;
-        uniforms.chromaticAberrationEnabled.value = s.chromaticAberration ? 1.0 : 0.0;
-        uniforms.chromaticAberrationIntensity.value = s.chromaticAberrationIntensity;
-        uniforms.ssaoEnabled.value = s.ssao ? 1.0 : 0.0;
-        uniforms.pomScale.value = s.parallaxOcclusion ? 0.025 : 0.0;
-        uniforms.pbrNormalScale.value = s.pbrMaterials ? 1.0 : 0.0;
-        uniforms.pbrDetailsEnabled.value = s.pbrMaterials ? 1.0 : 0.0;
-        uniforms.instancedPropsEnabled.value = s.instancedProps ? 1.0 : 0.0;
+        if (uniforms.bloomEnabled) uniforms.bloomEnabled.value = s.bloom ? 1.0 : 0.0;
+        if (uniforms.bloomStrength) uniforms.bloomStrength.value = s.bloomStrength;
+        if (uniforms.bloomRadius) uniforms.bloomRadius.value = s.bloomRadius;
+        if (uniforms.bloomThreshold) uniforms.bloomThreshold.value = s.bloomThreshold;
+        if (uniforms.vignetteEnabled) uniforms.vignetteEnabled.value = s.vignette ? 1.0 : 0.0;
+        if (uniforms.vignetteIntensity) uniforms.vignetteIntensity.value = s.vignetteIntensity;
+        if (uniforms.chromaticAberrationEnabled) uniforms.chromaticAberrationEnabled.value = s.chromaticAberration ? 1.0 : 0.0;
+        if (uniforms.chromaticAberrationIntensity) uniforms.chromaticAberrationIntensity.value = s.chromaticAberrationIntensity;
+        if (uniforms.ssaoEnabled) uniforms.ssaoEnabled.value = s.ssao ? 1.0 : 0.0;
+        if (uniforms.pomScale) uniforms.pomScale.value = s.parallaxOcclusion ? 0.025 : 0.0;
+        if (uniforms.pbrNormalScale) uniforms.pbrNormalScale.value = s.pbrMaterials ? 1.0 : 0.0;
+        if (uniforms.pbrDetailsEnabled) uniforms.pbrDetailsEnabled.value = s.pbrMaterials ? 1.0 : 0.0;
+        if (uniforms.instancedPropsEnabled) uniforms.instancedPropsEnabled.value = s.instancedProps ? 1.0 : 0.0;
     }
 
     // Trigger prop visibility or custom rendering updates
@@ -175,7 +175,7 @@ export function applySettings(s: VexeaSettingsData) {
     // FXAA
     if (W.fxaaPass) {
         W.fxaaPass.enabled = s.fxaa;
-        if (W.fxaaPass.material && W.fxaaPass.material.uniforms.resolution) {
+        if (W.fxaaPass.material?.uniforms?.resolution?.value) {
             W.fxaaPass.material.uniforms.resolution.value.set(1 / (window.innerWidth * window.devicePixelRatio), 1 / (window.innerHeight * window.devicePixelRatio));
         }
     }
@@ -872,47 +872,51 @@ export function openSettings() {
     populateUIFromSettings();
 
     const triggerApply = () => {
-        s.joySens = parseFloat(joySens.value);
-        s.camSens = parseFloat(camSens.value);
-        s.invertY = invY.checked;
-        s.fxaa = fxaa.checked;
-        s.masterVolume = parseFloat(vol.value);
-        s.musicVolume = parseFloat(musicVol.value);
-        s.sfxVolume = parseFloat(sfxVol.value);
-        s.uiVolume = parseFloat(uiVol.value);
-        if (voiceVol) s.voiceVolume = parseFloat(voiceVol.value);
-        s.spatialAudio = spatial.checked;
-        s.music = music.checked;
-        s.uiSounds = ui.checked;
-        s.hudScale = parseFloat(hud.value);
-        s.crosshairSize = parseFloat(crossSize.value);
-        s.fov = parseInt(fov.value);
-        if (rendType) s.rendererType = rendType.value as any;
-        
-        let checkedFps = document.querySelector('input[name="fps"]:checked') as HTMLInputElement;
-        if(checkedFps) s.fpsCap = parseInt(checkedFps.value);
+        try {
+            if (joySens) s.joySens = parseFloat(joySens.value);
+            if (camSens) s.camSens = parseFloat(camSens.value);
+            if (invY) s.invertY = invY.checked;
+            if (fxaa) s.fxaa = fxaa.checked;
+            if (vol) s.masterVolume = parseFloat(vol.value);
+            if (musicVol) s.musicVolume = parseFloat(musicVol.value);
+            if (sfxVol) s.sfxVolume = parseFloat(sfxVol.value);
+            if (uiVol) s.uiVolume = parseFloat(uiVol.value);
+            if (voiceVol) s.voiceVolume = parseFloat(voiceVol.value);
+            if (spatial) s.spatialAudio = spatial.checked;
+            if (music) s.music = music.checked;
+            if (ui) s.uiSounds = ui.checked;
+            if (hud) s.hudScale = parseFloat(hud.value);
+            if (crossSize) s.crosshairSize = parseFloat(crossSize.value);
+            if (fov) s.fov = parseInt(fov.value);
+            if (rendType) s.rendererType = rendType.value as any;
+            
+            let checkedFps = document.querySelector('input[name="fps"]:checked') as HTMLInputElement;
+            if(checkedFps) s.fpsCap = parseInt(checkedFps.value);
 
-        // Read advanced graphics
-        if (shadows) s.shadows = shadows.checked;
-        if (pbrMaterials) s.pbrMaterials = pbrMaterials.checked;
-        if (parallaxOcclusion) s.parallaxOcclusion = parallaxOcclusion.checked;
-        if (instancedProps) s.instancedProps = instancedProps.checked;
-        if (flashLight) s.flashLight = flashLight.checked;
-        if (ssao) s.ssao = ssao.checked;
-        if (bloom) s.bloom = bloom.checked;
-        if (bloomStrength) s.bloomStrength = parseFloat(bloomStrength.value);
-        if (vignette) s.vignette = vignette.checked;
-        if (vignetteIntensity) s.vignetteIntensity = parseFloat(vignetteIntensity.value);
-        if (chromaticAberration) s.chromaticAberration = chromaticAberration.checked;
-        if (chromaticAberrationIntensity) s.chromaticAberrationIntensity = parseFloat(chromaticAberrationIntensity.value);
-        if (toneMapping) s.toneMapping = toneMapping.value as any;
-        if (exposure) s.exposure = parseFloat(exposure.value);
-        if (dynResCheckbox) s.dynamicResolutionEnabled = dynResCheckbox.checked;
+            // Read advanced graphics
+            if (shadows) s.shadows = shadows.checked;
+            if (pbrMaterials) s.pbrMaterials = pbrMaterials.checked;
+            if (parallaxOcclusion) s.parallaxOcclusion = parallaxOcclusion.checked;
+            if (instancedProps) s.instancedProps = instancedProps.checked;
+            if (flashLight) s.flashLight = flashLight.checked;
+            if (ssao) s.ssao = ssao.checked;
+            if (bloom) s.bloom = bloom.checked;
+            if (bloomStrength) s.bloomStrength = parseFloat(bloomStrength.value);
+            if (vignette) s.vignette = vignette.checked;
+            if (vignetteIntensity) s.vignetteIntensity = parseFloat(vignetteIntensity.value);
+            if (chromaticAberration) s.chromaticAberration = chromaticAberration.checked;
+            if (chromaticAberrationIntensity) s.chromaticAberrationIntensity = parseFloat(chromaticAberrationIntensity.value);
+            if (toneMapping) s.toneMapping = toneMapping.value as any;
+            if (exposure) s.exposure = parseFloat(exposure.value);
+            if (dynResCheckbox) s.dynamicResolutionEnabled = dynResCheckbox.checked;
 
-        const checkedPixelRatio = document.querySelector('input[name="pixelRatioMode"]:checked') as HTMLInputElement;
-        if (checkedPixelRatio) s.pixelRatioMode = checkedPixelRatio.value as any;
+            const checkedPixelRatio = document.querySelector('input[name="pixelRatioMode"]:checked') as HTMLInputElement;
+            if (checkedPixelRatio) s.pixelRatioMode = checkedPixelRatio.value as any;
 
-        updatePixelRatioUIState();
+            updatePixelRatioUIState();
+        } catch(e) {
+            console.warn('[SETTINGS] triggerApply caught non-fatal update error:', e);
+        }
 
         // Update labels
         if (document.getElementById('val-joySens')) document.getElementById('val-joySens')!.innerText = s.joySens.toFixed(1);
@@ -1213,10 +1217,16 @@ export function openSettings() {
         _injectMatchTabDOM();
     }
 
-    triggerApply(); 
+    try {
+        triggerApply(); 
+    } catch (e) {
+        console.warn("[SETTINGS] Error during initial triggerApply:", e);
+    }
 
     const closeBtn = document.getElementById('btn-close-settings-overlay');
-    bind(closeBtn!, 'click', closeSettings);
+    if (closeBtn) {
+        bind(closeBtn, 'click', closeSettings);
+    }
 }
 
 export function closeSettings() {

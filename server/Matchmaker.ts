@@ -165,6 +165,7 @@ export class Matchmaker {
 
     // Register players in target room & send loading instruction
     group.forEach((p) => {
+      (p.channel as any).currentRoom = targetRoom;
       targetRoom.registerPlayer(p.reqUid || p.id, p.channel, null, p.classId);
 
       p.channel.emit("reliable_event", {
