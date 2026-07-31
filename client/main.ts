@@ -29,6 +29,13 @@ import { initLobby } from "./screens/lobby";
 import { initPostMatch } from "./screens/post-match-screen";
 import { initMapViewerGlobally } from "./screens/map_viewer";
 import * as screenManager from "./screens/screen-manager";
+import {
+  showMatchmakingOverlay,
+  updateMatchmakingOverlayStatus,
+  hideMatchmakingOverlay,
+  showPreMatchCountdownOverlay,
+  hidePreMatchCountdownOverlay
+} from "./screens/matchmaking-overlay";
 import { dynamicResolutionSystem } from "./src/systems/DynamicResolutionSystem";
 import { StudioPreviewManager } from "./StudioPreviewManager";
 import { audioManager } from "./audio";
@@ -370,102 +377,22 @@ const initClient = async () => {
     "canvas-container",
   ) as HTMLDivElement;
 
-  window.addEventListener("start-match", (e: any) => {
+  window.addEventListener("start-match", async (e: any) => {
     const requestedMap = e.detail?.map?.id || "map_0_dev";
+    const requestedClass = e.detail?.class || "ASSAULT";
+    const isDevQuickStart = !!e.detail?.isDevQuickStart;
     (window as any).vexMapId = requestedMap;
 
-    const match = createNewMatch();
-    match.scene.userData.camera = camera;
+    await connectEngineSocket();
 
-    match.updateWeaponUI = () => {
-      const w1 = document.getElementById("weapon-slot-1");
-      const w2 = document.getElementById("weapon-slot-2");
-      const autoLabel = document.getElementById("auto-label");
-      if (w1) {
-        w1.style.setProperty("opacity", "1", "important");
-        if (match.activeWeapon === 1) w1.classList.add("active");
-        else w1.classList.remove("active");
-      }
-      if (w2) {
-        w2.style.setProperty("opacity", "1", "important");
-        if (match.activeWeapon === 2) w2.classList.add("active");
-        else w2.classList.remove("active");
-      }
-      if (autoLabel) {
-        if (match.activeWeapon === 1)
-          autoLabel.innerHTML = match.rifleMode === "auto" ? "AUTO &rarr;" : "BURST &rarr;";
-        else autoLabel.innerHTML = "SINGLE &rarr;";
-      }
-    };
+    if (isDevQuickStart) {
+      // Step 6: Dev Quick Start path (exempt from pooling and pre-match countdown)
+      console.log("[MATCHMAKING] Dev Quick Start triggered — immediate match start");
+      const matchId = `M_${Math.floor(Math.random() * 1000000)}`;
+      const cloudUid = (window as any).vexPlayerUid;
 
-    match.start(requestedMap);
-    match.updateWeaponUI();
-    
-    injectMatchTab();
-    const cc = document.getElementById("canvas-container");
-    if (cc) cc.style.display = "block";
-    const hud = document.getElementById("hud-container");
-    if (hud) hud.style.setProperty("display", "block", "important");
-
-    setTimeout(() => {
-      window.dispatchEvent(new Event("resize"));
-    }, 10);
-
-    (window as any)._serverMatchReady = false;
-
-    const gltfLoader = createConfiguredGLTFLoader();
-    gltfLoader.load(getAssetUrl(ASSET_STRUCTURE["Player_one-optimized.glb"].fileName), (gltf) => {
-      riflemanModel = gltf.scene;
-      riflemanModel.traverse((child) => {
-        if ((child as any).isMesh) {
-          child.castShadow = true;
-          child.receiveShadow = true;
-        }
-      });
-    });
-
-    // Initialize Three Audio Listener natively
-    audioListener = new THREE.AudioListener();
-    camera.add(audioListener);
-    (window as any).audioListener = audioListener;
-    const s = (window as any).vexeaSettings;
-    if (s) audioListener.setMasterVolume(s.masterVolume);
-
-    localLaserSound = new THREE.Audio(audioListener);
-
-    // Pre-create synth raw sound buffers
-    const audioCtx = audioListener.context;
-    const bufferSize = audioCtx.sampleRate * 0.15; // 150ms shot
-    shotBuffer = audioCtx.createBuffer(
-      1,
-      bufferSize,
-      audioCtx.sampleRate,
-    );
-    const data = shotBuffer.getChannelData(0);
-    for (let s = 0; s < bufferSize; s++) {
-      data[s] =
-        Math.sin(2 * Math.PI * 800 * (s / audioCtx.sampleRate)) *
-        Math.exp(-12 * (s / bufferSize));
-    }
-    localLaserSound.setBuffer(shotBuffer);
-    (window as any).shotBuffer = shotBuffer;
-    localLaserSound.setVolume(0.2);
-
-    // Connect socket & boot views
-    (window as any).gameState = "ACTIVE_MATCH";
-
-    // Pointer lock and fullscreen requests moved synchronously to lobby 'READY' button direct click handler.
-
-    const cloudUid = (window as any).vexPlayerUid;
-    const matchId = `M_${Math.floor(Math.random() * 1000000)}`;
-
-    connectEngineSocket().then(() => {
-      if (channel) {
-        channel.on("match_ready", () => {
-          (window as any)._serverMatchReady = true;
-        });
-        match.transport = channel;
-      }
+      const match = initializeLocalMatchScene(requestedMap);
+      match.transport = channel;
 
       if (cloudUid) {
         lockMatchSession(matchId, cloudUid).then((locked) => {
@@ -476,6 +403,8 @@ const initClient = async () => {
                 uid: cloudUid,
                 matchId,
                 mapId: requestedMap,
+                class: requestedClass,
+                isDevQuickStart: true
               });
           }
         });
@@ -486,16 +415,16 @@ const initClient = async () => {
             uid: "guest_" + matchId,
             matchId,
             mapId: requestedMap,
+            class: requestedClass,
+            isDevQuickStart: true
           });
       }
 
-      // Load map via MapLoader if not dev map
       if (requestedMap !== "map_0_dev") {
         const mapDef = getMapById(requestedMap);
         if (mapDef && channel) {
           import("./src/map/LoadingOrchestrator").then((m) => {
-            const match = getMatch();
-            if (match) m.orchestrateMatchLoad(mapDef, channel!, match.scene);
+            m.orchestrateMatchLoad(mapDef, channel!, match.scene);
           });
         }
       } else {
@@ -509,7 +438,33 @@ const initClient = async () => {
           });
         }
       }
+      screenManager.showGame();
+      return;
+    }
+
+    // Steps 2-5: Real Matchmaking pool flow
+    console.log("[MATCHMAKING] Joining pool for map:", requestedMap, "class:", requestedClass);
+
+    showMatchmakingOverlay({
+      mapId: requestedMap,
+      onCancel: () => {
+        console.log("[MATCHMAKING] User cancelled matchmaking pool wait.");
+        if (channel) {
+          channel.emit("cancel_matchmaking", {});
+        }
+        hideMatchmakingOverlay();
+      }
     });
+
+    const cloudUid = (window as any).vexPlayerUid;
+    if (channel) {
+      channel.emit("start_match", {
+        uid: cloudUid || ("guest_" + Math.floor(Math.random() * 1000000)),
+        mapId: requestedMap,
+        class: requestedClass,
+        isDevQuickStart: false
+      });
+    }
   });
 
   // Create scene synchronously so event listeners don't crash if dispatched early
@@ -583,8 +538,126 @@ const initClient = async () => {
   animateFrame();
 };
 
+function initializeLocalMatchScene(requestedMap: string) {
+  const match = createNewMatch();
+  match.scene.userData.camera = camera;
+
+  match.updateWeaponUI = () => {
+    const w1 = document.getElementById("weapon-slot-1");
+    const w2 = document.getElementById("weapon-slot-2");
+    const autoLabel = document.getElementById("auto-label");
+    if (w1) {
+      w1.style.setProperty("opacity", "1", "important");
+      if (match.activeWeapon === 1) w1.classList.add("active");
+      else w1.classList.remove("active");
+    }
+    if (w2) {
+      w2.style.setProperty("opacity", "1", "important");
+      if (match.activeWeapon === 2) w2.classList.add("active");
+      else w2.classList.remove("active");
+    }
+    if (autoLabel) {
+      if (match.activeWeapon === 1)
+        autoLabel.innerHTML = match.rifleMode === "auto" ? "AUTO &rarr;" : "BURST &rarr;";
+      else autoLabel.innerHTML = "SINGLE &rarr;";
+    }
+  };
+
+  match.start(requestedMap);
+  match.updateWeaponUI();
+
+  injectMatchTab();
+  const cc = document.getElementById("canvas-container");
+  if (cc) cc.style.display = "block";
+  const hud = document.getElementById("hud-container");
+  if (hud) hud.style.setProperty("display", "block", "important");
+
+  setTimeout(() => {
+    window.dispatchEvent(new Event("resize"));
+  }, 10);
+
+  (window as any)._serverMatchReady = false;
+
+  const gltfLoader = createConfiguredGLTFLoader();
+  gltfLoader.load(getAssetUrl(ASSET_STRUCTURE["Player_one-optimized.glb"].fileName), (gltf) => {
+    riflemanModel = gltf.scene;
+    riflemanModel.traverse((child) => {
+      if ((child as any).isMesh) {
+        child.castShadow = true;
+        child.receiveShadow = true;
+      }
+    });
+  });
+
+  if (!audioListener) {
+    audioListener = new THREE.AudioListener();
+    camera.add(audioListener);
+    (window as any).audioListener = audioListener;
+    const s = (window as any).vexeaSettings;
+    if (s) audioListener.setMasterVolume(s.masterVolume);
+
+    localLaserSound = new THREE.Audio(audioListener);
+
+    const audioCtx = audioListener.context;
+    const bufferSize = audioCtx.sampleRate * 0.15;
+    shotBuffer = audioCtx.createBuffer(
+      1,
+      bufferSize,
+      audioCtx.sampleRate,
+    );
+    const data = shotBuffer.getChannelData(0);
+    for (let s = 0; s < bufferSize; s++) {
+      data[s] =
+        Math.sin(2 * Math.PI * 800 * (s / audioCtx.sampleRate)) *
+        Math.exp(-12 * (s / bufferSize));
+    }
+    localLaserSound.setBuffer(shotBuffer);
+    (window as any).shotBuffer = shotBuffer;
+    localLaserSound.setVolume(0.2);
+  }
+
+  (window as any).gameState = "ACTIVE_MATCH";
+  return match;
+}
+
+function startMatchFromMatchFound(msg: any) {
+  const matchId = msg.matchId || `M_${Math.floor(Math.random() * 1000000)}`;
+  const mapId = msg.mapId || "map_0_dev";
+  (window as any).vexMatchId = matchId;
+  (window as any).vexMapId = mapId;
+
+  const match = initializeLocalMatchScene(mapId);
+  match.transport = channel;
+
+  const mapDef = getMapById(mapId);
+  if (mapDef && channel) {
+    import("./src/map/LoadingOrchestrator").then((m) => {
+      m.orchestrateMatchLoad(mapDef, channel!, match.scene).then(() => {
+        console.log("[MATCHMAKING] Loading complete. Signaling server loading_complete for matchId:", matchId);
+        channel?.emit("loading_complete", { matchId });
+      });
+    });
+  } else {
+    const mLoader = new MapLoader(match.scene);
+    const mDef = getMapById(mapId);
+    if (mDef) {
+      mLoader.load(mDef).then(() => {
+        mLoader.buildScene();
+        mLoader.placeProps();
+        (window as any).__vexMapLoader = mLoader;
+        console.log("[MATCHMAKING] Loading complete. Signaling server loading_complete for matchId:", matchId);
+        channel?.emit("loading_complete", { matchId });
+      });
+    } else {
+      console.log("[MATCHMAKING] Loading complete. Signaling server loading_complete for matchId:", matchId);
+      channel?.emit("loading_complete", { matchId });
+    }
+  }
+}
+
 // Connect to Node binary sockets
 const connectEngineSocket = () => {
+  if (channel) return Promise.resolve();
   return new Promise<void>((resolve) => {
     const s = getSettings();
     let defaultUrl = window.location.origin;
@@ -611,6 +684,23 @@ const connectEngineSocket = () => {
       });
       channel.on("dev_server_memory_mb", (data: any) => {
         (window as any).devServerMemory = { heapUsedMb: data.heapUsedMb ?? 0, heapTotalMb: data.heapTotalMb ?? 0 };
+      });
+
+      channel.on("reliable_event", (msg: any) => {
+        if (!msg || typeof msg !== "object") return;
+
+        if (msg.type === "MATCHMAKING_STATUS") {
+          updateMatchmakingOverlayStatus(msg);
+        } else if (msg.type === "MATCH_FOUND") {
+          console.log("[MATCHMAKING] Server MATCH_FOUND event received:", msg);
+          hideMatchmakingOverlay();
+          screenManager.showGame();
+          startMatchFromMatchFound(msg);
+        } else if (msg.type === "PRE_MATCH_COUNTDOWN" || msg.type === "PRE_MATCH_COUNTDOWN_TICK") {
+          if (typeof msg.countdownSeconds === "number") {
+            showPreMatchCountdownOverlay(msg.countdownSeconds);
+          }
+        }
       });
 
       resolve();

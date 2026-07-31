@@ -520,11 +520,11 @@ export function initLobby() {
       const map = getDefaultMap();
       const selectedClassId: ClassId = classList[selectedClassIdx]?.id || 'ASSAULT';
       ensureAssetsDownloaded(() => {
-        screenManager.showGame();
         window.dispatchEvent(new CustomEvent("start-match", {
           detail: {
             map,
-            class: selectedClassId
+            class: selectedClassId,
+            isDevQuickStart: false
           }
         }));
       }, map.id);
