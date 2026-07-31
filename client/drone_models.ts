@@ -34,15 +34,18 @@ export async function initDroneModels(scene: THREE.Scene): Promise<void> {
 
   const parseGLTF = async (urlName: string) => {
     try {
+      console.log(`[DRONE_MODELS_LOG] parseGLTF fetching url for ${urlName}...`);
       const url = await Promise.race([
           getCachedOrFetchUrl(urlName, "Asset"),
           new Promise<string>((_, reject) => setTimeout(() => reject(new Error("Timeout caching " + urlName)), 20000))
       ]);
+      console.log(`[DRONE_MODELS_LOG] parseGLTF loading ${urlName} from url: ${url}`);
       const loader = createConfiguredGLTFLoader();
       const gltf = await Promise.race([
           loader.loadAsync(url),
           new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout loading " + urlName)), 20000))
       ]) as any;
+      console.log(`[DRONE_MODELS_LOG] parseGLTF loaded ${urlName} successfully!`);
 
       if (urlName === ASSET_STRUCTURE["uav-optimized.glb"].fileName && gltf && gltf.animations) {
          (window as any).fixedWingAnimations = gltf.animations;
@@ -201,7 +204,11 @@ export async function initDroneModels(scene: THREE.Scene): Promise<void> {
          material: singleMaterial,
          localMatrix: new THREE.Matrix4().identity(),
          parentName: null,
-         meshIndex: 0
+         meshIndex: 0,
+         baseWorldMatrix: new THREE.Matrix4().identity(),
+         baseInvWorldMatrix: new THREE.Matrix4().identity(),
+         pivot: new THREE.Vector3(0, 0, 0),
+         localPivot: new THREE.Vector3(0, 0, 0)
        }];
      }
 

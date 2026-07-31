@@ -441,8 +441,22 @@ io.onConnection((channel: ChannelAdapter) => {
     const reqClass = (args?.class || args?.playerClass || "ASSAULT") as ClassId;
 
     console.log(
-      `[VEXEA SERVER] Player ${playerId} requesting matchmaking (Map: ${reqMap}, Class: ${reqClass})`,
+      `[VEXEA SERVER] Player ${playerId} requesting matchmaking (Map: ${reqMap}, Class: ${reqClass}, DevQuickStart: ${!!args?.isDevQuickStart})`,
     );
+
+    // Dev Quick Start path: create/get room directly without multi-player queue
+    if (args?.isDevQuickStart) {
+      const devMatchId = args?.matchId || `M_DEV_${Math.floor(Math.random() * 1000000)}`;
+      console.log(`[VEXEA SERVER] Dev Quick Start match initialization: ${devMatchId} on map ${reqMap}`);
+      const targetRoom = matchManager.getOrCreateRoom(devMatchId, process.env.GEMINI_API_KEY, reqMap);
+      if (currentRoom) {
+        currentRoom.removePlayer(pState.id);
+      }
+      currentRoom = targetRoom;
+      (channel as any).currentRoom = targetRoom;
+      pState = currentRoom.registerPlayer(playerId, channel, null, reqClass);
+      return;
+    }
 
     // Unregister from current lobby room if active
     if (currentRoom) {
@@ -487,9 +501,10 @@ io.onConnection((channel: ChannelAdapter) => {
   });
 
   channel.on("player_ready", () => {
-    if (currentRoom && currentRoom.roomId !== "lobby") {
+    const activeRoom = (channel as any).currentRoom || currentRoom;
+    if (activeRoom && activeRoom.roomId !== "lobby") {
       if (pState) {
-        currentRoom.setPlayerReady(pState.id);
+        activeRoom.setPlayerReady(pState.id);
       }
     }
   });

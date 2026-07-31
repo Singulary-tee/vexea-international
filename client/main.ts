@@ -41,7 +41,7 @@ import { StudioPreviewManager } from "./StudioPreviewManager";
 import { audioManager } from "./audio";
 import { MapLoader } from "./src/map/MapLoader";
 import { getMapById } from "../shared/maps/map-registry";
-import { getAssetUrl, createConfiguredGLTFLoader } from "./asset-cache";
+import { getAssetUrl, createConfiguredGLTFLoader, initKTX2Support } from "./asset-cache";
 import { ASSET_STRUCTURE } from "../shared/asset-structure";
 import { inputManager, InputAction } from "./input";
 import { GlobalState } from "./state";
@@ -566,6 +566,7 @@ function initializeLocalMatchScene(requestedMap: string) {
   match.start(requestedMap);
   match.updateWeaponUI();
 
+  StudioPreviewManager.detach();
   injectMatchTab();
   const cc = document.getElementById("canvas-container");
   if (cc) cc.style.display = "block";
@@ -743,16 +744,7 @@ if (rewardBtn) {
 const mainMenuBtn = document.getElementById("main-menu-btn");
 if (mainMenuBtn) {
   mainMenuBtn.addEventListener("click", () => {
-    const cc = document.getElementById("canvas-container");
-    if (cc) cc.style.display = "none";
-    const hc = document.getElementById("hud-container");
-    if (hc) hc.style.display = "none";
-    const do_ = document.getElementById("death-overlay");
-    if (do_) do_.style.display = "none";
-    const me = document.getElementById("post-match-screen");
-    if (me) me.style.display = "none";
-    const mm = document.getElementById("main-menu-screen");
-    if (mm) mm.style.display = "flex";
+    document.dispatchEvent(new CustomEvent("VEXEA_PLAYER_QUIT"));
   });
 }
 
@@ -795,6 +787,8 @@ const setup3DStage = async () => {
       alpha: true,
     });
     await renderer.init();
+    (window as any).renderer = renderer;
+    initKTX2Support(renderer);
     (window as any).isWebGPU = !forceWebGL;
     console.log(`[Renderer] WebGPURenderer initialized successfully with ${forceWebGL ? 'WebGL' : 'WebGPU'} backend.`);
 
@@ -820,6 +814,8 @@ const setup3DStage = async () => {
           alpha: true,
         });
         await renderer.init();
+        (window as any).renderer = renderer;
+        initKTX2Support(renderer);
         (window as any).isWebGPU = false;
         console.log("[Renderer] WebGPURenderer initialized successfully with WebGL fallback backend (forceWebGL: true).");
       } catch (fallbackError) {
@@ -1349,18 +1345,28 @@ document.addEventListener("VEXEA_PLAYER_QUIT", () => {
     setTimeout(() => {
       c.disconnect();
     }, 100);
+    channel = null;
   }
 
   clearMatch();
+  StudioPreviewManager.detach();
 
-  const cc = document.getElementById("canvas-container");
-  if (cc) cc.style.display = "none";
+  // Scrap all post-loading screens, overlays, and DOM elements
   const hc = document.getElementById("hud-container");
   if (hc) hc.style.display = "none";
   const do_ = document.getElementById("death-overlay");
   if (do_) do_.style.display = "none";
   const me = document.getElementById("post-match-screen");
   if (me) me.style.display = "none";
+
+  document.querySelectorAll(".loading-overlay").forEach((el) => el.remove());
+  const pre = document.getElementById("pre-match-countdown-overlay");
+  if (pre) pre.remove();
+  hideMatchmakingOverlay();
+
+  (window as any)._serverMatchReady = false;
+  (window as any)._preMatchCountdownActive = false;
+  (window as any).buildingColliders = [];
   
   if ((window as any).__vexMapLoader) {
     (window as any).__vexMapLoader.dispose();

@@ -405,17 +405,17 @@ export class MatchRoom {
     if (mapDef && mapDef.specFile) {
       try {
         const absolutePath = path.join(process.cwd(), mapDef.specFile);
-        console.log('[COLLISION DEBUG] Loading spec from:', absolutePath);
+        // console.log('[COLLISION DEBUG] Loading spec from:', absolutePath);
         const specJson = JSON.parse(fs.readFileSync(absolutePath, "utf8"));
         this.specJson = specJson;
         this.zoneRegistry = new ZoneRegistry();
         this.zoneRegistry.loadFromSpec(specJson);
         this.collisionMap = new CollisionSystem();
         this.collisionMap.loadFromSpec(specJson);
-        console.log('[COLLISION DEBUG] Loaded box count:', this.collisionMap.boxes.length);
-        if (this.collisionMap.boxes.length > 0) {
-          console.log('[COLLISION DEBUG] First box:', JSON.stringify(this.collisionMap.boxes[0]));
-        }
+        // console.log('[COLLISION DEBUG] Loaded box count:', this.collisionMap.boxes.length);
+        // if (this.collisionMap.boxes.length > 0) {
+        //   console.log('[COLLISION DEBUG] First box:', JSON.stringify(this.collisionMap.boxes[0]));
+        // }
 
         if (specJson.spawnPoints) {
           console.log("[MATCH ROOM] Registered spawn points from spec");
@@ -639,7 +639,7 @@ export class MatchRoom {
         d.currentSpeed = 0;
       }
       
-      console.log('[COLLIDE_DIAG] Drone collider created. droneId:', d.id, 'colliderHandle:', d.collider.handle, 'collisionGroups:', d.collider.collisionGroups(), 'solverGroups:', d.collider.solverGroups(), 'isSensor:', d.collider.isSensor(), 'shape:', JSON.stringify(colliderDesc.shape));
+      // console.log('[COLLIDE_DIAG] Drone collider created. droneId:', d.id, 'colliderHandle:', d.collider.handle, 'collisionGroups:', d.collider.collisionGroups(), 'solverGroups:', d.collider.solverGroups(), 'isSensor:', d.collider.isSensor(), 'shape:', JSON.stringify(colliderDesc.shape));
     } catch (e) {}
   }
 
@@ -834,7 +834,7 @@ export class MatchRoom {
       colliderDesc,
       pState.body,
     );
-    console.log('[COLLIDE_DIAG] Player collider created. playerId:', playerId, 'colliderHandle:', pState.collider.handle, 'collisionGroups:', pState.collider.collisionGroups(), 'solverGroups:', pState.collider.solverGroups(), 'isSensor:', pState.collider.isSensor(), 'shape:', JSON.stringify(colliderDesc.shape));
+    // console.log('[COLLIDE_DIAG] Player collider created. playerId:', playerId, 'colliderHandle:', pState.collider.handle, 'collisionGroups:', pState.collider.collisionGroups(), 'solverGroups:', pState.collider.solverGroups(), 'isSensor:', pState.collider.isSensor(), 'shape:', JSON.stringify(colliderDesc.shape));
     pState.kcc = this.rapierWorld.createCharacterController(0.01);
     pState.kcc.setUp({ x: 0, y: 1, z: 0 });
     pState.kcc.setApplyImpulsesToDynamicBodies(true);
@@ -1348,7 +1348,7 @@ export class MatchRoom {
                 z: player.velZ * 0.0166,
               };
               if (DEBUG_PHYSICS_TICKS && this.serverTick % 300 === 0) {
-                console.log('[COLLIDE_DIAG] KCC query about to run. playerId:', player.id, 'colliderHandle:', player.collider.handle, 'desiredTranslation:', JSON.stringify(desiredTranslation), 'filterFlags:', RAPIER.QueryFilterFlags.EXCLUDE_SENSORS);
+                // console.log('[COLLIDE_DIAG] KCC query about to run. playerId:', player.id, 'colliderHandle:', player.collider.handle, 'desiredTranslation:', JSON.stringify(desiredTranslation), 'filterFlags:', RAPIER.QueryFilterFlags.EXCLUDE_SENSORS);
               }
               player.kcc.computeColliderMovement(
                 player.collider,
@@ -1360,14 +1360,14 @@ export class MatchRoom {
 
               const correctedTrans = player.kcc.computedMovement();
               if (DEBUG_PHYSICS_TICKS && this.serverTick % 300 === 0) {
-                console.log('[COLLIDE_DIAG] KCC query result. playerId:', player.id, 'correctedTrans:', JSON.stringify(correctedTrans), 'computedGrounded:', player.kcc.computedGrounded(), 'numComputedCollisions:', player.kcc.numComputedCollisions());
+                // console.log('[COLLIDE_DIAG] KCC query result. playerId:', player.id, 'correctedTrans:', JSON.stringify(correctedTrans), 'computedGrounded:', player.kcc.computedGrounded(), 'numComputedCollisions:', player.kcc.numComputedCollisions());
               }
 
               const playerCollisionsList: string[] = [];
               for (let i = 0; i < player.kcc.numComputedCollisions(); i++) {
                 const collision = player.kcc.computedCollision(i);
                 if (DEBUG_PHYSICS_TICKS && this.serverTick % 300 === 0) {
-                  console.log('[COLLIDE_DIAG] KCC detected collision. playerId:', player.id, 'collisionIndex:', i, 'colliderHandle:', collision ? (collision.collider ? collision.collider.handle : 'unknown') : 'unknown', 'toi:', collision ? (collision.toi !== undefined ? collision.toi : 'unknown') : 'unknown');
+                  // console.log('[COLLIDE_DIAG] KCC detected collision. playerId:', player.id, 'collisionIndex:', i, 'colliderHandle:', collision ? (collision.collider ? collision.collider.handle : 'unknown') : 'unknown', 'toi:', collision ? (collision.toi !== undefined ? collision.toi : 'unknown') : 'unknown');
                 }
                 if (collision && collision.collider) {
                   const hit = this.findHitEntity(collision.collider.handle);
@@ -1496,7 +1496,7 @@ export class MatchRoom {
                   return true;
                 }
               );
-              console.log('[COLLIDE_DIAG] Overlap query at player position. playerId:', player.id, 'position:', player.posX.toFixed(2), player.posY.toFixed(2), player.posZ.toFixed(2), 'overlappingHandles:', JSON.stringify(overlappingHandles));
+              // console.log('[COLLIDE_DIAG] Overlap query at player position. playerId:', player.id, 'position:', player.posX.toFixed(2), player.posY.toFixed(2), player.posZ.toFixed(2), 'overlappingHandles:', JSON.stringify(overlappingHandles));
             }
           }
         }
@@ -2278,22 +2278,22 @@ export class MatchRoom {
 
             // LOGGING FOR VERIFICATION
             const droneTypeName = DroneType[d.type] || "UNKNOWN";
-            console.log(
-               `[AVOIDANCE ACTIVATED] Tick: ${this.serverTick} | Drone ID: ${d.id} (${droneTypeName}) | ` +
-               `Obstacle forward hit at ${forwardHitDistance.toFixed(2)}m (detection range: ${detectionDistance.toFixed(2)}m) | ` +
-               `Probes (L: ${leftClearDist.toFixed(2)}m, R: ${rightClearDist.toFixed(2)}m) | ` +
-               `Chosen Dir: ${chosenDirection === -1 ? "LEFT (-1)" : "RIGHT (+1)"}`
-            );
+            // console.log(
+            //    `[AVOIDANCE ACTIVATED] Tick: ${this.serverTick} | Drone ID: ${d.id} (${droneTypeName}) | ` +
+            //    `Obstacle forward hit at ${forwardHitDistance.toFixed(2)}m (detection range: ${detectionDistance.toFixed(2)}m) | ` +
+            //    `Probes (L: ${leftClearDist.toFixed(2)}m, R: ${rightClearDist.toFixed(2)}m) | ` +
+            //    `Chosen Dir: ${chosenDirection === -1 ? "LEFT (-1)" : "RIGHT (+1)"}`
+            // );
          } else {
             // Already active: decrement ticks remaining, handle extension if ticks remaining reaches 0
             d.avoidanceState.ticksRemaining--;
             if (d.avoidanceState.ticksRemaining <= 0) {
                d.avoidanceState.ticksRemaining = MIN_AVOIDANCE_TICKS;
                const droneTypeName = DroneType[d.type] || "UNKNOWN";
-               console.log(
-                  `[AVOIDANCE EXTENDED] Tick: ${this.serverTick} | Drone ID: ${d.id} (${droneTypeName}) | ` +
-                  `Obstacle still detected, resetting ticks to ${MIN_AVOIDANCE_TICKS}`
-               );
+               // console.log(
+               //    `[AVOIDANCE EXTENDED] Tick: ${this.serverTick} | Drone ID: ${d.id} (${droneTypeName}) | ` +
+               //    `Obstacle still detected, resetting ticks to ${MIN_AVOIDANCE_TICKS}`
+               // );
             }
          }
       } else {
@@ -2321,10 +2321,10 @@ export class MatchRoom {
                d.avoidanceState.transitionZ = lastAvoidZ;
 
                const droneTypeName = DroneType[d.type] || "UNKNOWN";
-               console.log(
-                  `[AVOIDANCE DEACTIVATED] Tick: ${this.serverTick} | Drone ID: ${d.id} (${droneTypeName}) | ` +
-                  `Ticks reached 0 and obstacle cleared. Transitioning back.`
-               );
+               // console.log(
+               //    `[AVOIDANCE DEACTIVATED] Tick: ${this.serverTick} | Drone ID: ${d.id} (${droneTypeName}) | ` +
+               //    `Ticks reached 0 and obstacle cleared. Transitioning back.`
+               // );
             }
          }
       }
@@ -2353,12 +2353,12 @@ export class MatchRoom {
          // Tick-gated representative logging of active avoidance
          if (this.serverTick % 30 === 0) {
             const droneTypeName = DroneType[d.type] || "UNKNOWN";
-            console.log(
-               `[AVOIDANCE RUNNING] Tick: ${this.serverTick} | Drone ID: ${d.id} (${droneTypeName}) | ` +
-               `Steering ${d.avoidanceState.direction === -1 ? "LEFT" : "RIGHT"} | ` +
-               `Ticks remaining: ${d.avoidanceState.ticksRemaining} | ` +
-               `Deflection Vector: (${avoidX.toFixed(3)}, ${avoidZ.toFixed(3)})`
-            );
+            // console.log(
+            //    `[AVOIDANCE RUNNING] Tick: ${this.serverTick} | Drone ID: ${d.id} (${droneTypeName}) | ` +
+            //    `Steering ${d.avoidanceState.direction === -1 ? "LEFT" : "RIGHT"} | ` +
+            //    `Ticks remaining: ${d.avoidanceState.ticksRemaining} | ` +
+            //    `Deflection Vector: (${avoidX.toFixed(3)}, ${avoidZ.toFixed(3)})`
+            // );
          }
       }
 

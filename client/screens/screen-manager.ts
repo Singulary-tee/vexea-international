@@ -90,6 +90,45 @@ if (typeof window !== 'undefined') {
 export function showGame() {
   audioManager.setMatchState(true);
   hideAll();
+  StudioPreviewManager.detach();
+
+  const canvasContainer = document.getElementById("canvas-container");
+  const hudContainer = document.getElementById("hud-container");
+  if (canvasContainer) {
+    const vexeaView = document.getElementById("vexea-view");
+    if (vexeaView && canvasContainer.parentElement !== vexeaView) {
+      if (hudContainer && hudContainer.parentElement === vexeaView) {
+        vexeaView.insertBefore(canvasContainer, hudContainer);
+      } else {
+        vexeaView.appendChild(canvasContainer);
+      }
+    }
+    Object.assign(canvasContainer.style, {
+      position: 'absolute',
+      top: '0',
+      left: '0',
+      width: '100%',
+      height: '100%',
+      display: 'block',
+      zIndex: '0',
+    });
+    const renderer = (window as any).renderer;
+    if (renderer && renderer.domElement) {
+      if (renderer.domElement.parentElement !== canvasContainer) {
+        canvasContainer.appendChild(renderer.domElement);
+      }
+      renderer.domElement.style.display = "block";
+      renderer.domElement.style.width = "100%";
+      renderer.domElement.style.height = "100%";
+      if (typeof renderer.setSize === 'function') {
+        renderer.setSize(window.innerWidth, window.innerHeight, false);
+      }
+    }
+  }
+  if (hudContainer) {
+    hudContainer.style.setProperty("display", "block", "important");
+  }
+  window.dispatchEvent(new Event("resize"));
 }
 
 export function showPostMatch(matchData?: any) {

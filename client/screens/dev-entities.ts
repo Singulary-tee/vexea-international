@@ -2054,9 +2054,44 @@ async function loadActiveGLB() {
         modelGroup = loadedGLBsCache.get(urlName)!.clone();
     } else {
         try {
+            console.log(`[STAGE_LOG 1] DevEntities loading GLB: ${urlName}`);
             const assetUrl = await getAssetUrl(urlName);
-            console.log(`[DevEntities] Sourcing GLB: ${urlName} from ${assetUrl}`);
-            const gltf = await loader.loadAsync(assetUrl);
+            console.log(`[STAGE_LOG 2] Resolved assetUrl for ${urlName}: ${assetUrl}`);
+            console.log(`[STAGE_LOG 3.1] Fetching blob ArrayBuffer...`);
+            const res = await fetch(assetUrl);
+            console.log(`[STAGE_LOG 3.2] Blob response received. Status: ${res.status}. Converting to ArrayBuffer...`);
+            const arrayBuffer = await res.arrayBuffer();
+            console.log(`[STAGE_LOG 3.3] ArrayBuffer ready (${arrayBuffer.byteLength} bytes). Slicing GLB header...`);
+            
+            try {
+                const dataView = new DataView(arrayBuffer);
+                const magic = dataView.getUint32(0, true);
+                const version = dataView.getUint32(4, true);
+                const jsonLength = dataView.getUint32(12, true);
+                const jsonBytes = new Uint8Array(arrayBuffer, 20, jsonLength);
+                const jsonStr = new TextDecoder().decode(jsonBytes);
+                const gltfJson = JSON.parse(jsonStr);
+                console.log(`[STAGE_LOG GLTF_HEADER] GLTF Version: ${version}, extensionsUsed:`, gltfJson.extensionsUsed, `extensionsRequired:`, gltfJson.extensionsRequired);
+            } catch (headerErr) {
+                console.warn(`[STAGE_LOG GLTF_HEADER_ERR] Failed to parse GLB JSON header:`, headerErr);
+            }
+
+            console.log(`[STAGE_LOG 3.4] Invoking loader.parse with explicit callbacks...`);
+            const gltf = await new Promise<any>((resolve, reject) => {
+                loader.parse(
+                    arrayBuffer,
+                    '',
+                    (resGltf) => {
+                        console.log(`[STAGE_LOG 4] loader.parse callback SUCCESS!`, resGltf);
+                        resolve(resGltf);
+                    },
+                    (err) => {
+                        console.error(`[STAGE_LOG ERROR] loader.parse callback ERROR:`, err);
+                        reject(err);
+                    }
+                );
+            });
+            console.log(`[STAGE_LOG 5] GLTF parsed. Scene present:`, !!(gltf && gltf.scene));
             
             if (gltf && gltf.scene) {
                 gltf.scene.traverse((node: any) => {
@@ -2079,6 +2114,7 @@ async function loadActiveGLB() {
                 modelGroup = gltf.scene.clone();
             }
         } catch (e) {
+            console.error(`[STAGE_LOG ERROR] Sourcing GLB failed: ${urlName}`, e);
             console.warn(`[DevEntities] Sourcing GLB failed/absent: ${urlName}. Synthesizing highly styled dynamic fallback.`);
             
             // Generate brilliant high-quality fallback mesh dynamically

@@ -281,6 +281,14 @@ export class MatchController {
       }
     });
 
+    while (this.scene.children.length > 0) {
+      this.scene.remove(this.scene.children[0]);
+    }
+    this.scene.background = null;
+    this.scene.environment = null;
+    this.scene.fog = null;
+    (window as any).buildingColliders = [];
+
     // 4. Clear collections to free memory
     this.moveHistory = [];
     this.droneJitterMap.clear();
