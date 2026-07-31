@@ -805,7 +805,7 @@ export function initMainMenu() {
         e.stopPropagation();
         const mapId = getDefaultMap().id;
         ensureAssetsDownloaded(() => {
-            window.dispatchEvent(new CustomEvent('start-match', { detail: { mode: 'STANDARD', class: CLASSES.ASSAULT.id, solo: true, map: getDefaultMap() }}));
+            window.dispatchEvent(new CustomEvent('start-match', { detail: { mode: 'STANDARD', class: CLASSES.ASSAULT.id, solo: true, map: getDefaultMap(), isDevQuickStart: true }}));
             screenManager.showGame();
         }, mapId);
     });
@@ -842,8 +842,7 @@ export function initMainMenu() {
                   else if (docEl.webkitRequestFullscreen) docEl.webkitRequestFullscreen();
               }
           } catch (err) {}
-          window.dispatchEvent(new CustomEvent('start-match', { detail: { mode: 'STANDARD', class: CLASSES.ASSAULT.id, solo: true, map: getDefaultMap() }}));
-          screenManager.showGame();
+          window.dispatchEvent(new CustomEvent('start-match', { detail: { mode: 'STANDARD', class: CLASSES.ASSAULT.id, map: getDefaultMap(), isDevQuickStart: false }}));
       }, mapId);
   };
   playContent.appendChild(qmBtn);

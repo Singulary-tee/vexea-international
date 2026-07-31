@@ -97,6 +97,8 @@ This file is the authoritative index of all directories and source files within 
     *   *Purpose:* Captures mouse clicks, screen touch joystick inputs, and key bindings.
 *   **`main.ts`**
     *   *Purpose:* Initializer and state coordinator. Preloads screens, instantiates Three.js stages (WebGPU or WebGL fallbacks), and hooks connection clicks.
+*   **`screens/matchmaking-overlay.ts`**
+    *   *Purpose:* Renders matchmaking waiting overlay box with cancel option and pre-match countdown banner.
 *   **`map_editor.ts`**
     *   *Purpose:* Level-building sandbox interface.
 *   **`physics.worker.ts`**
@@ -457,6 +459,16 @@ Every file change in the VEXEA codebase must follow this strict three-step proto
     *   `/client/settings.ts`: Added `dynamicResolutionEnabled` setting (default true), added 'Automatic Scaling' UI toggle next to Pixel Ratio Scale control, greyed out manual radio buttons when active, and updated `applySettings` to yield pixel ratio control to automatic system when enabled.
     *   `/client/main.ts`: Integrated `dynamicResolutionSystem.update()` into render frame loop.
 *   **Verification:** `lint_applet` passed cleanly, `compile_applet` completed with zero errors.
+
+### Cycle 2026-07-30-01: Client Matchmaking Pooling and Pre-Match Countdown Integration
+*   **Target Files:** `/client/screens/matchmaking-overlay.ts`, `/client/main.ts`, `/client/screens/main-menu.ts`, `/client/screens/lobby.ts`, `/CODEBASE_INDEX.md`
+*   **Status:** Verified & Finalized
+*   **Modifications:**
+    *   `/client/screens/matchmaking-overlay.ts`: Created DS-compliant matchmaking waiting overlay with cancel option and pre-match countdown overlay display.
+    *   `/client/main.ts`: Wired socket `reliable_event` handling for `MATCHMAKING_STATUS`, `MATCH_FOUND`, `PRE_MATCH_COUNTDOWN`, and `PRE_MATCH_COUNTDOWN_TICK`. Delayed match scene initialization and map loading until server sends `MATCH_FOUND`. Emitted `loading_complete` upon scene load completion. Retained immediate path for `isDevQuickStart: true`.
+    *   `/client/screens/main-menu.ts`: Updated `DEV QUICK START` button to pass `isDevQuickStart: true` and `QUICK MATCH` button to pass `isDevQuickStart: false`. Removed immediate `showGame()` call from Quick Match handler.
+    *   `/client/screens/lobby.ts`: Updated `READY` button to pass `isDevQuickStart: false` and removed immediate `showGame()` call so server matchmaker governs match transition.
+*   **Verification:** `lint_applet` and `compile_applet` passed cleanly with zero errors.
 
 
 
