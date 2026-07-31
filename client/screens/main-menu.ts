@@ -782,7 +782,9 @@ export function initMainMenu() {
     padding: 'clamp(4px, 1vh, 8px)', gap: '4px', zIndex: '3', pointerEvents: 'none'
   });
 
-  if (IS_DEV) {
+  // TEMP DEPLOYMENT TEST: Temporarily enabled Dev buttons in production build. REVERT IMMEDIATELY ONCE TESTED!
+  // if (IS_DEV) {
+  if (true) {
     const devContainer = document.createElement('div');
     Object.assign(devContainer.style, {
       display: 'flex', gap: '5px', flexWrap: 'wrap', justifyContent: 'flex-end', alignItems: 'center',
