@@ -3260,21 +3260,6 @@ function applyProceduralModelAnimations(dt: number) {
                 r.makeRotationX(-Math.sin(trot) * 0.5);
                 didRotate = true;
             }
-        } else if (type === DroneType.HUMANOID) {
-            const walk = state.walkPhase || 0;
-            if (child.name.toLowerCase().includes("leftleg") || child.name.toLowerCase().includes("l_leg")) {
-                r.makeRotationX(Math.sin(walk) * 0.6);
-                didRotate = true;
-            } else if (child.name.toLowerCase().includes("rightleg") || child.name.toLowerCase().includes("r_leg")) {
-                r.makeRotationX(-Math.sin(walk) * 0.6);
-                didRotate = true;
-            } else if (child.name.toLowerCase().includes("leftarm") || child.name.toLowerCase().includes("l_arm")) {
-                r.makeRotationX(-Math.sin(walk) * 0.5);
-                didRotate = true;
-            } else if (child.name.toLowerCase().includes("rightarm") || child.name.toLowerCase().includes("r_arm")) {
-                r.makeRotationX(Math.sin(walk) * 0.5);
-                didRotate = true;
-            }
         }
 
         // Apply pivot translation to prevent offset general orbits
