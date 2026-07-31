@@ -51,9 +51,6 @@ export async function initDroneModels(scene: THREE.Scene): Promise<void> {
       if (urlName === "quadcopter_rifle-optimized.glb") typeId = DroneType.ROTARY_SHOOTER;
       else if (urlName === "quadcopter_bmb-optimized.glb") typeId = DroneType.BOMBER;
       else if (urlName === "quadcopter_cam-optimized.glb") typeId = DroneType.RECON;
-      else if (urlName === "uav-optimized.glb") typeId = DroneType.FIXED_WING;
-      else if (urlName === "ugv-optimized.glb") typeId = DroneType.WHEELED;
-      else if (urlName === "humanoid-optimized.glb") typeId = DroneType.HUMANOID;
       const config = typeId !== null ? DRONE_CONFIGS[typeId] : null;
 
       const nodes: DroneNode[] = [];
@@ -72,25 +69,27 @@ export async function initDroneModels(scene: THREE.Scene): Promise<void> {
         box.getCenter(center);
         
         gltf.scene.children.forEach((child: any) => {
-           if (child && child.position) {
-               child.position.sub(center);
-           }
+           child.position.sub(center);
         });
         gltf.scene.updateMatrixWorld(true);
 
         const targetRadius = config ? config.visualRadius : undefined;
         let scaleFactor = 1.0;
         if (targetRadius) {
-            const modelBox = new THREE.Box3().setFromObject(gltf.scene);
-            if (!modelBox.isEmpty()) {
-                const sphere = new THREE.Sphere();
-                modelBox.getBoundingSphere(sphere);
-                const currentRadius = sphere.radius;
-                if (typeof currentRadius === 'number' && isFinite(currentRadius) && currentRadius > 0.0001) {
-                    scaleFactor = targetRadius / currentRadius;
+            let bodyMesh: any = null;
+            gltf.scene.traverse((child: any) => {
+                if (child.isMesh && (!bodyMesh || child.name.toLowerCase().includes('body'))) {
+                    bodyMesh = child;
                 }
+            });
+            if (bodyMesh && bodyMesh.geometry) {
+                bodyMesh.geometry.computeBoundingBox();
+                const sphere = new THREE.Sphere();
+                if (bodyMesh.geometry.boundingBox) bodyMesh.geometry.boundingBox.getBoundingSphere(sphere);
+                const currentRadius = sphere.radius || 1.0;
+                scaleFactor = targetRadius / currentRadius;
             }
-            if (typeof scaleFactor === 'number' && isFinite(scaleFactor) && scaleFactor > 0 && scaleFactor !== 1.0) {
+            if (scaleFactor !== 1.0) {
                 gltf.scene.scale.set(scaleFactor, scaleFactor, scaleFactor);
                 gltf.scene.updateMatrixWorld(true);
             }
