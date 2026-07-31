@@ -174,7 +174,13 @@ export async function initDroneModels(scene: THREE.Scene): Promise<void> {
           });
         });
       }
-      if (urlName === ASSET_STRUCTURE["uav-optimized.glb"].fileName) (window as any).rawFwGLTF = gltf; return nodes;
+      if (urlName === ASSET_STRUCTURE["uav-optimized.glb"].fileName) {
+        (window as any).rawFwGLTF = gltf;
+      }
+      if (urlName === ASSET_STRUCTURE["humanoid-optimized.glb"].fileName) {
+        (window as any).rawHumanoidGLTF = gltf;
+      }
+      return nodes;
     } catch(e) {
       console.warn("Failed to load drone model:", urlName, e);
     }
@@ -320,6 +326,9 @@ export async function initDroneModels(scene: THREE.Scene): Promise<void> {
   const gBase = new THREE.SphereGeometry(0.8, 8, 8);
   const gBox = new THREE.BoxGeometry(2, 0.5, 3);
 
+  // Clarification on rendering architecture:
+  // - Batched meshes entities: all 3 quadcopter types (ROTARY_SHOOTER, BOMBER, RECON) and the ugv (WHEELED).
+  // - Not batched meshes entities: uav (FIXED_WING) and robot dog (ROBOT_DOG), and humanoid drone (HUMANOID) and the player models.
   (window as any).droneBatches = [];
   (window as any).droneBatches[0] = mkBatchDirect(rotaryParts, tMatAir, gBase, 50, DRONE_CONFIGS[DroneType.ROTARY_SHOOTER].visualRadius);
   (window as any).droneBatches[1] = mkBatchDirect(bomberParts, tMatBomber, gBase, 50, DRONE_CONFIGS[DroneType.BOMBER].visualRadius);
@@ -339,6 +348,7 @@ export async function initDroneModels(scene: THREE.Scene): Promise<void> {
   const gltf = (window as any).rawFwGLTF;
   if (gltf && gltf.scene) {
       const clone = SkeletonUtils.clone(gltf.scene);
+      clone.name = "FixedWingGLTFScene";
       offsetGroup.add(clone);
   }
   
@@ -353,6 +363,37 @@ export async function initDroneModels(scene: THREE.Scene): Promise<void> {
   fixedWingGroup.scale.set(scaleFactorFW, scaleFactorFW, scaleFactorFW);
   
   (window as any).fixedWingModel = fixedWingGroup;
+
+  // Standalone Humanoid model biped joints or skeletal setup
+  const humanoidGroup = new THREE.Group();
+  humanoidGroup.name = "HumanoidStandalone";
+  
+  const hOffsetGroup = new THREE.Group();
+  const hOffset = DRONE_CONFIGS[DroneType.HUMANOID].orientationOffset || [0, 0, 0];
+  hOffsetGroup.rotation.set(hOffset[0], hOffset[1], hOffset[2]);
+  humanoidGroup.add(hOffsetGroup);
+
+  const hGltf = (window as any).rawHumanoidGLTF;
+  if (hGltf && hGltf.scene) {
+      const clone = SkeletonUtils.clone(hGltf.scene);
+      clone.name = "HumanoidGLTFScene";
+      hOffsetGroup.add(clone);
+  }
+  
+  let scaleFactorH = 1.0;
+  let bodyH = humanoidParts.find(p => p.isMesh && (p.name === 'body' || p.name.toLowerCase().includes('body'))) || humanoidParts.find(p=>p.isMesh);
+  if (bodyH) {
+      bodyH.geom!.computeBoundingBox();
+      const sphere = new THREE.Sphere();
+      if (bodyH.geom!.boundingBox) bodyH.geom!.boundingBox.getBoundingSphere(sphere);
+      scaleFactorH = 2.5 / (sphere.radius || 1.0);
+  }
+  humanoidGroup.scale.set(scaleFactorH, scaleFactorH, scaleFactorH);
+  
+  (window as any).humanoidModel = humanoidGroup;
+  if (hGltf && hGltf.animations) {
+      (window as any).humanoidAnimations = hGltf.animations;
+  }
   setTimeout(() => {
      let logs = [];
      if (fixedWingGroup) {
