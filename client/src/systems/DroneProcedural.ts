@@ -197,7 +197,7 @@ export function applyNodeRotation(
   }
 
   if (config.animations.includes('turret')) {
-    if (nodeName === 'rotate') {
+    if (nodeName === 'Turret') {
       rOut.makeRotationY(state.turretYaw);
       didRotate = true;
     } else if (nodeName === 'gun') {

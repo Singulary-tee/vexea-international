@@ -150,7 +150,11 @@ export class DroneSystem {
 
       const typeId = latest.type;
       if (typeId >= 0 && typeId <= 6 || typeId === DroneType.TEST_ENTITY) {
-        if (typeId === 3 || typeId === DroneType.TEST_ENTITY) { // FIXED_WING standalone or TEST_ENTITY
+        const isStandalone = typeId === DroneType.FIXED_WING || 
+                             typeId === DroneType.ROBOT_DOG || 
+                             typeId === DroneType.HUMANOID || 
+                             typeId === DroneType.TEST_ENTITY;
+        if (isStandalone) { // FIXED_WING, ROBOT_DOG, HUMANOID, or TEST_ENTITY standalone
            match.tempScale.set(1, 1, 1);
            this.diagTempMatrix.compose(this.diagTempPosition, this.diagTempQuaternion, match.tempScale);
            let fw = this.standaloneDrones.get(id);
@@ -163,7 +167,7 @@ export class DroneSystem {
                  (fw as any).isDrone = true;
                  this.match.scene.add(fw);
                  this.standaloneDrones.set(id, fw);
-              } else if ((window as any).fixedWingModel) {
+              } else if (typeId === DroneType.FIXED_WING && (window as any).fixedWingModel) {
                  fw = SkeletonUtils.clone((window as any).fixedWingModel) as THREE.Group;
                  fw.name = "FixedWingDrone";
                  (fw as any).isDrone = true;
@@ -172,12 +176,40 @@ export class DroneSystem {
                  
                  const anims = (window as any).fixedWingAnimations;
                  if (anims && anims.length > 0) {
-                    const mixer = new THREE.AnimationMixer(fw);
+                    const subRoot = fw.getObjectByName("FixedWingGLTFScene") || fw;
+                    const mixer = new THREE.AnimationMixer(subRoot);
                     const action = mixer.clipAction(anims[0]);
                     action.play();
                     mixer.setTime(14/30); mixer.update(0);
                     // Do NOT add to standaloneMixers, so it holds at frame 14
                  }
+              } else if (typeId === DroneType.HUMANOID && (window as any).humanoidModel) {
+                 fw = SkeletonUtils.clone((window as any).humanoidModel) as THREE.Group;
+                 fw.name = "HumanoidDrone";
+                 (fw as any).isDrone = true;
+                 this.match.scene.add(fw);
+                 this.standaloneDrones.set(id, fw);
+                 
+                 const anims = (window as any).humanoidAnimations;
+                 if (anims && anims.length > 0) {
+                    const subRoot = fw.getObjectByName("HumanoidGLTFScene") || fw;
+                    const mixer = new THREE.AnimationMixer(subRoot);
+                    const action = mixer.clipAction(anims[0]);
+                    action.play();
+                    this.standaloneMixers.set(id, mixer);
+                 }
+              } else if (typeId === DroneType.ROBOT_DOG) {
+                 if ((window as any).robotDogModel) {
+                     fw = SkeletonUtils.clone((window as any).robotDogModel) as THREE.Group;
+                 } else {
+                     const geo = new THREE.BoxGeometry(1, 0.8, 1.5);
+                     const mat = new THREE.MeshStandardMaterial({ color: 0x555555 });
+                     fw = new THREE.Mesh(geo, mat) as any;
+                 }
+                 fw.name = "RobotDogDrone";
+                 (fw as any).isDrone = true;
+                 this.match.scene.add(fw);
+                 this.standaloneDrones.set(id, fw);
               }
            }
            if (fw) {
@@ -308,7 +340,7 @@ export class DroneSystem {
                              
                              // P_local: pivot relative to mesh origin in its own coordinate system
                              if (typeId === DroneType.WHEELED && (info as any).baseInvWorldMatrix) {
-                                 if (info.name === 'rotate' && config.turretYawPivot) {
+                                 if (info.name === 'Turret' && config.turretYawPivot) {
                                      this.tempTurretPivot.set(config.turretYawPivot[0], config.turretYawPivot[1], config.turretYawPivot[2]);
                                      if ((info as any).baseWorldMatrix) {
                                          this.tempTurretPivot.applyMatrix4((info as any).baseWorldMatrix);

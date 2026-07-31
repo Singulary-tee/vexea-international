@@ -609,15 +609,17 @@ let sharedKtx2Loader: KTX2Loader | null = null;
 
 function getSharedDracoLoader(): DRACOLoader {
   if (!sharedDracoLoader) {
-    console.log(`[STAGE_LOG DRACO] Initializing getSharedDracoLoader with path /draco/gltf/`);
     sharedDracoLoader = new DRACOLoader();
     sharedDracoLoader.setDecoderPath('/draco/gltf/');
   }
   return sharedDracoLoader;
 }
 
+/**
+ * Initializes KTX2 hardware support detection with the active Three.js WebGPU/WebGL renderer.
+ * Must be called with a valid renderer before parsing KTX2/Basis compressed texture GLBs.
+ */
 export function initKTX2Support(rendererInstance: any): void {
-  console.log(`[STAGE_LOG KTX2] initKTX2Support called. Renderer provided:`, !!rendererInstance);
   if (!sharedKtx2Loader) {
     sharedKtx2Loader = new KTX2Loader();
     sharedKtx2Loader.setTranscoderPath('/basis/');
@@ -626,18 +628,14 @@ export function initKTX2Support(rendererInstance: any): void {
     try {
       sharedKtx2Loader.detectSupport(rendererInstance);
       (sharedKtx2Loader as any)._supportDetected = true;
-      console.log(`[STAGE_LOG KTX2] detectSupport succeeded! workerConfig:`, sharedKtx2Loader.workerConfig);
     } catch (e) {
-      console.warn('[STAGE_LOG KTX2] Error initializing KTX2Loader detectSupport:', e);
+      console.warn('[AssetCache] Error initializing KTX2Loader detectSupport:', e);
     }
   }
   if (sharedKtx2Loader && !(sharedKtx2Loader as any)._initStarted) {
     (sharedKtx2Loader as any)._initStarted = true;
-    console.log(`[STAGE_LOG KTX2] Explicitly calling sharedKtx2Loader.init()...`);
-    (sharedKtx2Loader as any).init().then(() => {
-      console.log(`[STAGE_LOG KTX2] sharedKtx2Loader.init() SUCCESS! Basis transcoder ready.`);
-    }).catch((err: any) => {
-      console.error(`[STAGE_LOG KTX2] sharedKtx2Loader.init() FAILED:`, err);
+    (sharedKtx2Loader as any).init().catch((err: any) => {
+      console.error('[AssetCache] KTX2Loader basis transcoder init failed:', err);
     });
   }
 }
@@ -648,14 +646,12 @@ function getSharedKtx2Loader(rendererInstance?: any): KTX2Loader {
     sharedKtx2Loader.setTranscoderPath('/basis/');
   }
   const activeRenderer = rendererInstance || (typeof window !== 'undefined' ? (window as any).renderer || (window as any).W?.renderer : null);
-  console.log(`[STAGE_LOG KTX2] getSharedKtx2Loader called. Active renderer:`, !!activeRenderer, `Support already detected:`, !!(sharedKtx2Loader as any)._supportDetected);
   if (activeRenderer && !(sharedKtx2Loader as any)._supportDetected) {
     try {
       sharedKtx2Loader.detectSupport(activeRenderer);
       (sharedKtx2Loader as any)._supportDetected = true;
-      console.log(`[STAGE_LOG KTX2] getSharedKtx2Loader detectSupport succeeded! workerConfig:`, sharedKtx2Loader.workerConfig);
     } catch (e) {
-      console.warn('[STAGE_LOG KTX2] Error calling detectSupport in getSharedKtx2Loader:', e);
+      console.warn('[AssetCache] Error calling detectSupport in getSharedKtx2Loader:', e);
     }
   }
   return sharedKtx2Loader;

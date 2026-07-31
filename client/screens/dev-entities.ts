@@ -1,5 +1,6 @@
 import * as THREE from "three/webgpu";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+import * as SkeletonUtils from "three/addons/utils/SkeletonUtils.js";
 import { getAssetUrl, getCachedOrFetchUrl, createConfiguredGLTFLoader } from "../asset-cache";
 import * as screenManager from "./screen-manager";
 import { DS } from "../design-system";
@@ -96,7 +97,7 @@ function getLocalBoundingBoxOfNode(node: THREE.Object3D): THREE.Box3 {
 
 function verifyPivotRotationMath() {
     if (!activeGLBModel) return;
-    const rotateNode = activeGLBModel.getObjectByName("rotate");
+    const rotateNode = activeGLBModel.getObjectByName("Turret");
     const gunNode = activeGLBModel.getObjectByName("gun");
     const modelGroup = activeGLBModel.children[0]?.children[0] as THREE.Group;
     if (!rotateNode || !gunNode || !modelGroup) return;
@@ -767,6 +768,8 @@ let playerLoopMode: "IDLE" | "WALK" | "ADS" | "RELOAD" | "DRAW" = "IDLE";
 let playerLoopTimer = 0.0;
 let playerAdsLerp = 0.0; // dynamic ADS transition state
 let playerSwayCycle = 0.0;
+let playerMixer: THREE.AnimationMixer | null = null;
+let activePlayerAction: THREE.AnimationAction | null = null;
 
 // Mutable player physics tunables object for the Calibration UI
 const PLAYER_CALIBRATION_PARAMS = {
@@ -779,6 +782,9 @@ const PLAYER_CALIBRATION_PARAMS = {
     jumpVelocity: 7.0,
     gravity: 18.0,
     hp: 100,
+    meshScale: 0.025,
+    meshOffsetY: 0.0,
+    meshYawOffset: 0.0,
 };
 
 let activeGLBModel: THREE.Group | null = null;
@@ -1809,7 +1815,7 @@ function updateMuzzleVisualLocation() {
         if (currentTab === "WHEELED") {
             const barrelNode = activeGLBModel.getObjectByName("barrel");
             const gunNode = activeGLBModel.getObjectByName("gun");
-            const rotateNode = activeGLBModel.getObjectByName("rotate");
+            const rotateNode = activeGLBModel.getObjectByName("Turret");
             if (barrelNode) {
                 parentNode = barrelNode;
             } else if (gunNode) {
@@ -1821,7 +1827,7 @@ function updateMuzzleVisualLocation() {
             const barrelNode = activeGLBModel.getObjectByName("barrel");
             const rifleNode = activeGLBModel.getObjectByName("rifle");
             const gunNode = activeGLBModel.getObjectByName("gun");
-            const rotateNode = activeGLBModel.getObjectByName("rotate");
+            const rotateNode = activeGLBModel.getObjectByName("Turret");
             if (barrelNode) {
                 parentNode = barrelNode;
             } else if (rifleNode) {
@@ -1862,7 +1868,7 @@ function updateMuzzleVisualLocation() {
         localPos.applyMatrix4(activeGLBModel.matrixWorld);
         activeLightRightVisual.position.copy(localPos);
     }
-    const rotateNode = activeGLBModel.getObjectByName('rotate');
+    const rotateNode = activeGLBModel.getObjectByName('Turret');
     const modelGroup = activeGLBModel.children[0]?.children[0] as THREE.Group;
     const baseWorldMat = modelGroup?.userData.baseWorldMatrix;
 
@@ -2001,6 +2007,16 @@ async function loadActiveGLB() {
         scene.remove(activeGLBModel);
         activeGLBModel = null;
     }
+    if (playerModelMesh) {
+        scene.remove(playerModelMesh);
+        playerModelMesh = null;
+    }
+    if (weaponsContainer) {
+        scene.remove(weaponsContainer);
+    }
+    playerMixer = null;
+    activePlayerAction = null;
+
     if (activeMuzzleVisual) {
         scene.remove(activeMuzzleVisual);
         activeMuzzleVisual = null;
@@ -2051,47 +2067,22 @@ async function loadActiveGLB() {
     let modelGroup: THREE.Group | null = null;
 
     if (loadedGLBsCache.has(urlName)) {
-        modelGroup = loadedGLBsCache.get(urlName)!.clone();
+        modelGroup = SkeletonUtils.clone(loadedGLBsCache.get(urlName)!) as THREE.Group;
     } else {
         try {
-            console.log(`[STAGE_LOG 1] DevEntities loading GLB: ${urlName}`);
+            // Fetch asset ArrayBuffer via asset cache blob manager
             const assetUrl = await getAssetUrl(urlName);
-            console.log(`[STAGE_LOG 2] Resolved assetUrl for ${urlName}: ${assetUrl}`);
-            console.log(`[STAGE_LOG 3.1] Fetching blob ArrayBuffer...`);
             const res = await fetch(assetUrl);
-            console.log(`[STAGE_LOG 3.2] Blob response received. Status: ${res.status}. Converting to ArrayBuffer...`);
             const arrayBuffer = await res.arrayBuffer();
-            console.log(`[STAGE_LOG 3.3] ArrayBuffer ready (${arrayBuffer.byteLength} bytes). Slicing GLB header...`);
-            
-            try {
-                const dataView = new DataView(arrayBuffer);
-                const magic = dataView.getUint32(0, true);
-                const version = dataView.getUint32(4, true);
-                const jsonLength = dataView.getUint32(12, true);
-                const jsonBytes = new Uint8Array(arrayBuffer, 20, jsonLength);
-                const jsonStr = new TextDecoder().decode(jsonBytes);
-                const gltfJson = JSON.parse(jsonStr);
-                console.log(`[STAGE_LOG GLTF_HEADER] GLTF Version: ${version}, extensionsUsed:`, gltfJson.extensionsUsed, `extensionsRequired:`, gltfJson.extensionsRequired);
-            } catch (headerErr) {
-                console.warn(`[STAGE_LOG GLTF_HEADER_ERR] Failed to parse GLB JSON header:`, headerErr);
-            }
 
-            console.log(`[STAGE_LOG 3.4] Invoking loader.parse with explicit callbacks...`);
             const gltf = await new Promise<any>((resolve, reject) => {
                 loader.parse(
                     arrayBuffer,
                     '',
-                    (resGltf) => {
-                        console.log(`[STAGE_LOG 4] loader.parse callback SUCCESS!`, resGltf);
-                        resolve(resGltf);
-                    },
-                    (err) => {
-                        console.error(`[STAGE_LOG ERROR] loader.parse callback ERROR:`, err);
-                        reject(err);
-                    }
+                    (resGltf) => resolve(resGltf),
+                    (err) => reject(err)
                 );
             });
-            console.log(`[STAGE_LOG 5] GLTF parsed. Scene present:`, !!(gltf && gltf.scene));
             
             if (gltf && gltf.scene) {
                 gltf.scene.traverse((node: any) => {
@@ -2111,11 +2102,10 @@ async function loadActiveGLB() {
                 gltf.scene.updateMatrixWorld(true);
 
                 loadedGLBsCache.set(urlName, gltf.scene);
-                modelGroup = gltf.scene.clone();
+                modelGroup = SkeletonUtils.clone(gltf.scene) as THREE.Group;
             }
         } catch (e) {
-            console.error(`[STAGE_LOG ERROR] Sourcing GLB failed: ${urlName}`, e);
-            console.warn(`[DevEntities] Sourcing GLB failed/absent: ${urlName}. Synthesizing highly styled dynamic fallback.`);
+            console.warn(`[DevEntities] Sourcing GLB failed: ${urlName}. Synthesizing fallback mesh.`, e);
             
             // Generate brilliant high-quality fallback mesh dynamically
             modelGroup = new THREE.Group();
@@ -2689,7 +2679,7 @@ function runSliderAnimationTick(dt: number) {
             if (currentTab === "WHEELED") {
                 const barrelNode = activeGLBModel.getObjectByName("barrel");
                 const gunNode = activeGLBModel.getObjectByName("gun");
-                const rotateNode = activeGLBModel.getObjectByName("rotate");
+                const rotateNode = activeGLBModel.getObjectByName("Turret");
                 if (barrelNode) parentNode = barrelNode;
                 else if (gunNode) parentNode = gunNode;
                 else if (rotateNode) parentNode = rotateNode;
@@ -2697,7 +2687,7 @@ function runSliderAnimationTick(dt: number) {
                 const barrelNode = activeGLBModel.getObjectByName("barrel");
                 const rifleNode = activeGLBModel.getObjectByName("rifle");
                 const gunNode = activeGLBModel.getObjectByName("gun");
-                const rotateNode = activeGLBModel.getObjectByName("rotate");
+                const rotateNode = activeGLBModel.getObjectByName("Turret");
                 if (barrelNode) parentNode = barrelNode;
                 else if (rifleNode) parentNode = rifleNode;
                 else if (gunNode) parentNode = gunNode;
@@ -3204,7 +3194,7 @@ function applyProceduralModelAnimations(dt: number) {
                     r.premultiply(steerRot);
                 }
                 didRotate = true;
-            } else if (child.name === 'rotate') {
+            } else if (child.name === 'Turret') {
                 tempModelPivot.set(
                     params.turretYawPivotX !== undefined ? params.turretYawPivotX : 0.0,
                     params.turretYawPivotY !== undefined ? params.turretYawPivotY : 0.45,
@@ -3405,6 +3395,36 @@ const PLAYER_SLIDER_SCHEMAS: Record<string, Record<string, { label: string; min:
             label: "Player Total Height", min: 0.5, max: 3.0, step: 0.01,
             getValue: () => PLAYER_CALIBRATION_PARAMS.totalHeight,
             setValue: (v) => { PLAYER_CALIBRATION_PARAMS.totalHeight = v; updateColliderPositionAndDimensions(); }
+        },
+        meshScale: {
+            label: "Player Mesh Scale", min: 0.001, max: 0.1, step: 0.0005,
+            getValue: () => PLAYER_CALIBRATION_PARAMS.meshScale,
+            setValue: (v) => {
+                PLAYER_CALIBRATION_PARAMS.meshScale = v;
+                if (playerModelMesh) {
+                    playerModelMesh.scale.set(v, v, v);
+                }
+            }
+        },
+        meshOffsetY: {
+            label: "Player Mesh Y Offset", min: -5.0, max: 5.0, step: 0.02,
+            getValue: () => PLAYER_CALIBRATION_PARAMS.meshOffsetY,
+            setValue: (v) => {
+                PLAYER_CALIBRATION_PARAMS.meshOffsetY = v;
+                if (playerModelMesh && playerModelMesh.children[0]) {
+                    playerModelMesh.children[0].position.y = v;
+                }
+            }
+        },
+        meshYawOffset: {
+            label: "Player Mesh Yaw (Rad)", min: -Math.PI, max: Math.PI, step: 0.02,
+            getValue: () => PLAYER_CALIBRATION_PARAMS.meshYawOffset,
+            setValue: (v) => {
+                PLAYER_CALIBRATION_PARAMS.meshYawOffset = v;
+                if (playerModelMesh && playerModelMesh.children[0]) {
+                    playerModelMesh.children[0].rotation.y = v;
+                }
+            }
         }
     },
     "Category 3 — Recoil, Sway & Sound VFX": {
@@ -3594,6 +3614,7 @@ function buildPlayerSliders() {
     loopSelect.addEventListener("change", (e: any) => {
         playerLoopMode = e.target.value as any;
         playerLoopTimer = 0.0;
+        updatePlayerAnimation();
     });
 
     const fireBtn = headerBlock.querySelector("#player-fire-btn") as HTMLButtonElement;
@@ -3674,6 +3695,28 @@ function onPlayerParamChanged(key: string, val: number) {
     }
 }
 
+function updatePlayerAnimation() {
+    if (!playerMixer || !playerModelMesh || !playerModelMesh.userData.animations) return;
+    const animations = playerModelMesh.userData.animations;
+    
+    let targetAnimName = "idle";
+    if (playerLoopMode === "WALK") {
+        targetAnimName = "walk";
+    }
+    
+    const clip = animations.find((a: any) => a.name.toLowerCase().includes(targetAnimName)) || animations[0];
+    if (clip) {
+        const action = playerMixer.clipAction(clip);
+        if (activePlayerAction !== action) {
+            if (activePlayerAction) {
+                activePlayerAction.fadeOut(0.2);
+            }
+            action.reset().fadeIn(0.2).play();
+            activePlayerAction = action;
+        }
+    }
+}
+
 async function loadPlayerCalibrationScene() {
     // Clear standard drone artifacts
     if (activeGLBModel) {
@@ -3684,6 +3727,9 @@ async function loadPlayerCalibrationScene() {
         scene.remove(playerModelMesh);
         playerModelMesh = null;
     }
+    playerMixer = null;
+    activePlayerAction = null;
+
     if (weaponsContainer) {
         scene.remove(weaponsContainer);
     }
@@ -3707,7 +3753,14 @@ async function loadPlayerCalibrationScene() {
     // 1. Create Player Model group
     playerModelMesh = new THREE.Group();
     playerModelMesh.name = "PlayerModelGroup";
+    playerModelMesh.scale.setScalar(PLAYER_CALIBRATION_PARAMS.meshScale);
     scene.add(playerModelMesh);
+
+    const innerGroup = new THREE.Group();
+    innerGroup.name = "PlayerModelInner";
+    innerGroup.position.set(0, PLAYER_CALIBRATION_PARAMS.meshOffsetY, 0);
+    innerGroup.rotation.set(0, PLAYER_CALIBRATION_PARAMS.meshYawOffset, 0);
+    playerModelMesh.add(innerGroup);
 
     const loader = createConfiguredGLTFLoader();
     try {
@@ -3721,31 +3774,38 @@ async function loadPlayerCalibrationScene() {
                     node.material.roughness = 0.5;
                 }
             });
-            playerModelMesh.add(gltf.scene);
+            innerGroup.add(gltf.scene);
+
+            // Set up animations if present
+            if (gltf.animations && gltf.animations.length > 0) {
+                playerModelMesh.userData.animations = gltf.animations;
+                playerMixer = new THREE.AnimationMixer(gltf.scene);
+                updatePlayerAnimation();
+            }
         }
     } catch (e) {
-        console.warn(`[DevEntities] Sourcing Player GLB failed, synthesizing premium fallback.`);
+        console.warn(`[DevEntities] Sourcing Player GLB failed, synthesizing premium fallback.`, e);
         // Synthesize extremely slick fallback mannequin
         const mat = new THREE.MeshStandardMaterial({ color: 0x0ea5e9, metalness: 0.8, roughness: 0.2 });
         
         // Torso
         const torso = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.15, 0.7), mat);
         torso.position.y = 1.15;
-        playerModelMesh.add(torso);
+        innerGroup.add(torso);
 
         // Head
         const head = new THREE.Mesh(new THREE.SphereGeometry(0.12, 16, 16), mat);
         head.position.set(0, 1.6, 0);
-        playerModelMesh.add(head);
+        innerGroup.add(head);
 
         // Legs
         const lLeg = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.04, 0.7), mat);
         lLeg.position.set(-0.12, 0.45, 0);
-        playerModelMesh.add(lLeg);
+        innerGroup.add(lLeg);
 
         const rLeg = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.04, 0.7), mat);
         rLeg.position.set(0.12, 0.45, 0);
-        playerModelMesh.add(rLeg);
+        innerGroup.add(rLeg);
     }
 
     // Hide character mesh if starting in first person view
@@ -3776,6 +3836,10 @@ async function loadPlayerCalibrationScene() {
 
 function updatePlayerCalibrationScene(dt: number) {
     if (!weaponsContainer) return;
+
+    if (playerMixer) {
+        playerMixer.update(dt);
+    }
 
     playerLoopTimer += dt;
     if (activeSliderAnimationKey) {
