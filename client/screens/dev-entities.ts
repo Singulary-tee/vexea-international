@@ -826,7 +826,9 @@ let activePropFRPivotVisual: THREE.Mesh | null = null;
 let activePropBLPivotVisual: THREE.Mesh | null = null;
 let activePropBRPivotVisual: THREE.Mesh | null = null;
 
-const loadedGLBsCache = new Map<string, THREE.Group>();
+const loadedGLBsCache = new Map<string, any>();
+let activeGLBMixer: THREE.AnimationMixer | null = null;
+let activeGLBAction: THREE.AnimationAction | null = null;
 
 let activeSliderAnimationKey: string | null = null;
 let sliderAnimTimer = 0.0;
@@ -2066,8 +2068,12 @@ async function loadActiveGLB() {
     
     let modelGroup: THREE.Group | null = null;
 
+    let modelAnimations: THREE.AnimationClip[] | null = null;
+
     if (loadedGLBsCache.has(urlName)) {
-        modelGroup = SkeletonUtils.clone(loadedGLBsCache.get(urlName)!) as THREE.Group;
+        const gltf = loadedGLBsCache.get(urlName);
+        modelGroup = SkeletonUtils.clone(gltf.scene) as THREE.Group;
+        modelAnimations = gltf.animations;
     } else {
         try {
             // Fetch asset ArrayBuffer via asset cache blob manager
@@ -2083,7 +2089,7 @@ async function loadActiveGLB() {
                     (err) => reject(err)
                 );
             });
-            
+
             if (gltf && gltf.scene) {
                 gltf.scene.traverse((node: any) => {
                     if (node.isMesh && node.material) {
@@ -2101,8 +2107,9 @@ async function loadActiveGLB() {
                 });
                 gltf.scene.updateMatrixWorld(true);
 
-                loadedGLBsCache.set(urlName, gltf.scene);
+                loadedGLBsCache.set(urlName, gltf);
                 modelGroup = SkeletonUtils.clone(gltf.scene) as THREE.Group;
+                modelAnimations = gltf.animations;
             }
         } catch (e) {
             console.warn(`[DevEntities] Sourcing GLB failed: ${urlName}. Synthesizing fallback mesh.`, e);
@@ -2304,7 +2311,9 @@ async function loadActiveGLB() {
             }
 
             child.userData.localPivot = localPivot;
-            child.matrixAutoUpdate = false; // Direct matrix manual updates
+            if (!child.isBone && !child.isSkinnedMesh) {
+                child.matrixAutoUpdate = false; // Direct matrix manual updates
+            }
         });
 
         const visualWrapperGroup = new THREE.Group();
@@ -2324,6 +2333,19 @@ async function loadActiveGLB() {
         activeGLBModel.scale.set(userScale, userScale, userScale);
         activeGLBModel.position.set(0, 0.2, 0);
         scene.add(activeGLBModel);
+        
+        if (activeGLBMixer) {
+            activeGLBMixer.stopAllAction();
+            activeGLBMixer = null;
+        }
+        
+        if (modelAnimations && modelAnimations.length > 0) {
+            activeGLBMixer = new THREE.AnimationMixer(activeGLBModel);
+            let clip = modelAnimations.find(a => a.name.toLowerCase().includes('walk'));
+            if (!clip) clip = modelAnimations[0];
+            activeGLBAction = activeGLBMixer.clipAction(clip);
+            activeGLBAction.play();
+        }
 
         const mGeo = new THREE.SphereGeometry(0.06, 8, 8);
         const mMat = new THREE.MeshBasicMaterial({ color: 0xff0064, transparent: true, opacity: 0.85 });
@@ -2493,6 +2515,9 @@ let lastTickTime = performance.now();
 
 function tickLoop() {
     if (!isDevEntitiesActive) return;
+    const winAny = window as any;
+    winAny._globalFrameCount = (winAny._globalFrameCount || 0) + 1;
+    const shouldLogTick = (winAny._globalFrameCount % 30 === 1);
     requestAnimationFrame(tickLoop);
 
     const now = performance.now();
@@ -3075,6 +3100,10 @@ function runLoopSimulation(dt: number) {
 function applyProceduralModelAnimations(dt: number) {
     if (!activeGLBModel) return;
 
+    if (activeGLBMixer) {
+        activeGLBMixer.update(dt);
+    }
+
     const schema = DRONE_SCHEMAS.find(s => s.id === currentTab);
     if (!schema) return;
 
@@ -3137,6 +3166,7 @@ function applyProceduralModelAnimations(dt: number) {
     // Unified Zero-GC Pivot-Aware Matrix Hierarchy Animate Block (Issue 7 & 15)
     // -------------------------------------------------------------
     activeGLBModel.traverse((child: any) => {
+        if (child.isBone || child.isSkinnedMesh) return;
         if (!child.userData.baseLocalMatrix) return;
 
         const localMat = child.userData.baseLocalMatrix.clone();
