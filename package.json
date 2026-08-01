@@ -1,5 +1,5 @@
 {
-  "name": "react-example",
+  "name": "vexea",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -16,18 +16,13 @@
     "@geckos.io/server": "^3.1.0",
     "@google/genai": "^2.4.0",
     "@tailwindcss/vite": "^4.1.14",
-    "@vitejs/plugin-react": "^5.0.4",
     "dotenv": "^17.2.3",
     "express": "^4.21.2",
     "firebase": "^12.13.0",
     "firebase-admin": "^14.0.0",
     "howler": "^2.2.4",
-    "lucide-react": "^0.546.0",
-    "motion": "^12.23.24",
     "node-datachannel": "^0.32.3",
     "playwright": "^1.60.0",
-    "react": "^19.0.1",
-    "react-dom": "^19.0.1",
     "socket.io": "^4.8.3",
     "socket.io-client": "^4.8.3",
     "three": "^0.184.0",
@@ -51,6 +46,7 @@
     "tailwindcss": "^4.1.14",
     "tsx": "^4.21.0",
     "typescript": "~5.8.2",
-    "vite": "^6.2.3"
+    "vite": "^6.2.3",
+    "vite-plugin-static-copy": "^4.1.1"
   }
 }
