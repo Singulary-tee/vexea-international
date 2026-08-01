@@ -70,3 +70,80 @@ Per system guidelines and mobile-first engine requirements:
 - Verify sub-16ms screen and tab transitions across Main Menu, Armory, Store, and Faction screens.
 - Confirm complete elimination of artificial 600ms screen delays and 100ms tab delays.
 - Confirm zero runtime allocations or GLTF fetches during pre-match menu navigation.
+
+---
+
+## 4. Additional Findings: Splash → Lobby (Before Match Start)
+
+### Finding 5: Splash Preload Queue Uses O(n) `shift()` Loop + Per-Asset Layout Churn
+- **Location**: `/home/runner/work/vexea-international/vexea-international/client/screens/splash.ts` (lines 232–241, 225–229)
+- **Mechanism**:
+  - Worker preload loop repeatedly calls `queue.shift()` inside `while (queue.length > 0)`.
+  - Progress UI writes (`loadingBarInner.style.width`, `initText.textContent`) execute on every asset completion.
+- **Impact**: Extra CPU work and repeated style/layout updates during boot on slower devices.
+
+### Finding 6: Screen Manager Re-queries DOM and Allocates Timers on Every Transition
+- **Location**: `/home/runner/work/vexea-international/vexea-international/client/screens/screen-manager.ts` (lines 9–21, 35–47)
+- **Mechanism**:
+  - `hideAll()` calls `document.getElementById(...)` for each screen every time.
+  - Per-screen `setTimeout` timers are re-created for each transition cycle.
+- **Impact**: Avoidable transition overhead and timer churn in pre-match navigation.
+
+### Finding 7: Main Menu Rebuilds Right Panel Tree Repeatedly
+- **Location**: `/home/runner/work/vexea-international/vexea-international/client/screens/main-menu.ts` (lines 1413–1444)
+- **Mechanism**:
+  - `renderRightPanel()` clears `innerHTML` and reconstructs large DOM blocks for each mode change.
+  - A `setTimeout` delay wraps each rebuild pass.
+- **Impact**: High pre-match CPU/layout spikes when switching tabs before lobby.
+
+### Finding 8: Redundant Main Menu Re-render Trigger on `show-main-menu`
+- **Location**: `/home/runner/work/vexea-international/vexea-international/client/screens/screen-manager.ts` (line 56) + `/home/runner/work/vexea-international/vexea-international/client/screens/main-menu.ts` (lines 2986–2993)
+- **Mechanism**:
+  - Screen manager dispatches `show-main-menu`; listener calls `renderRightPanel()` again.
+  - Main menu flow already performs panel rendering in normal setup paths.
+- **Impact**: Duplicate work during splash → main menu transition.
+
+### Finding 9: Offer Carousel Runs on Interval Even When Not Visible
+- **Location**: `/home/runner/work/vexea-international/vexea-international/client/screens/main-menu.ts` (lines 996–1003)
+- **Mechanism**:
+  - `setInterval` + nested `setTimeout` keep mutating card UI continuously.
+  - Updates keep firing regardless of whether the card/screen is visible.
+- **Impact**: Idle CPU usage and unnecessary paint activity before match start.
+
+### Finding 10: Lobby Selection Updates Re-query DOM Per Click
+- **Location**: `/home/runner/work/vexea-international/vexea-international/client/screens/lobby.ts` (lines 390–409)
+- **Mechanism**:
+  - `updateSelection()` uses `querySelectorAll('.lobby-card-ability')` on every card every selection change.
+- **Impact**: Avoidable repeated DOM queries in lobby interaction.
+
+### Finding 11: Repeated Asset-Gating Calls for Lobby Entry
+- **Location**: `/home/runner/work/vexea-international/vexea-international/client/screens/main-menu.ts` (lines 933, 1848)
+- **Mechanism**:
+  - `ensureAssetsDownloaded(() => screenManager.showLobby(), getDefaultMap().id)` is invoked from multiple entry points.
+- **Impact**: Duplicate pre-lobby gate checks and callback setup overhead.
+
+---
+
+## 5. Action Plan Extension (Splash → Lobby Path)
+
+### Phase 6: Splash Preload Pipeline Tightening
+- Replace queue `shift()`-based worker loop with index-based consumption.
+- Coalesce splash progress bar/text updates to animation-frame cadence (instead of every single asset completion).
+
+### Phase 7: Transition Path Caching
+- Cache screen element references once in `screen-manager.ts` and reuse them for hide/show operations.
+- Replace timer-heavy hide/show flow with a single deterministic transition path per screen switch.
+
+### Phase 8: Main Menu Render Path Stabilization
+- Introduce persistent right-panel containers for major modes (`DEFAULT`, `PLAY`, `LOADOUT`, `STORE`, `INTEL`) and toggle visibility.
+- Remove redundant re-render triggers on `show-main-menu` when no state has changed.
+- Pause/stop offer carousel when screen/card is inactive; resume only when visible.
+
+### Phase 9: Lobby Interaction Micro-Optimizations
+- Cache per-card ability element references during lobby construction and update styles without repeated selector queries.
+- Deduplicate lobby entry pre-download logic using a single in-flight promise for map asset gating.
+
+### Phase 10: Verification (Pre-Match Path Only)
+- Measure splash-to-main-menu and main-menu-to-lobby transition latency before/after optimization.
+- Confirm no redundant right-panel rebuilds on main menu re-entry.
+- Confirm reduced idle timers/interval activity while user remains in pre-match screens.
