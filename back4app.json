@@ -1,6 +1,0 @@
-{
-  "container": {
-    "dockerfilePath": "./Dockerfile",
-    "port": "3000"
-  }
-}
