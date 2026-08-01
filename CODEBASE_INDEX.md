@@ -470,6 +470,12 @@ Every file change in the VEXEA codebase must follow this strict three-step proto
     *   `/client/screens/lobby.ts`: Updated `READY` button to pass `isDevQuickStart: false` and removed immediate `showGame()` call so server matchmaker governs match transition.
 *   **Verification:** `lint_applet` and `compile_applet` passed cleanly with zero errors.
 
+### Cycle 2026-08-01-01: Visual fidelity and performance implementation prompt document
+*   **Target Files:** `/Visual-fidelity_and_performance_improvement.md`, `/CODEBASE_INDEX.md`
+*   **Status:** Verified & Finalized
+*   **Modifications:**
+    *   `/Visual-fidelity_and_performance_improvement.md`: Added an implementation-ready LLM prompt that encodes architecture constraints, cross-system checks, prioritized optimization tasks, and validation requirements for VFX visual quality and FPS improvements.
+*   **Verification:** Documentation-only change; build/lint/test not required.
 
 
 
