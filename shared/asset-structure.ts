@@ -690,6 +690,2165 @@ export const ASSET_STRUCTURE: Record<string, GLBMetadata> = {
       }
     ],
     "skins": []
+  },
+  "robodog-optimized.glb": {
+    "label": "Robodog",
+    "materialsCount": 1,
+    "texturesCount": 3,
+    "imagesCount": 3,
+    "animations": [
+      {
+        "index": 0,
+        "name": "0LXN",
+        "minTime": 0,
+        "maxTime": 0
+      },
+      {
+        "index": 1,
+        "name": "0LXP",
+        "minTime": 0,
+        "maxTime": 0
+      },
+      {
+        "index": 2,
+        "name": "0LYN",
+        "minTime": 0,
+        "maxTime": 0
+      },
+      {
+        "index": 3,
+        "name": "0LYP",
+        "minTime": 0,
+        "maxTime": 0
+      },
+      {
+        "index": 4,
+        "name": "0RXN",
+        "minTime": 0,
+        "maxTime": 0
+      },
+      {
+        "index": 5,
+        "name": "0RXP",
+        "minTime": 0,
+        "maxTime": 0
+      },
+      {
+        "index": 6,
+        "name": "0RYN",
+        "minTime": 0,
+        "maxTime": 0
+      },
+      {
+        "index": 7,
+        "name": "0RYP",
+        "minTime": 0,
+        "maxTime": 0
+      },
+      {
+        "index": 8,
+        "name": "1Idle",
+        "minTime": 0,
+        "maxTime": 0.5
+      },
+      {
+        "index": 9,
+        "name": "1LXN",
+        "minTime": 0,
+        "maxTime": 0.5
+      },
+      {
+        "index": 10,
+        "name": "1LXP",
+        "minTime": 0,
+        "maxTime": 0.5
+      },
+      {
+        "index": 11,
+        "name": "1LYN",
+        "minTime": 0,
+        "maxTime": 0.5
+      },
+      {
+        "index": 12,
+        "name": "1LYP",
+        "minTime": 0,
+        "maxTime": 0.5
+      },
+      {
+        "index": 13,
+        "name": "1RXN",
+        "minTime": 0,
+        "maxTime": 0.5
+      },
+      {
+        "index": 14,
+        "name": "1RXP",
+        "minTime": 0,
+        "maxTime": 0.5
+      },
+      {
+        "index": 15,
+        "name": "1RYN",
+        "minTime": 0,
+        "maxTime": 0.5
+      },
+      {
+        "index": 16,
+        "name": "1RYP",
+        "minTime": 0,
+        "maxTime": 0.5
+      },
+      {
+        "index": 17,
+        "name": "Playing",
+        "minTime": 0,
+        "maxTime": 2.6666665077209473
+      },
+      {
+        "index": 18,
+        "name": "RESET",
+        "minTime": 0,
+        "maxTime": 0
+      }
+    ],
+    "nodes": [
+      {
+        "index": 0,
+        "name": "robodog",
+        "depth": 0,
+        "parentIndex": null,
+        "parentName": "ROOT",
+        "hasMesh": false,
+        "meshIndex": -1,
+        "meshName": null,
+        "bbox": null
+      },
+      {
+        "index": 1,
+        "name": "Armature_30",
+        "depth": 1,
+        "parentIndex": 0,
+        "parentName": "robodog",
+        "hasMesh": false,
+        "meshIndex": -1,
+        "meshName": null,
+        "bbox": null
+      },
+      {
+        "index": 2,
+        "name": "BodyBone_25",
+        "depth": 2,
+        "parentIndex": 1,
+        "parentName": "Armature_30",
+        "hasMesh": false,
+        "meshIndex": -1,
+        "meshName": null,
+        "bbox": null
+      },
+      {
+        "index": 3,
+        "name": "HipBRBone_5",
+        "depth": 3,
+        "parentIndex": 2,
+        "parentName": "BodyBone_25",
+        "hasMesh": false,
+        "meshIndex": -1,
+        "meshName": null,
+        "bbox": null
+      },
+      {
+        "index": 4,
+        "name": "ThighBRBone_3",
+        "depth": 4,
+        "parentIndex": 3,
+        "parentName": "HipBRBone_5",
+        "hasMesh": false,
+        "meshIndex": -1,
+        "meshName": null,
+        "bbox": null
+      },
+      {
+        "index": 5,
+        "name": "CalfBRBone_1",
+        "depth": 5,
+        "parentIndex": 4,
+        "parentName": "ThighBRBone_3",
+        "hasMesh": false,
+        "meshIndex": -1,
+        "meshName": null,
+        "bbox": null
+      },
+      {
+        "index": 6,
+        "name": "CalfBR_0",
+        "depth": 6,
+        "parentIndex": 5,
+        "parentName": "CalfBRBone_1",
+        "hasMesh": false,
+        "meshIndex": -1,
+        "meshName": null,
+        "bbox": null
+      },
+      {
+        "index": 7,
+        "name": "Object_9",
+        "depth": 7,
+        "parentIndex": 6,
+        "parentName": "CalfBR_0",
+        "hasMesh": false,
+        "meshIndex": -1,
+        "meshName": null,
+        "bbox": null
+      },
+      {
+        "index": 8,
+        "name": "Object_93",
+        "depth": 8,
+        "parentIndex": 7,
+        "parentName": "Object_9",
+        "hasMesh": false,
+        "meshIndex": -1,
+        "meshName": null,
+        "bbox": null
+      },
+      {
+        "index": 9,
+        "name": "Object_933",
+        "depth": 9,
+        "parentIndex": 8,
+        "parentName": "Object_93",
+        "hasMesh": false,
+        "meshIndex": -1,
+        "meshName": null,
+        "bbox": null
+      },
+      {
+        "index": 10,
+        "name": "Object_9333",
+        "depth": 10,
+        "parentIndex": 9,
+        "parentName": "Object_933",
+        "hasMesh": false,
+        "meshIndex": -1,
+        "meshName": null,
+        "bbox": null
+      },
+      {
+        "index": 11,
+        "name": "ThighBR_2",
+        "depth": 5,
+        "parentIndex": 4,
+        "parentName": "ThighBRBone_3",
+        "hasMesh": false,
+        "meshIndex": -1,
+        "meshName": null,
+        "bbox": null
+      },
+      {
+        "index": 12,
+        "name": "Object_11",
+        "depth": 6,
+        "parentIndex": 11,
+        "parentName": "ThighBR_2",
+        "hasMesh": false,
+        "meshIndex": -1,
+        "meshName": null,
+        "bbox": null
+      },
+      {
+        "index": 13,
+        "name": "Object_113",
+        "depth": 7,
+        "parentIndex": 12,
+        "parentName": "Object_11",
+        "hasMesh": false,
+        "meshIndex": -1,
+        "meshName": null,
+        "bbox": null
+      },
+      {
+        "index": 14,
+        "name": "Object_1133",
+        "depth": 8,
+        "parentIndex": 13,
+        "parentName": "Object_113",
+        "hasMesh": false,
+        "meshIndex": -1,
+        "meshName": null,
+        "bbox": null
+      },
+      {
+        "index": 15,
+        "name": "Object_11333",
+        "depth": 9,
+        "parentIndex": 14,
+        "parentName": "Object_1133",
+        "hasMesh": false,
+        "meshIndex": -1,
+        "meshName": null,
+        "bbox": null
+      },
+      {
+        "index": 16,
+        "name": "HipBR_4",
+        "depth": 4,
+        "parentIndex": 3,
+        "parentName": "HipBRBone_5",
+        "hasMesh": false,
+        "meshIndex": -1,
+        "meshName": null,
+        "bbox": null
+      },
+      {
+        "index": 17,
+        "name": "Object_13",
+        "depth": 5,
+        "parentIndex": 16,
+        "parentName": "HipBR_4",
+        "hasMesh": false,
+        "meshIndex": -1,
+        "meshName": null,
+        "bbox": null
+      },
+      {
+        "index": 18,
+        "name": "Object_133",
+        "depth": 6,
+        "parentIndex": 17,
+        "parentName": "Object_13",
+        "hasMesh": false,
+        "meshIndex": -1,
+        "meshName": null,
+        "bbox": null
+      },
+      {
+        "index": 19,
+        "name": "Object_1333",
+        "depth": 7,
+        "parentIndex": 18,
+        "parentName": "Object_133",
+        "hasMesh": false,
+        "meshIndex": -1,
+        "meshName": null,
+        "bbox": null
+      },
+      {
+        "index": 20,
+        "name": "Object_13333",
+        "depth": 8,
+        "parentIndex": 19,
+        "parentName": "Object_1333",
+        "hasMesh": false,
+        "meshIndex": -1,
+        "meshName": null,
+        "bbox": null
+      },
+      {
+        "index": 21,
+        "name": "Object_14",
+        "depth": 5,
+        "parentIndex": 16,
+        "parentName": "HipBR_4",
+        "hasMesh": false,
+        "meshIndex": -1,
+        "meshName": null,
+        "bbox": null
+      },
+      {
+        "index": 22,
+        "name": "Object_143",
+        "depth": 6,
+        "parentIndex": 21,
+        "parentName": "Object_14",
+        "hasMesh": false,
+        "meshIndex": -1,
+        "meshName": null,
+        "bbox": null
+      },
+      {
+        "index": 23,
+        "name": "Object_1433",
+        "depth": 7,
+        "parentIndex": 22,
+        "parentName": "Object_143",
+        "hasMesh": false,
+        "meshIndex": -1,
+        "meshName": null,
+        "bbox": null
+      },
+      {
+        "index": 24,
+        "name": "Object_14333",
+        "depth": 8,
+        "parentIndex": 23,
+        "parentName": "Object_1433",
+        "hasMesh": false,
+        "meshIndex": -1,
+        "meshName": null,
+        "bbox": null
+      },
+      {
+        "index": 25,
+        "name": "HipFRBone_11",
+        "depth": 3,
+        "parentIndex": 2,
+        "parentName": "BodyBone_25",
+        "hasMesh": false,
+        "meshIndex": -1,
+        "meshName": null,
+        "bbox": null
+      },
+      {
+        "index": 26,
+        "name": "ThighFRBone_9",
+        "depth": 4,
+        "parentIndex": 25,
+        "parentName": "HipFRBone_11",
+        "hasMesh": false,
+        "meshIndex": -1,
+        "meshName": null,
+        "bbox": null
+      },
+      {
+        "index": 27,
+        "name": "CalfFRBone_7",
+        "depth": 5,
+        "parentIndex": 26,
+        "parentName": "ThighFRBone_9",
+        "hasMesh": false,
+        "meshIndex": -1,
+        "meshName": null,
+        "bbox": null
+      },
+      {
+        "index": 28,
+        "name": "CalfFR_6",
+        "depth": 6,
+        "parentIndex": 27,
+        "parentName": "CalfFRBone_7",
+        "hasMesh": false,
+        "meshIndex": -1,
+        "meshName": null,
+        "bbox": null
+      },
+      {
+        "index": 29,
+        "name": "Object_19",
+        "depth": 7,
+        "parentIndex": 28,
+        "parentName": "CalfFR_6",
+        "hasMesh": false,
+        "meshIndex": -1,
+        "meshName": null,
+        "bbox": null
+      },
+      {
+        "index": 30,
+        "name": "Object_193",
+        "depth": 8,
+        "parentIndex": 29,
+        "parentName": "Object_19",
+        "hasMesh": false,
+        "meshIndex": -1,
+        "meshName": null,
+        "bbox": null
+      },
+      {
+        "index": 31,
+        "name": "Object_1933",
+        "depth": 9,
+        "parentIndex": 30,
+        "parentName": "Object_193",
+        "hasMesh": false,
+        "meshIndex": -1,
+        "meshName": null,
+        "bbox": null
+      },
+      {
+        "index": 32,
+        "name": "Object_19333",
+        "depth": 10,
+        "parentIndex": 31,
+        "parentName": "Object_1933",
+        "hasMesh": false,
+        "meshIndex": -1,
+        "meshName": null,
+        "bbox": null
+      },
+      {
+        "index": 33,
+        "name": "ThighFR_8",
+        "depth": 5,
+        "parentIndex": 26,
+        "parentName": "ThighFRBone_9",
+        "hasMesh": false,
+        "meshIndex": -1,
+        "meshName": null,
+        "bbox": null
+      },
+      {
+        "index": 34,
+        "name": "Object_21",
+        "depth": 6,
+        "parentIndex": 33,
+        "parentName": "ThighFR_8",
+        "hasMesh": false,
+        "meshIndex": -1,
+        "meshName": null,
+        "bbox": null
+      },
+      {
+        "index": 35,
+        "name": "Object_213",
+        "depth": 7,
+        "parentIndex": 34,
+        "parentName": "Object_21",
+        "hasMesh": false,
+        "meshIndex": -1,
+        "meshName": null,
+        "bbox": null
+      },
+      {
+        "index": 36,
+        "name": "Object_2133",
+        "depth": 8,
+        "parentIndex": 35,
+        "parentName": "Object_213",
+        "hasMesh": false,
+        "meshIndex": -1,
+        "meshName": null,
+        "bbox": null
+      },
+      {
+        "index": 37,
+        "name": "Object_21333",
+        "depth": 9,
+        "parentIndex": 36,
+        "parentName": "Object_2133",
+        "hasMesh": false,
+        "meshIndex": -1,
+        "meshName": null,
+        "bbox": null
+      },
+      {
+        "index": 38,
+        "name": "HipFR_10",
+        "depth": 4,
+        "parentIndex": 25,
+        "parentName": "HipFRBone_11",
+        "hasMesh": false,
+        "meshIndex": -1,
+        "meshName": null,
+        "bbox": null
+      },
+      {
+        "index": 39,
+        "name": "Object_23",
+        "depth": 5,
+        "parentIndex": 38,
+        "parentName": "HipFR_10",
+        "hasMesh": false,
+        "meshIndex": -1,
+        "meshName": null,
+        "bbox": null
+      },
+      {
+        "index": 40,
+        "name": "Object_233",
+        "depth": 6,
+        "parentIndex": 39,
+        "parentName": "Object_23",
+        "hasMesh": false,
+        "meshIndex": -1,
+        "meshName": null,
+        "bbox": null
+      },
+      {
+        "index": 41,
+        "name": "Object_2333",
+        "depth": 7,
+        "parentIndex": 40,
+        "parentName": "Object_233",
+        "hasMesh": false,
+        "meshIndex": -1,
+        "meshName": null,
+        "bbox": null
+      },
+      {
+        "index": 42,
+        "name": "Object_23333",
+        "depth": 8,
+        "parentIndex": 41,
+        "parentName": "Object_2333",
+        "hasMesh": false,
+        "meshIndex": -1,
+        "meshName": null,
+        "bbox": null
+      },
+      {
+        "index": 43,
+        "name": "Object_24",
+        "depth": 5,
+        "parentIndex": 38,
+        "parentName": "HipFR_10",
+        "hasMesh": false,
+        "meshIndex": -1,
+        "meshName": null,
+        "bbox": null
+      },
+      {
+        "index": 44,
+        "name": "Object_243",
+        "depth": 6,
+        "parentIndex": 43,
+        "parentName": "Object_24",
+        "hasMesh": false,
+        "meshIndex": -1,
+        "meshName": null,
+        "bbox": null
+      },
+      {
+        "index": 45,
+        "name": "Object_2433",
+        "depth": 7,
+        "parentIndex": 44,
+        "parentName": "Object_243",
+        "hasMesh": false,
+        "meshIndex": -1,
+        "meshName": null,
+        "bbox": null
+      },
+      {
+        "index": 46,
+        "name": "Object_24333",
+        "depth": 8,
+        "parentIndex": 45,
+        "parentName": "Object_2433",
+        "hasMesh": false,
+        "meshIndex": -1,
+        "meshName": null,
+        "bbox": null
+      },
+      {
+        "index": 47,
+        "name": "HipBLBone_17",
+        "depth": 3,
+        "parentIndex": 2,
+        "parentName": "BodyBone_25",
+        "hasMesh": false,
+        "meshIndex": -1,
+        "meshName": null,
+        "bbox": null
+      },
+      {
+        "index": 48,
+        "name": "ThighBLBone_15",
+        "depth": 4,
+        "parentIndex": 47,
+        "parentName": "HipBLBone_17",
+        "hasMesh": false,
+        "meshIndex": -1,
+        "meshName": null,
+        "bbox": null
+      },
+      {
+        "index": 49,
+        "name": "CalfBLBone_13",
+        "depth": 5,
+        "parentIndex": 48,
+        "parentName": "ThighBLBone_15",
+        "hasMesh": false,
+        "meshIndex": -1,
+        "meshName": null,
+        "bbox": null
+      },
+      {
+        "index": 50,
+        "name": "CalfBL_12",
+        "depth": 6,
+        "parentIndex": 49,
+        "parentName": "CalfBLBone_13",
+        "hasMesh": false,
+        "meshIndex": -1,
+        "meshName": null,
+        "bbox": null
+      },
+      {
+        "index": 51,
+        "name": "Object_29",
+        "depth": 7,
+        "parentIndex": 50,
+        "parentName": "CalfBL_12",
+        "hasMesh": false,
+        "meshIndex": -1,
+        "meshName": null,
+        "bbox": null
+      },
+      {
+        "index": 52,
+        "name": "Object_293",
+        "depth": 8,
+        "parentIndex": 51,
+        "parentName": "Object_29",
+        "hasMesh": false,
+        "meshIndex": -1,
+        "meshName": null,
+        "bbox": null
+      },
+      {
+        "index": 53,
+        "name": "Object_2933",
+        "depth": 9,
+        "parentIndex": 52,
+        "parentName": "Object_293",
+        "hasMesh": false,
+        "meshIndex": -1,
+        "meshName": null,
+        "bbox": null
+      },
+      {
+        "index": 54,
+        "name": "Object_29333",
+        "depth": 10,
+        "parentIndex": 53,
+        "parentName": "Object_2933",
+        "hasMesh": false,
+        "meshIndex": -1,
+        "meshName": null,
+        "bbox": null
+      },
+      {
+        "index": 55,
+        "name": "ThighBL_14",
+        "depth": 5,
+        "parentIndex": 48,
+        "parentName": "ThighBLBone_15",
+        "hasMesh": false,
+        "meshIndex": -1,
+        "meshName": null,
+        "bbox": null
+      },
+      {
+        "index": 56,
+        "name": "Object_31",
+        "depth": 6,
+        "parentIndex": 55,
+        "parentName": "ThighBL_14",
+        "hasMesh": false,
+        "meshIndex": -1,
+        "meshName": null,
+        "bbox": null
+      },
+      {
+        "index": 57,
+        "name": "Object_313",
+        "depth": 7,
+        "parentIndex": 56,
+        "parentName": "Object_31",
+        "hasMesh": false,
+        "meshIndex": -1,
+        "meshName": null,
+        "bbox": null
+      },
+      {
+        "index": 58,
+        "name": "Object_3133",
+        "depth": 8,
+        "parentIndex": 57,
+        "parentName": "Object_313",
+        "hasMesh": false,
+        "meshIndex": -1,
+        "meshName": null,
+        "bbox": null
+      },
+      {
+        "index": 59,
+        "name": "Object_31333",
+        "depth": 9,
+        "parentIndex": 58,
+        "parentName": "Object_3133",
+        "hasMesh": false,
+        "meshIndex": -1,
+        "meshName": null,
+        "bbox": null
+      },
+      {
+        "index": 60,
+        "name": "HipBL_16",
+        "depth": 4,
+        "parentIndex": 47,
+        "parentName": "HipBLBone_17",
+        "hasMesh": false,
+        "meshIndex": -1,
+        "meshName": null,
+        "bbox": null
+      },
+      {
+        "index": 61,
+        "name": "Object_33",
+        "depth": 5,
+        "parentIndex": 60,
+        "parentName": "HipBL_16",
+        "hasMesh": false,
+        "meshIndex": -1,
+        "meshName": null,
+        "bbox": null
+      },
+      {
+        "index": 62,
+        "name": "Object_333",
+        "depth": 6,
+        "parentIndex": 61,
+        "parentName": "Object_33",
+        "hasMesh": false,
+        "meshIndex": -1,
+        "meshName": null,
+        "bbox": null
+      },
+      {
+        "index": 63,
+        "name": "Object_3333",
+        "depth": 7,
+        "parentIndex": 62,
+        "parentName": "Object_333",
+        "hasMesh": false,
+        "meshIndex": -1,
+        "meshName": null,
+        "bbox": null
+      },
+      {
+        "index": 64,
+        "name": "Object_33333",
+        "depth": 8,
+        "parentIndex": 63,
+        "parentName": "Object_3333",
+        "hasMesh": false,
+        "meshIndex": -1,
+        "meshName": null,
+        "bbox": null
+      },
+      {
+        "index": 65,
+        "name": "Object_34",
+        "depth": 5,
+        "parentIndex": 60,
+        "parentName": "HipBL_16",
+        "hasMesh": false,
+        "meshIndex": -1,
+        "meshName": null,
+        "bbox": null
+      },
+      {
+        "index": 66,
+        "name": "Object_343",
+        "depth": 6,
+        "parentIndex": 65,
+        "parentName": "Object_34",
+        "hasMesh": false,
+        "meshIndex": -1,
+        "meshName": null,
+        "bbox": null
+      },
+      {
+        "index": 67,
+        "name": "Object_3433",
+        "depth": 7,
+        "parentIndex": 66,
+        "parentName": "Object_343",
+        "hasMesh": false,
+        "meshIndex": -1,
+        "meshName": null,
+        "bbox": null
+      },
+      {
+        "index": 68,
+        "name": "Object_34333",
+        "depth": 8,
+        "parentIndex": 67,
+        "parentName": "Object_3433",
+        "hasMesh": false,
+        "meshIndex": -1,
+        "meshName": null,
+        "bbox": null
+      },
+      {
+        "index": 69,
+        "name": "HipFLBone_23",
+        "depth": 3,
+        "parentIndex": 2,
+        "parentName": "BodyBone_25",
+        "hasMesh": false,
+        "meshIndex": -1,
+        "meshName": null,
+        "bbox": null
+      },
+      {
+        "index": 70,
+        "name": "ThighFLBone_21",
+        "depth": 4,
+        "parentIndex": 69,
+        "parentName": "HipFLBone_23",
+        "hasMesh": false,
+        "meshIndex": -1,
+        "meshName": null,
+        "bbox": null
+      },
+      {
+        "index": 71,
+        "name": "CalfFLBone_19",
+        "depth": 5,
+        "parentIndex": 70,
+        "parentName": "ThighFLBone_21",
+        "hasMesh": false,
+        "meshIndex": -1,
+        "meshName": null,
+        "bbox": null
+      },
+      {
+        "index": 72,
+        "name": "CalfFL_18",
+        "depth": 6,
+        "parentIndex": 71,
+        "parentName": "CalfFLBone_19",
+        "hasMesh": false,
+        "meshIndex": -1,
+        "meshName": null,
+        "bbox": null
+      },
+      {
+        "index": 73,
+        "name": "Object_39",
+        "depth": 7,
+        "parentIndex": 72,
+        "parentName": "CalfFL_18",
+        "hasMesh": false,
+        "meshIndex": -1,
+        "meshName": null,
+        "bbox": null
+      },
+      {
+        "index": 74,
+        "name": "Object_393",
+        "depth": 8,
+        "parentIndex": 73,
+        "parentName": "Object_39",
+        "hasMesh": false,
+        "meshIndex": -1,
+        "meshName": null,
+        "bbox": null
+      },
+      {
+        "index": 75,
+        "name": "Object_3933",
+        "depth": 9,
+        "parentIndex": 74,
+        "parentName": "Object_393",
+        "hasMesh": false,
+        "meshIndex": -1,
+        "meshName": null,
+        "bbox": null
+      },
+      {
+        "index": 76,
+        "name": "Object_39333",
+        "depth": 10,
+        "parentIndex": 75,
+        "parentName": "Object_3933",
+        "hasMesh": false,
+        "meshIndex": -1,
+        "meshName": null,
+        "bbox": null
+      },
+      {
+        "index": 77,
+        "name": "ThighFL_20",
+        "depth": 5,
+        "parentIndex": 70,
+        "parentName": "ThighFLBone_21",
+        "hasMesh": false,
+        "meshIndex": -1,
+        "meshName": null,
+        "bbox": null
+      },
+      {
+        "index": 78,
+        "name": "Object_41",
+        "depth": 6,
+        "parentIndex": 77,
+        "parentName": "ThighFL_20",
+        "hasMesh": false,
+        "meshIndex": -1,
+        "meshName": null,
+        "bbox": null
+      },
+      {
+        "index": 79,
+        "name": "Object_413",
+        "depth": 7,
+        "parentIndex": 78,
+        "parentName": "Object_41",
+        "hasMesh": false,
+        "meshIndex": -1,
+        "meshName": null,
+        "bbox": null
+      },
+      {
+        "index": 80,
+        "name": "Object_4133",
+        "depth": 8,
+        "parentIndex": 79,
+        "parentName": "Object_413",
+        "hasMesh": false,
+        "meshIndex": -1,
+        "meshName": null,
+        "bbox": null
+      },
+      {
+        "index": 81,
+        "name": "Object_41333",
+        "depth": 9,
+        "parentIndex": 80,
+        "parentName": "Object_4133",
+        "hasMesh": false,
+        "meshIndex": -1,
+        "meshName": null,
+        "bbox": null
+      },
+      {
+        "index": 82,
+        "name": "HipFL_22",
+        "depth": 4,
+        "parentIndex": 69,
+        "parentName": "HipFLBone_23",
+        "hasMesh": false,
+        "meshIndex": -1,
+        "meshName": null,
+        "bbox": null
+      },
+      {
+        "index": 83,
+        "name": "Object_43",
+        "depth": 5,
+        "parentIndex": 82,
+        "parentName": "HipFL_22",
+        "hasMesh": false,
+        "meshIndex": -1,
+        "meshName": null,
+        "bbox": null
+      },
+      {
+        "index": 84,
+        "name": "Object_433",
+        "depth": 6,
+        "parentIndex": 83,
+        "parentName": "Object_43",
+        "hasMesh": false,
+        "meshIndex": -1,
+        "meshName": null,
+        "bbox": null
+      },
+      {
+        "index": 85,
+        "name": "Object_4333",
+        "depth": 7,
+        "parentIndex": 84,
+        "parentName": "Object_433",
+        "hasMesh": false,
+        "meshIndex": -1,
+        "meshName": null,
+        "bbox": null
+      },
+      {
+        "index": 86,
+        "name": "Object_43333",
+        "depth": 8,
+        "parentIndex": 85,
+        "parentName": "Object_4333",
+        "hasMesh": false,
+        "meshIndex": -1,
+        "meshName": null,
+        "bbox": null
+      },
+      {
+        "index": 87,
+        "name": "Object_44",
+        "depth": 5,
+        "parentIndex": 82,
+        "parentName": "HipFL_22",
+        "hasMesh": false,
+        "meshIndex": -1,
+        "meshName": null,
+        "bbox": null
+      },
+      {
+        "index": 88,
+        "name": "Object_443",
+        "depth": 6,
+        "parentIndex": 87,
+        "parentName": "Object_44",
+        "hasMesh": false,
+        "meshIndex": -1,
+        "meshName": null,
+        "bbox": null
+      },
+      {
+        "index": 89,
+        "name": "Object_4433",
+        "depth": 7,
+        "parentIndex": 88,
+        "parentName": "Object_443",
+        "hasMesh": false,
+        "meshIndex": -1,
+        "meshName": null,
+        "bbox": null
+      },
+      {
+        "index": 90,
+        "name": "Object_44333",
+        "depth": 8,
+        "parentIndex": 89,
+        "parentName": "Object_4433",
+        "hasMesh": false,
+        "meshIndex": -1,
+        "meshName": null,
+        "bbox": null
+      },
+      {
+        "index": 91,
+        "name": "Trunk_24",
+        "depth": 3,
+        "parentIndex": 2,
+        "parentName": "BodyBone_25",
+        "hasMesh": false,
+        "meshIndex": -1,
+        "meshName": null,
+        "bbox": null
+      },
+      {
+        "index": 92,
+        "name": "Object_46",
+        "depth": 4,
+        "parentIndex": 91,
+        "parentName": "Trunk_24",
+        "hasMesh": false,
+        "meshIndex": -1,
+        "meshName": null,
+        "bbox": null
+      },
+      {
+        "index": 93,
+        "name": "Object_463",
+        "depth": 5,
+        "parentIndex": 92,
+        "parentName": "Object_46",
+        "hasMesh": false,
+        "meshIndex": -1,
+        "meshName": null,
+        "bbox": null
+      },
+      {
+        "index": 94,
+        "name": "holder_mesh",
+        "depth": 6,
+        "parentIndex": 93,
+        "parentName": "Object_463",
+        "hasMesh": false,
+        "meshIndex": -1,
+        "meshName": null,
+        "bbox": null
+      },
+      {
+        "index": 95,
+        "name": "holder_mesh3",
+        "depth": 7,
+        "parentIndex": 94,
+        "parentName": "holder_mesh",
+        "hasMesh": false,
+        "meshIndex": -1,
+        "meshName": null,
+        "bbox": null
+      },
+      {
+        "index": 96,
+        "name": "holder_mesh33",
+        "depth": 8,
+        "parentIndex": 95,
+        "parentName": "holder_mesh3",
+        "hasMesh": false,
+        "meshIndex": -1,
+        "meshName": null,
+        "bbox": null
+      },
+      {
+        "index": 97,
+        "name": "Object_4633",
+        "depth": 6,
+        "parentIndex": 93,
+        "parentName": "Object_463",
+        "hasMesh": false,
+        "meshIndex": -1,
+        "meshName": null,
+        "bbox": null
+      },
+      {
+        "index": 98,
+        "name": "Object_46333",
+        "depth": 7,
+        "parentIndex": 97,
+        "parentName": "Object_4633",
+        "hasMesh": false,
+        "meshIndex": -1,
+        "meshName": null,
+        "bbox": null
+      },
+      {
+        "index": 99,
+        "name": "riflestand",
+        "depth": 5,
+        "parentIndex": 92,
+        "parentName": "Object_46",
+        "hasMesh": false,
+        "meshIndex": -1,
+        "meshName": null,
+        "bbox": null
+      },
+      {
+        "index": 100,
+        "name": "mag_mesh",
+        "depth": 6,
+        "parentIndex": 99,
+        "parentName": "riflestand",
+        "hasMesh": false,
+        "meshIndex": -1,
+        "meshName": null,
+        "bbox": null
+      },
+      {
+        "index": 101,
+        "name": "mag_mesh3",
+        "depth": 7,
+        "parentIndex": 100,
+        "parentName": "mag_mesh",
+        "hasMesh": false,
+        "meshIndex": -1,
+        "meshName": null,
+        "bbox": null
+      },
+      {
+        "index": 102,
+        "name": "mag_mesh33",
+        "depth": 8,
+        "parentIndex": 101,
+        "parentName": "mag_mesh3",
+        "hasMesh": false,
+        "meshIndex": -1,
+        "meshName": null,
+        "bbox": null
+      },
+      {
+        "index": 103,
+        "name": "rifle_mesh",
+        "depth": 6,
+        "parentIndex": 99,
+        "parentName": "riflestand",
+        "hasMesh": false,
+        "meshIndex": -1,
+        "meshName": null,
+        "bbox": null
+      },
+      {
+        "index": 104,
+        "name": "rifle_mesh3",
+        "depth": 7,
+        "parentIndex": 103,
+        "parentName": "rifle_mesh",
+        "hasMesh": false,
+        "meshIndex": -1,
+        "meshName": null,
+        "bbox": null
+      },
+      {
+        "index": 105,
+        "name": "rifle_mesh33",
+        "depth": 8,
+        "parentIndex": 104,
+        "parentName": "rifle_mesh3",
+        "hasMesh": false,
+        "meshIndex": -1,
+        "meshName": null,
+        "bbox": null
+      },
+      {
+        "index": 106,
+        "name": "Object_47",
+        "depth": 4,
+        "parentIndex": 91,
+        "parentName": "Trunk_24",
+        "hasMesh": false,
+        "meshIndex": -1,
+        "meshName": null,
+        "bbox": null
+      },
+      {
+        "index": 107,
+        "name": "Object_473",
+        "depth": 5,
+        "parentIndex": 106,
+        "parentName": "Object_47",
+        "hasMesh": false,
+        "meshIndex": -1,
+        "meshName": null,
+        "bbox": null
+      },
+      {
+        "index": 108,
+        "name": "Object_4733",
+        "depth": 6,
+        "parentIndex": 107,
+        "parentName": "Object_473",
+        "hasMesh": false,
+        "meshIndex": -1,
+        "meshName": null,
+        "bbox": null
+      },
+      {
+        "index": 109,
+        "name": "Object_47333",
+        "depth": 7,
+        "parentIndex": 108,
+        "parentName": "Object_4733",
+        "hasMesh": false,
+        "meshIndex": -1,
+        "meshName": null,
+        "bbox": null
+      },
+      {
+        "index": 110,
+        "name": "Object_48",
+        "depth": 4,
+        "parentIndex": 91,
+        "parentName": "Trunk_24",
+        "hasMesh": false,
+        "meshIndex": -1,
+        "meshName": null,
+        "bbox": null
+      },
+      {
+        "index": 111,
+        "name": "Object_483",
+        "depth": 5,
+        "parentIndex": 110,
+        "parentName": "Object_48",
+        "hasMesh": false,
+        "meshIndex": -1,
+        "meshName": null,
+        "bbox": null
+      },
+      {
+        "index": 112,
+        "name": "Object_4833",
+        "depth": 6,
+        "parentIndex": 111,
+        "parentName": "Object_483",
+        "hasMesh": false,
+        "meshIndex": -1,
+        "meshName": null,
+        "bbox": null
+      },
+      {
+        "index": 113,
+        "name": "Object_48333",
+        "depth": 7,
+        "parentIndex": 112,
+        "parentName": "Object_4833",
+        "hasMesh": false,
+        "meshIndex": -1,
+        "meshName": null,
+        "bbox": null
+      },
+      {
+        "index": 114,
+        "name": "Object_49",
+        "depth": 4,
+        "parentIndex": 91,
+        "parentName": "Trunk_24",
+        "hasMesh": false,
+        "meshIndex": -1,
+        "meshName": null,
+        "bbox": null
+      },
+      {
+        "index": 115,
+        "name": "Object_493",
+        "depth": 5,
+        "parentIndex": 114,
+        "parentName": "Object_49",
+        "hasMesh": false,
+        "meshIndex": -1,
+        "meshName": null,
+        "bbox": null
+      },
+      {
+        "index": 116,
+        "name": "Object_4933",
+        "depth": 6,
+        "parentIndex": 115,
+        "parentName": "Object_493",
+        "hasMesh": false,
+        "meshIndex": -1,
+        "meshName": null,
+        "bbox": null
+      },
+      {
+        "index": 117,
+        "name": "Object_49333",
+        "depth": 7,
+        "parentIndex": 116,
+        "parentName": "Object_4933",
+        "hasMesh": false,
+        "meshIndex": -1,
+        "meshName": null,
+        "bbox": null
+      },
+      {
+        "index": 118,
+        "name": "Object_50",
+        "depth": 4,
+        "parentIndex": 91,
+        "parentName": "Trunk_24",
+        "hasMesh": false,
+        "meshIndex": -1,
+        "meshName": null,
+        "bbox": null
+      },
+      {
+        "index": 119,
+        "name": "Object_503",
+        "depth": 5,
+        "parentIndex": 118,
+        "parentName": "Object_50",
+        "hasMesh": false,
+        "meshIndex": -1,
+        "meshName": null,
+        "bbox": null
+      },
+      {
+        "index": 120,
+        "name": "Object_5033",
+        "depth": 6,
+        "parentIndex": 119,
+        "parentName": "Object_503",
+        "hasMesh": false,
+        "meshIndex": -1,
+        "meshName": null,
+        "bbox": null
+      },
+      {
+        "index": 121,
+        "name": "Object_50333",
+        "depth": 7,
+        "parentIndex": 120,
+        "parentName": "Object_5033",
+        "hasMesh": false,
+        "meshIndex": -1,
+        "meshName": null,
+        "bbox": null
+      },
+      {
+        "index": 122,
+        "name": "FootBRBone_26",
+        "depth": 2,
+        "parentIndex": 1,
+        "parentName": "Armature_30",
+        "hasMesh": false,
+        "meshIndex": -1,
+        "meshName": null,
+        "bbox": null
+      },
+      {
+        "index": 123,
+        "name": "FootFRBone_27",
+        "depth": 2,
+        "parentIndex": 1,
+        "parentName": "Armature_30",
+        "hasMesh": false,
+        "meshIndex": -1,
+        "meshName": null,
+        "bbox": null
+      },
+      {
+        "index": 124,
+        "name": "FootFLBone_28",
+        "depth": 2,
+        "parentIndex": 1,
+        "parentName": "Armature_30",
+        "hasMesh": false,
+        "meshIndex": -1,
+        "meshName": null,
+        "bbox": null
+      },
+      {
+        "index": 125,
+        "name": "FootBLBone_29",
+        "depth": 2,
+        "parentIndex": 1,
+        "parentName": "Armature_30",
+        "hasMesh": false,
+        "meshIndex": -1,
+        "meshName": null,
+        "bbox": null
+      },
+      {
+        "index": 126,
+        "name": "Object_93333",
+        "depth": 11,
+        "parentIndex": 10,
+        "parentName": "Object_9333",
+        "hasMesh": true,
+        "meshIndex": 0,
+        "meshName": "robodog-opt(1)_robodog-opt(1)_robodog-opt_Sketchfab_Scene_Object_0",
+        "bbox": {
+          "min": [
+            -0.0227,
+            -0.2353,
+            -0.0202
+          ],
+          "max": [
+            0.0316,
+            0.0313,
+            0.0202
+          ],
+          "size": [
+            0.0543,
+            0.2665,
+            0.0404
+          ]
+        }
+      },
+      {
+        "index": 127,
+        "name": "Object_113333",
+        "depth": 10,
+        "parentIndex": 15,
+        "parentName": "Object_11333",
+        "hasMesh": true,
+        "meshIndex": 1,
+        "meshName": "robodog-opt(1)_robodog-opt(1)_robodog-opt_Sketchfab_Scene_Object_1",
+        "bbox": {
+          "min": [
+            -0.047,
+            -0.228,
+            -0.0162
+          ],
+          "max": [
+            0.047,
+            0.049,
+            0.0617
+          ],
+          "size": [
+            0.0941,
+            0.277,
+            0.0779
+          ]
+        }
+      },
+      {
+        "index": 128,
+        "name": "Object_133333",
+        "depth": 9,
+        "parentIndex": 20,
+        "parentName": "Object_13333",
+        "hasMesh": true,
+        "meshIndex": 2,
+        "meshName": "robodog-opt(1)_robodog-opt(1)_robodog-opt_Sketchfab_Scene_Object_2",
+        "bbox": {
+          "min": [
+            -0.0565,
+            -0.0481,
+            -0.0345
+          ],
+          "max": [
+            0.031,
+            0.0481,
+            0.0193
+          ],
+          "size": [
+            0.0875,
+            0.0962,
+            0.0538
+          ]
+        }
+      },
+      {
+        "index": 129,
+        "name": "Object_143333",
+        "depth": 9,
+        "parentIndex": 24,
+        "parentName": "Object_14333",
+        "hasMesh": true,
+        "meshIndex": 3,
+        "meshName": "robodog-opt(1)_robodog-opt(1)_robodog-opt_Sketchfab_Scene_Object_3",
+        "bbox": {
+          "min": [
+            -0.0482,
+            -0.0463,
+            -0.015
+          ],
+          "max": [
+            0.0482,
+            0.0463,
+            0.011
+          ],
+          "size": [
+            0.0964,
+            0.0925,
+            0.026
+          ]
+        }
+      },
+      {
+        "index": 130,
+        "name": "Object_193333",
+        "depth": 11,
+        "parentIndex": 32,
+        "parentName": "Object_19333",
+        "hasMesh": true,
+        "meshIndex": 4,
+        "meshName": "robodog-opt(1)_robodog-opt(1)_robodog-opt_Sketchfab_Scene_Object_02",
+        "bbox": {
+          "min": [
+            -0.0227,
+            -0.2353,
+            -0.0202
+          ],
+          "max": [
+            0.0316,
+            0.0313,
+            0.0202
+          ],
+          "size": [
+            0.0543,
+            0.2665,
+            0.0404
+          ]
+        }
+      },
+      {
+        "index": 131,
+        "name": "Object_213333",
+        "depth": 10,
+        "parentIndex": 37,
+        "parentName": "Object_21333",
+        "hasMesh": true,
+        "meshIndex": 5,
+        "meshName": "robodog-opt(1)_robodog-opt(1)_robodog-opt_Sketchfab_Scene_Object_12",
+        "bbox": {
+          "min": [
+            -0.047,
+            -0.228,
+            -0.0162
+          ],
+          "max": [
+            0.047,
+            0.049,
+            0.0617
+          ],
+          "size": [
+            0.0941,
+            0.277,
+            0.0779
+          ]
+        }
+      },
+      {
+        "index": 132,
+        "name": "Object_233333",
+        "depth": 9,
+        "parentIndex": 42,
+        "parentName": "Object_23333",
+        "hasMesh": true,
+        "meshIndex": 6,
+        "meshName": "robodog-opt(1)_robodog-opt(1)_robodog-opt_Sketchfab_Scene_Object_22",
+        "bbox": {
+          "min": [
+            -0.0565,
+            -0.0481,
+            -0.0345
+          ],
+          "max": [
+            0.031,
+            0.0481,
+            0.0193
+          ],
+          "size": [
+            0.0875,
+            0.0962,
+            0.0538
+          ]
+        }
+      },
+      {
+        "index": 133,
+        "name": "Object_243333",
+        "depth": 9,
+        "parentIndex": 46,
+        "parentName": "Object_24333",
+        "hasMesh": true,
+        "meshIndex": 7,
+        "meshName": "robodog-opt(1)_robodog-opt(1)_robodog-opt_Sketchfab_Scene_Object_32",
+        "bbox": {
+          "min": [
+            -0.0482,
+            -0.0463,
+            -0.015
+          ],
+          "max": [
+            0.0482,
+            0.0463,
+            0.011
+          ],
+          "size": [
+            0.0964,
+            0.0925,
+            0.026
+          ]
+        }
+      },
+      {
+        "index": 134,
+        "name": "Object_293333",
+        "depth": 11,
+        "parentIndex": 54,
+        "parentName": "Object_29333",
+        "hasMesh": true,
+        "meshIndex": 8,
+        "meshName": "robodog-opt(1)_robodog-opt(1)_robodog-opt_Sketchfab_Scene_Object_03",
+        "bbox": {
+          "min": [
+            -0.0227,
+            -0.2353,
+            -0.0202
+          ],
+          "max": [
+            0.0316,
+            0.0313,
+            0.0202
+          ],
+          "size": [
+            0.0543,
+            0.2665,
+            0.0404
+          ]
+        }
+      },
+      {
+        "index": 135,
+        "name": "Object_313333",
+        "depth": 10,
+        "parentIndex": 59,
+        "parentName": "Object_31333",
+        "hasMesh": true,
+        "meshIndex": 9,
+        "meshName": "robodog-opt(1)_robodog-opt(1)_robodog-opt_Sketchfab_Scene_Object_9",
+        "bbox": {
+          "min": [
+            -0.047,
+            -0.228,
+            -0.0162
+          ],
+          "max": [
+            0.047,
+            0.049,
+            0.0617
+          ],
+          "size": [
+            0.0941,
+            0.277,
+            0.0779
+          ]
+        }
+      },
+      {
+        "index": 136,
+        "name": "Object_333333",
+        "depth": 9,
+        "parentIndex": 64,
+        "parentName": "Object_33333",
+        "hasMesh": true,
+        "meshIndex": 10,
+        "meshName": "robodog-opt(1)_robodog-opt(1)_robodog-opt_Sketchfab_Scene_Object_23",
+        "bbox": {
+          "min": [
+            -0.0565,
+            -0.0481,
+            -0.0345
+          ],
+          "max": [
+            0.031,
+            0.0481,
+            0.0193
+          ],
+          "size": [
+            0.0875,
+            0.0962,
+            0.0538
+          ]
+        }
+      },
+      {
+        "index": 137,
+        "name": "Object_343333",
+        "depth": 9,
+        "parentIndex": 68,
+        "parentName": "Object_34333",
+        "hasMesh": true,
+        "meshIndex": 11,
+        "meshName": "robodog-opt(1)_robodog-opt(1)_robodog-opt_Sketchfab_Scene_Object_33",
+        "bbox": {
+          "min": [
+            -0.0482,
+            -0.0463,
+            -0.015
+          ],
+          "max": [
+            0.0482,
+            0.0463,
+            0.011
+          ],
+          "size": [
+            0.0964,
+            0.0925,
+            0.026
+          ]
+        }
+      },
+      {
+        "index": 138,
+        "name": "Object_393333",
+        "depth": 11,
+        "parentIndex": 76,
+        "parentName": "Object_39333",
+        "hasMesh": true,
+        "meshIndex": 12,
+        "meshName": "robodog-opt(1)_robodog-opt(1)_robodog-opt_Sketchfab_Scene_Object_04",
+        "bbox": {
+          "min": [
+            -0.0227,
+            -0.2353,
+            -0.0202
+          ],
+          "max": [
+            0.0316,
+            0.0313,
+            0.0202
+          ],
+          "size": [
+            0.0543,
+            0.2665,
+            0.0404
+          ]
+        }
+      },
+      {
+        "index": 139,
+        "name": "Object_413333",
+        "depth": 10,
+        "parentIndex": 81,
+        "parentName": "Object_41333",
+        "hasMesh": true,
+        "meshIndex": 13,
+        "meshName": "robodog-opt(1)_robodog-opt(1)_robodog-opt_Sketchfab_Scene_Object_92",
+        "bbox": {
+          "min": [
+            -0.047,
+            -0.228,
+            -0.0162
+          ],
+          "max": [
+            0.047,
+            0.049,
+            0.0617
+          ],
+          "size": [
+            0.0941,
+            0.277,
+            0.0779
+          ]
+        }
+      },
+      {
+        "index": 140,
+        "name": "Object_433333",
+        "depth": 9,
+        "parentIndex": 86,
+        "parentName": "Object_43333",
+        "hasMesh": true,
+        "meshIndex": 14,
+        "meshName": "robodog-opt(1)_robodog-opt(1)_robodog-opt_Sketchfab_Scene_Object_24",
+        "bbox": {
+          "min": [
+            -0.0565,
+            -0.0481,
+            -0.0345
+          ],
+          "max": [
+            0.031,
+            0.0481,
+            0.0193
+          ],
+          "size": [
+            0.0875,
+            0.0962,
+            0.0538
+          ]
+        }
+      },
+      {
+        "index": 141,
+        "name": "Object_443333",
+        "depth": 9,
+        "parentIndex": 90,
+        "parentName": "Object_44333",
+        "hasMesh": true,
+        "meshIndex": 15,
+        "meshName": "robodog-opt(1)_robodog-opt(1)_robodog-opt_Sketchfab_Scene_Object_34",
+        "bbox": {
+          "min": [
+            -0.0482,
+            -0.0463,
+            -0.015
+          ],
+          "max": [
+            0.0482,
+            0.0463,
+            0.011
+          ],
+          "size": [
+            0.0964,
+            0.0925,
+            0.026
+          ]
+        }
+      },
+      {
+        "index": 142,
+        "name": "holder_mesh333",
+        "depth": 9,
+        "parentIndex": 96,
+        "parentName": "holder_mesh33",
+        "hasMesh": true,
+        "meshIndex": 16,
+        "meshName": "robodog-opt(1)_robodog-opt(1)_robodog-opt_mesh",
+        "bbox": {
+          "min": [
+            -0.05,
+            -0.05,
+            -0.05
+          ],
+          "max": [
+            0.05,
+            0.05,
+            0.05
+          ],
+          "size": [
+            0.1,
+            0.1,
+            0.1
+          ]
+        }
+      },
+      {
+        "index": 143,
+        "name": "Object_463333",
+        "depth": 8,
+        "parentIndex": 98,
+        "parentName": "Object_46333",
+        "hasMesh": true,
+        "meshIndex": 17,
+        "meshName": "robodog-opt(1)_robodog-opt(1)_robodog-opt_Sketchfab_Scene_Object_16",
+        "bbox": {
+          "min": [
+            -0.097,
+            -0.0598,
+            -0.1316
+          ],
+          "max": [
+            0.097,
+            0.0713,
+            0.2993
+          ],
+          "size": [
+            0.194,
+            0.1311,
+            0.4309
+          ]
+        }
+      },
+      {
+        "index": 144,
+        "name": "mag_mesh333",
+        "depth": 9,
+        "parentIndex": 102,
+        "parentName": "mag_mesh33",
+        "hasMesh": true,
+        "meshIndex": 18,
+        "meshName": "robodog-opt(1)_robodog-opt(1)_robodog-opt_nodriflee3d-opt_Sketchfab_Scene_SM_Rif_SCAR_L_Mag_001_ScarMK16Mag_MI_0",
+        "bbox": {
+          "min": [
+            -1.2846,
+            -5.6811,
+            -16.2429
+          ],
+          "max": [
+            1.3641,
+            2.717,
+            3.4879
+          ],
+          "size": [
+            2.6486,
+            8.3981,
+            19.7307
+          ]
+        }
+      },
+      {
+        "index": 145,
+        "name": "rifle_mesh333",
+        "depth": 9,
+        "parentIndex": 105,
+        "parentName": "rifle_mesh33",
+        "hasMesh": true,
+        "meshIndex": 19,
+        "meshName": "robodog-opt(1)_robodog-opt(1)_robodog-opt_nodriflee3d-opt_Sketchfab_Scene_SK_Rif_SCAR_L_001_ScarMK16_MI_0",
+        "bbox": {
+          "min": [
+            -13.2804,
+            -4.3716,
+            67.5446
+          ],
+          "max": [
+            12.0154,
+            3.2344,
+            146.309
+          ],
+          "size": [
+            25.2959,
+            7.606,
+            78.7645
+          ]
+        }
+      },
+      {
+        "index": 146,
+        "name": "Object_473333",
+        "depth": 8,
+        "parentIndex": 109,
+        "parentName": "Object_47333",
+        "hasMesh": true,
+        "meshIndex": 20,
+        "meshName": "robodog-opt(1)_robodog-opt(1)_robodog-opt_Sketchfab_Scene_Object_17",
+        "bbox": {
+          "min": [
+            -0.0956,
+            -0.0573,
+            -0.091
+          ],
+          "max": [
+            0.0956,
+            0.0249,
+            0.2893
+          ],
+          "size": [
+            0.1911,
+            0.0822,
+            0.3803
+          ]
+        }
+      },
+      {
+        "index": 147,
+        "name": "Object_483333",
+        "depth": 8,
+        "parentIndex": 113,
+        "parentName": "Object_48333",
+        "hasMesh": true,
+        "meshIndex": 21,
+        "meshName": "robodog-opt(1)_robodog-opt(1)_robodog-opt_Sketchfab_Scene_Object_18",
+        "bbox": {
+          "min": [
+            -0.0682,
+            -0.0564,
+            0.2512
+          ],
+          "max": [
+            0.0128,
+            0.0713,
+            0.2968
+          ],
+          "size": [
+            0.0811,
+            0.1276,
+            0.0455
+          ]
+        }
+      },
+      {
+        "index": 148,
+        "name": "Object_493333",
+        "depth": 8,
+        "parentIndex": 117,
+        "parentName": "Object_49333",
+        "hasMesh": true,
+        "meshIndex": 22,
+        "meshName": "robodog-opt(1)_robodog-opt(1)_robodog-opt_Sketchfab_Scene_Object_19",
+        "bbox": {
+          "min": [
+            -0.03,
+            -0.0568,
+            0.0921
+          ],
+          "max": [
+            0.03,
+            0.057,
+            0.2286
+          ],
+          "size": [
+            0.06,
+            0.1138,
+            0.1365
+          ]
+        }
+      },
+      {
+        "index": 149,
+        "name": "Object_503333",
+        "depth": 8,
+        "parentIndex": 121,
+        "parentName": "Object_50333",
+        "hasMesh": true,
+        "meshIndex": 23,
+        "meshName": "robodog-opt(1)_robodog-opt(1)_robodog-opt_Sketchfab_Scene_Object_20",
+        "bbox": {
+          "min": [
+            -0.0687,
+            -0.0121,
+            0.2433
+          ],
+          "max": [
+            0.0687,
+            0.0212,
+            0.2549
+          ],
+          "size": [
+            0.1373,
+            0.0333,
+            0.0116
+          ]
+        }
+      }
+    ],
+    "skins": []
   }
 };
 

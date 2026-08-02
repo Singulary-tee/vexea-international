@@ -180,6 +180,9 @@ export async function initDroneModels(scene: THREE.Scene): Promise<void> {
       if (urlName === ASSET_STRUCTURE["humanoid-optimized.glb"].fileName) {
         (window as any).rawHumanoidGLTF = gltf;
       }
+      if (urlName === ASSET_STRUCTURE["robodog-optimized.glb"].fileName) {
+        (window as any).rawRobotDogGLTF = gltf;
+      }
       return nodes;
     } catch(e) {
       console.warn("Failed to load drone model:", urlName, e);
@@ -193,6 +196,7 @@ export async function initDroneModels(scene: THREE.Scene): Promise<void> {
   const wheeledParts = await parseGLTF(ASSET_STRUCTURE["ugv-optimized.glb"].fileName);
   const fixedWingParts = await parseGLTF(ASSET_STRUCTURE["uav-optimized.glb"].fileName);
   const humanoidParts = await parseGLTF(ASSET_STRUCTURE["humanoid-optimized.glb"].fileName);
+  const robotDogParts = await parseGLTF(ASSET_STRUCTURE["robodog-optimized.glb"].fileName);
 
   const mkBatchDirect = (
     nodes: DroneNode[], 
@@ -334,7 +338,7 @@ export async function initDroneModels(scene: THREE.Scene): Promise<void> {
   (window as any).droneBatches[1] = mkBatchDirect(bomberParts, tMatBomber, gBase, 50, DRONE_CONFIGS[DroneType.BOMBER].visualRadius);
   (window as any).droneBatches[2] = mkBatchDirect(reconParts, tMatAir, gBase, 50, DRONE_CONFIGS[DroneType.RECON].visualRadius);
   (window as any).droneBatches[4] = mkBatchDirect(wheeledParts, tMatGround, gBox, 50, DRONE_CONFIGS[DroneType.WHEELED].visualRadius);
-  (window as any).droneBatches[5] = mkBatchDirect([], tMatGround, gBox, 50, 1.5);
+  (window as any).droneBatches[5] = mkBatchDirect(robotDogParts, tMatGround, gBox, 50, DRONE_CONFIGS[DroneType.ROBOT_DOG].visualRadius);
   (window as any).droneBatches[6] = mkBatchDirect(humanoidParts, tMatGround, gBox, 50, 2.5);
 
   const fixedWingGroup = new THREE.Group();
@@ -393,6 +397,37 @@ export async function initDroneModels(scene: THREE.Scene): Promise<void> {
   (window as any).humanoidModel = humanoidGroup;
   if (hGltf && hGltf.animations) {
       (window as any).humanoidAnimations = hGltf.animations;
+  }
+
+  // Standalone Robot Dog model (uses 3dboneattachments & animation tracks, not SkinnedMesh)
+  const robotDogGroup = new THREE.Group();
+  robotDogGroup.name = "RobotDogStandalone";
+  
+  const rdOffsetGroup = new THREE.Group();
+  const rdOffset = DRONE_CONFIGS[DroneType.ROBOT_DOG].orientationOffset || [0, 0, 0];
+  rdOffsetGroup.rotation.set(rdOffset[0], rdOffset[1], rdOffset[2]);
+  robotDogGroup.add(rdOffsetGroup);
+
+  const rdGltf = (window as any).rawRobotDogGLTF;
+  if (rdGltf && rdGltf.scene) {
+      const clone = SkeletonUtils.clone(rdGltf.scene);
+      clone.name = "RobotDogGLTFScene";
+      rdOffsetGroup.add(clone);
+  }
+  
+  let scaleFactorRD = 1.0;
+  let bodyRD = robotDogParts.find(p => p.isMesh && (p.name === 'body' || p.name.toLowerCase().includes('body'))) || robotDogParts.find(p => p.isMesh);
+  if (bodyRD) {
+      bodyRD.geom!.computeBoundingBox();
+      const sphere = new THREE.Sphere();
+      if (bodyRD.geom!.boundingBox) bodyRD.geom!.boundingBox.getBoundingSphere(sphere);
+      scaleFactorRD = DRONE_CONFIGS[DroneType.ROBOT_DOG].visualRadius / (sphere.radius || 1.0);
+  }
+  robotDogGroup.scale.set(scaleFactorRD, scaleFactorRD, scaleFactorRD);
+  
+  (window as any).robotDogModel = robotDogGroup;
+  if (rdGltf && rdGltf.animations) {
+      (window as any).robotDogAnimations = rdGltf.animations;
   }
   setTimeout(() => {
      let logs = [];

@@ -27,6 +27,7 @@ let userFaction: string | null = null;
 let registeredUserData: any = null;
 let userSubscriptionUnsubscribe: (() => void) | null = null;
 let offersInterval: any = null;
+let persistentContainers: { [mode: string]: HTMLElement } = {};
 
 let lastChosenGameMode = localStorage.getItem('lastChosenGameMode') || 'INFILTRATION';
 let playCardTitleEl: HTMLElement | null = null;
@@ -89,6 +90,7 @@ export function initMainMenu() {
     clearInterval(offersInterval);
     offersInterval = null;
   }
+  persistentContainers = {};
   cardImages.forEach(name => {
     const img = new Image();
     img.src = getAssetUrl(name);
@@ -333,6 +335,19 @@ export function initMainMenu() {
   });
 
   el.appendChild(tabBgOverlay);
+
+  // 3D Studio Backdrop Layer for Character Model
+  const mm3dBackdrop = document.createElement('div');
+  mm3dBackdrop.id = 'main-menu-3d-backdrop';
+  Object.assign(mm3dBackdrop.style, {
+    position: 'absolute',
+    inset: '0',
+    width: '100%',
+    height: '100%',
+    zIndex: '2',
+    pointerEvents: 'none'
+  });
+  el.appendChild(mm3dBackdrop);
 
   const fisheyeWrap = document.createElement('div');
   fisheyeWrap.className = 'mm-fisheye-wrap';
@@ -817,6 +832,10 @@ export function initMainMenu() {
         e.stopPropagation();
         screenManager.showDevEntities();
     });
+    createDevBtn('DEV PLACEMENT', (e) => {
+        e.stopPropagation();
+        screenManager.showDevPlacement();
+    });
     playContent.appendChild(devContainer);
   }
 
@@ -914,6 +933,7 @@ export function initMainMenu() {
   // 3. INTEL CARD
   const intelObj = createNewCard('INTEL', 'intel_card_1.webp');
   const intelCard = intelObj.card;
+  intelCard.id = 'mm-intel-card';
   intelCard.style.flex = '1';
   intelCard.style.height = '100%';
   intelCard.style.minHeight = '0';
@@ -925,6 +945,7 @@ export function initMainMenu() {
   // 4. SQUAD RAID CARD
   const squadRaidObj = createNewCard('SQUAD RAID', 'squad_card_1.webp');
   const squadRaidCard = squadRaidObj.card;
+  squadRaidCard.id = 'mm-squad-card';
   squadRaidCard.style.flex = '1';
   squadRaidCard.style.height = '100%';
   squadRaidCard.style.minHeight = '0';
@@ -948,6 +969,7 @@ export function initMainMenu() {
   // 1. STORE CARD (Offers Carousel)
   const storeObj = createNewCard('OFFERS', 'promo_rifle_1.webp');
   const storeCard = storeObj.card;
+  storeCard.id = 'mm-store-card';
   storeCard.style.flex = '1';
   storeCard.style.height = '100%';
   storeCard.style.minHeight = '0';
@@ -994,6 +1016,10 @@ export function initMainMenu() {
 
   // Auto-flipping carousel
   offersInterval = setInterval(() => {
+    const mmScreen = document.getElementById('main-menu-screen');
+    const isVisible = mmScreen && mmScreen.style.display !== 'none' && mmScreen.style.opacity !== '0';
+    if (!isVisible) return; // Skip updating offer when hidden/off-screen to avoid background churn
+    
     currentOfferIdx = (currentOfferIdx + 1) % OFFERS.length;
     promoTextEl.style.opacity = '0';
     setTimeout(() => {
@@ -1410,6 +1436,57 @@ function createPanelBlock(label: string, renderContent: (container: HTMLElement)
   return block;
 }
 
+function updateDefaultPanelStats() {
+  const stats = [
+    { key: 'totalMatches', v: registeredUserData ? String(registeredUserData.totalMatches || 0) : '—' },
+    { key: 'totalWins', v: registeredUserData ? String(registeredUserData.totalWins || 0) : '—' },
+    { key: 'winRate', v: registeredUserData ? `${registeredUserData.winRate || 0}%` : '—' },
+    { key: 'totalDroneEliminations', v: registeredUserData ? String(registeredUserData.totalDroneEliminations || 0) : '—' },
+    { key: 'totalDeaths', v: registeredUserData ? String(registeredUserData.totalDeaths || 0) : '—' },
+    { key: 'totalObjectiveTimeHeld', v: registeredUserData ? `${registeredUserData.totalObjectiveTimeHeld || 0}s` : '—' },
+    { key: 'totalRevivesPerformed', v: registeredUserData ? String(registeredUserData.totalRevivesPerformed || 0) : '—' },
+    { key: 'highestIndividualScore', v: registeredUserData ? String(registeredUserData.highestIndividualScore || 0) : '—' }
+  ];
+  stats.forEach(s => {
+    const el = document.getElementById(`intel-summary-val-${s.key}`);
+    if (el) {
+      el.textContent = s.v;
+    }
+  });
+}
+
+function updatePlayTabSelection() {
+  const container = persistentContainers['PLAY'];
+  if (!container) return;
+  GAME_MODES.forEach(mode => {
+     const isSelected = lastChosenGameMode === mode.id;
+     const card = container.querySelector(`[data-mode-id="${mode.id}"]`) as HTMLElement;
+     if (card) {
+        card.style.background = isSelected ? 'rgba(255, 69, 0, 0.05)' : 'rgba(255, 255, 255, 0.01)';
+        card.style.border = isSelected ? `1px solid ${DS.colors.accent}` : '1px solid rgba(255, 255, 255, 0.05)';
+        
+        const strip = card.children[0] as HTMLElement;
+        if (strip) strip.style.background = isSelected ? DS.colors.accent : 'transparent';
+        
+        const textGroup = card.children[1] as HTMLElement;
+        if (textGroup) {
+           const nameEl = textGroup.children[0] as HTMLElement;
+           if (nameEl) nameEl.style.color = isSelected ? DS.colors.text : 'rgba(255, 255, 255, 0.6)';
+           const descEl = textGroup.children[1] as HTMLElement;
+           if (descEl) descEl.style.color = isSelected ? 'rgba(255, 255, 255, 0.6)' : 'rgba(255, 255, 255, 0.3)';
+        }
+        
+        const statusEl = card.children[2] as HTMLElement;
+        if (statusEl) {
+           statusEl.textContent = isSelected ? 'ACTIVE' : 'READY';
+           statusEl.style.background = isSelected ? 'rgba(255, 69, 0, 0.15)' : 'rgba(255, 255, 255, 0.03)';
+           statusEl.style.color = isSelected ? DS.colors.accent : 'rgba(255, 255, 255, 0.4)';
+           statusEl.style.border = isSelected ? `1px solid rgba(255, 69, 0, 0.3)` : 'none';
+        }
+     }
+  });
+}
+
 function renderRightPanel() {
   rightPanelContent.style.opacity = '0';
   
@@ -1420,511 +1497,538 @@ function renderRightPanel() {
   }
 
   setTimeout(() => {
-    rightPanelContent.innerHTML = '';
-    
-    if (currentRightPanelMode === 'DEFAULT') {
-       // Embed 3D Studio Viewport in the Main Menu right panel
-       const studioBlock = document.createElement('div');
-       studioBlock.id = 'mm-3d-viewport';
-       Object.assign(studioBlock.style, {
-         width: '100%',
-         height: '240px',
-         background: '#08080c',
-         border: '1px solid rgba(255, 69, 0, 0.4)',
-         borderRadius: '0px',
-         position: 'relative',
-         overflow: 'hidden',
-         marginBottom: '12px'
-       });
-       rightPanelContent.appendChild(studioBlock);
-
-       requestAnimationFrame(() => {
-         StudioPreviewManager.attachTo(studioBlock, 'MAIN_MENU');
-       });
-
-       rightPanelContent.appendChild(createPanelBlock('INTEL SUMMARY', c => {
-         const stats = [
-           { l: 'MATCHES', v: registeredUserData ? String(registeredUserData.totalMatches || 0) : '—' },
-           { l: 'WINS', v: registeredUserData ? String(registeredUserData.totalWins || 0) : '—' },
-           { l: 'WIN RATE', v: registeredUserData ? `${registeredUserData.winRate || 0}%` : '—' },
-           { l: 'ELIMINATIONS', v: registeredUserData ? String(registeredUserData.totalDroneEliminations || 0) : '—' },
-           { l: 'DEATHS', v: registeredUserData ? String(registeredUserData.totalDeaths || 0) : '—' },
-           { l: 'OBJECTIVE TIME', v: registeredUserData ? `${registeredUserData.totalObjectiveTimeHeld || 0}s` : '—' },
-           { l: 'REVIVES', v: registeredUserData ? String(registeredUserData.totalRevivesPerformed || 0) : '—' },
-           { l: 'BEST SCORE', v: registeredUserData ? String(registeredUserData.highestIndividualScore || 0) : '—' }
-         ];
-         stats.forEach(s => {
-           const row = document.createElement('div');
-           Object.assign(row.style, { display: 'flex', justifyContent: 'space-between', marginBottom: 'clamp(4px, 1vh, 8px)' });
-           const lbl = document.createElement('span'); lbl.textContent = s.l;
-           Object.assign(lbl.style, { fontFamily: DS.typography.fontFamily, fontSize: 'clamp(10px, 1.5vh, 14px)', color: DS.colors.textMuted });
-           const val = document.createElement('span'); val.textContent = s.v;
-           Object.assign(val.style, { fontFamily: DS.typography.fontFamily, fontSize: 'clamp(14px, 2.5vh, 18px)', color: DS.colors.text, fontWeight: DS.typography.weightBold });
-           row.appendChild(lbl); row.appendChild(val); c.appendChild(row);
-         });
-       }));
-       rightPanelContent.appendChild(createPanelBlock('LAST MATCH', c => {
-         const lbl = document.createElement('div'); lbl.textContent = 'NO DATA AVAILABLE';
-         Object.assign(lbl.style, { fontFamily: DS.typography.fontFamily, fontSize: 'clamp(10px, 1.5vh, 14px)', color: DS.colors.textMuted });
-         c.appendChild(lbl);
-       }, true));
+    // Hide all existing persistent containers
+    for (const key in persistentContainers) {
+      persistentContainers[key].style.display = 'none';
     }
-    else if (currentRightPanelMode === 'INTEL') {
-      renderStatsScreen(rightPanelContent, registeredUserData);
-    }
-    else if (currentRightPanelMode === 'LOADOUT') {
-      renderArmoryScreen(rightPanelContent);
-    }
-    else if (currentRightPanelMode === 'FACTION') {
-      renderFactionScreen(rightPanelContent, registeredUserData);
-    }
-    else if (currentRightPanelMode === 'STORE') {
-      renderStoreScreen(rightPanelContent, registeredUserData);
-    } 
-    else if (currentRightPanelMode === 'PLAY') {
-      rightPanelContent.style.overflow = 'hidden';
 
-      // Play Tab Content Dashboard
-      const playDashboard = document.createElement('div');
-      Object.assign(playDashboard.style, {
-        display: 'grid',
-        gridTemplateColumns: window.innerWidth < 850 ? '1fr' : '1.2fr 1fr 1fr',
-        gap: '8px',
-        width: '100%',
-        height: '100%',
-        boxSizing: 'border-box',
-        overflow: 'hidden'
-      });
-
-      // Column 1: Operational Directives Selector
-      const leftCol = document.createElement('div');
-      Object.assign(leftCol.style, {
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '4px',
-        minHeight: '0'
-      });
-
-      const leftTitle = document.createElement('div');
-      leftTitle.textContent = 'SELECT OPERATIONAL DIRECTIVE';
-      Object.assign(leftTitle.style, {
-        fontFamily: DS.typography.fontFamily,
-        fontSize: '8.5px',
-        color: DS.colors.textMuted,
-        letterSpacing: '1.5px',
-        fontWeight: 'bold',
-        textTransform: 'uppercase'
-      });
-      leftCol.appendChild(leftTitle);
-
-      const modesContainer = document.createElement('div');
-      Object.assign(modesContainer.style, {
+    let container = persistentContainers[currentRightPanelMode];
+    if (!container) {
+      container = document.createElement('div');
+      Object.assign(container.style, {
         display: 'flex',
         flexDirection: 'column',
         gap: '6px',
-        flex: '1',
-        minHeight: '0'
+        width: '100%',
+        height: '100%',
+        boxSizing: 'border-box'
       });
+      rightPanelContent.appendChild(container);
+      persistentContainers[currentRightPanelMode] = container;
 
-      GAME_MODES.forEach(mode => {
-        const isSelected = lastChosenGameMode === mode.id;
-        const card = document.createElement('div');
-        card.className = 'mm-glass';
-        Object.assign(card.style, {
-          background: isSelected ? 'rgba(255, 69, 0, 0.05)' : 'rgba(255, 255, 255, 0.01)',
-          border: isSelected ? `1px solid ${DS.colors.accent}` : '1px solid rgba(255, 255, 255, 0.05)',
-          borderRadius: '0px',
-          padding: '6px 10px',
-          cursor: 'pointer',
-          position: 'relative',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          transition: 'all 0.15s ease-out'
+      // Populate container based on currentRightPanelMode (ONCE)
+      if (currentRightPanelMode === 'DEFAULT') {
+         container.appendChild(createPanelBlock('INTEL SUMMARY', c => {
+           const stats = [
+             { key: 'totalMatches', l: 'MATCHES', v: '—' },
+             { key: 'totalWins', l: 'WINS', v: '—' },
+             { key: 'winRate', l: 'WIN RATE', v: '—' },
+             { key: 'totalDroneEliminations', l: 'ELIMINATIONS', v: '—' },
+             { key: 'totalDeaths', l: 'DEATHS', v: '—' },
+             { key: 'totalObjectiveTimeHeld', l: 'OBJECTIVE TIME', v: '—' },
+             { key: 'totalRevivesPerformed', l: 'REVIVES', v: '—' },
+             { key: 'highestIndividualScore', l: 'BEST SCORE', v: '—' }
+           ];
+           stats.forEach(s => {
+             const row = document.createElement('div');
+             Object.assign(row.style, { display: 'flex', justifyContent: 'space-between', marginBottom: 'clamp(4px, 1vh, 8px)' });
+             const lbl = document.createElement('span'); lbl.textContent = s.l;
+             Object.assign(lbl.style, { fontFamily: DS.typography.fontFamily, fontSize: 'clamp(10px, 1.5vh, 14px)', color: DS.colors.textMuted });
+             const val = document.createElement('span'); 
+             val.id = `intel-summary-val-${s.key}`;
+             val.textContent = s.v;
+             Object.assign(val.style, { fontFamily: DS.typography.fontFamily, fontSize: 'clamp(14px, 2.5vh, 18px)', color: DS.colors.text, fontWeight: DS.typography.weightBold });
+             row.appendChild(lbl); row.appendChild(val); c.appendChild(row);
+           });
+         }));
+
+         container.appendChild(createPanelBlock('LAST MATCH', c => {
+           const lbl = document.createElement('div'); lbl.textContent = 'NO DATA AVAILABLE';
+           Object.assign(lbl.style, { fontFamily: DS.typography.fontFamily, fontSize: 'clamp(10px, 1.5vh, 14px)', color: DS.colors.textMuted });
+           c.appendChild(lbl);
+         }, true));
+      }
+      else if (currentRightPanelMode === 'INTEL') {
+        renderStatsScreen(container, registeredUserData);
+      }
+      else if (currentRightPanelMode === 'LOADOUT') {
+        renderArmoryScreen(container);
+      }
+      else if (currentRightPanelMode === 'FACTION') {
+        renderFactionScreen(container, registeredUserData);
+      }
+      else if (currentRightPanelMode === 'STORE') {
+        renderStoreScreen(container, registeredUserData);
+      } 
+      else if (currentRightPanelMode === 'PLAY') {
+        container.style.overflow = 'hidden';
+
+        // Play Tab Content Dashboard
+        const playDashboard = document.createElement('div');
+        Object.assign(playDashboard.style, {
+          display: 'grid',
+          gridTemplateColumns: window.innerWidth < 850 ? '1fr' : '1.2fr 1fr 1fr',
+          gap: '8px',
+          width: '100%',
+          height: '100%',
+          boxSizing: 'border-box',
+          overflow: 'hidden'
         });
 
-        // Left highlight strip
-        const strip = document.createElement('div');
-        Object.assign(strip.style, {
-          position: 'absolute',
-          left: '0',
-          top: '0',
-          bottom: '0',
-          width: '3px',
-          background: isSelected ? DS.colors.accent : 'transparent'
-        });
-        card.appendChild(strip);
-
-        const textGroup = document.createElement('div');
-        Object.assign(textGroup.style, {
+        // Column 1: Operational Directives Selector
+        const leftCol = document.createElement('div');
+        Object.assign(leftCol.style, {
           display: 'flex',
           flexDirection: 'column',
-          gap: '1px'
+          gap: '4px',
+          minHeight: '0'
         });
 
-        const nameEl = document.createElement('div');
-        nameEl.textContent = mode.label;
-        Object.assign(nameEl.style, {
+        const leftTitle = document.createElement('div');
+        leftTitle.textContent = 'SELECT OPERATIONAL DIRECTIVE';
+        Object.assign(leftTitle.style, {
           fontFamily: DS.typography.fontFamily,
-          fontSize: '11.5px',
+          fontSize: '8.5px',
+          color: DS.colors.textMuted,
+          letterSpacing: '1.5px',
           fontWeight: 'bold',
-          color: isSelected ? DS.colors.text : 'rgba(255, 255, 255, 0.6)',
-          letterSpacing: '0.8px'
+          textTransform: 'uppercase'
+        });
+        leftCol.appendChild(leftTitle);
+
+        const modesContainer = document.createElement('div');
+        Object.assign(modesContainer.style, {
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '6px',
+          flex: '1',
+          minHeight: '0'
         });
 
-        const descEl = document.createElement('div');
-        descEl.textContent = mode.desc.toUpperCase();
-        Object.assign(descEl.style, {
+        GAME_MODES.forEach(mode => {
+          const isSelected = lastChosenGameMode === mode.id;
+          const card = document.createElement('div');
+          card.className = 'mm-glass';
+          card.setAttribute('data-mode-id', mode.id);
+          Object.assign(card.style, {
+            background: isSelected ? 'rgba(255, 69, 0, 0.05)' : 'rgba(255, 255, 255, 0.01)',
+            border: isSelected ? `1px solid ${DS.colors.accent}` : '1px solid rgba(255, 255, 255, 0.05)',
+            borderRadius: '0px',
+            padding: '6px 10px',
+            cursor: 'pointer',
+            position: 'relative',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            transition: 'all 0.15s ease-out'
+          });
+
+          // Left highlight strip
+          const strip = document.createElement('div');
+          Object.assign(strip.style, {
+            position: 'absolute',
+            left: '0',
+            top: '0',
+            bottom: '0',
+            width: '3px',
+            background: isSelected ? DS.colors.accent : 'transparent'
+          });
+          card.appendChild(strip);
+
+          const textGroup = document.createElement('div');
+          Object.assign(textGroup.style, {
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '1px'
+          });
+
+          const nameEl = document.createElement('div');
+          nameEl.textContent = mode.label;
+          Object.assign(nameEl.style, {
+            fontFamily: DS.typography.fontFamily,
+            fontSize: '11.5px',
+            fontWeight: 'bold',
+            color: isSelected ? DS.colors.text : 'rgba(255, 255, 255, 0.6)',
+            letterSpacing: '0.8px'
+          });
+
+          const descEl = document.createElement('div');
+          descEl.textContent = mode.desc.toUpperCase();
+          Object.assign(descEl.style, {
+            fontFamily: DS.typography.fontFamily,
+            fontSize: '8px',
+            color: isSelected ? 'rgba(255, 255, 255, 0.6)' : 'rgba(255, 255, 255, 0.3)',
+            letterSpacing: '0.5px'
+          });
+
+          textGroup.appendChild(nameEl);
+          textGroup.appendChild(descEl);
+          card.appendChild(textGroup);
+
+          const statusEl = document.createElement('div');
+          statusEl.textContent = isSelected ? 'ACTIVE' : 'READY';
+          Object.assign(statusEl.style, {
+            fontFamily: DS.typography.fontFamily,
+            fontSize: '7.5px',
+            fontWeight: 'bold',
+            letterSpacing: '0.8px',
+            padding: '2px 6px',
+            borderRadius: '0px',
+            background: isSelected ? 'rgba(255, 69, 0, 0.15)' : 'rgba(255, 255, 255, 0.03)',
+            color: isSelected ? DS.colors.accent : 'rgba(255, 255, 255, 0.4)',
+            border: isSelected ? `1px solid rgba(255, 69, 0, 0.3)` : 'none'
+          });
+          card.appendChild(statusEl);
+
+          card.onclick = () => {
+            lastChosenGameMode = mode.id;
+            localStorage.setItem('lastChosenGameMode', mode.id);
+            if (playCardTitleEl) {
+              playCardTitleEl.textContent = mode.id;
+            }
+            updatePlayCardBackground();
+            import('../audio').then(({ audioManager }) => audioManager.play('click'));
+            renderRightPanel();
+          };
+
+          modesContainer.appendChild(card);
+        });
+
+        leftCol.appendChild(modesContainer);
+        playDashboard.appendChild(leftCol);
+
+        // Column 2: Zone & Intelligence Preview
+        const centerCol = document.createElement('div');
+        Object.assign(centerCol.style, {
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '4px',
+          minHeight: '0'
+        });
+
+        const centerTitle = document.createElement('div');
+        centerTitle.textContent = 'ZONE INTEL & SECTOR MAP';
+        Object.assign(centerTitle.style, {
+          fontFamily: DS.typography.fontFamily,
+          fontSize: '8.5px',
+          color: DS.colors.textMuted,
+          letterSpacing: '1.5px',
+          fontWeight: 'bold',
+          textTransform: 'uppercase'
+        });
+        centerCol.appendChild(centerTitle);
+
+        const zoneCard = document.createElement('div');
+        zoneCard.className = 'mm-glass';
+        Object.assign(zoneCard.style, {
+          background: 'rgba(255, 255, 255, 0.015)',
+          border: '1px solid rgba(255, 255, 255, 0.05)',
+          borderRadius: '0px',
+          padding: '8px 10px',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '6px',
+          flex: '1',
+          justifyContent: 'space-between',
+          minHeight: '0'
+        });
+
+        zoneCard.innerHTML = `
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <span style="font-family:${DS.typography.fontFamily}; font-size:10px; font-weight:bold; color:${DS.colors.text}; letter-spacing:0.8px;">${getDefaultMap().displayName.toUpperCase()}</span>
+            <span style="font-family:${DS.typography.fontFamily}; font-size:7.5px; font-weight:bold; color:#00FF88; background:rgba(0,255,136,0.08); padding:1px 5px; border:1px solid rgba(0,255,136,0.2);">SECURE</span>
+          </div>
+
+          <!-- Zone Blueprint Map SVG Preview -->
+          <div style="width:100%; height:clamp(60px, 11vh, 90px); background:rgba(0,0,0,0.4); border:1px solid rgba(255,255,255,0.06); border-radius:0px; display:flex; align-items:center; justify-content:center; position:relative; overflow:hidden;">
+            <svg width="100%" height="100%" viewBox="0 0 200 120" preserveAspectRatio="xMidYMid meet">
+              <rect width="200" height="120" fill="#050508"/>
+              <path d="M20,20 L180,20 L180,100 L20,100 Z" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="1" stroke-dasharray="4 2"/>
+              <path d="M50,35 L150,35 L150,85 L50,85 Z" fill="none" stroke="${DS.colors.accent}" stroke-width="1.5"/>
+              <line x1="100" y1="20" x2="100" y2="100" stroke="rgba(255,255,255,0.15)" stroke-width="1"/>
+              <line x1="20" y1="60" x2="180" y2="60" stroke="rgba(255,255,255,0.15)" stroke-width="1"/>
+              <circle cx="100" cy="60" r="15" fill="none" stroke="${DS.colors.accent}" stroke-width="1"/>
+              <circle cx="100" cy="60" r="3" fill="${DS.colors.accent}"/>
+              <circle cx="65" cy="45" r="4" fill="#00F0FF"/>
+              <circle cx="135" cy="75" r="4" fill="#00FF88"/>
+            </svg>
+            <div style="position:absolute; bottom:4px; left:6px; font-family:${DS.typography.fontFamily}; font-size:6.5px; color:${DS.colors.textMuted}; letter-spacing:0.8px;">BLUEPRINT v2.1</div>
+          </div>
+        `;
+        centerCol.appendChild(zoneCard);
+        playDashboard.appendChild(centerCol);
+
+        // Column 3: Deployment Parameters & Execution
+        const rightCol = document.createElement('div');
+        Object.assign(rightCol.style, {
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '4px',
+          minHeight: '0'
+        });
+
+        const rightTitle = document.createElement('div');
+        rightTitle.textContent = 'DEPLOYMENT PARAMETERS';
+        Object.assign(rightTitle.style, {
+          fontFamily: DS.typography.fontFamily,
+          fontSize: '8.5px',
+          color: DS.colors.textMuted,
+          letterSpacing: '1.5px',
+          fontWeight: 'bold',
+          textTransform: 'uppercase'
+        });
+        rightCol.appendChild(rightTitle);
+
+        const paramsCard = document.createElement('div');
+        paramsCard.className = 'mm-glass';
+        Object.assign(paramsCard.style, {
+          background: 'rgba(255, 255, 255, 0.015)',
+          border: '1px solid rgba(255, 255, 255, 0.05)',
+          borderRadius: '0px',
+          padding: '8px 10px',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '6px',
+          flex: '1',
+          justifyContent: 'space-between',
+          minHeight: '0'
+        });
+
+        // Match type
+        const matchTypeGroup = document.createElement('div');
+        Object.assign(matchTypeGroup.style, {
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '4px'
+        });
+
+        const matchTypeLabel = document.createElement('div');
+        matchTypeLabel.textContent = 'MATCH TYPE';
+        Object.assign(matchTypeLabel.style, {
           fontFamily: DS.typography.fontFamily,
           fontSize: '8px',
-          color: isSelected ? 'rgba(255, 255, 255, 0.6)' : 'rgba(255, 255, 255, 0.3)',
+          color: DS.colors.textMuted,
+          letterSpacing: '1.5px',
+          fontWeight: 'bold'
+        });
+        matchTypeGroup.appendChild(matchTypeLabel);
+
+        const matchTypeToggle = document.createElement('div');
+        Object.assign(matchTypeToggle.style, {
+          display: 'flex',
+          gap: '4px'
+        });
+
+        const openBtn = document.createElement('div');
+        openBtn.textContent = 'OPEN MATCH';
+        Object.assign(openBtn.style, {
+          flex: '1',
+          textAlign: 'center',
+          padding: '6px 3px',
+          fontSize: '9px',
+          fontWeight: 'bold',
+          fontFamily: DS.typography.fontFamily,
+          letterSpacing: '0.8px',
+          borderRadius: '0px',
+          background: 'rgba(255, 69, 0, 0.08)',
+          border: `1px solid ${DS.colors.accent}`,
+          color: DS.colors.text,
+          cursor: 'default'
+        });
+
+        const privateBtn = document.createElement('div');
+        privateBtn.textContent = 'PRIVATE MATCH';
+        Object.assign(privateBtn.style, {
+          flex: '1',
+          textAlign: 'center',
+          padding: '6px 3px',
+          fontSize: '9px',
+          fontWeight: 'bold',
+          fontFamily: DS.typography.fontFamily,
+          letterSpacing: '0.8px',
+          borderRadius: '0px',
+          background: 'rgba(255, 255, 255, 0.01)',
+          border: 'none',
+          color: 'rgba(255, 255, 255, 0.3)',
+          cursor: 'not-allowed',
+          opacity: '0.6'
+        });
+
+        matchTypeToggle.appendChild(openBtn);
+        matchTypeToggle.appendChild(privateBtn);
+        matchTypeGroup.appendChild(matchTypeToggle);
+        paramsCard.appendChild(matchTypeGroup);
+
+        // Contractors indicator
+        const contrGroup = document.createElement('div');
+        Object.assign(contrGroup.style, {
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '4px',
+          padding: '6px 8px',
+          background: 'rgba(255, 255, 255, 0.01)',
+          border: 'none',
+          borderRadius: '0px'
+        });
+
+        const contrLabel = document.createElement('div');
+        contrLabel.textContent = 'ACTIVE CONTRACTORS IN SECTOR';
+        Object.assign(contrLabel.style, {
+          fontFamily: DS.typography.fontFamily,
+          fontSize: '8px',
+          color: DS.colors.textMuted,
+          letterSpacing: '0.8px',
+          fontWeight: 'bold'
+        });
+
+        const contrValue = document.createElement('div');
+        contrValue.textContent = '1 / 10 OPERATIVES';
+        Object.assign(contrValue.style, {
+          fontFamily: DS.typography.fontFamily,
+          fontSize: '11px',
+          color: DS.colors.text,
+          fontWeight: 'bold',
           letterSpacing: '0.5px'
         });
 
-        textGroup.appendChild(nameEl);
-        textGroup.appendChild(descEl);
-        card.appendChild(textGroup);
+        contrGroup.appendChild(contrLabel);
+        contrGroup.appendChild(contrValue);
+        paramsCard.appendChild(contrGroup);
 
-        const statusEl = document.createElement('div');
-        statusEl.textContent = isSelected ? 'ACTIVE' : 'READY';
-        Object.assign(statusEl.style, {
+        // Deploy Button
+        const deployBtn = document.createElement('button');
+        deployBtn.textContent = 'DEPLOY TO SECTOR';
+        Object.assign(deployBtn.style, {
+          width: '100%',
+          height: 'clamp(32px, 4.5vh, 42px)',
+          background: DS.colors.accent,
+          color: DS.colors.background,
+          border: 'none',
           fontFamily: DS.typography.fontFamily,
-          fontSize: '7.5px',
-          fontWeight: 'bold',
-          letterSpacing: '0.8px',
-          padding: '2px 6px',
+          fontSize: 'clamp(12px, 1.8vh, 15px)',
+          fontWeight: DS.typography.weightBold,
+          textTransform: 'uppercase',
+          cursor: 'pointer',
           borderRadius: '0px',
-          background: isSelected ? 'rgba(255, 69, 0, 0.15)' : 'rgba(255, 255, 255, 0.03)',
-          color: isSelected ? DS.colors.accent : 'rgba(255, 255, 255, 0.4)',
-          border: isSelected ? `1px solid rgba(255, 69, 0, 0.3)` : 'none'
+          transition: 'all 0.15s ease'
         });
-        card.appendChild(statusEl);
 
-        card.onclick = () => {
-          lastChosenGameMode = mode.id;
-          localStorage.setItem('lastChosenGameMode', mode.id);
-          if (playCardTitleEl) {
-            playCardTitleEl.textContent = mode.id;
+        deployBtn.addEventListener('mouseenter', () => {
+          deployBtn.style.background = '#FF6347';
+        });
+        deployBtn.addEventListener('mouseleave', () => {
+          deployBtn.style.background = DS.colors.accent;
+        });
+
+        deployBtn.onclick = () => {
+          if (registeredUserData && (registeredUserData.energy || 0) < 10) {
+            showMenuNotification("DEPLOYMENT REJECTED: INSUFFICIENT ENERGY. REFILL DEV CREDITS IN INTEL.", "warning");
+            return;
           }
-          updatePlayCardBackground();
-          import('../audio').then(({ audioManager }) => audioManager.play('click'));
-          renderRightPanel();
+          ensureAssetsDownloaded(() => screenManager.showLobby(), getDefaultMap().id);
         };
 
-        modesContainer.appendChild(card);
-      });
+        paramsCard.appendChild(deployBtn);
+        rightCol.appendChild(paramsCard);
+        playDashboard.appendChild(rightCol);
 
-      leftCol.appendChild(modesContainer);
-      playDashboard.appendChild(leftCol);
+        container.appendChild(playDashboard);
+      }
+      else if (currentRightPanelMode === 'FEEDBACK') {
+         let sr = 0;
+         const stars: HTMLElement[] = [];
+         container.appendChild(createPanelBlock('', c => {
+           const row = document.createElement('div'); Object.assign(row.style, { display: 'flex', gap: 'clamp(4px, 1vh, 8px)', marginBottom: 'clamp(8px, 2vh, 16px)' });
+           for (let i=1; i<=5; i++) {
+             const s = document.createElement('div'); s.innerHTML = '★';
+             Object.assign(s.style, { fontSize: 'clamp(20px, 3.5vh, 32px)', color: DS.colors.border, cursor: 'pointer', lineHeight: '1' });
+             s.onclick = () => { sr = i; stars.forEach((st, idx) => st.style.color = idx < sr ? DS.colors.accent : DS.colors.border); };
+             stars.push(s); row.appendChild(s);
+           }
+           c.appendChild(row);
 
-      // Column 2: Zone & Intelligence Preview
-      const centerCol = document.createElement('div');
-      Object.assign(centerCol.style, {
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '4px',
-        minHeight: '0'
-      });
-
-      const centerTitle = document.createElement('div');
-      centerTitle.textContent = 'ZONE INTEL & SECTOR MAP';
-      Object.assign(centerTitle.style, {
-        fontFamily: DS.typography.fontFamily,
-        fontSize: '8.5px',
-        color: DS.colors.textMuted,
-        letterSpacing: '1.5px',
-        fontWeight: 'bold',
-        textTransform: 'uppercase'
-      });
-      centerCol.appendChild(centerTitle);
-
-      const zoneCard = document.createElement('div');
-      zoneCard.className = 'mm-glass';
-      Object.assign(zoneCard.style, {
-        background: 'rgba(255, 255, 255, 0.015)',
-        border: '1px solid rgba(255, 255, 255, 0.05)',
-        borderRadius: '0px',
-        padding: '8px 10px',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '6px',
-        flex: '1',
-        justifyContent: 'space-between',
-        minHeight: '0'
-      });
-
-      zoneCard.innerHTML = `
-        <div style="display:flex; justify-content:space-between; align-items:center;">
-          <span style="font-family:${DS.typography.fontFamily}; font-size:10px; font-weight:bold; color:${DS.colors.text}; letter-spacing:0.8px;">${getDefaultMap().displayName.toUpperCase()}</span>
-          <span style="font-family:${DS.typography.fontFamily}; font-size:7.5px; font-weight:bold; color:#00FF88; background:rgba(0,255,136,0.08); padding:1px 5px; border:1px solid rgba(0,255,136,0.2);">SECURE</span>
-        </div>
-
-        <!-- Zone Blueprint Map SVG Preview -->
-        <div style="width:100%; height:clamp(60px, 11vh, 90px); background:rgba(0,0,0,0.4); border:1px solid rgba(255,255,255,0.06); border-radius:0px; display:flex; align-items:center; justify-content:center; position:relative; overflow:hidden;">
-          <svg width="100%" height="100%" viewBox="0 0 200 120" preserveAspectRatio="xMidYMid meet">
-            <rect width="200" height="120" fill="#050508"/>
-            <path d="M20,20 L180,20 L180,100 L20,100 Z" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="1" stroke-dasharray="4 2"/>
-            <path d="M50,35 L150,35 L150,85 L50,85 Z" fill="none" stroke="${DS.colors.accent}" stroke-width="1.5"/>
-            <line x1="100" y1="20" x2="100" y2="100" stroke="rgba(255,255,255,0.15)" stroke-width="1"/>
-            <line x1="20" y1="60" x2="180" y2="60" stroke="rgba(255,255,255,0.15)" stroke-width="1"/>
-            <circle cx="100" cy="60" r="15" fill="none" stroke="${DS.colors.accent}" stroke-width="1"/>
-            <circle cx="100" cy="60" r="3" fill="${DS.colors.accent}"/>
-            <circle cx="65" cy="45" r="4" fill="#00F0FF"/>
-            <circle cx="135" cy="75" r="4" fill="#00FF88"/>
-          </svg>
-          <div style="position:absolute; bottom:4px; left:6px; font-family:${DS.typography.fontFamily}; font-size:6.5px; color:${DS.colors.textMuted}; letter-spacing:0.8px;">BLUEPRINT v2.1</div>
-        </div>
-      `;
-      centerCol.appendChild(zoneCard);
-      playDashboard.appendChild(centerCol);
-
-      // Column 3: Deployment Parameters & Execution
-      const rightCol = document.createElement('div');
-      Object.assign(rightCol.style, {
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '4px',
-        minHeight: '0'
-      });
-
-      const rightTitle = document.createElement('div');
-      rightTitle.textContent = 'DEPLOYMENT PARAMETERS';
-      Object.assign(rightTitle.style, {
-        fontFamily: DS.typography.fontFamily,
-        fontSize: '8.5px',
-        color: DS.colors.textMuted,
-        letterSpacing: '1.5px',
-        fontWeight: 'bold',
-        textTransform: 'uppercase'
-      });
-      rightCol.appendChild(rightTitle);
-
-      const paramsCard = document.createElement('div');
-      paramsCard.className = 'mm-glass';
-      Object.assign(paramsCard.style, {
-        background: 'rgba(255, 255, 255, 0.015)',
-        border: '1px solid rgba(255, 255, 255, 0.05)',
-        borderRadius: '0px',
-        padding: '8px 10px',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '6px',
-        flex: '1',
-        justifyContent: 'space-between',
-        minHeight: '0'
-      });
-
-      // Match type
-      const matchTypeGroup = document.createElement('div');
-      Object.assign(matchTypeGroup.style, {
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '4px'
-      });
-
-      const matchTypeLabel = document.createElement('div');
-      matchTypeLabel.textContent = 'MATCH TYPE';
-      Object.assign(matchTypeLabel.style, {
-        fontFamily: DS.typography.fontFamily,
-        fontSize: '8px',
-        color: DS.colors.textMuted,
-        letterSpacing: '1.5px',
-        fontWeight: 'bold'
-      });
-      matchTypeGroup.appendChild(matchTypeLabel);
-
-      const matchTypeToggle = document.createElement('div');
-      Object.assign(matchTypeToggle.style, {
-        display: 'flex',
-        gap: '4px'
-      });
-
-      const openBtn = document.createElement('div');
-      openBtn.textContent = 'OPEN MATCH';
-      Object.assign(openBtn.style, {
-        flex: '1',
-        textAlign: 'center',
-        padding: '6px 3px',
-        fontSize: '9px',
-        fontWeight: 'bold',
-        fontFamily: DS.typography.fontFamily,
-        letterSpacing: '0.8px',
-        borderRadius: '0px',
-        background: 'rgba(255, 69, 0, 0.08)',
-        border: `1px solid ${DS.colors.accent}`,
-        color: DS.colors.text,
-        cursor: 'default'
-      });
-
-      const privateBtn = document.createElement('div');
-      privateBtn.textContent = 'PRIVATE MATCH';
-      Object.assign(privateBtn.style, {
-        flex: '1',
-        textAlign: 'center',
-        padding: '6px 3px',
-        fontSize: '9px',
-        fontWeight: 'bold',
-        fontFamily: DS.typography.fontFamily,
-        letterSpacing: '0.8px',
-        borderRadius: '0px',
-        background: 'rgba(255, 255, 255, 0.01)',
-        border: 'none',
-        color: 'rgba(255, 255, 255, 0.3)',
-        cursor: 'not-allowed',
-        opacity: '0.6'
-      });
-
-      matchTypeToggle.appendChild(openBtn);
-      matchTypeToggle.appendChild(privateBtn);
-      matchTypeGroup.appendChild(matchTypeToggle);
-      paramsCard.appendChild(matchTypeGroup);
-
-      // Contractors indicator
-      const contrGroup = document.createElement('div');
-      Object.assign(contrGroup.style, {
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '4px',
-        padding: '6px 8px',
-        background: 'rgba(255, 255, 255, 0.01)',
-        border: 'none',
-        borderRadius: '0px'
-      });
-
-      const contrLabel = document.createElement('div');
-      contrLabel.textContent = 'ACTIVE CONTRACTORS IN SECTOR';
-      Object.assign(contrLabel.style, {
-        fontFamily: DS.typography.fontFamily,
-        fontSize: '8px',
-        color: DS.colors.textMuted,
-        letterSpacing: '0.8px',
-        fontWeight: 'bold'
-      });
-
-      const contrValue = document.createElement('div');
-      contrValue.textContent = '1 / 10 OPERATIVES';
-      Object.assign(contrValue.style, {
-        fontFamily: DS.typography.fontFamily,
-        fontSize: '11px',
-        color: DS.colors.text,
-        fontWeight: 'bold',
-        letterSpacing: '0.5px'
-      });
-
-      contrGroup.appendChild(contrLabel);
-      contrGroup.appendChild(contrValue);
-      paramsCard.appendChild(contrGroup);
-
-      // Deploy Button
-      const deployBtn = document.createElement('button');
-      deployBtn.textContent = 'DEPLOY TO SECTOR';
-      Object.assign(deployBtn.style, {
-        width: '100%',
-        height: 'clamp(32px, 4.5vh, 42px)',
-        background: DS.colors.accent,
-        color: DS.colors.background,
-        border: 'none',
-        fontFamily: DS.typography.fontFamily,
-        fontSize: 'clamp(12px, 1.8vh, 15px)',
-        fontWeight: DS.typography.weightBold,
-        textTransform: 'uppercase',
-        cursor: 'pointer',
-        borderRadius: '0px',
-        transition: 'all 0.15s ease'
-      });
-
-      deployBtn.addEventListener('mouseenter', () => {
-        deployBtn.style.background = '#FF6347';
-      });
-      deployBtn.addEventListener('mouseleave', () => {
-        deployBtn.style.background = DS.colors.accent;
-      });
-
-      deployBtn.onclick = () => {
-        if (registeredUserData && (registeredUserData.energy || 0) < 10) {
-          showMenuNotification("DEPLOYMENT REJECTED: INSUFFICIENT ENERGY. REFILL DEV CREDITS IN INTEL.", "warning");
-          return;
-        }
-        ensureAssetsDownloaded(() => screenManager.showLobby(), getDefaultMap().id);
-      };
-
-      paramsCard.appendChild(deployBtn);
-      rightCol.appendChild(paramsCard);
-      playDashboard.appendChild(rightCol);
-
-      rightPanelContent.appendChild(playDashboard);
+           const txt = document.createElement('textarea');
+           txt.placeholder = 'Describe your experience.';
+           Object.assign(txt.style, {
+             width: '100%', height: 'clamp(50px, 10vh, 80px)', background: 'rgba(0,0,0,0.4)', border: DS.glass.border,
+             color: DS.colors.text, fontFamily: DS.typography.fontFamily, fontSize: 'clamp(10px, 1.5vh, 13px)', padding: 'clamp(5px, 1vh, 10px)', resize: 'none'
+           });
+           c.appendChild(txt);
+         }));
+         container.appendChild(createPanelBlock('', c => {
+           const btn = document.createElement('button'); btn.textContent = 'SUBMIT';
+           Object.assign(btn.style, {
+             width: '100%', height: 'clamp(30px, 4vh, 40px)', background: DS.colors.accent, color: DS.colors.background, border: 'none',
+             fontFamily: DS.typography.fontFamily, fontSize: 'clamp(14px, 2.5vh, 18px)', fontWeight: DS.typography.weightBold, textTransform: 'uppercase', cursor: 'pointer'
+           });
+           btn.onclick = async () => {
+             const auth = getAuth();
+             const uid = auth.currentUser ? auth.currentUser.uid : "guest";
+             const txt = container.querySelector('textarea');
+             try {
+                 await addDoc(collection(getFirestore(), "feedback"), {
+                     rating: sr, text: txt?.value || '', timestamp: serverTimestamp(), userId: uid
+                 });
+                 if(txt) txt.value = '';
+                 sr = 0; stars.forEach(st => st.style.color = DS.colors.border);
+                 btn.textContent = 'SENT';
+                 setTimeout(() => btn.textContent = 'SUBMIT', 2000);
+             } catch(e) {}
+           };
+           c.appendChild(btn);
+         }, true));
+      }
+      else if (currentRightPanelMode === 'MAP_EDITOR') {
+          container.appendChild(createPanelBlock('AVAILABLE MAPS', c => {
+              MAP_REGISTRY.forEach(map => {
+                  const mapBtn = document.createElement('div');
+                  Object.assign(mapBtn.style, {
+                      padding: 'clamp(8px, 1.5vh, 12px)',
+                      marginBottom: '8px',
+                      borderLeft: `2px solid ${DS.colors.accent}`,
+                      background: 'rgba(255,255,255,0.05)',
+                      cursor: 'pointer',
+                      color: DS.colors.text,
+                      fontFamily: DS.typography.fontFamily,
+                      fontSize: 'clamp(14px, 2.5vh, 18px)'
+                  });
+                  mapBtn.textContent = map.displayName;
+                  mapBtn.addEventListener('mouseenter', () => { mapBtn.style.background = 'rgba(255,255,255,0.1)'; });
+                  mapBtn.addEventListener('mouseleave', () => { mapBtn.style.background = 'rgba(255,255,255,0.05)'; });
+                  mapBtn.addEventListener('click', () => {
+                      if ((window as any).launchMapEditor) {
+                          (window as any).launchMapEditor(map.id);
+                      } else {
+                          console.log('launchMapEditor missing');
+                      }
+                  });
+                  c.appendChild(mapBtn);
+              });
+          }));
+      }
     }
-    else if (currentRightPanelMode === 'FEEDBACK') {
-       let sr = 0;
-       const stars: HTMLElement[] = [];
-       rightPanelContent.appendChild(createPanelBlock('', c => {
-         const row = document.createElement('div'); Object.assign(row.style, { display: 'flex', gap: 'clamp(4px, 1vh, 8px)', marginBottom: 'clamp(8px, 2vh, 16px)' });
-         for (let i=1; i<=5; i++) {
-           const s = document.createElement('div'); s.innerHTML = '★';
-           Object.assign(s.style, { fontSize: 'clamp(20px, 3.5vh, 32px)', color: DS.colors.border, cursor: 'pointer', lineHeight: '1' });
-           s.onclick = () => { sr = i; stars.forEach((st, idx) => st.style.color = idx < sr ? DS.colors.accent : DS.colors.border); };
-           stars.push(s); row.appendChild(s);
-         }
-         c.appendChild(row);
 
-         const txt = document.createElement('textarea');
-         txt.placeholder = 'Describe your experience.';
-         Object.assign(txt.style, {
-           width: '100%', height: 'clamp(50px, 10vh, 80px)', background: 'rgba(0,0,0,0.4)', border: DS.glass.border,
-           color: DS.colors.text, fontFamily: DS.typography.fontFamily, fontSize: 'clamp(10px, 1.5vh, 13px)', padding: 'clamp(5px, 1vh, 10px)', resize: 'none'
-         });
-         c.appendChild(txt);
-       }));
-       rightPanelContent.appendChild(createPanelBlock('', c => {
-         const btn = document.createElement('button'); btn.textContent = 'SUBMIT';
-         Object.assign(btn.style, {
-           width: '100%', height: 'clamp(30px, 4vh, 40px)', background: DS.colors.accent, color: DS.colors.background, border: 'none',
-           fontFamily: DS.typography.fontFamily, fontSize: 'clamp(14px, 2.5vh, 18px)', fontWeight: DS.typography.weightBold, textTransform: 'uppercase', cursor: 'pointer'
-         });
-         btn.onclick = async () => {
-           const auth = getAuth();
-           const uid = auth.currentUser ? auth.currentUser.uid : "guest";
-           const txt = rightPanelContent.querySelector('textarea');
-           try {
-               await addDoc(collection(getFirestore(), "feedback"), {
-                   rating: sr, text: txt?.value || '', timestamp: serverTimestamp(), userId: uid
-               });
-               if(txt) txt.value = '';
-               sr = 0; stars.forEach(st => st.style.color = DS.colors.border);
-               btn.textContent = 'SENT';
-               setTimeout(() => btn.textContent = 'SUBMIT', 2000);
-           } catch(e) {}
-         };
-         c.appendChild(btn);
-       }, true));
+    // Toggle active container visibility
+    container.style.display = (currentRightPanelMode === 'PLAY') ? 'grid' : 'flex';
+
+    // Perform selective dynamic updates on the active container to avoid rebuilding layout
+    if (currentRightPanelMode === 'DEFAULT') {
+       updateDefaultPanelStats();
     }
-    else if (currentRightPanelMode === 'MAP_EDITOR') {
-        rightPanelContent.appendChild(createPanelBlock('AVAILABLE MAPS', c => {
-            MAP_REGISTRY.forEach(map => {
-                const mapBtn = document.createElement('div');
-                Object.assign(mapBtn.style, {
-                    padding: 'clamp(8px, 1.5vh, 12px)',
-                    marginBottom: '8px',
-                    borderLeft: `2px solid ${DS.colors.accent}`,
-                    background: 'rgba(255,255,255,0.05)',
-                    cursor: 'pointer',
-                    color: DS.colors.text,
-                    fontFamily: DS.typography.fontFamily,
-                    fontSize: 'clamp(14px, 2.5vh, 18px)'
-                });
-                mapBtn.textContent = map.displayName;
-                mapBtn.addEventListener('mouseenter', () => { mapBtn.style.background = 'rgba(255,255,255,0.1)'; });
-                mapBtn.addEventListener('mouseleave', () => { mapBtn.style.background = 'rgba(255,255,255,0.05)'; });
-                mapBtn.addEventListener('click', () => {
-                    if ((window as any).launchMapEditor) {
-                        (window as any).launchMapEditor(map.id);
-                    } else {
-                        console.log('launchMapEditor missing');
-                    }
-                });
-                c.appendChild(mapBtn);
-            });
-        }));
+    else if (currentRightPanelMode === 'INTEL') {
+       renderStatsScreen(container, registeredUserData);
+    }
+    else if (currentRightPanelMode === 'LOADOUT') {
+       renderArmoryScreen(container);
+    }
+    else if (currentRightPanelMode === 'FACTION') {
+       renderFactionScreen(container, registeredUserData);
+    }
+    else if (currentRightPanelMode === 'STORE') {
+       renderStoreScreen(container, registeredUserData);
+    }
+    else if (currentRightPanelMode === 'PLAY') {
+       updatePlayTabSelection();
     }
 
     rightPanelContent.style.opacity = '1';
@@ -2982,8 +3086,39 @@ function openSquadFriendsModal() {
   renderTabContent();
 }
 
+export function refreshCardImages() {
+  if (playCardEl) {
+    playCardEl.style.backgroundImage = `url('${getAssetUrl(getPlayCardImageForMode(lastChosenGameMode))}')`;
+  }
+  const updatesCard = document.getElementById('mm-updates-card');
+  if (updatesCard) {
+    updatesCard.style.backgroundImage = `url('${getAssetUrl('update_card_1.webp')}')`;
+  }
+  const leaderboardCard = document.getElementById('leaderboard-card');
+  if (leaderboardCard) {
+    leaderboardCard.style.backgroundImage = `url('${getAssetUrl('leaderboard_card_1.webp')}')`;
+  }
+  const intelCard = document.getElementById('mm-intel-card');
+  if (intelCard) {
+    intelCard.style.backgroundImage = `url('${getAssetUrl('intel_card_1.webp')}')`;
+  }
+  const squadRaidCard = document.getElementById('mm-squad-card');
+  if (squadRaidCard) {
+    squadRaidCard.style.backgroundImage = `url('${getAssetUrl('squad_card_1.webp')}')`;
+  }
+  const storeCard = document.getElementById('mm-store-card');
+  if (storeCard) {
+    storeCard.style.backgroundImage = `url('${getAssetUrl('promo_rifle_1.webp')}')`;
+  }
+}
+
 if (typeof window !== 'undefined') {
   window.addEventListener('show-main-menu', () => {
+    refreshCardImages();
+    const backdrop = document.getElementById('main-menu-3d-backdrop');
+    if (backdrop) {
+      StudioPreviewManager.attachTo(backdrop, 'MAIN_MENU');
+    }
     renderRightPanel();
     const auth = getAuth();
     const db = getFirestore();

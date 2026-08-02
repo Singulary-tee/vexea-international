@@ -187,7 +187,7 @@ export function updateLargeVFX(deltaTime: number, camera: THREE.PerspectiveCamer
     for (let i = 0; i < fSlots; i++) {
       if (!fireActive[i]) continue;
 
-      fireLife![i]--;
+      fireLife![i] -= 60 * deltaTime;
       if (fireLife![i] <= 0) {
         fireActive[i] = 0;
         fireBatch.setVisibleAt(fireInstIds[i], false);
@@ -206,7 +206,8 @@ export function updateLargeVFX(deltaTime: number, camera: THREE.PerspectiveCamer
       _largePos.set(firePosX![i], firePosY![i], firePosZ![i]);
       _largeQuat.copy(camera.quaternion);
 
-      const progress = 1 - (fireLife![i] / VFX_CONSTANTS.LARGE.FIRE_LIFETIME); // 0 -> 1
+      const clampedFireLife = Math.max(0, fireLife![i]);
+      const progress = 1 - (clampedFireLife / VFX_CONSTANTS.LARGE.FIRE_LIFETIME); // 0 -> 1
       const size = VFX_CONSTANTS.LARGE.FIRE_SIZE * (1.0 + progress * VFX_CONSTANTS.LARGE.EXPLOSION_EXPANSION_RATE);
       _largeScale.setScalar(size);
 

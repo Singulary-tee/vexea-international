@@ -286,16 +286,19 @@ export class VisualsSystem {
       const bOffset = offset.mul(aberrationStrength).negate();
       
       const r = sceneColor.sample(uvNode.add(rOffset)).r;
-      const g = sceneColor.g;
+      const g = sceneColor.sample(uvNode).g;
       const b = sceneColor.sample(uvNode.add(bOffset)).b;
-      const a = sceneColor.a;
+      const a = sceneColor.sample(uvNode).a;
       
       const caPass = vec4(r, g, b, a);
       colorNode = select(uniforms.chromaticAberrationEnabled.equal(1.0), caPass as any, colorNode) as any;
 
       // 3. Bloom pass
-      const bloomPass = bloom(colorNode, uniforms.bloomStrength.mul(0.10) as any, uniforms.bloomRadius as any, uniforms.bloomThreshold as any);
-      colorNode = select(uniforms.bloomEnabled.equal(1.0), colorNode.add(bloomPass) as any, colorNode) as any;
+      const bloomPass = bloom(colorNode);
+      bloomPass.strength = uniforms.bloomStrength as any;
+      bloomPass.radius = uniforms.bloomRadius as any;
+      bloomPass.threshold = uniforms.bloomThreshold as any;
+      colorNode = select(uniforms.bloomEnabled.equal(1.0), colorNode.add(bloomPass.mul(0.10)) as any, colorNode) as any;
 
       // 4. Vignette custom effect using inline TSL (no Fn wrapper to avoid WGSL scope issues)
       const dist = uvNode.sub(vec2(0.5)).length();

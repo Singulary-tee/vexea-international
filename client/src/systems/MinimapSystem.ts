@@ -18,6 +18,20 @@ export class MinimapSystem {
   private panX = 0;
   private panY = 0;
 
+  // Static Caching Fields
+  private staticCanvas: HTMLCanvasElement | null = null;
+  private staticCtx: CanvasRenderingContext2D | null = null;
+  private lastSpec: any = null;
+  private lastIsFS = false;
+  private lastW = 0;
+  private lastH = 0;
+  private lastScaleX = 0;
+  private lastScaleZ = 0;
+
+  // Dynamic Markers Caching (20Hz / 50ms)
+  private cachedMarkers: Array<{ dx: number; dz: number; color: string }> = [];
+  private lastMarkerUpdate = 0;
+
   constructor(match: MatchController) {
     this.match = match;
     this.canvas = document.getElementById("minimap-canvas") as HTMLCanvasElement;
@@ -30,6 +44,63 @@ export class MinimapSystem {
   private isFullscreen(): boolean {
     const container = document.getElementById("minimap-container");
     return !!(container && container.classList.contains("fullscreen-minimap"));
+  }
+
+  private renderStaticMap(spec: any, isFS: boolean, w: number, h: number, scaleX: number, scaleZ: number, cx: number, cy: number, scx: number, scy: number) {
+    if (!this.staticCanvas) {
+      this.staticCanvas = document.createElement("canvas");
+    }
+    this.staticCanvas.width = isFS ? w : spec.worldSize.x * scaleX;
+    this.staticCanvas.height = isFS ? h : spec.worldSize.z * scaleZ;
+    const ctx = this.staticCanvas.getContext("2d");
+    if (!ctx) return;
+
+    ctx.clearRect(0, 0, this.staticCanvas.width, this.staticCanvas.height);
+
+    const drawCx = isFS ? cx : scx;
+    const drawCy = isFS ? cy : scy;
+
+    // 1. Draw Zones
+    if (spec.zones) {
+      for (const zone of spec.zones) {
+        if (!zone || !zone.bounds) continue;
+        const zWidth = zone.bounds.xMax - zone.bounds.xMin;
+        const zHeight = zone.bounds.zMax - zone.bounds.zMin;
+        
+        const zx = drawCx + zone.bounds.xMin * scaleX;
+        const zz = drawCy + zone.bounds.zMin * scaleZ;
+        
+        ctx.fillStyle = DS.utils.rgba(DS.colors.surface, 0.2);
+        ctx.strokeStyle = DS.glass.border;
+        ctx.lineWidth = 1;
+        ctx.fillRect(zx, zz, zWidth * scaleX, zHeight * scaleZ);
+        ctx.strokeRect(zx, zz, zWidth * scaleX, zHeight * scaleZ);
+      }
+    }
+
+    // 2. Draw Buildings
+    if (spec.buildings) {
+      for (const b of spec.buildings) {
+        if (!b || !b.position || !b.size) continue;
+        const bx = drawCx + b.position.x * scaleX;
+        const bz = drawCy + b.position.z * scaleZ;
+        const bw = b.size.x * (b.scale?.x || 1) * scaleX;
+        const bh = b.size.z * (b.scale?.z || 1) * scaleZ;
+
+        ctx.fillStyle = DS.utils.rgba(DS.colors.textMuted, 0.3);
+        ctx.strokeStyle = DS.utils.rgba(DS.colors.text, 0.4);
+        ctx.lineWidth = 0.5;
+
+        ctx.save();
+        ctx.translate(bx, bz);
+        if (b.rotation?.y) {
+          ctx.rotate((-b.rotation.y * Math.PI) / 180);
+        }
+        ctx.fillRect(-bw / 2, -bh / 2, bw, bh);
+        ctx.strokeRect(-bw / 2, -bh / 2, bw, bh);
+        ctx.restore();
+      }
+    }
   }
 
   public update(dt: number, spec: any) {
@@ -129,67 +200,72 @@ export class MinimapSystem {
     }
 
     if (spec) {
-      // 1. Draw Zones
-      if (spec.zones) {
-        for (const zone of spec.zones) {
-          if (!zone || !zone.bounds) continue;
-          const zWidth = zone.bounds.xMax - zone.bounds.xMin;
-          const zHeight = zone.bounds.zMax - zone.bounds.zMin;
-          
-          const zx = cx + (zone.bounds.xMin - (isFS ? 0 : px)) * scaleX;
-          const zz = cy + (zone.bounds.zMin - (isFS ? 0 : pz)) * scaleZ;
-          
-          ctx.fillStyle = DS.utils.rgba(DS.colors.surface, 0.2);
-          ctx.strokeStyle = DS.glass.border;
-          ctx.lineWidth = 1;
-          ctx.fillRect(zx, zz, zWidth * scaleX, zHeight * scaleZ);
-          ctx.strokeRect(zx, zz, zWidth * scaleX, zHeight * scaleZ);
-        }
+      const scx = (spec.worldSize.x * scaleX) / 2;
+      const scy = (spec.worldSize.z * scaleZ) / 2;
+
+      // Caching static canvas layer
+      if (
+        !this.staticCanvas ||
+        this.lastSpec !== spec ||
+        this.lastIsFS !== isFS ||
+        this.lastW !== w ||
+        this.lastH !== h ||
+        this.lastScaleX !== scaleX ||
+        this.lastScaleZ !== scaleZ
+      ) {
+        this.renderStaticMap(spec, isFS, w, h, scaleX, scaleZ, cx, cy, scx, scy);
+        this.lastSpec = spec;
+        this.lastIsFS = isFS;
+        this.lastW = w;
+        this.lastH = h;
+        this.lastScaleX = scaleX;
+        this.lastScaleZ = scaleZ;
       }
 
-      // 2. Draw Buildings
-      if (spec.buildings) {
-        for (const b of spec.buildings) {
-          if (!b || !b.position || !b.size) continue;
-          const bx = cx + (b.position.x - (isFS ? 0 : px)) * scaleX;
-          const bz = cy + (b.position.z - (isFS ? 0 : pz)) * scaleZ;
-          const bw = b.size.x * (b.scale?.x || 1) * scaleX;
-          const bh = b.size.z * (b.scale?.z || 1) * scaleZ;
-
-          ctx.fillStyle = DS.utils.rgba(DS.colors.textMuted, 0.3);
-          ctx.strokeStyle = DS.utils.rgba(DS.colors.text, 0.4);
-          ctx.lineWidth = 0.5;
-
-          ctx.save();
-          ctx.translate(bx, bz);
-          if (b.rotation?.y) {
-            ctx.rotate((-b.rotation.y * Math.PI) / 180);
-          }
-          ctx.fillRect(-bw / 2, -bh / 2, bw, bh);
-          ctx.strokeRect(-bw / 2, -bh / 2, bw, bh);
-          ctx.restore();
+      // Draw Static Canvas
+      if (this.staticCanvas) {
+        if (isFS) {
+          ctx.drawImage(this.staticCanvas, 0, 0);
+        } else {
+          ctx.drawImage(this.staticCanvas, cx - scx - px * scaleX, cy - scy - pz * scaleZ);
         }
       }
     }
 
-    // 3. Draw Drones
-    this.match.droneJitterMap.forEach((buffer) => {
-      if (buffer.count === 0) return;
-      const head = buffer.states[(buffer.head - 1 + 3) % 3];
-      if (!head || head.state === DroneState.DEAD) return;
+    // Update dynamic entities at 20Hz (every 50ms)
+    const now = performance.now();
+    if (now - this.lastMarkerUpdate > 50 || this.cachedMarkers.length === 0) {
+      this.lastMarkerUpdate = now;
+      this.cachedMarkers.length = 0;
+      this.match.droneJitterMap.forEach((buffer) => {
+        if (buffer.count === 0) return;
+        const head = buffer.states[(buffer.head - 1 + 3) % 3];
+        if (!head || head.state === DroneState.DEAD) return;
 
-      let color = DS.colors.textSecondary; // Ground
-      if (head.type === 0 || head.type === 1 || head.type === 3)
-        color = DS.colors.accent; // Air
-      else if (head.type === 2) color = DS.colors.warning; // Recon
+        let markerColor = DS.colors.textSecondary; // Ground
+        if (head.type === 0 || head.type === 1 || head.type === 3) {
+          markerColor = DS.colors.accent; // Air
+        } else if (head.type === 2) {
+          markerColor = DS.colors.warning; // Recon
+        }
 
-      const dx = cx + (head.posX - (isFS ? 0 : px)) * scaleX;
-      const dz = cy + (head.posZ - (isFS ? 0 : pz)) * scaleZ;
+        this.cachedMarkers.push({
+          dx: head.posX,
+          dz: head.posZ,
+          color: markerColor
+        });
+      });
+    }
+
+    // 3. Draw Drones from cached markers
+    for (const marker of this.cachedMarkers) {
+      const dx = cx + (marker.dx - (isFS ? 0 : px)) * scaleX;
+      const dz = cy + (marker.dz - (isFS ? 0 : pz)) * scaleZ;
 
       ctx.save();
-      ctx.shadowColor = color;
+      ctx.shadowColor = marker.color;
       ctx.shadowBlur = 8;
-      ctx.fillStyle = color;
+      ctx.fillStyle = marker.color;
       ctx.beginPath();
       ctx.arc(dx, dz, 4.5, 0, Math.PI * 2);
       ctx.fill();
@@ -197,7 +273,7 @@ export class MinimapSystem {
       ctx.lineWidth = 1;
       ctx.stroke();
       ctx.restore();
-    });
+    }
 
     ctx.restore(); // Restore Pan and Zoom stack
 
@@ -236,5 +312,7 @@ export class MinimapSystem {
     this.canvas = null;
     this.ctx = null;
     this.playerArrow = null;
+    this.staticCanvas = null;
+    this.staticCtx = null;
   }
 }

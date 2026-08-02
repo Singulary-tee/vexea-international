@@ -29,6 +29,8 @@ const _tempDronePos = new THREE.Vector3();
 const _tempDroneQuat = new THREE.Quaternion();
 const _tempOffset = new THREE.Vector3();
 const _tempQuat = new THREE.Quaternion();
+const _tempFlashQuat = new THREE.Quaternion();
+const _zAxis = new THREE.Vector3(0, 0, 1);
 
 export function getFirstNiagaraFlash(): NiagaraMuzzleFlash | null {
   return flashPool.length > 0 ? flashPool[0] : null;
@@ -167,9 +169,8 @@ export function triggerNiagaraFlash(
     inst.spikeMesh.scale.set(sFactor, sFactor, sFactor);
     
     // Rotate spike to point in direction of firing
-    const q = new THREE.Quaternion();
-    q.setFromUnitVectors(new THREE.Vector3(0, 0, 1), direction);
-    inst.spikeMesh.quaternion.copy(q);
+    _tempFlashQuat.setFromUnitVectors(_zAxis, direction);
+    inst.spikeMesh.quaternion.copy(_tempFlashQuat);
     inst.spikeMesh.visible = true; // Fully enable visual Niagara-style spikes
 
     if (attachToPlayer) {
@@ -177,13 +178,13 @@ export function triggerNiagaraFlash(
       const camera = (window as any).camera;
       if (camera) {
         _tempQuat.copy(camera.quaternion).invert();
-        inst.localSpikeQuat.copy(q).premultiply(_tempQuat);
+        inst.localSpikeQuat.copy(_tempFlashQuat).premultiply(_tempQuat);
         
         inst.localOffset.copy(muzzlePos).sub(camera.position);
         inst.localOffset.applyQuaternion(_tempQuat);
       } else {
         inst.localOffset.set(0, 0, 0);
-        inst.localSpikeQuat.copy(q);
+        inst.localSpikeQuat.copy(_tempFlashQuat);
       }
     } else if (attachToDroneId !== null && match && match.droneJitterMap) {
       const buffer = match.droneJitterMap.get(attachToDroneId);
@@ -195,25 +196,25 @@ export function triggerNiagaraFlash(
         
         _tempDronePos.set(clientX, clientY, clientZ);
         inst.localOffset.copy(muzzlePos).sub(_tempDronePos);
-
+ 
         const clientRotX = (latest as any).clientRotX !== undefined ? (latest as any).clientRotX : latest.rotX;
         const clientRotY = (latest as any).clientRotY !== undefined ? (latest as any).clientRotY : latest.rotY;
         const clientRotZ = (latest as any).clientRotZ !== undefined ? (latest as any).clientRotZ : latest.rotZ;
         const clientRotW = (latest as any).clientRotW !== undefined ? (latest as any).clientRotW : latest.rotW;
-
+ 
         _tempDroneQuat.set(clientRotX, clientRotY, clientRotZ, clientRotW);
         inst.localOffset.applyQuaternion(_tempDroneQuat.invert());
-
+ 
         // Compute local spike rotation relative to the drone's orientation
         _tempDroneQuat.set(clientRotX, clientRotY, clientRotZ, clientRotW).invert();
-        inst.localSpikeQuat.copy(q).premultiply(_tempDroneQuat);
+        inst.localSpikeQuat.copy(_tempFlashQuat).premultiply(_tempDroneQuat);
       } else {
         inst.localOffset.set(0, 0, 0);
-        inst.localSpikeQuat.copy(q);
+        inst.localSpikeQuat.copy(_tempFlashQuat);
       }
     } else {
       inst.localOffset.set(0, 0, 0);
-      inst.localSpikeQuat.copy(q);
+      inst.localSpikeQuat.copy(_tempFlashQuat);
     }
 
     if (inst.light) {

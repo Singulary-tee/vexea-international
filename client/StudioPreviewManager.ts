@@ -1,6 +1,7 @@
 import * as THREE from "three/webgpu";
 import { DS } from "./design-system";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+import * as SkeletonUtils from "three/addons/utils/SkeletonUtils.js";
 import { getCachedOrFetchUrl, createConfiguredGLTFLoader } from "./asset-cache";
 
 export type StudioMode = 'MAIN_MENU' | 'ARMORY' | 'STORE' | 'LOBBY' | 'INACTIVE';
@@ -14,7 +15,7 @@ export interface WeaponSkin {
 
 export const AVAILABLE_SKINS: Record<string, WeaponSkin> = {
   STANDARD: { id: 'STANDARD', name: 'STANDARD FINISH', textureFile: null, previewBg: '#111111' },
-  HAZARD: { id: 'HAZARD', name: 'HAZARD COATING', textureFile: 'asphalt_02_diff_1k.jpg', previewBg: '#2a1a10' }
+  HAZARD: { id: 'HAZARD', name: 'HAZARD COATING', textureFile: null, previewBg: '#2a1a10' }
 };
 
 class StudioPreviewManagerImpl {
@@ -30,6 +31,25 @@ class StudioPreviewManagerImpl {
   private activeModelGroup: THREE.Group;
   private keyLight: THREE.DirectionalLight;
   private rimLight: THREE.DirectionalLight;
+  private ambientLight: THREE.AmbientLight;
+  
+  // Turntable and hook states
+  private turntableEnabled = false;
+  private activeMixer: THREE.AnimationMixer | null = null;
+  private _onModelLoaded: ((model: THREE.Group, glbName: string) => void) | null = null;
+  private lastLoadedModel: THREE.Group | null = null;
+  private lastLoadedGlbName: string = "";
+
+  public get onModelLoaded(): ((model: THREE.Group, glbName: string) => void) | null {
+    return this._onModelLoaded;
+  }
+
+  public set onModelLoaded(fn: ((model: THREE.Group, glbName: string) => void) | null) {
+    this._onModelLoaded = fn;
+    if (fn && this.lastLoadedModel) {
+      fn(this.lastLoadedModel, this.lastLoadedGlbName);
+    }
+  }
   
   // Interactive Drag State
   private isDragging = false;
@@ -37,7 +57,7 @@ class StudioPreviewManagerImpl {
   private dragSensitivity = 0.008;
 
   // Active showcase item state
-  private activeItemKey = 'rifle';
+  private activeItemKey = 'Player_one-optimized.glb';
   private activeSkinId = 'STANDARD';
 
   constructor() {
@@ -49,14 +69,14 @@ class StudioPreviewManagerImpl {
     this.studioCamera.lookAt(0, 0, 0);
 
     // Setup Studio Lighting (Clean, neutral colors - NO NEON)
-    const ambLight = new THREE.AmbientLight(0xffffff, 1.2);
+    this.ambientLight = new THREE.AmbientLight(0xffffff, 1.2);
     this.keyLight = new THREE.DirectionalLight(0xffffff, 2.5);
     this.keyLight.position.set(3, 4, 3);
 
     this.rimLight = new THREE.DirectionalLight(0x8899aa, 1.5);
     this.rimLight.position.set(-3, 2, -3);
 
-    this.studioScene.add(ambLight, this.keyLight, this.rimLight);
+    this.studioScene.add(this.ambientLight, this.keyLight, this.rimLight);
 
     // Build Studio Stage - No pedestal or grid helpers
     this.stageGroup = new THREE.Group();
@@ -67,8 +87,8 @@ class StudioPreviewManagerImpl {
 
     this.studioScene.add(this.stageGroup);
 
-    // Build default model
-    this.buildShowcaseModel('rifle', 'STANDARD');
+    // Build default character model
+    this.buildShowcaseModel('Player_one-optimized.glb', 'STANDARD');
   }
 
   public getStudioScene(): THREE.Scene {
@@ -81,6 +101,38 @@ class StudioPreviewManagerImpl {
 
   public getMode(): StudioMode {
     return this.currentMode;
+  }
+
+  public getStageGroup(): THREE.Group {
+    return this.stageGroup;
+  }
+
+  public getActiveModelGroup(): THREE.Group {
+    return this.activeModelGroup;
+  }
+
+  public getKeyLight(): THREE.DirectionalLight {
+    return this.keyLight;
+  }
+
+  public getRimLight(): THREE.DirectionalLight {
+    return this.rimLight;
+  }
+
+  public getAmbientLight(): THREE.AmbientLight {
+    return this.ambientLight;
+  }
+
+  public getContainerEl(): HTMLElement | null {
+    return this.containerEl;
+  }
+
+  public isTurntableEnabled(): boolean {
+    return this.turntableEnabled;
+  }
+
+  public setTurntableEnabled(enabled: boolean): void {
+    this.turntableEnabled = enabled;
   }
 
   public detach(): void {
@@ -121,9 +173,12 @@ class StudioPreviewManagerImpl {
     this.currentMode = mode;
     this.containerEl = container;
 
-    if (options?.itemKey || options?.skinId) {
-      this.setShowcaseItem(options.itemKey || this.activeItemKey, options.skinId || this.activeSkinId);
+    let itemToLoad = options?.itemKey || this.activeItemKey;
+    if (mode === 'MAIN_MENU' && !options?.itemKey) {
+      itemToLoad = "Player_one-optimized.glb";
     }
+
+    this.setShowcaseItem(itemToLoad, options?.skinId || this.activeSkinId);
 
     if (!this.canvasContainerEl) {
       this.canvasContainerEl = document.getElementById('canvas-container');
@@ -143,6 +198,15 @@ class StudioPreviewManagerImpl {
       });
       this.resizeToContainer();
       this.setupInputListeners();
+
+      // Dynamically import Dev Placement tools only in local development environments
+      import("../shared/gates/production.gate").then((gate) => {
+        if (gate.IS_DEV) {
+          import("./StudioCharacterPreview").then((devPreview) => {
+            devPreview.initStudioCharacterPreview();
+          }).catch(err => console.error("Failed to load StudioCharacterPreview:", err));
+        }
+      }).catch(err => console.error("Failed to load production gate:", err));
     }
   }
 
@@ -156,40 +220,88 @@ class StudioPreviewManagerImpl {
 
   private async buildShowcaseModel(itemKey: string, skinId: string): Promise<void> {
     let glbName = "";
-    if (itemKey === 'rifle' || itemKey === 'm4_rifle' || itemKey === 'lmg' || itemKey === 'shotgun' || itemKey === 'sniper' || itemKey.includes('rifle_')) {
+    if (itemKey.endsWith(".glb")) {
+      glbName = itemKey;
+    } else if (itemKey === 'rifle' || itemKey === 'm4_rifle' || itemKey === 'lmg' || itemKey === 'shotgun' || itemKey === 'sniper' || itemKey.includes('rifle_')) {
       glbName = "smg_fps_animations.glb";
     } else if (itemKey === 'pistol' || itemKey === 'viper_pistol' || itemKey.includes('pistol_')) {
       glbName = "animated_pistol.glb";
     } else if (itemKey === 'grenade' || itemKey === 'frag_grenade' || itemKey.includes('grenade_') || itemKey.includes('flash_') || itemKey.includes('emp_') || itemKey.includes('c4_')) {
       glbName = "grenade.glb";
     } else {
-      // Fallback for other items (e.g. medkit, radio, disruptor, revive)
-      glbName = "grenade.glb";
+      glbName = itemKey || "Player_one-optimized.glb";
     }
 
-    if (glbName) {
-      try {
-        const loader = createConfiguredGLTFLoader();
-        const url = await getCachedOrFetchUrl(glbName, "Asset");
-        const gltf = await loader.loadAsync(url);
-        
-        // Clone the model so we don't interfere with other instances
-        const model = gltf.scene.clone();
-        
-        // Initial clean rotation
-        model.rotation.set(0, -Math.PI / 2, 0); // Side view
+    // Force character preview models to Player_one-optimized.glb
+    if (glbName.toLowerCase().includes("player") || glbName.toLowerCase().includes("character") || glbName.toLowerCase().includes("bpre")) {
+      glbName = "Player_one-optimized.glb";
+    }
 
-        // Hide temporarily during calculations and texture setup
-        model.visible = false;
-        this.activeModelGroup.add(model);
-        model.updateMatrixWorld(true);
+    try {
+      const loader = createConfiguredGLTFLoader();
+      const url = await getCachedOrFetchUrl(glbName, "Asset");
+      const gltf = await loader.loadAsync(url);
+      
+      // Use SkeletonUtils to clone model safely
+      const model = SkeletonUtils.clone(gltf.scene) as THREE.Group;
+      
+      // Setup Animation Mixer if clips are available
+      this.activeMixer = null;
+      if (gltf.animations && gltf.animations.length > 0) {
+        const mixer = new THREE.AnimationMixer(model);
+        this.activeMixer = mixer;
+        let clip = gltf.animations.find(a => a.name.toLowerCase().includes("idle"));
+        if (!clip) {
+          clip = gltf.animations[0];
+        }
+        if (clip) {
+          mixer.clipAction(clip).play();
+        }
+      }
 
-        // Senior Engine Implementer Trick: Auto-center and auto-scale model based on weapon mesh bounding box, ignoring pelvis rig offset
+      // Initial clean rotation
+      model.rotation.set(0, -Math.PI / 2, 0);
+
+      // Hide temporarily during calculations and texture setup
+      model.visible = false;
+      this.activeModelGroup.add(model);
+      model.updateMatrixWorld(true);
+
+      // Ensure crisp high quality texture rendering on model materials
+      model.traverse((child: any) => {
+        if (child.isMesh && child.material) {
+          const mats = Array.isArray(child.material) ? child.material : [child.material];
+          mats.forEach((mat: any) => {
+            if (mat.map) {
+              mat.map.anisotropy = 16;
+              mat.map.minFilter = THREE.LinearMipmapLinearFilter;
+              mat.map.magFilter = THREE.LinearFilter;
+              mat.map.needsUpdate = true;
+            }
+          });
+        }
+      });
+
+      const isCharacter = glbName.toLowerCase().includes('player') || 
+                          glbName.toLowerCase().includes('character') || 
+                          glbName.toLowerCase().includes('humanoid') || 
+                          glbName.toLowerCase().includes('soldier');
+
+      let targetScaleVal = 1.0;
+
+      if (isCharacter) {
+        model.position.set(-0.43, -1.35, 0.69);
+        model.rotation.set(-0.001592653589793, 2.09840734641021, 0);
+        model.scale.set(1.35, 1.35, 1.35);
+
+        if (this.keyLight) this.keyLight.intensity = 0;
+        if (this.rimLight) this.rimLight.intensity = 1.9;
+        if (this.ambientLight) this.ambientLight.intensity = 0.2;
+      } else {
         let weaponMeshes: THREE.Mesh[] = [];
         model.traverse((child: any) => {
           if (child.isMesh && child.visible) {
             const name = child.name.toLowerCase();
-            // Avoid including arms or player character body meshes in bounds calculations
             if (!name.includes('arm') && !name.includes('hand') && !name.includes('sleeve') && !name.includes('body') && !name.includes('character') && !name.includes('player')) {
               weaponMeshes.push(child);
             }
@@ -204,7 +316,6 @@ class StudioPreviewManagerImpl {
           });
         }
 
-        let targetScaleVal = 1.0;
         if (weaponMeshes.length > 0) {
           const box = new THREE.Box3();
           weaponMeshes.forEach(mesh => {
@@ -218,38 +329,40 @@ class StudioPreviewManagerImpl {
           const size = new THREE.Vector3();
           box.getSize(size);
 
-          // Center the entire model relative to the weapon mesh center
           model.position.sub(center);
 
-          // Scale so the weapon's largest dimension is exactly 0.65 units inside the 2.0 distance camera view
           const maxDim = Math.max(size.x, size.y, size.z);
           if (maxDim > 0) {
             targetScaleVal = 0.65 / maxDim;
           }
         } else {
-          // Fallback static sizing
           model.position.set(0, 0, 0);
           targetScaleVal = 1.5;
         }
-
-        // Apply skin texture asynchronously
-        const skin = AVAILABLE_SKINS[skinId] || AVAILABLE_SKINS.STANDARD;
-        await this.applySkinToModelAsync(model, skin.textureFile);
-
-        // Store target scale and start at 0 for a beautiful transition
-        model.userData.targetScale = new THREE.Vector3(targetScaleVal, targetScaleVal, targetScaleVal);
-        model.scale.set(0, 0, 0);
-        model.visible = true;
-
-        // Clean up older model instances seamlessly with no empty frames/popping
-        const childrenToRemove = this.activeModelGroup.children.filter(child => child !== model);
-        childrenToRemove.forEach(child => {
-          this.activeModelGroup.remove(child);
-        });
-
-      } catch (err) {
-        console.error("[StudioPreview] GLTF Showcase Load Failed:", err);
       }
+
+      model.userData.baseScaleVal = targetScaleVal;
+
+      const skin = AVAILABLE_SKINS[skinId] || AVAILABLE_SKINS.STANDARD;
+      await this.applySkinToModelAsync(model, skin.textureFile);
+
+      model.userData.targetScale = new THREE.Vector3(targetScaleVal, targetScaleVal, targetScaleVal);
+      model.scale.copy(model.userData.targetScale);
+      model.visible = true;
+
+      const childrenToRemove = this.activeModelGroup.children.filter(child => child !== model);
+      childrenToRemove.forEach(child => {
+        this.activeModelGroup.remove(child);
+      });
+
+      this.lastLoadedModel = model;
+      this.lastLoadedGlbName = glbName;
+      if (this._onModelLoaded) {
+        this._onModelLoaded(model, glbName);
+      }
+
+    } catch (err) {
+      console.error("[StudioPreview] GLTF Showcase Load Failed:", err);
     }
   }
 
@@ -300,7 +413,18 @@ class StudioPreviewManagerImpl {
     const width = this.containerEl.clientWidth || window.innerWidth;
     const height = this.containerEl.clientHeight || window.innerHeight;
 
-    this.studioCamera.aspect = width / height;
+    const aspect = width / height;
+    const baseAspect = 16 / 9;
+    const baseFov = 45;
+
+    if (aspect < baseAspect) {
+      const vFovRad = 2 * Math.atan(Math.tan((baseFov * Math.PI / 180) / 2) * (baseAspect / aspect));
+      this.studioCamera.fov = vFovRad * (180 / Math.PI);
+    } else {
+      this.studioCamera.fov = baseFov;
+    }
+
+    this.studioCamera.aspect = aspect;
     this.studioCamera.updateProjectionMatrix();
 
     const renderer = (window as any).renderer;
@@ -358,8 +482,13 @@ class StudioPreviewManagerImpl {
       }
     });
 
+    // Update animation mixer if active
+    if (this.activeMixer) {
+      this.activeMixer.update(dt);
+    }
+
     // Slow turntable rotation when idle
-    if (!this.isDragging) {
+    if (!this.isDragging && this.turntableEnabled) {
       this.activeModelGroup.rotation.y += dt * 0.4;
     }
 

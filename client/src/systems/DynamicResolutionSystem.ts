@@ -4,15 +4,15 @@ import { getSettings, applySettings } from '../../settings';
  * Dynamic Resolution System Tunable Parameters.
  * Note: These bounds and step constants are tunable performance parameters.
  */
-export const DYNAMIC_RES_MIN = 0.6;
+export const DYNAMIC_RES_MIN = 0.75;
 export const DYNAMIC_RES_MAX = 1.5;
 export const DYNAMIC_RES_STEP = 0.1;
 
-export const HIGH_FRAME_TIME_THRESHOLD_MS = 20.0;
-export const CONSECUTIVE_OVER_BUDGET_TRIGGER = 3;
+export const HIGH_FRAME_TIME_THRESHOLD_MS = 28.0;
+export const CONSECUTIVE_OVER_BUDGET_TRIGGER = 15;
 
-export const LOW_FRAME_TIME_THRESHOLD_MS = 14.0;
-export const CONSECUTIVE_UNDER_BUDGET_RECOVERY = 60;
+export const LOW_FRAME_TIME_THRESHOLD_MS = 18.0;
+export const CONSECUTIVE_UNDER_BUDGET_RECOVERY = 15;
 
 export class DynamicResolutionSystem {
   private currentPixelRatio: number = DYNAMIC_RES_MAX;
@@ -76,8 +76,21 @@ export class DynamicResolutionSystem {
     const dtMs = frameDurationMs !== undefined ? frameDurationMs : (nowMs - this.lastFrameTime);
     this.lastFrameTime = nowMs;
 
-    // Filter out huge anomaly spikes from tab switching or initial load
-    if (dtMs <= 0 || dtMs > 200) {
+    // Filter out huge anomaly spikes from tab switching, loading assets, or initial load
+    if (dtMs <= 0 || dtMs > 60) {
+      this.overBudgetFrames = 0;
+      this.underBudgetFrames = 0;
+      return;
+    }
+
+    // Force crisp rendering in Studio Preview / Main Menu
+    const isStudioOrMenu = (window as any).gameState !== "ACTIVE_MATCH";
+    if (isStudioOrMenu) {
+      const maxLimit = Math.min(window.devicePixelRatio || 1.0, DYNAMIC_RES_MAX);
+      if (this.currentPixelRatio < maxLimit) {
+        this.currentPixelRatio = maxLimit;
+        this.applyPixelRatio(maxLimit);
+      }
       this.overBudgetFrames = 0;
       this.underBudgetFrames = 0;
       return;

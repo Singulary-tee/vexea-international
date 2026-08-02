@@ -132,6 +132,12 @@
       "category": "Asset",
       "source": "CloudflareR2",
       "path": "Models/Entities/ugv-optimized.glb"
+    },
+    {
+      "name": "robodog-optimized.glb",
+      "category": "Asset",
+      "source": "CloudflareR2",
+      "path": "Models/Entities/robodog-optimized.glb"
     }
   ],
   "sounds": [

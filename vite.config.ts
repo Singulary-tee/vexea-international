@@ -1,25 +1,12 @@
 import tailwindcss from '@tailwindcss/vite';
 import path from 'path';
 import {defineConfig} from 'vite';
-import {viteStaticCopy} from 'vite-plugin-static-copy';
 
 export default defineConfig(() => {
   return {
     root: 'client',
     plugins: [
       tailwindcss(),
-      viteStaticCopy({
-        targets: [
-          {
-            src: path.resolve(__dirname, 'node_modules/three/examples/jsm/libs/draco/gltf/*').replace(/\\/g, '/'),
-            dest: 'draco/gltf'
-          },
-          {
-            src: path.resolve(__dirname, 'node_modules/three/examples/jsm/libs/basis/*').replace(/\\/g, '/'),
-            dest: 'basis'
-          }
-        ]
-      }),
       {
         name: 'configure-response-headers',
         configureServer: (server) => {
