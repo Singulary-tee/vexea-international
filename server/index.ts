@@ -651,6 +651,27 @@ io.onConnection((channel: ChannelAdapter) => {
     console.log(`[VEXEA SERVER] LLM Commander disabled toggle processed: ${currentRoom.llmCommanderDisabled}`);
   });
 
+  channel.on("dev_interview_llm", async (args: any) => {
+    if (!IS_DEV) return;
+    const question = args?.question;
+    if (!question || typeof question !== "string" || !question.trim()) return;
+
+    if (currentRoom && currentRoom.llmCommander) {
+      const answer = await currentRoom.llmCommander.interviewLLM(question.trim());
+      channel.emit("dev_llm_interview_response", {
+        question: question.trim(),
+        answer,
+        timestamp: Date.now(),
+      });
+    } else {
+      channel.emit("dev_llm_interview_response", {
+        question: question.trim(),
+        answer: "ERROR: MatchRoom or LLM Commander unavailable.",
+        timestamp: Date.now(),
+      });
+    }
+  });
+
   channel.on("refill_credits", async (args: any) => {
     if (!IS_DEV) return;
     const reqUid = args?.uid || playerId;

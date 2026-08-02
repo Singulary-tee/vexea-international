@@ -53,6 +53,10 @@ export function showSplash() {
 
 export function showMainMenu() {
   showScreen('main-menu-screen', 500, false);
+  const backdrop = document.getElementById('main-menu-3d-backdrop');
+  if (backdrop) {
+    StudioPreviewManager.attachTo(backdrop, 'MAIN_MENU');
+  }
   window.dispatchEvent(new CustomEvent('show-main-menu'));
 }
 
@@ -85,6 +89,16 @@ export function showDevEntities() {
 }
 if (typeof window !== 'undefined') {
   (window as any).showDevEntities = showDevEntities;
+}
+
+export function showDevPlacement() {
+  if (!IS_DEV) return;
+  import("../StudioCharacterPreview").then(({ toggleDevPanel }) => {
+    toggleDevPanel();
+  });
+}
+if (typeof window !== 'undefined') {
+  (window as any).showDevPlacement = showDevPlacement;
 }
 
 export function showGame() {

@@ -290,6 +290,7 @@ export function getDroneColliderRadius(type: DroneType): number {
 export class MatchRoom {
   public roomId: string;
   public players: Map<string, PlayerState> = new Map();
+  private colliderToEntityMap: Map<number, { type: "player"; obj: PlayerState } | { type: "drone"; obj: ServerDrone }> = new Map();
   public drones: ServerDrone[] = [];
   public nextDroneId = 1;
   public serverTick = 0;
@@ -623,6 +624,7 @@ export class MatchRoom {
       }
       
       d.collider = this.rapierWorld.createCollider(colliderDesc, d.body);
+      this.colliderToEntityMap.set(d.collider.handle, { type: "drone", obj: d });
       if (config.collider.offset) {
         d.collider.setTranslationWrtParent({ x: config.collider.offset[0], y: config.collider.offset[1], z: config.collider.offset[2] });
       }
@@ -655,6 +657,9 @@ export class MatchRoom {
         posZ: d.posZ,
       });
     }
+    if (d.collider) {
+      this.colliderToEntityMap.delete(d.collider.handle);
+    }
     if (d.body) {
       try {
         if (this.rapierWorld) {
@@ -669,18 +674,7 @@ export class MatchRoom {
   }
 
   public findHitEntity(colliderHandle: number): { type: "player", obj: PlayerState } | { type: "drone", obj: ServerDrone } | null {
-    for (const player of this.players.values()) {
-      if (player.collider && player.collider.handle === colliderHandle) {
-        return { type: "player", obj: player };
-      }
-    }
-    for (let i = 0; i < this.drones.length; i++) {
-      const d = this.drones[i];
-      if (d.state !== DroneState.DEAD && d.collider && d.collider.handle === colliderHandle) {
-        return { type: "drone", obj: d };
-      }
-    }
-    return null;
+    return this.colliderToEntityMap.get(colliderHandle) || null;
   }
 
 
@@ -834,6 +828,7 @@ export class MatchRoom {
       colliderDesc,
       pState.body,
     );
+    this.colliderToEntityMap.set(pState.collider.handle, { type: "player", obj: pState });
     // console.log('[COLLIDE_DIAG] Player collider created. playerId:', playerId, 'colliderHandle:', pState.collider.handle, 'collisionGroups:', pState.collider.collisionGroups(), 'solverGroups:', pState.collider.solverGroups(), 'isSensor:', pState.collider.isSensor(), 'shape:', JSON.stringify(colliderDesc.shape));
     pState.kcc = this.rapierWorld.createCharacterController(0.01);
     pState.kcc.setUp({ x: 0, y: 1, z: 0 });
@@ -970,6 +965,9 @@ export class MatchRoom {
   public removePlayer(playerId: string) {
     const p = this.players.get(playerId);
     if (p) {
+      if (p.collider) {
+        this.colliderToEntityMap.delete(p.collider.handle);
+      }
       if (p.body) this.rapierWorld.removeRigidBody(p.body);
       this.players.delete(playerId);
       this.broadcastReliableEvent({ type: "PLAYER_LEFT", playerId });
@@ -2184,7 +2182,7 @@ export class MatchRoom {
       const conf = DRONE_CONFIGS[d.type];
       let decelRadius = conf.decelerationRadius ?? 5.0;
       let maxYawRatePerTick = (conf.maxTurnRate ?? 3.0) * (1 / 60);
-      let minSpeed = conf.minSpeed ?? 0.0;
+      let minSpeed = isFixedWing ? (conf.minSpeed ?? 10.0) : 0.0;
       let maxSpeed = conf.speed;
       let maxAccelPerTick = conf.maxAccelPerTick ?? 0.4;
 
@@ -2199,37 +2197,44 @@ export class MatchRoom {
 
       let obstacleDetected = false;
       let forwardHitDistance = 0;
-      let detectionDistance = conf.detectionRadius ?? BASE_DETECTION_DISTANCE;
 
       const headingLen = Math.sqrt(d.currentHeadingX * d.currentHeadingX + d.currentHeadingZ * d.currentHeadingZ);
       const dirX = headingLen > 0.001 ? d.currentHeadingX / headingLen : 1;
       const dirZ = headingLen > 0.001 ? d.currentHeadingZ / headingLen : 0;
 
-      if (this.rapierWorld) {
-         const speedForDetection = Math.sqrt(d.currentVelocityX * d.currentVelocityX + d.currentVelocityY * d.currentVelocityY + d.currentVelocityZ * d.currentVelocityZ);
-         const currentSpeed = Math.max(speedForDetection, targetSpeed);
-         detectionDistance = (conf.detectionRadius ?? BASE_DETECTION_DISTANCE) + (currentSpeed * DETECTION_TIME_HORIZON);
+      const speedForDetection = Math.sqrt(d.currentVelocityX * d.currentVelocityX + d.currentVelocityY * d.currentVelocityY + d.currentVelocityZ * d.currentVelocityZ);
+      const currentSpeed = Math.max(speedForDetection, targetSpeed);
+      const detectionDistance = (conf.detectionRadius ?? BASE_DETECTION_DISTANCE) + (currentSpeed * DETECTION_TIME_HORIZON);
 
-         const rayOrigin = getDroneMuzzleWorldPosition(d);
-         const rayDir = { x: dirX, y: 0, z: dirZ };
-         const ray = new RAPIER.Ray(rayOrigin, rayDir);
-         const hit = this.rapierWorld.castRay(
-           ray,
-           detectionDistance,
-           true,
-           RAPIER.QueryFilterFlags.EXCLUDE_SENSORS,
-           undefined,
-           d.collider || undefined
-         );
+      if ((d as any).cachedObstacleDetected === undefined) {
+         (d as any).cachedObstacleDetected = false;
+         (d as any).cachedForwardHitDistance = 0;
+      }
 
-         // if (d.id === 1) {
-         //    console.log(`[DEBUG IN-ENGINE RAYCAST] Tick: ${this.serverTick} | Origin: (${rayOrigin.x.toFixed(2)}, ${rayOrigin.y.toFixed(2)}, ${rayOrigin.z.toFixed(2)}) | Dir: (${rayDir.x.toFixed(3)}, ${rayDir.z.toFixed(3)}) | Dist: ${detectionDistance.toFixed(2)} | Hit: ${hit ? `YES (toi: ${hit.timeOfImpact.toFixed(2)})` : "NO"}`);
-         // }
+      if ((this.serverTick + d.id) % 3 === 0) {
+         if (this.rapierWorld) {
+            const rayOrigin = getDroneMuzzleWorldPosition(d);
+            const rayDir = { x: dirX, y: 0, z: dirZ };
+            const ray = new RAPIER.Ray(rayOrigin, rayDir);
+            const hit = this.rapierWorld.castRay(
+              ray,
+              detectionDistance,
+              true,
+              RAPIER.QueryFilterFlags.EXCLUDE_SENSORS,
+              undefined,
+              d.collider || undefined
+            );
 
-         if (hit && hit.timeOfImpact <= detectionDistance) {
-            obstacleDetected = true;
-            forwardHitDistance = hit.timeOfImpact;
+            if (hit && hit.timeOfImpact <= detectionDistance) {
+               obstacleDetected = true;
+               forwardHitDistance = hit.timeOfImpact;
+            }
          }
+         (d as any).cachedObstacleDetected = obstacleDetected;
+         (d as any).cachedForwardHitDistance = forwardHitDistance;
+      } else {
+         obstacleDetected = (d as any).cachedObstacleDetected;
+         forwardHitDistance = (d as any).cachedForwardHitDistance;
       }
 
       const sin45 = 0.70710678;
@@ -2404,6 +2409,14 @@ export class MatchRoom {
          d.currentVelocityY += clamp(desiredVy - d.currentVelocityY, -maxAccelPerTick, maxAccelPerTick);
          d.currentVelocityZ += clamp(desiredVz - d.currentVelocityZ, -maxAccelPerTick, maxAccelPerTick);
 
+         const curVelMag = Math.sqrt(d.currentVelocityX**2 + d.currentVelocityY**2 + d.currentVelocityZ**2);
+         if (curVelMag > maxSpeed && curVelMag > 0.001) {
+            const velScale = maxSpeed / curVelMag;
+            d.currentVelocityX *= velScale;
+            d.currentVelocityY *= velScale;
+            d.currentVelocityZ *= velScale;
+         }
+
          desiredTx = d.currentVelocityX * 0.0166;
          desiredTy = d.currentVelocityY * 0.0166;
          desiredTz = d.currentVelocityZ * 0.0166;
@@ -2446,9 +2459,11 @@ export class MatchRoom {
          d.currentHeadingX = Math.sin(nextAngle);
          d.currentHeadingZ = Math.cos(nextAngle);
 
+         /*
          if ((d.id === 1 || d.type === DroneType.TEST_ENTITY) && this.serverTick % 30 === 0) {
             console.log(`[DRONE LOG] ID: ${d.id} Type: ${d.type} Dist: ${distToTarget.toFixed(3)} targetSpeed: ${targetSpeed.toFixed(3)} AngleDiff: ${(angleDiff * 180 / Math.PI).toFixed(1)}° headingX: ${d.currentHeadingX.toFixed(3)} headingZ: ${d.currentHeadingZ.toFixed(3)}`);
          }
+         */
 
       } else {
          const hLen = Math.sqrt(d.currentHeadingX**2 + d.currentHeadingZ**2) || 1;
@@ -2496,9 +2511,11 @@ export class MatchRoom {
          desiredTy = d.currentVelocityY * 0.0166;
          desiredTz = d.currentVelocityZ * 0.0166;
 
+         /*
          if ((d.id === 1 || d.type === DroneType.TEST_ENTITY) && this.serverTick % 30 === 0) {
             console.log(`[DRONE LOG] ID: ${d.id} Type: ${d.type} Dist: ${distToTarget.toFixed(3)} targetSpeed: ${targetSpeed.toFixed(3)} AngleDiff: ${(angleDiff * 180 / Math.PI).toFixed(1)}° headingX: ${d.currentHeadingX.toFixed(3)} headingZ: ${d.currentHeadingZ.toFixed(3)}`);
          }
+         */
       }
 
       d.rotY = Math.atan2(d.currentHeadingX, d.currentHeadingZ);
@@ -2538,9 +2555,11 @@ export class MatchRoom {
         const STUCK_TICK_THRESHOLD = 15;
         if ((d.stuckTicks || 0) >= STUCK_TICK_THRESHOLD) {
            const droneTypeName = DroneType[d.type] || "UNKNOWN";
+           /*
            console.log(
               `[STUCK RECOVERY] Tick: ${this.serverTick} | Drone ID: ${d.id} (${droneTypeName}) has been stuck for ${STUCK_TICK_THRESHOLD} ticks! Initiating recovery.`
            );
+           */
 
            // Zero out velocities
            d.currentVelocityX = 0;
@@ -3732,6 +3751,7 @@ export class MatchRoom {
       } catch (e) {}
     }
     this.players.clear();
+    this.colliderToEntityMap.clear();
 
     // Cleanup remaining drones
     for (let i = 0; i < this.drones.length; i++) {

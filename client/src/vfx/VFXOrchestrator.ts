@@ -277,7 +277,7 @@ export function updateVFX(deltaTime: number, camera: THREE.PerspectiveCamera, ma
     for (let i = 0; i < tracerSlots; i++) {
       if (!tracerActive[i]) continue;
       
-      tracerLife![i]--;
+      tracerLife![i] -= 60 * deltaTime;
       if (tracerLife![i] <= 0) {
         tracerActive[i] = 0;
         tracerBatch.setVisibleAt(tracerInstIds[i], false);
@@ -306,7 +306,8 @@ export function updateVFX(deltaTime: number, camera: THREE.PerspectiveCamera, ma
       _vfxMatrix.makeBasis(_vfxDir, _vfxUp, _vfxRight);
       _vfxQuat.setFromRotationMatrix(_vfxMatrix);
       
-      const scaleX = (tracerLife![i] / 6) * 3.0 + 0.5;
+      const clampedTracerLife = Math.max(0, tracerLife![i]);
+      const scaleX = (clampedTracerLife / 6) * 3.0 + 0.5;
       _vfxScale.set(scaleX, 1, 1);
       
       _vfxMatrix.compose(_vfxPos, _vfxQuat, _vfxScale);
@@ -324,7 +325,7 @@ export function updateVFX(deltaTime: number, camera: THREE.PerspectiveCamera, ma
     for (let i = 0; i < barrelSmokeCount; i++) {
       if (!smokeActive[i]) continue;
       
-      smokeLife![i]--;
+      smokeLife![i] -= 60 * deltaTime;
       if (smokeLife![i] <= 0) {
         smokeActive[i] = 0;
         smokeBatch.setVisibleAt(smokeInstIds[i], false);
@@ -335,7 +336,8 @@ export function updateVFX(deltaTime: number, camera: THREE.PerspectiveCamera, ma
       smokePosY![i] += VFX_CONSTANTS.FIRING.SMOKE_RISE_SPEED;
       _vfxPos.set(smokePosX![i], smokePosY![i], smokePosZ![i]);
       _vfxQuat.copy(camera.quaternion);
-      const sProgress = 1 - (smokeLife![i] / VFX_CONSTANTS.FIRING.SMOKE_LIFETIME);
+      const clampedSmokeLife = Math.max(0, smokeLife![i]);
+      const sProgress = 1 - (clampedSmokeLife / VFX_CONSTANTS.FIRING.SMOKE_LIFETIME);
       _vfxScale.setScalar(0.1 + sProgress * VFX_CONSTANTS.FIRING.SMOKE_GROWTH_SPEED);
       
       _vfxMatrix.compose(_vfxPos, _vfxQuat, _vfxScale);
@@ -356,13 +358,25 @@ export function clearAllVisuals() {
   clearHitsVFX();
   clearLargeVFX();
 
-  if (tracerBatch && tracerInstIds && tracerActive) {
-    tracerActive.fill(0);
-    for (let i = 0; i < tracerInstIds.length; i++) tracerBatch.setVisibleAt(tracerInstIds[i], false);
+  if (tracerBatch) {
+    if (tracerInstIds && tracerActive) {
+      tracerActive.fill(0);
+      for (let i = 0; i < tracerInstIds.length; i++) tracerBatch.setVisibleAt(tracerInstIds[i], false);
+    }
+    _scene?.remove(tracerBatch);
+    tracerBatch.material?.dispose();
+    tracerBatch.dispose();
+    tracerBatch = null;
   }
-  if (smokeBatch && smokeInstIds && smokeActive) {
-    smokeActive.fill(0);
-    for (let i = 0; i < smokeInstIds.length; i++) smokeBatch.setVisibleAt(smokeInstIds[i], false);
+  if (smokeBatch) {
+    if (smokeInstIds && smokeActive) {
+      smokeActive.fill(0);
+      for (let i = 0; i < smokeInstIds.length; i++) smokeBatch.setVisibleAt(smokeInstIds[i], false);
+    }
+    _scene?.remove(smokeBatch);
+    smokeBatch.material?.dispose();
+    smokeBatch.dispose();
+    smokeBatch = null;
   }
   flashLife = 0;
 }

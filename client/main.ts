@@ -231,11 +231,6 @@ export let wheeledDroneModel: THREE.Group | null = null;
 // Dynamic weapon mechanics state variables
 // Migrated to MatchController
 
-// Dynamic laser lines
-let laserLineSegments: THREE.LineSegments;
-const laserPositions: number[] = [];
-const laserColors: number[] = [];
-
 // Match visual elements are imported from client/visuals.ts and initialized dynamically
 
 // Initialize Game loop
@@ -928,38 +923,6 @@ const handleWindowResize = () => {
 };
 
 let lastTime = performance.now();
-const syncVisualProjectiles = (data: any) => {
-  if (Array.isArray(data)) {
-    // network sync
-    let ptr = 0;
-    const maxLen = 64 * 6;
-    for (let i = 0; i < data.length; i++) {
-      const p = data[i];
-      // Just a basic visual line or dot,
-      // In original code this populated laserPositions
-      if (ptr < maxLen) {
-        laserPositions[ptr++] = p.x;
-        laserPositions[ptr++] = p.y;
-        laserPositions[ptr++] = p.z;
-        laserPositions[ptr++] = p.x + 0.5;
-        laserPositions[ptr++] = p.y + 0.5;
-        laserPositions[ptr++] = p.z + 0.5;
-      }
-    }
-    if (laserLineSegments && laserLineSegments.geometry) {
-      // We just zero out the rest
-      for (let i = ptr; i < maxLen; i++) laserPositions[i] = 0;
-      laserLineSegments.geometry.setAttribute(
-        "position",
-        new THREE.Float32BufferAttribute(laserPositions, 3),
-      );
-      laserLineSegments.geometry.attributes.position.needsUpdate = true;
-    }
-  } else {
-    // dt update (unused logic maybe)
-  }
-};
-
 let targetFpsRef = 0;
 let diagnosticFrameCount = 0;
 const diagTempMatrix = new THREE.Matrix4();
@@ -969,6 +932,48 @@ const diagTempQuaternion = new THREE.Quaternion();
 const diagTempEuler = new THREE.Euler();
 
 let animationFrameId = 0;
+
+// Dynamic laser lines
+let laserLineSegments: THREE.LineSegments | null = null;
+const maxLaserSegmentsCount = 64;
+const laserPositions = new Float32Array(maxLaserSegmentsCount * 6);
+let laserPositionsAttr: THREE.BufferAttribute | null = null;
+
+const syncVisualProjectiles = (data: any) => {
+  if (!laserLineSegments) {
+    laserLineSegments = (window as any).laserLineSegments;
+    if (laserLineSegments && laserLineSegments.geometry) {
+      laserPositionsAttr = laserLineSegments.geometry.getAttribute("position") as THREE.BufferAttribute;
+      if (!laserPositionsAttr) {
+        laserPositionsAttr = new THREE.BufferAttribute(laserPositions, 3);
+        laserLineSegments.geometry.setAttribute("position", laserPositionsAttr);
+      }
+    }
+  }
+
+  if (Array.isArray(data)) {
+    let ptr = 0;
+    const maxLen = maxLaserSegmentsCount * 6;
+    for (let i = 0; i < data.length; i++) {
+      const p = data[i];
+      if (ptr < maxLen) {
+        laserPositions[ptr++] = p.x;
+        laserPositions[ptr++] = p.y;
+        laserPositions[ptr++] = p.z;
+        laserPositions[ptr++] = p.x + 0.5;
+        laserPositions[ptr++] = p.y + 0.5;
+        laserPositions[ptr++] = p.z + 0.5;
+      }
+    }
+    // zero out the rest
+    for (let i = ptr; i < maxLen; i++) {
+      laserPositions[i] = 0;
+    }
+    if (laserPositionsAttr) {
+      laserPositionsAttr.needsUpdate = true;
+    }
+  }
+};
 
 // updateVFX now fully handled inside client/visuals.ts
 
@@ -1136,7 +1141,7 @@ const animateFrame = async () => {
       }
     }
 
-     syncVisualProjectiles(dt);
+    syncVisualProjectiles(dt);
 
     if (match.visuals) {
         const _v0 = performance.now();

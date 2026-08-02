@@ -201,6 +201,14 @@ export class DroneSystem {
               } else if (typeId === DroneType.ROBOT_DOG) {
                  if ((window as any).robotDogModel) {
                      fw = SkeletonUtils.clone((window as any).robotDogModel) as THREE.Group;
+                     const anims = (window as any).robotDogAnimations;
+                     if (anims && anims.length > 0) {
+                        const subRoot = fw.getObjectByName("RobotDogGLTFScene") || fw;
+                        const mixer = new THREE.AnimationMixer(subRoot);
+                        const action = mixer.clipAction(anims[0]);
+                        action.play();
+                        this.standaloneMixers.set(id, mixer);
+                     }
                  } else {
                      const geo = new THREE.BoxGeometry(1, 0.8, 1.5);
                      const mat = new THREE.MeshStandardMaterial({ color: 0x555555 });

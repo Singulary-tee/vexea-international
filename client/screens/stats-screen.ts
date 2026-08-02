@@ -113,87 +113,107 @@ function createArcGaugeSVG(percent: number, label: string, valueDisplay: string,
 }
 
 export function renderStatsScreen(container: HTMLElement, registeredUserData: any): void {
-  container.innerHTML = '';
-
-  const wrap = document.createElement('div');
-  Object.assign(wrap.style, {
-    display: 'flex',
-    flexDirection: 'column',
-    width: '100%',
-    height: '100%',
-    gap: '6px',
-    boxSizing: 'border-box',
-    overflow: 'hidden'
-  });
-
-  // Top Sub-Tab Navigation Bar inside STATS
-  const navRow = document.createElement('div');
-  Object.assign(navRow.style, {
-    display: 'flex',
-    gap: '12px',
-    borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
-    paddingBottom: '2px',
-    flexShrink: '0'
-  });
-
-  const subTabs: { id: 'PROFILE' | 'INTEL' | 'CHALLENGES' | 'LEADERBOARD'; label: string }[] = [
-    { id: 'PROFILE', label: 'CONTRACTOR PROFILE' },
-    { id: 'INTEL', label: 'COMMANDER INTEL' },
-    { id: 'CHALLENGES', label: 'DAILY CONTRACTS' },
-    { id: 'LEADERBOARD', label: 'GLOBAL STANDINGS' }
-  ];
-
-  subTabs.forEach(tab => {
-    const btn = document.createElement('button');
-    btn.textContent = tab.label;
-    const isActive = tab.id === activeStatsSubTab;
-    Object.assign(btn.style, {
-      padding: '2px 1px',
-      background: 'transparent',
-      color: isActive ? DS.colors.accent : 'rgba(255, 255, 255, 0.4)',
-      border: 'none',
-      borderBottom: isActive ? `2px solid ${DS.colors.accent}` : '2px solid transparent',
-      fontFamily: DS.typography.fontFamily,
-      fontSize: '9.5px',
-      fontWeight: 'bold',
-      letterSpacing: '0.8px',
-      cursor: 'pointer',
-      transition: 'all 0.15s ease'
+  let wrap = container.querySelector('.stats-screen-wrap') as HTMLElement;
+  if (!wrap) {
+    container.innerHTML = '';
+    wrap = document.createElement('div');
+    wrap.className = 'stats-screen-wrap';
+    Object.assign(wrap.style, {
+      display: 'flex',
+      flexDirection: 'column',
+      width: '100%',
+      height: '100%',
+      gap: '6px',
+      boxSizing: 'border-box',
+      overflow: 'hidden'
     });
 
-    btn.onclick = () => {
-      audioManager.play('click');
-      activeStatsSubTab = tab.id;
-      renderStatsScreen(container, registeredUserData);
-    };
+    // Top Sub-Tab Navigation Bar inside STATS
+    const navRow = document.createElement('div');
+    Object.assign(navRow.style, {
+      display: 'flex',
+      gap: '12px',
+      borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+      paddingBottom: '2px',
+      flexShrink: '0'
+    });
 
-    navRow.appendChild(btn);
-  });
+    const subTabs: { id: 'PROFILE' | 'INTEL' | 'CHALLENGES' | 'LEADERBOARD'; label: string }[] = [
+      { id: 'PROFILE', label: 'CONTRACTOR PROFILE' },
+      { id: 'INTEL', label: 'COMMANDER INTEL' },
+      { id: 'CHALLENGES', label: 'DAILY CONTRACTS' },
+      { id: 'LEADERBOARD', label: 'GLOBAL STANDINGS' }
+    ];
 
-  wrap.appendChild(navRow);
+    subTabs.forEach(tab => {
+      const btn = document.createElement('button');
+      btn.className = 'stats-subtab-btn';
+      btn.setAttribute('data-tab-id', tab.id);
+      btn.textContent = tab.label;
+      const isActive = tab.id === activeStatsSubTab;
+      Object.assign(btn.style, {
+        padding: '2px 1px',
+        background: 'transparent',
+        color: isActive ? DS.colors.accent : 'rgba(255, 255, 255, 0.4)',
+        border: 'none',
+        borderBottom: isActive ? `2px solid ${DS.colors.accent}` : '2px solid transparent',
+        fontFamily: DS.typography.fontFamily,
+        fontSize: '9.5px',
+        fontWeight: 'bold',
+        letterSpacing: '0.8px',
+        cursor: 'pointer',
+        transition: 'all 0.15s ease'
+      });
 
-  // Content Area
-  const contentBody = document.createElement('div');
-  Object.assign(contentBody.style, {
-    flex: '1',
-    overflow: 'hidden',
-    display: 'flex',
-    flexDirection: 'column',
-    minHeight: '0'
-  });
+      btn.onclick = () => {
+        audioManager.play('click');
+        activeStatsSubTab = tab.id;
+        renderStatsScreen(container, registeredUserData);
+      };
 
-  if (activeStatsSubTab === 'PROFILE') {
-    renderProfileView(contentBody, registeredUserData);
-  } else if (activeStatsSubTab === 'INTEL') {
-    renderIntelView(contentBody, registeredUserData);
-  } else if (activeStatsSubTab === 'CHALLENGES') {
-    renderChallengesView(contentBody, registeredUserData);
-  } else if (activeStatsSubTab === 'LEADERBOARD') {
-    renderLeaderboardView(contentBody, registeredUserData);
+      navRow.appendChild(btn);
+    });
+
+    wrap.appendChild(navRow);
+
+    // Content Area
+    const contentBody = document.createElement('div');
+    contentBody.className = 'stats-content-body';
+    Object.assign(contentBody.style, {
+      flex: '1',
+      overflow: 'hidden',
+      display: 'flex',
+      flexDirection: 'column',
+      minHeight: '0'
+    });
+    wrap.appendChild(contentBody);
+    container.appendChild(wrap);
   }
 
-  wrap.appendChild(contentBody);
-  container.appendChild(wrap);
+  // Update button active state classes in-place
+  const buttons = wrap.querySelectorAll('.stats-subtab-btn');
+  buttons.forEach(btn => {
+    const tabId = btn.getAttribute('data-tab-id');
+    const isActive = tabId === activeStatsSubTab;
+    Object.assign((btn as HTMLElement).style, {
+      color: isActive ? DS.colors.accent : 'rgba(255, 255, 255, 0.4)',
+      borderBottom: isActive ? `2px solid ${DS.colors.accent}` : '2px solid transparent'
+    });
+  });
+
+  const contentBody = wrap.querySelector('.stats-content-body') as HTMLElement;
+  if (contentBody) {
+    contentBody.innerHTML = '';
+    if (activeStatsSubTab === 'PROFILE') {
+      renderProfileView(contentBody, registeredUserData);
+    } else if (activeStatsSubTab === 'INTEL') {
+      renderIntelView(contentBody, registeredUserData);
+    } else if (activeStatsSubTab === 'CHALLENGES') {
+      renderChallengesView(contentBody, registeredUserData);
+    } else if (activeStatsSubTab === 'LEADERBOARD') {
+      renderLeaderboardView(contentBody, registeredUserData);
+    }
+  }
 }
 
 // 1. PROFILE VIEW

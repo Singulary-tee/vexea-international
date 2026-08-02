@@ -502,7 +502,7 @@ const buildSchema = (type: DroneType, name: string, glbUrl: string, baseDefaults
         maxRotationSpeed: config.maxRotationSpeed ?? 3.0,
         maxVerticalSpeed: config.maxVerticalSpeed ?? 5.0,
         bankingAngle: config.bankingAngle ?? 0.35,
-        minSpeed: config.minSpeed ?? 10.0,
+        minSpeed: config.minSpeed ?? 0.0,
         maxTurnRate: config.maxTurnRate ?? 1.5,
         pitchAngle: config.pitchAngle ?? 0.35,
         engagementRange: config.engagementRange ?? 40.0,
@@ -701,7 +701,7 @@ const DRONE_SCHEMAS: DroneSchema[] = Object.values(DRONE_CONFIGS).map(config => 
     if (config.type === DroneType.RECON) glbUrl = "quadcopter_cam-optimized.glb";
     if (config.type === DroneType.FIXED_WING) glbUrl = "uav-optimized.glb";
     if (config.type === DroneType.WHEELED) glbUrl = "ugv-optimized.glb";
-    if (config.type === DroneType.ROBOT_DOG) glbUrl = "robot_dog.glb";
+    if (config.type === DroneType.ROBOT_DOG) glbUrl = "robodog-optimized.glb";
     if (config.type === DroneType.HUMANOID) glbUrl = "humanoid-optimized.glb";
 
     const baseDefaults: Record<string, any> = {};

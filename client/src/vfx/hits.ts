@@ -1,5 +1,5 @@
 import * as THREE from "three/webgpu";
-import { uv, float, smoothstep, length as tslLength, vec2, vec4, mix } from "three/tsl";
+import { uv, float, smoothstep, length as tslLength, vec2, vec4, mix, texture } from "three/tsl";
 import { VFX_CONSTANTS } from "./constants";
 import { getAssetUrl } from "../../asset-cache";
 
@@ -9,7 +9,11 @@ const _hitQuat = new THREE.Quaternion();
 const _hitScale = new THREE.Vector3();
 const _hitMatrix = new THREE.Matrix4();
 const _hitZAxis = new THREE.Vector3(0, 0, 1);
+const _tempRotQuat = new THREE.Quaternion();
 const _hitNormal = new THREE.Vector3();
+const _upVec = new THREE.Vector3(0, 1, 0);
+const _dustQuat = new THREE.Quaternion();
+const _dustVec = new THREE.Vector3();
 
 // Batches and config limits
 export let sparkBatch: THREE.BatchedMesh | null = null;
@@ -81,18 +85,24 @@ export function initHitsVFX(scene: THREE.Scene, config: any) {
   const dustUV = uv().sub(vec2(0.5, 0.5));
   const dustDist = tslLength(dustUV).mul(float(2.0));
   const dustAlpha = smoothstep(float(1.0), float(0.2), dustDist).mul(float(0.7));
-  const dustGrey = vec4(0.34, 0.28, 0.22, 0.0); // dirt/brown color
-  dustMat.colorNode = vec4(dustGrey.x, dustGrey.y, dustGrey.z, dustAlpha);
+  const dustCenterColor = vec4(0.42, 0.36, 0.30, 1.0);
+  const dustEdgeColor = vec4(0.24, 0.18, 0.12, 1.0);
+  const dustColorNode = mix(dustEdgeColor, dustCenterColor, smoothstep(float(1.0), float(0.0), dustDist));
+  dustMat.colorNode = vec4(dustColorNode.x, dustColorNode.y, dustColorNode.z, dustAlpha);
 
   // 3. DECAL MAT
   const decalTexture = new THREE.TextureLoader().load(getAssetUrl('Surface_Impact.png'));
   const decalMat = new THREE.MeshBasicNodeMaterial();
-  decalMat.map = decalTexture;
   decalMat.transparent = true;
   decalMat.depthWrite = false;
   decalMat.polygonOffset = true;
   decalMat.polygonOffsetFactor = VFX_CONSTANTS.HITS.DECAL_OFFSET_FACTOR;
   decalMat.side = THREE.DoubleSide;
+  const decalTexNode = texture(decalTexture);
+  const decalUV = uv().sub(vec2(0.5, 0.5));
+  const decalDist = tslLength(decalUV).mul(float(2.0));
+  const decalGlow = smoothstep(float(0.8), float(0.0), decalDist).mul(vec4(1.0, 0.27, 0.0, 1.0));
+  decalMat.colorNode = decalTexNode.mul(vec4(0.15, 0.15, 0.15, 1.0)).add(decalGlow.mul(decalTexNode.a).mul(float(0.4)));
 
   // Setup Sparks BatchedMesh
   const sparksPerHit = config.sparksPerHit || 0;
@@ -224,22 +234,24 @@ export function spawnEnvironmentDecalAndDust(ix: number, iy: number, iz: number,
     
     // Give each decal a tiny randomized rotation around its normal (the local Z axis) so they look organic
     const randomAngle = Math.random() * Math.PI * 2;
-    const tempRot = new THREE.Quaternion().setFromAxisAngle(_hitZAxis, randomAngle);
-    _hitQuat.multiply(tempRot);
+    _tempRotQuat.setFromAxisAngle(_hitZAxis, randomAngle);
+    _hitQuat.multiply(_tempRotQuat);
 
     _hitScale.set(1, 1, 1);
     _hitMatrix.compose(_hitPos, _hitQuat, _hitScale);
     
     decalBatch.setMatrixAt(dInstId, _hitMatrix);
     decalBatch.setVisibleAt(dInstId, true);
+    if ((decalBatch as any).instanceMatrix) {
+      (decalBatch as any).instanceMatrix.needsUpdate = true;
+    }
     
     decalIndex = (decalIndex + 1) % decalSlotsCount;
   }
   
   if (dustBatch && dustActive && dustInstIds && dustSlotsCount > 0) {
     const dustToSpawn = Math.floor(dustSlotsCount / 8);
-    const dustQuat = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), _hitNormal);
-    const dustVec = new THREE.Vector3();
+    _dustQuat.setFromUnitVectors(_upVec, _hitNormal);
 
     let activated = 0;
     for (let i = 0; i < dustSlotsCount && activated < dustToSpawn; i++) {
@@ -254,16 +266,16 @@ export function spawnEnvironmentDecalAndDust(ix: number, iy: number, iz: number,
         const dustSpeed = 1.0 + Math.random() * VFX_CONSTANTS.HITS.DUST_RISE_SPEED;
         
         // Push dust outward along the surface normal
-        dustVec.set(
+        _dustVec.set(
           Math.cos(angle) * (0.5 + Math.random() * VFX_CONSTANTS.HITS.DUST_SPREAD_SPEED),
           Math.random() * 0.5,
           Math.sin(angle) * (0.5 + Math.random() * VFX_CONSTANTS.HITS.DUST_SPREAD_SPEED)
         );
-        dustVec.applyQuaternion(dustQuat);
+        _dustVec.applyQuaternion(_dustQuat);
 
-        dustVelX![i] = dustVec.x;
-        dustVelY![i] = dustVec.y + dustSpeed * 0.5; // add upward buoyancy
-        dustVelZ![i] = dustVec.z;
+        dustVelX![i] = _dustVec.x;
+        dustVelY![i] = _dustVec.y + dustSpeed * 0.5; // add upward buoyancy
+        dustVelZ![i] = _dustVec.z;
         
         dustBatch.setVisibleAt(dustInstIds[i], true);
         activated++;
@@ -281,7 +293,7 @@ export function updateHitsVFX(deltaTime: number, camera: THREE.PerspectiveCamera
     for (let i = 0; i < sparkSlotsCount; i++) {
       if (!sparkActive[i]) continue;
       
-      sparkLife![i]--;
+      sparkLife![i] -= 60 * deltaTime;
       if (sparkLife![i] <= 0) {
         sparkActive[i] = 0;
         sparkBatch.setVisibleAt(sparkInstIds[i], false);
@@ -298,10 +310,15 @@ export function updateHitsVFX(deltaTime: number, camera: THREE.PerspectiveCamera
       sparkPosZ![i] += sparkVelZ![i] * deltaTime;
       
       _hitPos.set(sparkPosX![i], sparkPosY![i], sparkPosZ![i]);
-      _hitQuat.copy(camera.quaternion);
+      const clampedLife = Math.max(0, sparkLife![i]);
+      const rAngle = ((i * 37) % 360) * (Math.PI / 180) + (((i * 23) % 10) - 5) * (clampedLife / VFX_CONSTANTS.HITS.SPARK_LIFETIME) * 2;
+      _tempRotQuat.setFromAxisAngle(_hitZAxis, rAngle);
+      _hitQuat.copy(camera.quaternion).multiply(_tempRotQuat);
       
-      const progress = sparkLife![i] / VFX_CONSTANTS.HITS.SPARK_LIFETIME;
-      _hitScale.setScalar(VFX_CONSTANTS.HITS.SPARK_SIZE * progress);
+      const progress = clampedLife / VFX_CONSTANTS.HITS.SPARK_LIFETIME;
+      const sparkSizeCurve = progress * Math.sin(progress * Math.PI * 0.5);
+      const rScale = 0.75 + ((i * 17) % 10) / 20; // deterministic random 0.75 - 1.25
+      _hitScale.setScalar(VFX_CONSTANTS.HITS.SPARK_SIZE * sparkSizeCurve * rScale);
       
       _hitMatrix.compose(_hitPos, _hitQuat, _hitScale);
       sparkBatch.setMatrixAt(sparkInstIds[i], _hitMatrix);
@@ -318,7 +335,7 @@ export function updateHitsVFX(deltaTime: number, camera: THREE.PerspectiveCamera
     for (let i = 0; i < dustSlotsCount; i++) {
       if (!dustActive[i]) continue;
       
-      dustLife![i]--;
+      dustLife![i] -= 60 * deltaTime;
       if (dustLife![i] <= 0) {
         dustActive[i] = 0;
         dustBatch.setVisibleAt(dustInstIds[i], false);
@@ -333,11 +350,16 @@ export function updateHitsVFX(deltaTime: number, camera: THREE.PerspectiveCamera
       dustPosZ![i] += dustVelZ![i] * deltaTime;
       
       _hitPos.set(dustPosX![i], dustPosY![i], dustPosZ![i]);
-      _hitQuat.copy(camera.quaternion);
+      const clampedDustLife = Math.max(0, dustLife![i]);
+      const t = 1 - (clampedDustLife / VFX_CONSTANTS.HITS.DUST_LIFETIME); // 0 -> 1
+      const rAngle = ((i * 29) % 360) * (Math.PI / 180) + (((i * 19) % 10) - 5) * t * 1.5;
+      _tempRotQuat.setFromAxisAngle(_hitZAxis, rAngle);
+      _hitQuat.copy(camera.quaternion).multiply(_tempRotQuat);
       
-      const t = 1 - (dustLife![i] / VFX_CONSTANTS.HITS.DUST_LIFETIME); // 0 -> 1
-      const scale = VFX_CONSTANTS.HITS.DUST_SIZE_START + t * (VFX_CONSTANTS.HITS.DUST_SIZE_END - VFX_CONSTANTS.HITS.DUST_SIZE_START);
-      _hitScale.setScalar(scale);
+      const dustProgress = Math.sin(t * Math.PI * 0.5); // non-linear swell curve
+      const scale = VFX_CONSTANTS.HITS.DUST_SIZE_START + dustProgress * (VFX_CONSTANTS.HITS.DUST_SIZE_END - VFX_CONSTANTS.HITS.DUST_SIZE_START);
+      const rScale = 0.8 + ((i * 13) % 10) / 25; // deterministic random 0.8 to 1.2
+      _hitScale.setScalar(scale * rScale);
       
       _hitMatrix.compose(_hitPos, _hitQuat, _hitScale);
       dustBatch.setMatrixAt(dustInstIds[i], _hitMatrix);
@@ -348,24 +370,42 @@ export function updateHitsVFX(deltaTime: number, camera: THREE.PerspectiveCamera
     }
   }
 
-  // Mark Decal update needed
-  if (decalBatch && (decalBatch as any).instanceMatrix) {
-    (decalBatch as any).instanceMatrix.needsUpdate = true;
-  }
+  // Mark Decal update needed - Only updated when decals actually spawn now
 }
 
 export function clearHitsVFX() {
-  if (sparkBatch && sparkInstIds && sparkActive) {
-    sparkActive.fill(0);
-    for (let i = 0; i < sparkSlotsCount; i++) sparkBatch.setVisibleAt(sparkInstIds[i], false);
+  if (sparkBatch) {
+    if (sparkInstIds && sparkActive) {
+      sparkActive.fill(0);
+      for (let i = 0; i < sparkSlotsCount; i++) sparkBatch.setVisibleAt(sparkInstIds[i], false);
+    }
+    _scene?.remove(sparkBatch);
+    sparkBatch.material?.dispose();
+    sparkBatch.dispose();
+    sparkBatch = null;
   }
-  if (dustBatch && dustInstIds && dustActive) {
-    dustActive.fill(0);
-    for (let i = 0; i < dustSlotsCount; i++) dustBatch.setVisibleAt(dustInstIds[i], false);
+  if (dustBatch) {
+    if (dustInstIds && dustActive) {
+      dustActive.fill(0);
+      for (let i = 0; i < dustSlotsCount; i++) dustBatch.setVisibleAt(dustInstIds[i], false);
+    }
+    _scene?.remove(dustBatch);
+    dustBatch.material?.dispose();
+    dustBatch.dispose();
+    dustBatch = null;
   }
-  if (decalBatch && decalInstIds) {
-    for (let i = 0; i < decalSlotsCount; i++) decalBatch.setVisibleAt(decalInstIds[i], false);
-    decalIndex = 0;
+  if (decalBatch) {
+    if (decalInstIds) {
+      for (let i = 0; i < decalSlotsCount; i++) decalBatch.setVisibleAt(decalInstIds[i], false);
+      decalIndex = 0;
+    }
+    _scene?.remove(decalBatch);
+    if (decalBatch.material) {
+      if ((decalBatch.material as any).map) (decalBatch.material as any).map.dispose();
+      decalBatch.material.dispose();
+    }
+    decalBatch.dispose();
+    decalBatch = null;
   }
   // Impact light clearing removed per user request
 }

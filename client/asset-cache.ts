@@ -184,14 +184,8 @@ export async function clearCache(): Promise<void> {
  */
 export function mapRequestedFileToReal(filename: string): string {
   const base = filename.substring(filename.lastIndexOf("/") + 1);
-  if (base === "asphalt_02_1k.glb") return "asphalt_02_1k.gltf";
-  if (base === "concrete_tiles_02_1k.glb") return "concrete_tiles_02_1k.gltf";
-  if (base === "red_brick_03_1k.glb") return "red_brick_03_1k.gltf";
-  if (base === "rocks_ground_01_1k.glb") return "rocks_ground_01_1k.gltf";
-  if (base === "rocky_trail_1k.glb") return "rocky_trail_1k.gltf";
   if (base === "defaultmaterial.glb" || base === "defaultmaterial_1.glb") return "concrete_block_low_poly.glb";
   if (base === "single_arm.glb" || base === "double_arm.glb") return "StreetLightPoles.glb";
-  if (base === "single_arm_1.glb" || base === "double_arm_1.glb") return "StreetLightPoles.gltf";
   return base;
 }
 
@@ -234,34 +228,7 @@ export const MAP_1_ASSETS = [
   "security_camera_01_1k.gltf.glb",
   "security_camera_02_1k.gltf.glb",
   "concrete_block_low_poly.glb",
-  "StreetLightPoles.glb",
-  "StreetLightPoles.gltf",
-  "StreetLightPoles.bin",
-  "asphalt_02_1k.gltf",
-  "asphalt_02.bin",
-  "asphalt_02_diff_1k.jpg",
-  "asphalt_02_nor_gl_1k.jpg",
-  "asphalt_02_arm_1k.jpg",
-  "concrete_tiles_02_1k.gltf",
-  "concrete_tiles_02.bin",
-  "concrete_tiles_02_diff_1k.jpg",
-  "concrete_tiles_02_nor_gl_1k.jpg",
-  "concrete_tiles_02_arm_1k.jpg",
-  "red_brick_03_1k.gltf",
-  "red_brick_03.bin",
-  "red_brick_03_diff_1k.jpg",
-  "red_brick_03_nor_gl_1k.jpg",
-  "red_brick_03_arm_1k.jpg",
-  "rocks_ground_01_1k.gltf",
-  "rocks_ground_01.bin",
-  "rocks_ground_01_diff_1k.jpg",
-  "rocks_ground_01_nor_gl_1k.jpg",
-  "rocks_ground_01_arm_1k.jpg",
-  "rocky_trail_1k.gltf",
-  "rocky_trail.bin",
-  "rocky_trail_diff_1k.jpg",
-  "rocky_trail_nor_gl_1k.jpg",
-  "rocky_trail_arm_1k.jpg"
+  "StreetLightPoles.glb"
 ];
 
 export const REQUIRED_SOUNDS = [
@@ -657,11 +624,45 @@ function getSharedKtx2Loader(rendererInstance?: any): KTX2Loader {
   return sharedKtx2Loader;
 }
 
+const fallback1x1Blob = new Blob([new Uint8Array([
+  0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x00, 0x00, 0x00, 0x0d,
+  0x49, 0x48, 0x44, 0x52, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01,
+  0x08, 0x06, 0x00, 0x00, 0x00, 0x1f, 0x15, 0xc4, 0x89, 0x00, 0x00, 0x00,
+  0x0d, 0x49, 0x44, 0x41, 0x54, 0x78, 0x9c, 0x63, 0x00, 0x01, 0x00, 0x00,
+  0x05, 0x00, 0x01, 0x0d, 0x0a, 0x2d, 0xb4, 0x00, 0x00, 0x00, 0x00, 0x49,
+  0x45, 0x4e, 0x44, 0xae, 0x42, 0x60, 0x82
+])], { type: 'image/png' });
+const fallback1x1Url = typeof URL !== 'undefined' && URL.createObjectURL ? URL.createObjectURL(fallback1x1Blob) : '';
+
 /**
  * Factory function to create a fully configured GLTFLoader instance with Draco
  * and KTX2 transcoder support attached.
  */
-export function createConfiguredGLTFLoader(manager?: THREE.LoadingManager, rendererInstance?: any): GLTFLoader {
+export function createConfiguredGLTFLoader(customManager?: THREE.LoadingManager, rendererInstance?: any): GLTFLoader {
+  const manager = customManager || new THREE.LoadingManager();
+  const existingModifier = (manager as any).urlModifier;
+
+  manager.setURLModifier((url: string) => {
+    let resolvedUrl = existingModifier ? existingModifier(url) : url;
+
+    // Prevent GLTFLoader from failing on sub-resource texture/bin lookups relative to blob: or relative URLs
+    const lower = resolvedUrl.toLowerCase();
+    const isTexture = lower.includes(".jpg") || lower.includes(".jpeg") || lower.includes(".png") || lower.includes(".webp") || lower.includes(".ktx2") || lower.includes(".dds") || lower.includes(".tga");
+    const isBin = lower.includes(".bin");
+
+    if (isTexture || isBin) {
+      const fileName = resolvedUrl.substring(resolvedUrl.lastIndexOf("/") + 1);
+      if (blobUrlMap.has(fileName)) {
+        return blobUrlMap.get(fileName)!;
+      }
+      if (isTexture) {
+        return fallback1x1Url;
+      }
+    }
+
+    return resolvedUrl;
+  });
+
   const loader = new GLTFLoader(manager);
   loader.setDRACOLoader(getSharedDracoLoader());
   loader.setKTX2Loader(getSharedKtx2Loader(rendererInstance));

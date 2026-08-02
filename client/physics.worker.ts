@@ -36,6 +36,7 @@ let localIsCrouch = false;
 let localVelY = 0;
 
 let dronesMap: Map<number, { body: RAPIER.RigidBody, collider: RAPIER.Collider }> = new Map();
+const currentDroneIds = new Set<number>();
 
 self.onerror = function(message, source, lineno, colno, error) {
     self.postMessage({
@@ -152,7 +153,7 @@ self.onmessage = async (e) => {
         }
         
         if (e.data.drones && Array.isArray(e.data.drones)) {
-            const currentDroneIds = new Set<number>();
+            currentDroneIds.clear();
             for (const d of e.data.drones) {
                 currentDroneIds.add(d.id);
                 let droneObj = dronesMap.get(d.id);
@@ -179,7 +180,7 @@ self.onmessage = async (e) => {
                 droneObj.body.setNextKinematicTranslation({ x: d.x, y: d.y + droneObj.collider.halfExtents().y, z: d.z });
             }
             
-            for (const [id, droneObj] of Array.from(dronesMap.entries())) {
+            for (const [id, droneObj] of dronesMap) {
                 if (!currentDroneIds.has(id)) {
                     world.removeRigidBody(droneObj.body);
                     dronesMap.delete(id);

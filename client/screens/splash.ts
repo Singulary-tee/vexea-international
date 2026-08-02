@@ -10,6 +10,10 @@ const SOUNDS_TO_PRELOAD = [
 const TEXTURES_TO_PRELOAD: string[] = [
 ];
 
+const MODELS_TO_PRELOAD = [
+  'Player_one-optimized.glb'
+];
+
 const IMAGES_TO_PRELOAD = [
   'splash_screen.webp',
   'infiltration_card_1.webp',
@@ -39,13 +43,7 @@ export const EXTENDED_SOUNDS = [
   'wood_walk.mp3'
 ];
 
-export const EXTENDED_TEXTURES = [
-  'asphalt_02_diff_1k.jpg', 'asphalt_02_nor_gl_1k.jpg', 'asphalt_02_arm_1k.jpg',
-  'concrete_tiles_02_diff_1k.jpg', 'concrete_tiles_02_nor_gl_1k.jpg', 'concrete_tiles_02_arm_1k.jpg',
-  'red_brick_03_diff_1k.jpg', 'red_brick_03_nor_gl_1k.jpg', 'red_brick_03_arm_1k.jpg',
-  'rocks_ground_01_diff_1k.jpg', 'rocks_ground_01_nor_gl_1k.jpg', 'rocks_ground_01_arm_1k.jpg',
-  'rocky_trail_diff_1k.jpg', 'rocky_trail_nor_gl_1k.jpg', 'rocky_trail_arm_1k.jpg'
-];
+export const EXTENDED_TEXTURES: string[] = [];
 
 (window as any).interactionStarted = false;
 
@@ -210,6 +208,7 @@ export function initSplash() {
       const allFiles = [
         ...SOUNDS_TO_PRELOAD.map(f => ({ name: f, cat: 'Sound' as const })),
         ...TEXTURES_TO_PRELOAD.map(f => ({ name: f, cat: 'Asset' as const })),
+        ...MODELS_TO_PRELOAD.map(f => ({ name: f, cat: 'Asset' as const })),
         ...IMAGES_TO_PRELOAD.map(f => ({ name: f, cat: 'Image' as const })),
         ...VIDEOS_TO_PRELOAD.map(f => ({ name: f, cat: 'Video' as const }))
       ];
@@ -230,10 +229,13 @@ export function initSplash() {
       };
 
       const queue = [...allFiles];
+      let queueIndex = 0;
       const workerCount = 4;
       const workers = Array(workerCount).fill(null).map(async () => {
-        while (queue.length > 0) {
-          const item = queue.shift();
+        while (true) {
+          const currentIndex = queueIndex++;
+          if (currentIndex >= queue.length) break;
+          const item = queue[currentIndex];
           if (item) {
             await processItem(item);
           }

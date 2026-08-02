@@ -250,125 +250,17 @@ export class MapLoader {
 
     // Ground plane: a single large flat plane covering the full 768x768 world size.
     // We use the asphalt_02 PBR texture set to fit the facility vibe.
-    const textureLoader = new THREE.TextureLoader();
-    let diffUrl = '';
-    let normUrl = '';
-    let armUrl = '';
-    let skyboxUrl = '';
-    let wallDiffUrl = '';
-    let wallNormUrl = '';
-    let wallArmUrl = '';
-    try {
-      diffUrl = await getCachedOrFetchUrl('asphalt_02_diff_1k.jpg', 'Asset');
-      normUrl = await getCachedOrFetchUrl('asphalt_02_nor_gl_1k.jpg', 'Asset');
-      armUrl = await getCachedOrFetchUrl('asphalt_02_arm_1k.jpg', 'Asset');
-      skyboxUrl = await getCachedOrFetchUrl('qwantani_dusk_2_puresky_4k.hdr', 'Asset');
-      
-      wallDiffUrl = await getCachedOrFetchUrl('concrete_tiles_02_diff_1k.jpg', 'Asset');
-      wallNormUrl = await getCachedOrFetchUrl('concrete_tiles_02_nor_gl_1k.jpg', 'Asset');
-      wallArmUrl = await getCachedOrFetchUrl('concrete_tiles_02_arm_1k.jpg', 'Asset');
-    } catch (e) {
-      console.warn('Failed to load environment textures from cache', e);
-      return;
-    }
-
-    const albedo = textureLoader.load(diffUrl);
-    const normal = textureLoader.load(normUrl);
-    const arm = textureLoader.load(armUrl);
-
-    albedo.colorSpace = THREE.SRGBColorSpace;
-    [albedo, normal, arm].forEach(tex => {
-      tex.wrapS = THREE.RepeatWrapping;
-      tex.wrapT = THREE.RepeatWrapping;
-      tex.repeat.set(80, 80);
+    this.concreteWallMat = new THREE.MeshStandardMaterial({
+      color: 0x5a6372,
+      roughness: 0.8,
+      metalness: 0.1
     });
 
-    const isWebGPU = (window as any).isWebGPU;
-    const s = (window as any).vexeaSettings || getSettings();
-
-    // 1. Concrete Wall Material
-    if (wallDiffUrl) {
-      const wallAlbedo = textureLoader.load(wallDiffUrl);
-      const wallNormal = textureLoader.load(wallNormUrl);
-      const wallArm = textureLoader.load(wallArmUrl);
-      
-      wallAlbedo.colorSpace = THREE.SRGBColorSpace;
-      [wallAlbedo, wallNormal, wallArm].forEach(tex => {
-        tex.wrapS = THREE.RepeatWrapping;
-        tex.wrapT = THREE.RepeatWrapping;
-        tex.repeat.set(4, 4);
-      });
-
-      if (isWebGPU) {
-        const wallNodeMat = new THREE.MeshStandardNodeMaterial();
-        const pbrNormalScale = uniform(s.pbrMaterials ? 1.0 : 0.0);
-        const pomScale = uniform(s.parallaxOcclusion ? 0.025 : 0.0);
-
-        (window as any).vexGraphicsUniforms = (window as any).vexGraphicsUniforms || {};
-        (window as any).vexGraphicsUniforms.wallPbrNormalScale = pbrNormalScale;
-        (window as any).vexGraphicsUniforms.wallPomScale = pomScale;
-
-        const wallUV = uv().mul(4.0);
-        const pUV = parallaxUV(wallUV, pomScale.mul(texture(wallArm, wallUV).g));
-
-        wallNodeMat.colorNode = texture(wallAlbedo, pUV);
-        wallNodeMat.normalNode = normalMap(texture(wallNormal, pUV), pbrNormalScale);
-        wallNodeMat.roughnessNode = texture(wallArm, pUV).g;
-        wallNodeMat.metalnessNode = texture(wallArm, pUV).b.mul(0.1);
-        wallNodeMat.aoNode = texture(wallArm, pUV).r;
-
-        this.concreteWallMat = wallNodeMat as any;
-      } else {
-        this.concreteWallMat = new THREE.MeshStandardMaterial({
-          map: wallAlbedo,
-          normalMap: wallNormal,
-          roughnessMap: wallArm,
-          aoMap: wallArm,
-          metalnessMap: wallArm,
-          metalness: 0.1,
-          roughness: 0.7
-        });
-      }
-    } else {
-      this.concreteWallMat = new THREE.MeshStandardMaterial({
-        color: 0x768192,
-        roughness: 0.8,
-        metalness: 0.1
-      });
-    }
-
-    // 2. Ground Material
-    let groundMat;
-    if (isWebGPU) {
-      const groundNodeMat = new THREE.MeshStandardNodeMaterial();
-      const pbrNormalScale = uniform(s.pbrMaterials ? 1.0 : 0.0);
-      const pomScale = uniform(s.parallaxOcclusion ? 0.025 : 0.0);
-
-      (window as any).vexGraphicsUniforms = (window as any).vexGraphicsUniforms || {};
-      (window as any).vexGraphicsUniforms.pomScale = pomScale;
-      (window as any).vexGraphicsUniforms.pbrNormalScale = pbrNormalScale;
-
-      const groundUV = uv().mul(80.0);
-      const pUV = parallaxUV(groundUV, pomScale.mul(texture(arm, groundUV).g));
-
-      groundNodeMat.colorNode = texture(albedo, pUV);
-      groundNodeMat.normalNode = normalMap(texture(normal, pUV), pbrNormalScale);
-      groundNodeMat.roughnessNode = texture(arm, pUV).g;
-      groundNodeMat.metalnessNode = texture(arm, pUV).b;
-      groundNodeMat.aoNode = texture(arm, pUV).r;
-
-      groundMat = groundNodeMat as any;
-    } else {
-      groundMat = new THREE.MeshStandardMaterial({
-        map: albedo,
-        normalMap: normal,
-        roughnessMap: arm,
-        aoMap: arm,
-        metalnessMap: arm,
-        metalness: 1.0,
-        roughness: 1.0
-      });
-    }
+    const groundMat = new THREE.MeshStandardMaterial({
+      color: 0x1f232a,
+      roughness: 0.85,
+      metalness: 0.15
+    });
 
     const { x: wX, z: wZ } = this.spec.worldSize;
     const groundGeom = new THREE.PlaneGeometry(wX, wZ);
@@ -382,23 +274,26 @@ export class MapLoader {
     this.mergedMeshes.push(groundMesh);
 
     // HDR skybox
-    const rgbeLoader = new HDRLoader();
-    rgbeLoader.load(skyboxUrl, (texture) => {
-      texture.mapping = THREE.EquirectangularReflectionMapping;
-      this.scene.background = texture;
-      this.scene.environment = texture;
-      
-      const fogNear = 80;
-      const fogFar = 400;
-      this.scene.fog = new THREE.Fog(0x8899aa, fogNear, fogFar);
-      
-      // Clear WebGPU specific fogNode if it was set
-      if ((this.scene as any).fogNode) {
-          (this.scene as any).fogNode = null;
+    try {
+      const skyboxUrl = await getCachedOrFetchUrl('qwantani_dusk_2_puresky_4k.hdr', 'Asset');
+      if (skyboxUrl) {
+        const rgbeLoader = new HDRLoader();
+        rgbeLoader.load(skyboxUrl, (texture) => {
+          texture.mapping = THREE.EquirectangularReflectionMapping;
+          this.scene.background = texture;
+          this.scene.environment = texture;
+          
+          const fogNear = 80;
+          const fogFar = 400;
+          this.scene.fog = new THREE.Fog(0x8899aa, fogNear, fogFar);
+
+          if ((this.scene as any).fogNode) {
+            (this.scene as any).fogNode = null;
+          }
+          console.log('[ENV DEBUG] Environment setup complete. Skybox loaded: true', 'Fog near/far:', fogNear, fogFar);
+        }, undefined, () => {});
       }
-      
-      console.log('[ENV DEBUG] Environment setup complete. Skybox loaded: true', 'Fog near/far:', fogNear, fogFar);
-    });
+    } catch (e) {}
 
     // Ambient + directional light simulating dusk HDR
     const ambient = new THREE.AmbientLight(0xE8E8E8, 0.4);

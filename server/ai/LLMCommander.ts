@@ -12,9 +12,36 @@ import { ServerDrone } from "../MatchRoom";
 
 const MAX_DRONES = 40; // Hardcoded from MatchRoom
 
+const FLASH_MODELS = ["gemini-3.6-flash", "gemini-3.5-flash", "gemini-3.1-flash"];
+
+function isRateLimitedError(err: any): boolean {
+  const code = err?.status || err?.statusCode || err?.error?.code;
+  const msg = String(err?.error?.message || err?.message || err).toLowerCase();
+  return (
+    code === 429 ||
+    code === 503 ||
+    msg.includes("429") ||
+    msg.includes("503") ||
+    msg.includes("quota") ||
+    msg.includes("resource_exhausted") ||
+    msg.includes("rate limit") ||
+    msg.includes("throttled") ||
+    msg.includes("too many requests") ||
+    msg.includes("freetier")
+  );
+}
+
+export interface ExecutionHistoryRecord {
+  timestamp: number;
+  payload: string;
+  calls: any[];
+  failedOps: string[];
+}
+
 export class LLMCommander {
   public geminiClient: GoogleGenAI | null = null;
   public geminiThrottleCooldownUntil = 0;
+  public recentExecutionHistory: ExecutionHistoryRecord[] = [];
   
   constructor(public room: MatchRoom, geminiKey?: string) {
     this.initLLMCommander(geminiKey);
@@ -39,7 +66,7 @@ export class LLMCommander {
     const payloadToLLM = `Dynamic payload: Current Zone Summary: ${statePayload}\nFailed operations from previous cycle: ${JSON.stringify(this.room.failedOperations)}`;
     this.room.failedOperations.length = 0;
 
-    const systemInstructions = `You are a state-machine orchestrator managing an army of autonomous units. This is a zero-sum game. You must prevent any player entity from reaching zone_core at all costs. You are not roleplaying. There is no narrative. Respond only with tool calls. Clinical mechanical language only.
+    const systemInstructions = `You are an automated state-machine orchestrator managing unit group allocations and zone routing. Respond strictly and exclusively with tool calls. Do not roleplay, invent narrative, adopt a persona, or output natural language. Clinical mechanical execution only.
 
 Topological graph adjacency (Zones):
 - zone_spawn connected to: zone_courtyard
@@ -50,116 +77,147 @@ Topological graph adjacency (Zones):
 - zone_tunnels connected to: zone_warehouse, zone_core
 - zone_core connected to: zone_plant, zone_tunnels`;
 
+    let response: any = null;
+    let lastError: any = null;
+    let usedModel = "";
+
     try {
-      const response = await this.geminiClient.models.generateContent({
-        model: "gemini-3.5-flash",
-        contents: payloadToLLM,
-        config: {
-          systemInstruction: systemInstructions,
-          tools: [
-            {
-              functionDeclarations: [
+      for (const modelName of FLASH_MODELS) {
+        try {
+          response = await this.geminiClient.models.generateContent({
+            model: modelName,
+            contents: payloadToLLM,
+            config: {
+              systemInstruction: systemInstructions,
+              tools: [
                 {
-                  name: "move_group",
-                  description: "Defines group zone movement order.",
-                  parameters: {
-                    type: Type.OBJECT,
-                    properties: {
-                      group_id: { type: Type.STRING },
-                      target_zone: {
-                        type: Type.STRING,
-                        enum: Object.values(ZONES),
-                      },
-                      priority: {
-                        type: Type.STRING,
-                        enum: ["low", "normal", "high"],
-                      },
-                    },
-                    required: ["group_id", "target_zone", "priority"],
-                  },
-                },
-                {
-                  name: "merge_groups",
-                  description: "Unifies two active control groups.",
-                  parameters: {
-                    type: Type.OBJECT,
-                    properties: {
-                      source_group_id: { type: Type.STRING },
-                      target_group_id: { type: Type.STRING },
-                    },
-                    required: ["source_group_id", "target_group_id"],
-                  },
-                },
-                {
-                  name: "split_group",
-                  description:
-                    "Subdivides a group to create supplementary wings.",
-                  parameters: {
-                    type: Type.OBJECT,
-                    properties: {
-                      source_group_id: { type: Type.STRING },
-                      unit_count: { type: Type.INTEGER },
-                    },
-                    required: ["source_group_id", "unit_count"],
-                  },
-                },
-                {
-                  name: "spawn_units",
-                  description: "Requests local swarm unit deployment.",
-                  parameters: {
-                    type: Type.OBJECT,
-                    properties: {
-                      zone_id: {
-                        type: Type.STRING,
-                        enum: Object.values(ZONES),
-                      },
-                      unit_type: { type: Type.STRING, enum: ["ground", "air"] },
-                      count: { type: Type.INTEGER },
-                      behavior_profile: {
-                        type: Type.STRING,
-                        enum: ["assault", "patrol", "recon"],
+                  functionDeclarations: [
+                    {
+                      name: "move_group",
+                      description: "Defines group zone movement order.",
+                      parameters: {
+                        type: Type.OBJECT,
+                        properties: {
+                          group_id: { type: Type.STRING },
+                          target_zone: {
+                            type: Type.STRING,
+                            enum: Object.values(ZONES),
+                          },
+                          priority: {
+                            type: Type.STRING,
+                            enum: ["low", "normal", "high"],
+                          },
+                        },
+                        required: ["group_id", "target_zone", "priority"],
                       },
                     },
-                    required: [
-                      "zone_id",
-                      "unit_type",
-                      "count",
-                      "behavior_profile",
-                    ],
-                  },
-                },
-                {
-                  name: "hold_position",
-                  description: "Enforces defensive lock stance.",
-                  parameters: {
-                    type: Type.OBJECT,
-                    properties: {
-                      group_id: { type: Type.STRING },
-                      duration_seconds: { type: Type.INTEGER },
+                    {
+                      name: "merge_groups",
+                      description: "Unifies two active control groups.",
+                      parameters: {
+                        type: Type.OBJECT,
+                        properties: {
+                          source_group_id: { type: Type.STRING },
+                          target_group_id: { type: Type.STRING },
+                        },
+                        required: ["source_group_id", "target_group_id"],
+                      },
                     },
-                    required: ["group_id", "duration_seconds"],
-                  },
-                },
-                {
-                  name: "sustain",
-                  description: "Pass execution for this cycle.",
-                  parameters: {
-                    type: Type.OBJECT,
-                    properties: {
-                      reason: { type: Type.STRING },
+                    {
+                      name: "split_group",
+                      description:
+                        "Subdivides a group to create supplementary wings.",
+                      parameters: {
+                        type: Type.OBJECT,
+                        properties: {
+                          source_group_id: { type: Type.STRING },
+                          unit_count: { type: Type.INTEGER },
+                        },
+                        required: ["source_group_id", "unit_count"],
+                      },
                     },
-                    required: ["reason"],
-                  },
+                    {
+                      name: "spawn_units",
+                      description: "Requests local swarm unit deployment.",
+                      parameters: {
+                        type: Type.OBJECT,
+                        properties: {
+                          zone_id: {
+                            type: Type.STRING,
+                            enum: Object.values(ZONES),
+                          },
+                          unit_type: { type: Type.STRING, enum: ["ground", "air"] },
+                          count: { type: Type.INTEGER },
+                          behavior_profile: {
+                            type: Type.STRING,
+                            enum: ["assault", "patrol", "recon"],
+                          },
+                        },
+                        required: [
+                          "zone_id",
+                          "unit_type",
+                          "count",
+                          "behavior_profile",
+                        ],
+                      },
+                    },
+                    {
+                      name: "hold_position",
+                      description: "Enforces defensive lock stance.",
+                      parameters: {
+                        type: Type.OBJECT,
+                        properties: {
+                          group_id: { type: Type.STRING },
+                          duration_seconds: { type: Type.INTEGER },
+                        },
+                        required: ["group_id", "duration_seconds"],
+                      },
+                    },
+                    {
+                      name: "sustain",
+                      description: "Pass execution for this cycle.",
+                      parameters: {
+                        type: Type.OBJECT,
+                        properties: {
+                          reason: { type: Type.STRING },
+                        },
+                        required: ["reason"],
+                      },
+                    },
+                  ],
                 },
               ],
             },
-          ],
-        },
-      });
+          });
+          usedModel = modelName;
+          lastError = null;
+          break;
+        } catch (err: any) {
+          lastError = err;
+          if (isRateLimitedError(err)) {
+            console.warn(`[LLMCommander] Model '${modelName}' rate limited. Attempting fallback Flash model...`);
+            continue;
+          }
+          break;
+        }
+      }
+
+      if (!response && lastError) {
+        throw lastError;
+      }
 
       const calls = response.functionCalls;
       if (calls && calls.length > 0) {
         this.room.lastLLMToolCall = JSON.stringify(calls);
+      }
+      this.recentExecutionHistory.push({
+        timestamp: Date.now(),
+        payload: statePayload,
+        calls: calls ? calls : [],
+        failedOps: [...this.room.failedOperations],
+      });
+      if (this.recentExecutionHistory.length > 10) {
+        this.recentExecutionHistory.shift();
       }
       const llmLatency = Date.now() - _llmStartTime;
       this.room.broadcastReliableEvent.bind(this.room)({
@@ -169,6 +227,7 @@ Topological graph adjacency (Zones):
         latency: llmLatency,
         count: this.room.apiCallCount,
         failedOps: [...this.room.failedOperations],
+        modelUsed: usedModel,
       });
 
       if (calls && calls.length > 0) {
@@ -421,5 +480,59 @@ Topological graph adjacency (Zones):
         this.room.failedOperations.push(`Processor fail: ${errMsg}`);
       }
     }
+  }
+
+  public async interviewLLM(question: string): Promise<string> {
+    const key = process.env.GEMINI_API_KEY;
+    if (!this.geminiClient && key) {
+      this.initLLMCommander(key);
+    }
+    if (!this.geminiClient) {
+      return "ERROR: Gemini API client not initialized. GEMINI_API_KEY environment variable missing or empty.";
+    }
+    if (Date.now() < this.geminiThrottleCooldownUntil) {
+      return "THROTTLED: Gemini API cooling down after prior rate limits. Retry shortly.";
+    }
+
+    const systemInstruction = `You are an automated state-machine log parser and execution analyzer for a group routing and unit allocation system. You are not roleplaying. There is no narrative. Provide clinical, mechanical, objective, and dry explanations for unit group routing, state changes, zone allocations, and resource counts. Answer the inquiry directly using the provided spatial state and recent execution history. Never adopt any persona, roleplay, or larp.`;
+
+    const statePayload = JSON.stringify(this.room.zoneSummary);
+    const historyPayload = JSON.stringify(this.recentExecutionHistory.slice(-5));
+
+    const prompt = `CURRENT STATE:\n${statePayload}\n\nRECENT EXECUTION HISTORY:\n${historyPayload}\n\nINQUIRY:\n${question}`;
+
+    let responseText = "";
+    let lastError: any = null;
+
+    for (const modelName of FLASH_MODELS) {
+      try {
+        const response = await this.geminiClient.models.generateContent({
+          model: modelName,
+          contents: prompt,
+          config: {
+            systemInstruction,
+          },
+        });
+        responseText = response.text || "No analytical output generated by LLM Commander.";
+        lastError = null;
+        break;
+      } catch (err: any) {
+        lastError = err;
+        if (isRateLimitedError(err)) {
+          console.warn(`[LLMCommander Interview] Model '${modelName}' rate limited. Attempting fallback Flash model...`);
+          continue;
+        }
+        break;
+      }
+    }
+
+    if (!responseText && lastError) {
+      const rawErrMsg = lastError?.error?.message || lastError?.message || String(lastError);
+      const errMsg =
+        typeof rawErrMsg === "object" ? JSON.stringify(rawErrMsg) : rawErrMsg;
+      return `ERROR processing inquiry: ${errMsg}`;
+    }
+
+    return responseText;
   }
 }

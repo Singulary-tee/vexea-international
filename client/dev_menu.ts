@@ -23,6 +23,78 @@ let outboundIdx = 0;
 let logs: string[] = [];
 let devLlmDisabled = false;
 
+export interface LLMInterviewMessage {
+    question: string;
+    answer: string;
+    timestamp: number;
+    pending?: boolean;
+}
+
+const devLlmConversationHistory: LLMInterviewMessage[] = [];
+
+function escapeHtml(str: string): string {
+    return str
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+
+function updateLLMConversationUI() {
+    const box = document.getElementById("dev-llm-conversation-box");
+    if (!box) return;
+
+    if (devLlmConversationHistory.length === 0) {
+        box.innerHTML = `<div style="color:${DS.colors.textMuted}; font-style:italic;">No debrief entries logged yet. Enter an inquiry below to interview the LLM Commander regarding unit movements, zone prioritization, or group execution routing.</div>`;
+        return;
+    }
+
+    let html = "";
+    for (let i = 0; i < devLlmConversationHistory.length; i++) {
+        const item = devLlmConversationHistory[i];
+        const timeStr = new Date(item.timestamp).toLocaleTimeString();
+        html += `
+            <div style="margin-bottom:12px; border-bottom:${DS.borders.thin} #222; padding-bottom:10px;">
+                <div style="color:${DS.colors.accent}; font-weight:bold; margin-bottom:3px;">
+                    [${timeStr}] DEVELOPER INQUIRY:
+                </div>
+                <div style="color:${DS.colors.text}; margin-bottom:6px; padding-left:8px; border-left:2px solid ${DS.colors.accent}; font-weight:bold;">
+                    ${escapeHtml(item.question)}
+                </div>
+                <div style="color:${DS.colors.success}; font-weight:bold; margin-bottom:3px;">
+                    COMMANDER ANALYTICAL DEBRIEF:
+                </div>
+                <div style="color:${item.pending ? '#eab308' : '#38bdf8'}; padding-left:8px; border-left:2px solid ${item.pending ? '#eab308' : '#38bdf8'}; white-space:pre-wrap;">
+                    ${item.pending ? "<i>[ANALYZING RECENT EXECUTION LOGS & SEMANTIC STATE...]</i>" : escapeHtml(item.answer)}
+                </div>
+            </div>
+        `;
+    }
+    box.innerHTML = html;
+    box.scrollTop = box.scrollHeight;
+}
+
+function sendLLMInterview() {
+    const inputEl = document.getElementById("dev-llm-interview-input") as HTMLInputElement;
+    if (!inputEl) return;
+    const question = inputEl.value.trim();
+    if (!question) return;
+
+    devLlmConversationHistory.push({
+        question,
+        answer: "",
+        timestamp: Date.now(),
+        pending: true
+    });
+    inputEl.value = "";
+    updateLLMConversationUI();
+
+    if (activeChannel) {
+        activeChannel.emit("dev_interview_llm", { question });
+    }
+}
+
 // AI NAV state
 let navPanX = 0;
 let navPanY = 0;
@@ -470,8 +542,8 @@ export function receivedLLMFeed(data: any) {
     if (!isDev || !data) return;
     llmFeed = data;
     if (activePanel === "LLM FEED") {
-        const el = document.getElementById("dev-llm");
-        if (el) {
+        const targetEl = document.getElementById("dev-llm-telemetry") || document.getElementById("dev-llm");
+        if (targetEl) {
             const tempPay = data.payload === undefined || data.payload === null ? "" : data.payload;
             const tempCalls = data.calls === undefined || data.calls === null ? "[]" : data.calls;
             
@@ -510,10 +582,12 @@ export function receivedLLMFeed(data: any) {
                 ? data.failedOps.map((op: any) => `<div style="color:#ff3333;">REJECTED: ${JSON.stringify(op)}</div>`).join("")
                 : `<span style="color:${DS.colors.textMuted};">Zero command failures in last cycle</span>`;
 
-            el.innerHTML = `
+            const activeModel = data.modelUsed || "gemini-2.5-flash";
+
+            targetEl.innerHTML = `
                 <div style="background:${DS.colors.surface}; padding:${DS.spacing.md}; border:${DS.borders.thin} ${DS.colors.border}; border-radius:${DS.borders.radius.sm}; font-family:${DS.typography.fontFamilyMono}; font-size:${DS.typography.tiny}; margin-bottom:15px; line-height:1.4;">
                     <div style="font-weight:bold; color:${DS.colors.accent}; margin-bottom:5px;">[LLM COMMANDER OVERVIEW]</div>
-                    <div>ACTIVE MODEL: <span style="color:${DS.colors.text}; font-weight:bold;">gemini-3.5-flash (Server-Authoritative)</span></div>
+                    <div>ACTIVE MODEL: <span style="color:${DS.colors.text}; font-weight:bold;">${activeModel} (Server-Authoritative)</span></div>
                     <div>RESPONSE STATUS: <span style="color:${hasError ? '#f33' : 'lime'}; font-weight:bold;">${hasError ? 'FAILED' : 'RESPONDED SUCCESSFULLY'}</span></div>
                     <div>LATENCY: <span style="color:${DS.colors.text};">${lastLatency} ms</span> | TOTAL CALLS: <span style="color:${DS.colors.text};">${totalCallsCount}</span></div>
                 </div>
@@ -642,6 +716,24 @@ export function initDevMenu(channel: any, jitterMap: any) {
         }
         
         channel.on("dev_llm_feed", (data: any) => receivedLLMFeed(data));
+        channel.on("dev_llm_interview_response", (data: any) => {
+            if (!data) return;
+            const idx = devLlmConversationHistory.findIndex(
+                item => item.pending && item.question === data.question
+            );
+            if (idx !== -1) {
+                devLlmConversationHistory[idx].answer = data.answer || "No response generated";
+                devLlmConversationHistory[idx].pending = false;
+            } else {
+                devLlmConversationHistory.push({
+                    question: data.question,
+                    answer: data.answer || "No response generated",
+                    timestamp: data.timestamp || Date.now(),
+                    pending: false
+                });
+            }
+            updateLLMConversationUI();
+        });
         channel.on("dev_server_tick_ms", (data: any) => {
             (window as any).devServerTickMs = data.tickMs;
         });
@@ -677,14 +769,15 @@ export function initDevMenu(channel: any, jitterMap: any) {
 
     // Construct DOM
     const btn = document.createElement("button");
+    btn.id = "dev-menu-btn";
     btn.innerText = "DEV";
-    btn.style.cssText = "position:absolute;top:10px;left:10px;z-index:999999;background:#f0f;color:${DS.colors.text};font-weight:bold;padding:${DS.spacing.sm} 10px;border:none;cursor:pointer;pointer-events:auto;";
+    btn.style.cssText = `position:absolute;top:10px;left:10px;z-index:999999;background:#f0f;color:${DS.colors.text};font-weight:bold;padding:${DS.spacing.sm} 10px;border:none;cursor:pointer;pointer-events:auto;`;
     btn.onclick = () => toggleDevMenu();
     document.body.appendChild(btn);
 
     const overlay = document.createElement("div");
     overlay.id = "dev-overlay";
-    overlay.style.cssText = "display:none;position:absolute;inset:0;background:${DS.shadows.overlay};z-index:999998;pointer-events:auto;color:${DS.colors.success};font-family:${DS.typography.fontFamilyMono};padding:${DS.spacing.md};flex-direction:column;";
+    overlay.style.cssText = `display:none;position:absolute;inset:0;background:rgba(10,10,12,0.95);backdrop-filter:blur(6px);z-index:999998;pointer-events:auto;color:${DS.colors.success};font-family:${DS.typography.fontFamilyMono};padding:${DS.spacing.md};flex-direction:column;`;
     
     const tabs = ["VIS DIAG", "GAME CONTROL", "PHYSICS", "CHEATS", "WEPS", "CAM_FX", "CONSOLE", "LLM FEED", "AI NAV", "PERF", "NETWORK", "ZONES", "ENTITIES", "COLLISIONS"];
     const header = document.createElement("div");
@@ -749,10 +842,6 @@ function renderPanel() {
             <div id="dev-loadout-buttons" style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom: 20px;">
                 ${Object.values(CLASSES).map(c => `<button data-class="${c.id}" style="padding:${DS.spacing.sm};">${c.displayName}</button>`).join('')}
             </div>
-            <h3>LLM Commander</h3>
-            <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom: 20px;">
-                <button id="dev-toggle-llm" style="padding:${DS.spacing.sm};">${devLlmDisabled ? "ENABLE LLM COMMANDER" : "DISABLE LLM COMMANDER"}</button>
-            </div>
             <h3 style="color:${DS.colors.danger};">[DEV] ONBOARDING & ACCOUNT RESET</h3>
             <div style="display:flex; gap:10px; flex-wrap:wrap;">
                 <button id="dev-wipe-guest-btn" style="padding:${DS.spacing.sm} ${DS.spacing.md}; background:${DS.colors.danger}; color:white; font-weight:bold; border:none; cursor:pointer;">[DEV] WIPE GUEST & RESET ONBOARDING</button>
@@ -786,15 +875,6 @@ function renderPanel() {
                 }
             });
         });
-
-        const toggleLlmBtn = document.getElementById('dev-toggle-llm');
-        if (toggleLlmBtn) {
-            toggleLlmBtn.addEventListener('click', () => {
-                devLlmDisabled = !devLlmDisabled;
-                toggleLlmBtn.innerText = devLlmDisabled ? "ENABLE LLM COMMANDER" : "DISABLE LLM COMMANDER";
-                if (activeChannel) activeChannel.emit("dev_toggle_llm", { disabled: devLlmDisabled });
-            });
-        }
     }
     else if (activePanel === "ENTITIES") {
         c.innerHTML = `
@@ -1831,7 +1911,75 @@ function renderPanel() {
         }
     }
     else if (activePanel === "CONSOLE") c.innerHTML = "<div id='dev-console' style='white-space:pre-wrap;overflow-y:auto;height:100%;'></div>";
-    else if (activePanel === "LLM FEED") c.innerHTML = "<div id='dev-llm' style='white-space:pre-wrap;overflow-y:auto;height:100%;'></div>";
+    else if (activePanel === "LLM FEED") {
+        c.innerHTML = `
+            <div id="dev-llm" style="white-space:normal; overflow-y:auto; height:100%; font-family:${DS.typography.fontFamilyMono}; font-size:${DS.typography.tiny}; display:flex; flex-direction:column; gap:15px; padding-right:5px;">
+                <div style="background:${DS.colors.surface}; padding:${DS.spacing.md}; border:${DS.borders.thin} ${DS.colors.border}; border-radius:${DS.borders.radius.sm}; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+                    <div>
+                        <span style="font-weight:bold; color:${DS.colors.accent};">[LLM COMMANDER DEV TAB]</span>
+                        <span style="color:${DS.colors.textMuted}; font-size:9px; margin-left:10px;">Model: gemini-3.5-flash</span>
+                    </div>
+                    <button id="dev-toggle-llm" style="padding:6px 12px; font-weight:bold; background:${devLlmDisabled ? '#0a0' : '#a00'}; color:white; border:none; cursor:pointer; border-radius:3px;">${devLlmDisabled ? "ENABLE LLM COMMANDER" : "DISABLE LLM COMMANDER"}</button>
+                </div>
+
+                <div id="dev-llm-telemetry">
+                    <div style="background:${DS.colors.surface}; padding:${DS.spacing.md}; border:${DS.borders.thin} ${DS.colors.border}; border-radius:${DS.borders.radius.sm}; color:${DS.colors.textMuted}; font-style:italic;">
+                        Awaiting next LLM execution telemetry packet...
+                    </div>
+                </div>
+
+                <div style="background:${DS.colors.surface}; padding:${DS.spacing.md}; border:${DS.borders.thin} ${DS.colors.border}; border-radius:${DS.borders.radius.sm}; margin-bottom:20px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                        <div style="font-weight:bold; color:#0cf;">[SYSTEM DEBRIEF & INTERVIEW CONVERSATION]</div>
+                        <button id="dev-llm-interview-clear" style="padding:2px 8px; background:#333; color:#aaa; border:1px solid #555; cursor:pointer; font-size:9px; border-radius:3px;">CLEAR CHAT</button>
+                    </div>
+                    <div id="dev-llm-conversation-box" style="background:${DS.colors.background}; border:${DS.borders.thin} ${DS.colors.border}; border-radius:${DS.borders.radius.sm}; padding:${DS.spacing.md}; height:180px; overflow-y:auto; margin-bottom:10px; font-size:10px; line-height:1.5;">
+                    </div>
+                    <div style="display:flex; gap:10px;">
+                        <input type="text" id="dev-llm-interview-input" placeholder="Interview LLM Commander (e.g. Why did you move group G_ALPHA to zone_core?)" style="flex:1; background:${DS.colors.background}; color:${DS.colors.text}; border:${DS.borders.thin} ${DS.colors.border}; padding:6px 10px; border-radius:3px; font-family:${DS.typography.fontFamilyMono}; font-size:11px;" />
+                        <button id="dev-llm-interview-send" style="padding:6px 14px; background:${DS.colors.dev}; color:${DS.colors.text}; font-weight:bold; border:none; cursor:pointer; border-radius:3px; font-family:${DS.typography.fontFamilyMono};">ASK COMMANDER</button>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        const toggleLlmBtn = document.getElementById('dev-toggle-llm');
+        if (toggleLlmBtn) {
+            toggleLlmBtn.addEventListener('click', () => {
+                devLlmDisabled = !devLlmDisabled;
+                toggleLlmBtn.innerText = devLlmDisabled ? "ENABLE LLM COMMANDER" : "DISABLE LLM COMMANDER";
+                toggleLlmBtn.style.background = devLlmDisabled ? '#0a0' : '#a00';
+                if (activeChannel) activeChannel.emit("dev_toggle_llm", { disabled: devLlmDisabled });
+            });
+        }
+
+        const sendBtn = document.getElementById('dev-llm-interview-send');
+        if (sendBtn) {
+            sendBtn.addEventListener('click', sendLLMInterview);
+        }
+
+        const inputEl = document.getElementById('dev-llm-interview-input');
+        if (inputEl) {
+            inputEl.addEventListener('keydown', (e: KeyboardEvent) => {
+                if (e.key === 'Enter') {
+                    sendLLMInterview();
+                }
+            });
+        }
+
+        const clearBtn = document.getElementById('dev-llm-interview-clear');
+        if (clearBtn) {
+            clearBtn.addEventListener('click', () => {
+                devLlmConversationHistory.length = 0;
+                updateLLMConversationUI();
+            });
+        }
+
+        if (llmFeed) {
+            receivedLLMFeed(llmFeed);
+        }
+        updateLLMConversationUI();
+    }
     else if (activePanel === "PERF") c.innerHTML = "<div id='dev-perf' style='white-space:pre-wrap;overflow-y:auto;height:100%;'></div>";
     else if (activePanel === "NETWORK") {
         c.innerHTML = "<div id='dev-network' style='white-space:pre-wrap;overflow-y:auto;height:100%;'></div>";

@@ -151,7 +151,31 @@ export class NetworkSyncSystem {
       const py = view.getFloat32(12, true);
       const pz = view.getFloat32(16, true);
 
-      const idx = this.match.moveHistory.findIndex((h) => h.seq === lastSeq);
+      let idx = -1;
+      if (this.match.moveHistory.length > 0) {
+        const firstSeq = this.match.moveHistory[0].seq;
+        const estimatedIdx = lastSeq - firstSeq;
+        if (estimatedIdx >= 0 && estimatedIdx < this.match.moveHistory.length && this.match.moveHistory[estimatedIdx].seq === lastSeq) {
+          idx = estimatedIdx;
+        } else {
+          // Fallback to optimized binary search
+          let low = 0;
+          let high = this.match.moveHistory.length - 1;
+          while (low <= high) {
+            const mid = (low + high) >> 1;
+            const midSeq = this.match.moveHistory[mid].seq;
+            if (midSeq === lastSeq) {
+              idx = mid;
+              break;
+            } else if (midSeq < lastSeq) {
+              low = mid + 1;
+            } else {
+              high = mid - 1;
+            }
+          }
+        }
+      }
+
       if (idx !== -1) {
         const hist = this.match.moveHistory[idx];
         const dx = hist.x - px;
