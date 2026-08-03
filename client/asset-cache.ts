@@ -223,6 +223,12 @@ export async function populateBlobUrlMap(): Promise<void> {
  */
 export const MAP_1_ASSETS = [
   "grenade.glb",
+  "attachments-optimized.glb",
+  "brn_180-optimized.glb",
+  "f_90-optimized.glb",
+  "hk_51-optimized.glb",
+  "scar_h_mk_17-optimized.glb",
+  "scar_l-optimized.glb",
   ...Object.keys(ASSET_STRUCTURE),
   "concrete_fence_low-poly.glb",
   "security_camera_01_1k.gltf.glb",
@@ -328,6 +334,10 @@ export async function getCachedOrFetchUrl(
 
     // 3. Download from appropriate GitHub Release CDN
     const r2Map: Record<string, string> = {
+      ...Object.keys(ASSET_STRUCTURE).reduce((acc, key) => {
+        acc[key] = `Models/Entities/${key}`;
+        return acc;
+      }, {} as Record<string, string>),
       "main_menu_1.webm": "Video/Backgrounds/main_menu_1.webm",
       "click.opus": "Audio/Sfx/click.opus",
       "vexea_theme.opus": "Audio/Music/vexea_theme.opus",
@@ -346,10 +356,12 @@ export async function getCachedOrFetchUrl(
       "promo_rifle_1.webp": "Images/promotional/promo_rifle_1.webp",
       "promo_pistol_1.webp": "Images/promotional/promo_pistol_1.webp",
       "promo_shotgun_1.webp": "Images/promotional/promo_shotgun_1.webp",
-      ...Object.keys(ASSET_STRUCTURE).reduce((acc, key) => {
-        acc[key] = `Models/Entities/${key}`;
-        return acc;
-      }, {} as Record<string, string>)
+      "attachments-optimized.glb": "Models/Weapons/attachments-optimized.glb",
+      "brn_180-optimized.glb": "Models/Weapons/brn_180-optimized.glb",
+      "f_90-optimized.glb": "Models/Weapons/f_90-optimized.glb",
+      "hk_51-optimized.glb": "Models/Weapons/hk_51-optimized.glb",
+      "scar_h_mk_17-optimized.glb": "Models/Weapons/scar_h_mk_17-optimized.glb",
+      "scar_l-optimized.glb": "Models/Weapons/scar_l-optimized.glb"
     };
 
     let downloadUrl = "";

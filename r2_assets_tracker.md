@@ -27,4 +27,10 @@
 | `quadcopter_rifle-optimized.glb` | Asset | `Models/Entities/quadcopter_rifle-optimized.glb` |
 | `uav-optimized.glb` | Asset | `Models/Entities/uav-optimized.glb` |
 | `ugv-optimized.glb` | Asset | `Models/Entities/ugv-optimized.glb` |
+| `attachments-optimized.glb` | Asset | `Models/Weapons/attachments-optimized.glb` |
+| `brn_180-optimized.glb` | Asset | `Models/Weapons/brn_180-optimized.glb` |
+| `f_90-optimized.glb` | Asset | `Models/Weapons/f_90-optimized.glb` |
+| `hk_51-optimized.glb` | Asset | `Models/Weapons/hk_51-optimized.glb` |
+| `scar_h_mk_17-optimized.glb` | Asset | `Models/Weapons/scar_h_mk_17-optimized.glb` |
+| `scar_l-optimized.glb` | Asset | `Models/Weapons/scar_l-optimized.glb` |
 

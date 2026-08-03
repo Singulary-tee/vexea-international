@@ -2849,6 +2849,128 @@ export const ASSET_STRUCTURE: Record<string, GLBMetadata> = {
       }
     ],
     "skins": []
+  },
+  "attachments-optimized.glb": {
+    "label": "Weapon Attachments",
+    "materialsCount": 19,
+    "texturesCount": 28,
+    "imagesCount": 28,
+    "animations": [],
+    "nodes": [
+      { "index": 0, "name": "attachments", "depth": 0, "parentIndex": null, "parentName": "ROOT", "hasMesh": false, "meshIndex": -1, "meshName": null, "bbox": null },
+      { "index": 1, "name": "SK_Pistol_light_X300", "depth": 1, "parentIndex": 0, "parentName": "attachments", "hasMesh": false, "meshIndex": -1, "meshName": null, "bbox": null },
+      { "index": 7, "name": "Object_25", "depth": 3, "parentIndex": 2, "parentName": "Object_19", "hasMesh": true, "meshIndex": 0, "meshName": "Sketchfab_Scene_SK_Pistol_light_X300_001_MI_Cubicle_Glass_001_0", "bbox": { "min": [101.6331, 1.7704, 45.2638], "max": [103.8522, 3.9895, 45.2638], "size": [2.2191, 2.2191, 0] } },
+      { "index": 8, "name": "Object_26", "depth": 3, "parentIndex": 2, "parentName": "Object_19", "hasMesh": true, "meshIndex": 1, "meshName": "Sketchfab_Scene_SK_Pistol_light_X300_001_MI_Flashight_M600V_Inst_0", "bbox": { "min": [100.7685, 1.144, 36.3598], "max": [104.1437, 4.6159, 45.4143], "size": [3.3752, 3.4719, 9.0545] } },
+      { "index": 9, "name": "SK_suppressor_gm9", "depth": 1, "parentIndex": 0, "parentName": "attachments", "hasMesh": false, "meshIndex": -1, "meshName": null, "bbox": null },
+      { "index": 14, "name": "Object_489", "depth": 3, "parentIndex": 10, "parentName": "Object_484", "hasMesh": true, "meshIndex": 2, "meshName": "Sketchfab_Scene_SK_suppressor_gm9_001_MI_Attachment_GM9_0", "bbox": { "min": [-2.2889, 1.4776, 34.959], "max": [0.7822, 4.5316, 54.6604], "size": [3.0711, 3.0541, 19.7015] } },
+      { "index": 15, "name": "sk_optic_acog_rds", "depth": 1, "parentIndex": 0, "parentName": "attachments", "hasMesh": false, "meshIndex": -1, "meshName": null, "bbox": null },
+      { "index": 25, "name": "Object_510", "depth": 3, "parentIndex": 16, "parentName": "Object_500", "hasMesh": true, "meshIndex": 5, "meshName": "Sketchfab_Scene_sk_optic_acog_rds_001_MI_Optic_ACOG_0", "bbox": { "min": [-15.6546, -0.5659, -10.5698], "max": [-5.1139, 6.7521, 6.5087], "size": [10.5406, 7.318, 17.0785] } },
+      { "index": 31, "name": "sk_rif_laser", "depth": 1, "parentIndex": 0, "parentName": "attachments", "hasMesh": false, "meshIndex": -1, "meshName": null, "bbox": null },
+      { "index": 37, "name": "Object_523", "depth": 3, "parentIndex": 32, "parentName": "Object_517", "hasMesh": true, "meshIndex": 11, "meshName": "Sketchfab_Scene_sk_rif_laser_001_MI_Laser_Rif_0", "bbox": { "min": [95.6972, -3.2101, 38.1756], "max": [101.4839, 0.5892, 47.9535], "size": [5.7868, 3.7993, 9.7779] } },
+      { "index": 38, "name": "sm_optic_atacr18", "depth": 1, "parentIndex": 0, "parentName": "attachments", "hasMesh": false, "meshIndex": -1, "meshName": null, "bbox": null },
+      { "index": 46, "name": "Object_533", "depth": 3, "parentIndex": 39, "parentName": "Object_525", "hasMesh": true, "meshIndex": 12, "meshName": "Sketchfab_Scene_sm_optic_atacr18_001_MI_Optic_ATACR_0", "bbox": { "min": [85.7572, -0.6094, -3.7828], "max": [91.5564, 6.3694, 21.6421], "size": [5.7992, 6.9788, 25.4249] } },
+      { "index": 51, "name": "Holosight_512", "depth": 1, "parentIndex": 0, "parentName": "attachments", "hasMesh": false, "meshIndex": -1, "meshName": null, "bbox": null },
+      { "index": 60, "name": "Object_16", "depth": 3, "parentIndex": 52, "parentName": "Object_7", "hasMesh": true, "meshIndex": 18, "meshName": "Sketchfab_Scene_Holosight_512_001_Optic_1P_HOLO_INST_0", "bbox": { "min": [-15.3733, -2.9514, 95.8976], "max": [-7.8193, 3.0559, 112.0786], "size": [7.5541, 6.0072, 16.181] } }
+    ]
+  },
+  "brn_180-optimized.glb": {
+    "label": "BRN-180 Rifle",
+    "materialsCount": 2,
+    "texturesCount": 6,
+    "imagesCount": 6,
+    "animations": [],
+    "nodes": [
+      { "index": 0, "name": "BRN180", "depth": 0, "parentIndex": null, "parentName": "ROOT", "hasMesh": false, "meshIndex": -1, "meshName": null, "bbox": null },
+      { "index": 3, "name": "_rootJoint", "depth": 3, "parentIndex": 2, "parentName": "Object_219", "hasMesh": false, "meshIndex": -1, "meshName": null, "bbox": null },
+      { "index": 4, "name": "J_Gun_0104", "depth": 4, "parentIndex": 3, "parentName": "_rootJoint", "hasMesh": false, "meshIndex": -1, "meshName": null, "bbox": null },
+      { "index": 22, "name": "tag_bolt_0116", "depth": 5, "parentIndex": 4, "parentName": "J_Gun_0104", "hasMesh": false, "meshIndex": -1, "meshName": null, "bbox": null },
+      { "index": 36, "name": "tag_muzzle_0126", "depth": 8, "parentIndex": 35, "parentName": "tag_barrel_2_0125", "hasMesh": false, "meshIndex": -1, "meshName": null, "bbox": null },
+      { "index": 40, "name": "tag_trigger_0129", "depth": 5, "parentIndex": 4, "parentName": "J_Gun_0104", "hasMesh": false, "meshIndex": -1, "meshName": null, "bbox": null },
+      { "index": 46, "name": "combat_grip_0132", "depth": 5, "parentIndex": 4, "parentName": "J_Gun_0104", "hasMesh": false, "meshIndex": -1, "meshName": null, "bbox": null },
+      { "index": 50, "name": "mault_socket_0134", "depth": 5, "parentIndex": 4, "parentName": "J_Gun_0104", "hasMesh": false, "meshIndex": -1, "meshName": null, "bbox": null },
+      { "index": 56, "name": "laser_socket_0137", "depth": 5, "parentIndex": 4, "parentName": "J_Gun_0104", "hasMesh": false, "meshIndex": -1, "meshName": null, "bbox": null },
+      { "index": 60, "name": "EXPS3_socket_0139", "depth": 5, "parentIndex": 4, "parentName": "J_Gun_0104", "hasMesh": false, "meshIndex": -1, "meshName": null, "bbox": null },
+      { "index": 62, "name": "MicroT2Raised_socket_0140", "depth": 5, "parentIndex": 4, "parentName": "J_Gun_0104", "hasMesh": false, "meshIndex": -1, "meshName": null, "bbox": null },
+      { "index": 64, "name": "socom338_socket_0141", "depth": 5, "parentIndex": 4, "parentName": "J_Gun_0104", "hasMesh": false, "meshIndex": -1, "meshName": null, "bbox": null },
+      { "index": 68, "name": "sdr_socket_0143", "depth": 5, "parentIndex": 4, "parentName": "J_Gun_0104", "hasMesh": false, "meshIndex": -1, "meshName": null, "bbox": null },
+      { "index": 70, "name": "Reflex_Socket_0144", "depth": 5, "parentIndex": 4, "parentName": "J_Gun_0104", "hasMesh": false, "meshIndex": -1, "meshName": null, "bbox": null },
+      { "index": 78, "name": "HS510C_socket_0148", "depth": 5, "parentIndex": 4, "parentName": "J_Gun_0104", "hasMesh": false, "meshIndex": -1, "meshName": null, "bbox": null },
+      { "index": 84, "name": "Object_302", "depth": 3, "parentIndex": 2, "parentName": "Object_219", "hasMesh": true, "meshIndex": 0, "meshName": "Sketchfab_Scene_SK_Rif_BRN180_001_MI_1P_BRN180_0", "bbox": { "min": [-108.4853, -4.6181, -32.2449], "max": [-87.0248, 2.8299, 38.7007], "size": [21.4606, 7.448, 70.9456] } }
+    ]
+  },
+  "f_90-optimized.glb": {
+    "label": "F90 Rifle",
+    "materialsCount": 3,
+    "texturesCount": 9,
+    "imagesCount": 9,
+    "animations": [],
+    "nodes": [
+      { "index": 0, "name": "f90", "depth": 0, "parentIndex": null, "parentName": "ROOT", "hasMesh": false, "meshIndex": -1, "meshName": null, "bbox": null },
+      { "index": 3, "name": "_rootJoint", "depth": 3, "parentIndex": 2, "parentName": "Object_305", "hasMesh": false, "meshIndex": -1, "meshName": null, "bbox": null },
+      { "index": 4, "name": "J_Gun_0151", "depth": 4, "parentIndex": 3, "parentName": "_rootJoint", "hasMesh": false, "meshIndex": -1, "meshName": null, "bbox": null },
+      { "index": 19, "name": "tag_bolt_0161", "depth": 5, "parentIndex": 4, "parentName": "J_Gun_0151", "hasMesh": false, "meshIndex": -1, "meshName": null, "bbox": null },
+      { "index": 35, "name": "tag_muzzle_0172", "depth": 8, "parentIndex": 34, "parentName": "tag_barrel_2_0171", "hasMesh": false, "meshIndex": -1, "meshName": null, "bbox": null },
+      { "index": 37, "name": "tag_trigger_0173", "depth": 5, "parentIndex": 4, "parentName": "J_Gun_0151", "hasMesh": false, "meshIndex": -1, "meshName": null, "bbox": null },
+      { "index": 44, "name": "Reflex_Socket_0177", "depth": 5, "parentIndex": 4, "parentName": "J_Gun_0151", "hasMesh": false, "meshIndex": -1, "meshName": null, "bbox": null },
+      { "index": 46, "name": "EXPS3_socket_0178", "depth": 5, "parentIndex": 4, "parentName": "J_Gun_0151", "hasMesh": false, "meshIndex": -1, "meshName": null, "bbox": null },
+      { "index": 48, "name": "MicroT2Raised_Socket_0179", "depth": 5, "parentIndex": 4, "parentName": "J_Gun_0151", "hasMesh": false, "meshIndex": -1, "meshName": null, "bbox": null },
+      { "index": 52, "name": "sdr_Socket_0181", "depth": 5, "parentIndex": 4, "parentName": "J_Gun_0151", "hasMesh": false, "meshIndex": -1, "meshName": null, "bbox": null },
+      { "index": 54, "name": "atac_Socket_0182", "depth": 5, "parentIndex": 4, "parentName": "J_Gun_0151", "hasMesh": false, "meshIndex": -1, "meshName": null, "bbox": null },
+      { "index": 58, "name": "combat_grip_0184", "depth": 5, "parentIndex": 4, "parentName": "J_Gun_0151", "hasMesh": false, "meshIndex": -1, "meshName": null, "bbox": null },
+      { "index": 60, "name": "socom338_socket_0185", "depth": 5, "parentIndex": 4, "parentName": "J_Gun_0151", "hasMesh": false, "meshIndex": -1, "meshName": null, "bbox": null },
+      { "index": 66, "name": "mault_socket_0188", "depth": 5, "parentIndex": 4, "parentName": "J_Gun_0151", "hasMesh": false, "meshIndex": -1, "meshName": null, "bbox": null },
+      { "index": 76, "name": "HS510C_socket_0193", "depth": 5, "parentIndex": 4, "parentName": "J_Gun_0151", "hasMesh": false, "meshIndex": -1, "meshName": null, "bbox": null },
+      { "index": 88, "name": "Object_392", "depth": 3, "parentIndex": 2, "parentName": "Object_305", "hasMesh": true, "meshIndex": 0, "meshName": "Sketchfab_Scene_SK_Rif_F90_001_F90_MI_0", "bbox": { "min": [-4.1702, -1.2484, -128.4533], "max": [13.9393, 5.7971, -56.2111], "size": [18.1095, 7.0455, 72.2422] } }
+    ]
+  },
+  "hk_51-optimized.glb": {
+    "label": "HK-51 Rifle",
+    "materialsCount": 2,
+    "texturesCount": 6,
+    "imagesCount": 6,
+    "animations": [],
+    "nodes": [
+      { "index": 0, "name": "HK51", "depth": 0, "parentIndex": null, "parentName": "ROOT", "hasMesh": false, "meshIndex": -1, "meshName": null, "bbox": null },
+      { "index": 4, "name": "J_Gun_08", "depth": 4, "parentIndex": 3, "parentName": "_rootJoint", "hasMesh": false, "meshIndex": -1, "meshName": null, "bbox": null },
+      { "index": 38, "name": "tag_muzzle_011", "depth": 8, "parentIndex": 37, "parentName": "tag_barrel_010", "hasMesh": false, "meshIndex": -1, "meshName": null, "bbox": null },
+      { "index": 52, "name": "EXPS3_socket_013", "depth": 5, "parentIndex": 4, "parentName": "J_Gun_08", "hasMesh": false, "meshIndex": -1, "meshName": null, "bbox": null },
+      { "index": 66, "name": "Object_121", "depth": 3, "parentIndex": 2, "parentName": "Object_28", "hasMesh": true, "meshIndex": 0, "meshName": "Sketchfab_Scene_SK_RIF_HK51_001_MI_1P_HK51_0", "bbox": { "min": [-92.4206, -3.8327, -25.2671], "max": [-75.4042, 3.8433, 27.6748], "size": [17.0164, 7.676, 52.9419] } }
+    ]
+  },
+  "scar_h_mk_17-optimized.glb": {
+    "label": "SCAR-H MK17",
+    "materialsCount": 2,
+    "texturesCount": 6,
+    "imagesCount": 6,
+    "animations": [],
+    "nodes": [
+      { "index": 0, "name": "scar_h", "depth": 0, "parentIndex": null, "parentName": "ROOT", "hasMesh": false, "meshIndex": -1, "meshName": null, "bbox": null },
+      { "index": 3, "name": "_rootJoint", "depth": 3, "parentIndex": 2, "parentName": "Object_252", "hasMesh": false, "meshIndex": -1, "meshName": null, "bbox": null },
+      { "index": 4, "name": "J_Gun_00", "depth": 4, "parentIndex": 3, "parentName": "_rootJoint", "hasMesh": false, "meshIndex": -1, "meshName": null, "bbox": null },
+      { "index": 21, "name": "tag_bolt_063", "depth": 5, "parentIndex": 4, "parentName": "J_Gun_00", "hasMesh": false, "meshIndex": -1, "meshName": null, "bbox": null },
+      { "index": 35, "name": "tag_muzzle_01", "depth": 8, "parentIndex": 34, "parentName": "tag_barrel_2_01", "hasMesh": false, "meshIndex": -1, "meshName": null, "bbox": null },
+      { "index": 41, "name": "tag_grip_075", "depth": 5, "parentIndex": 4, "parentName": "J_Gun_00", "hasMesh": false, "meshIndex": -1, "meshName": null, "bbox": null },
+      { "index": 45, "name": "tag_trigger_077", "depth": 5, "parentIndex": 4, "parentName": "J_Gun_00", "hasMesh": false, "meshIndex": -1, "meshName": null, "bbox": null },
+      { "index": 76, "name": "combat_grip_093", "depth": 5, "parentIndex": 4, "parentName": "J_Gun_00", "hasMesh": false, "meshIndex": -1, "meshName": null, "bbox": null },
+      { "index": 82, "name": "Object_336", "depth": 3, "parentIndex": 2, "parentName": "Object_252", "hasMesh": true, "meshIndex": 0, "meshName": "Sketchfab_Scene_SK_Rif_SCARH_001_MI_1P_SCAR_H_0", "bbox": { "min": [-106.6713, -5.0298, -26.963], "max": [-86.6436, 4.4144, 46.5936], "size": [20.0277, 9.4442, 73.5566] } }
+    ]
+  },
+  "scar_l-optimized.glb": {
+    "label": "SCAR-L",
+    "materialsCount": 2,
+    "texturesCount": 6,
+    "imagesCount": 6,
+    "animations": [],
+    "nodes": [
+      { "index": 0, "name": "scar_l", "depth": 0, "parentIndex": null, "parentName": "ROOT", "hasMesh": false, "meshIndex": -1, "meshName": null, "bbox": null },
+      { "index": 3, "name": "_rootJoint", "depth": 3, "parentIndex": 2, "parentName": "Object_244", "hasMesh": false, "meshIndex": -1, "meshName": null, "bbox": null },
+      { "index": 4, "name": "J_Gun_00", "depth": 4, "parentIndex": 3, "parentName": "_rootJoint", "hasMesh": false, "meshIndex": -1, "meshName": null, "bbox": null },
+      { "index": 22, "name": "tag_bolt_0211", "depth": 5, "parentIndex": 4, "parentName": "J_Gun_00", "hasMesh": false, "meshIndex": -1, "meshName": null, "bbox": null },
+      { "index": 35, "name": "tag_muzzle_01", "depth": 8, "parentIndex": 34, "parentName": "tag_barrel_2_01", "hasMesh": false, "meshIndex": -1, "meshName": null, "bbox": null },
+      { "index": 40, "name": "tag_trigger_0223", "depth": 5, "parentIndex": 4, "parentName": "J_Gun_00", "hasMesh": false, "meshIndex": -1, "meshName": null, "bbox": null },
+      { "index": 60, "name": "combat_grip_0233", "depth": 5, "parentIndex": 4, "parentName": "J_Gun_00", "hasMesh": false, "meshIndex": -1, "meshName": null, "bbox": null },
+      { "index": 82, "name": "Object_328", "depth": 3, "parentIndex": 2, "parentName": "Object_244", "hasMesh": true, "meshIndex": 0, "meshName": "Sketchfab_Scene_SK_Rif_SCARL_001_MI_1P_SCAR_L_0", "bbox": { "min": [-106.7725, -4.9547, -26.963], "max": [-86.6436, 4.4144, 46.5936], "size": [20.1289, 9.3691, 73.5566] } }
+    ]
   }
 };
 

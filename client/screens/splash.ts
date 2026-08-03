@@ -11,7 +11,13 @@ const TEXTURES_TO_PRELOAD: string[] = [
 ];
 
 const MODELS_TO_PRELOAD = [
-  'Player_one-optimized.glb'
+  'Player_one-optimized.glb',
+  'attachments-optimized.glb',
+  'brn_180-optimized.glb',
+  'f_90-optimized.glb',
+  'hk_51-optimized.glb',
+  'scar_h_mk_17-optimized.glb',
+  'scar_l-optimized.glb'
 ];
 
 const IMAGES_TO_PRELOAD = [
