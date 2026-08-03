@@ -11,6 +11,7 @@ import {
 import { ServerDrone } from "../MatchRoom";
 
 const MAX_DRONES = 40; // Hardcoded from MatchRoom
+const MAX_LLM_TOKENS_PER_MATCH = 55000; // Deliberate per-match token budget safety ceiling to protect against free-tier volatility
 
 const FLASH_MODELS = ["gemini-3.6-flash", "gemini-3.5-flash", "gemini-3.1-flash"];
 
@@ -59,6 +60,13 @@ export class LLMCommander {
 
   public async executeLLMStep() {
     if (!this.geminiClient) return;
+    if (this.room.llmTokensUsedThisMatch >= MAX_LLM_TOKENS_PER_MATCH) {
+      console.warn(
+        `[LLMCommander] Match token budget ceiling reached (${this.room.llmTokensUsedThisMatch} / ${MAX_LLM_TOKENS_PER_MATCH} tokens). Skipping API call and falling back to offline AI for rest of match.`,
+      );
+      this.room.offlineSystemFallbackAI();
+      return;
+    }
     const _llmStartTime = Date.now();
     this.room.apiCallCount++;
 
@@ -206,6 +214,14 @@ Topological graph adjacency (Zones):
         throw lastError;
       }
 
+      const callTokens =
+        response?.usageMetadata?.totalTokenCount ??
+        ((response?.usageMetadata?.promptTokenCount || 0) +
+          (response?.usageMetadata?.candidatesTokenCount || 0));
+      if (callTokens > 0) {
+        this.room.llmTokensUsedThisMatch += callTokens;
+      }
+
       const calls = response.functionCalls;
       if (calls && calls.length > 0) {
         this.room.lastLLMToolCall = JSON.stringify(calls);
@@ -226,6 +242,7 @@ Topological graph adjacency (Zones):
         calls: calls ? JSON.stringify(calls) : "[]",
         latency: llmLatency,
         count: this.room.apiCallCount,
+        tokensUsed: this.room.llmTokensUsedThisMatch,
         failedOps: [...this.room.failedOperations],
         modelUsed: usedModel,
       });
@@ -458,6 +475,7 @@ Topological graph adjacency (Zones):
         calls: JSON.stringify([{ error: errMsg }]),
         latency: llmLatency,
         count: this.room.apiCallCount,
+        tokensUsed: this.room.llmTokensUsedThisMatch,
         failedOps: [...this.room.failedOperations],
       });
 

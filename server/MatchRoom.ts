@@ -298,6 +298,7 @@ export class MatchRoom {
   public matchStartTime = 0;
   public cameras: ServerCamera[] = [];
   public apiCallCount = 0;
+  public llmTokensUsedThisMatch = 0;
   public failedOperations: string[] = [];
   public zoneSummary!: Record<ZoneName, ServerZoneState>;
 
@@ -3146,6 +3147,8 @@ export class MatchRoom {
       this.matchActive = true;
       this.serverTick = 0;
       this.matchStartTime = Date.now();
+      this.apiCallCount = 0;
+      this.llmTokensUsedThisMatch = 0;
       console.log(
         `[VEXEA SERVER] Match active! Triggering Loops in Room: ${this.roomId}`,
       );
