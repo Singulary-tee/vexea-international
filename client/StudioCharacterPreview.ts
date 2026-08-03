@@ -2,6 +2,10 @@ import * as THREE from "three/webgpu";
 import { DS } from "./design-system";
 import { StudioPreviewManager } from "./StudioPreviewManager";
 import { IS_DEV } from "../shared/gates/production.gate";
+import * as SkeletonUtils from "three/addons/utils/SkeletonUtils.js";
+import { getCachedOrFetchUrl, createConfiguredGLTFLoader } from "./asset-cache";
+import { attachScope, preloadAttachments } from "./weapons/AttachmentSystem";
+import { applyScenicGripPose } from "./weapons/GripSystem";
 
 export interface TransformConfig {
   posX: number;
@@ -14,44 +18,220 @@ export interface TransformConfig {
   keyLightIntensity: number;
   rimLightIntensity: number;
   ambLightIntensity: number;
+
+  // New IK/Weapon Overrides
+  wepPosX: number;
+  wepPosY: number;
+  wepPosZ: number;
+  wepRotX: number;
+  wepRotY: number;
+  wepRotZ: number;
+
+  rArmPosX: number;
+  rArmPosY: number;
+  rArmPosZ: number;
+  rArmRotX: number;
+  rArmRotY: number;
+  rArmRotZ: number;
+
+  rForeArmPosX: number;
+  rForeArmPosY: number;
+  rForeArmPosZ: number;
+  rForeArmRotX: number;
+  rForeArmRotY: number;
+  rForeArmRotZ: number;
+
+  rHandPosX: number;
+  rHandPosY: number;
+  rHandPosZ: number;
+  rHandRotX: number;
+  rHandRotY: number;
+  rHandRotZ: number;
+
+  lArmPosX: number;
+  lArmPosY: number;
+  lArmPosZ: number;
+  lArmRotX: number;
+  lArmRotY: number;
+  lArmRotZ: number;
+
+  lForeArmPosX: number;
+  lForeArmPosY: number;
+  lForeArmPosZ: number;
+  lForeArmRotX: number;
+  lForeArmRotY: number;
+  lForeArmRotZ: number;
+
+  lHandPosX: number;
+  lHandPosY: number;
+  lHandPosZ: number;
+  lHandRotX: number;
+  lHandRotY: number;
+  lHandRotZ: number;
 }
 
 const DEFAULT_CONFIGS: Record<string, TransformConfig> = {
   "Player_one-optimized.glb": {
-    posX: -0.43,
-    posY: -1.35,
-    posZ: 0.69,
+    posX: 2.9,
+    posY: -5,
+    posZ: -1.12,
     rotX: -0.001592653589793,
-    rotY: 2.09840734641021,
-    rotZ: 0,
-    scale: 1.35,
+    rotY: -0.741592653589793,
+    rotZ: 0.008407346410207,
+    scale: 0.1,
     keyLightIntensity: 0,
-    rimLightIntensity: 1.9,
-    ambLightIntensity: 0.2
+    rimLightIntensity: 1.7,
+    ambLightIntensity: 0.2,
+    wepPosX: 2,
+    wepPosY: 2,
+    wepPosZ: 2,
+    wepRotX: -0.441592653589793,
+    wepRotY: -1.63159265358979,
+    wepRotZ: 3.13840734641021,
+    rArmPosX: 0.02,
+    rArmPosY: 0.02,
+    rArmPosZ: 0,
+    rArmRotX: 1.00840734641021,
+    rArmRotY: -0.161592653589793,
+    rArmRotZ: 0.058407346410207,
+    rForeArmPosX: 0.02,
+    rForeArmPosY: 0,
+    rForeArmPosZ: 0,
+    rForeArmRotX: 1.09840734641021,
+    rForeArmRotY: -1.07159265358979,
+    rForeArmRotZ: 0.648407346410207,
+    rHandPosX: 0,
+    rHandPosY: 0,
+    rHandPosZ: 0.01,
+    rHandRotX: 0.648407346410207,
+    rHandRotY: 1.56840734641021,
+    rHandRotZ: 0,
+    lArmPosX: 0,
+    lArmPosY: 0,
+    lArmPosZ: 0,
+    lArmRotX: -0.311592653589793,
+    lArmRotY: 0.318407346410207,
+    lArmRotZ: 0.048407346410207,
+    lForeArmPosX: 0.02,
+    lForeArmPosY: 0,
+    lForeArmPosZ: 0.01,
+    lForeArmRotX: 1.34840734641021,
+    lForeArmRotY: -0.531592653589793,
+    lForeArmRotZ: -0.411592653589793,
+    lHandPosX: 0.07,
+    lHandPosY: 0,
+    lHandPosZ: 0,
+    lHandRotX: 0.038407346410207,
+    lHandRotY: -1.21159265358979,
+    lHandRotZ: -0.031592653589793
   },
   "player-on_optimised.glb": {
-    posX: -0.43,
-    posY: -1.35,
-    posZ: 0.69,
+    posX: 2.9,
+    posY: -5,
+    posZ: -1.12,
     rotX: -0.001592653589793,
-    rotY: 2.09840734641021,
-    rotZ: 0,
-    scale: 1.35,
+    rotY: -0.741592653589793,
+    rotZ: 0.008407346410207,
+    scale: 0.1,
     keyLightIntensity: 0,
-    rimLightIntensity: 1.9,
-    ambLightIntensity: 0.2
+    rimLightIntensity: 1.7,
+    ambLightIntensity: 0.2,
+    wepPosX: 2,
+    wepPosY: 2,
+    wepPosZ: 2,
+    wepRotX: -0.441592653589793,
+    wepRotY: -1.63159265358979,
+    wepRotZ: 3.13840734641021,
+    rArmPosX: 0.02,
+    rArmPosY: 0.02,
+    rArmPosZ: 0,
+    rArmRotX: 1.00840734641021,
+    rArmRotY: -0.161592653589793,
+    rArmRotZ: 0.058407346410207,
+    rForeArmPosX: 0.02,
+    rForeArmPosY: 0,
+    rForeArmPosZ: 0,
+    rForeArmRotX: 1.09840734641021,
+    rForeArmRotY: -1.07159265358979,
+    rForeArmRotZ: 0.648407346410207,
+    rHandPosX: 0,
+    rHandPosY: 0,
+    rHandPosZ: 0.01,
+    rHandRotX: 0.648407346410207,
+    rHandRotY: 1.56840734641021,
+    rHandRotZ: 0,
+    lArmPosX: 0,
+    lArmPosY: 0,
+    lArmPosZ: 0,
+    lArmRotX: -0.311592653589793,
+    lArmRotY: 0.318407346410207,
+    lArmRotZ: 0.048407346410207,
+    lForeArmPosX: 0.02,
+    lForeArmPosY: 0,
+    lForeArmPosZ: 0.01,
+    lForeArmRotX: 1.34840734641021,
+    lForeArmRotY: -0.531592653589793,
+    lForeArmRotZ: -0.411592653589793,
+    lHandPosX: 0.07,
+    lHandPosY: 0,
+    lHandPosZ: 0,
+    lHandRotX: 0.038407346410207,
+    lHandRotY: -1.21159265358979,
+    lHandRotZ: -0.031592653589793
   },
   "default": {
-    posX: -0.43,
-    posY: -1.35,
-    posZ: 0.69,
+    posX: 2.9,
+    posY: -5,
+    posZ: -1.12,
     rotX: -0.001592653589793,
-    rotY: 2.09840734641021,
-    rotZ: 0,
-    scale: 1.35,
+    rotY: -0.741592653589793,
+    rotZ: 0.008407346410207,
+    scale: 0.1,
     keyLightIntensity: 0,
-    rimLightIntensity: 1.9,
-    ambLightIntensity: 0.2
+    rimLightIntensity: 1.7,
+    ambLightIntensity: 0.2,
+    wepPosX: 2,
+    wepPosY: 2,
+    wepPosZ: 2,
+    wepRotX: -0.441592653589793,
+    wepRotY: -1.63159265358979,
+    wepRotZ: 3.13840734641021,
+    rArmPosX: 0.02,
+    rArmPosY: 0.02,
+    rArmPosZ: 0,
+    rArmRotX: 1.00840734641021,
+    rArmRotY: -0.161592653589793,
+    rArmRotZ: 0.058407346410207,
+    rForeArmPosX: 0.02,
+    rForeArmPosY: 0,
+    rForeArmPosZ: 0,
+    rForeArmRotX: 1.09840734641021,
+    rForeArmRotY: -1.07159265358979,
+    rForeArmRotZ: 0.648407346410207,
+    rHandPosX: 0,
+    rHandPosY: 0,
+    rHandPosZ: 0.01,
+    rHandRotX: 0.648407346410207,
+    rHandRotY: 1.56840734641021,
+    rHandRotZ: 0,
+    lArmPosX: 0,
+    lArmPosY: 0,
+    lArmPosZ: 0,
+    lArmRotX: -0.311592653589793,
+    lArmRotY: 0.318407346410207,
+    lArmRotZ: 0.048407346410207,
+    lForeArmPosX: 0.02,
+    lForeArmPosY: 0,
+    lForeArmPosZ: 0.01,
+    lForeArmRotX: 1.34840734641021,
+    lForeArmRotY: -0.531592653589793,
+    lForeArmRotZ: -0.411592653589793,
+    lHandPosX: 0.07,
+    lHandPosY: 0,
+    lHandPosZ: 0,
+    lHandRotX: 0.038407346410207,
+    lHandRotY: -1.21159265358979,
+    lHandRotZ: -0.031592653589793
   }
 };
 
@@ -101,6 +281,11 @@ function applyConfigToScene(model: THREE.Group, config: TransformConfig) {
   if (ambLight) {
     ambLight.intensity = config.ambLightIntensity;
   }
+
+  model.userData.poseConfig = config;
+  if (model.userData.activeWeapon) {
+    applyScenicGripPose(model, model.userData.activeWeapon, config);
+  }
 }
 
 /**
@@ -121,6 +306,42 @@ function updatePanelFields(config: TransformConfig) {
 }
 
 /**
+ * Helper to immediately load the SCAR-L and equip it with the ACOG scope in the low-ready scenic stance.
+ */
+async function loadAndEquipWeapon(characterModel: THREE.Group) {
+  try {
+    // 1. Ensure attachments are preloaded
+    await preloadAttachments();
+
+    // 2. Load the optimized SCAR-L GLB model
+    const loader = createConfiguredGLTFLoader();
+    const url = await getCachedOrFetchUrl("scar_l-optimized.glb", "Asset");
+    const gltf = await loader.loadAsync(url);
+    const weapon = SkeletonUtils.clone(gltf.scene) as THREE.Group;
+
+    // Apply proportional scaling relative to the player
+    weapon.scale.set(0.42, 0.42, 0.42);
+
+    // Ensure any skeleton components on the weapon are properly mapped
+    import("./StudioPreviewManager").then(({ fixSkinnedMeshBones }) => {
+      fixSkinnedMeshBones(weapon, gltf.scene);
+    }).catch(() => {});
+
+    // 3. Attach ACOG scope automatically
+    await attachScope(weapon, "ACOG");
+
+    // 4. Store active weapon on model userData to update skeletal pose in real-time
+    characterModel.userData.activeWeapon = weapon;
+
+    // 5. Initial procedural pose alignment
+    applyScenicGripPose(characterModel, weapon, currentConfig);
+    console.log("[StudioCharacterPreview] Scenic Weapon (SCAR-L + ACOG) equipped successfully");
+  } catch (err) {
+    console.error("[StudioCharacterPreview] Failed to load and equip scenic weapon:", err);
+  }
+}
+
+/**
  * Set up the model loaded hook of StudioPreviewManager
  */
 StudioPreviewManager.onModelLoaded = (model: THREE.Group, glbName: string) => {
@@ -137,7 +358,7 @@ StudioPreviewManager.onModelLoaded = (model: THREE.Group, glbName: string) => {
   activeModel = model;
   activeGlbName = glbName;
 
-  // Lock turntable only on the main menu start tab viewport
+  // Lock turntable only on the main menu start tab viewport to keep scenic view steady
   if (StudioPreviewManager.getMode() === 'MAIN_MENU') {
     StudioPreviewManager.setTurntableEnabled(false);
   } else {
@@ -150,8 +371,16 @@ StudioPreviewManager.onModelLoaded = (model: THREE.Group, glbName: string) => {
   // Use hand-tuned default config for deterministic spawn position
   const config: TransformConfig = { ...(DEFAULT_CONFIGS[glbName] || DEFAULT_CONFIGS["default"]) };
 
+  // Adjust scenic angle to look slightly from behind-side (matching user request references)
+  config.rotY = Math.PI - 0.55; // Scenic rear/side angle
+  config.posX = -0.32;
+  config.posZ = 0.58;
+
   updatePanelFields(config);
   applyConfigToScene(model, config);
+
+  // Immediately load the weapon and equip it
+  loadAndEquipWeapon(model);
 };
 
 /**
@@ -491,6 +720,55 @@ export function toggleDevPanel() {
   createDevSlider("keyLightIntensity", "KEY LIGHT INTENSITY", 0.0, 10.0, 0.1);
   createDevSlider("rimLightIntensity", "RIM LIGHT INTENSITY", 0.0, 10.0, 0.1);
   createDevSlider("ambLightIntensity", "AMBIENT LIGHT INTENSITY", 0.0, 5.0, 0.1);
+
+  createDevSlider("wepPosX", "WEAPON X", -2, 2, 0.01);
+  createDevSlider("wepPosY", "WEAPON Y", -2, 2, 0.01);
+  createDevSlider("wepPosZ", "WEAPON Z", -2, 2, 0.01);
+  createDevSlider("wepRotX", "WEAPON ROT X", -Math.PI, Math.PI, 0.01);
+  createDevSlider("wepRotY", "WEAPON ROT Y", -Math.PI, Math.PI, 0.01);
+  createDevSlider("wepRotZ", "WEAPON ROT Z", -Math.PI, Math.PI, 0.01);
+
+  createDevSlider("rArmPosX", "R ARM POS X", -2, 2, 0.01);
+  createDevSlider("rArmPosY", "R ARM POS Y", -2, 2, 0.01);
+  createDevSlider("rArmPosZ", "R ARM POS Z", -2, 2, 0.01);
+  createDevSlider("rArmRotX", "R ARM ROT X", -Math.PI, Math.PI, 0.01);
+  createDevSlider("rArmRotY", "R ARM ROT Y", -Math.PI, Math.PI, 0.01);
+  createDevSlider("rArmRotZ", "R ARM ROT Z", -Math.PI, Math.PI, 0.01);
+
+  createDevSlider("rForeArmPosX", "R FOREARM POS X", -2, 2, 0.01);
+  createDevSlider("rForeArmPosY", "R FOREARM POS Y", -2, 2, 0.01);
+  createDevSlider("rForeArmPosZ", "R FOREARM POS Z", -2, 2, 0.01);
+  createDevSlider("rForeArmRotX", "R FOREARM ROT X", -Math.PI, Math.PI, 0.01);
+  createDevSlider("rForeArmRotY", "R FOREARM ROT Y", -Math.PI, Math.PI, 0.01);
+  createDevSlider("rForeArmRotZ", "R FOREARM ROT Z", -Math.PI, Math.PI, 0.01);
+
+  createDevSlider("rHandPosX", "R HAND POS X", -2, 2, 0.01);
+  createDevSlider("rHandPosY", "R HAND POS Y", -2, 2, 0.01);
+  createDevSlider("rHandPosZ", "R HAND POS Z", -2, 2, 0.01);
+  createDevSlider("rHandRotX", "R HAND ROT X", -Math.PI, Math.PI, 0.01);
+  createDevSlider("rHandRotY", "R HAND ROT Y", -Math.PI, Math.PI, 0.01);
+  createDevSlider("rHandRotZ", "R HAND ROT Z", -Math.PI, Math.PI, 0.01);
+
+  createDevSlider("lArmPosX", "L ARM POS X", -2, 2, 0.01);
+  createDevSlider("lArmPosY", "L ARM POS Y", -2, 2, 0.01);
+  createDevSlider("lArmPosZ", "L ARM POS Z", -2, 2, 0.01);
+  createDevSlider("lArmRotX", "L ARM ROT X", -Math.PI, Math.PI, 0.01);
+  createDevSlider("lArmRotY", "L ARM ROT Y", -Math.PI, Math.PI, 0.01);
+  createDevSlider("lArmRotZ", "L ARM ROT Z", -Math.PI, Math.PI, 0.01);
+
+  createDevSlider("lForeArmPosX", "L FOREARM POS X", -2, 2, 0.01);
+  createDevSlider("lForeArmPosY", "L FOREARM POS Y", -2, 2, 0.01);
+  createDevSlider("lForeArmPosZ", "L FOREARM POS Z", -2, 2, 0.01);
+  createDevSlider("lForeArmRotX", "L FOREARM ROT X", -Math.PI, Math.PI, 0.01);
+  createDevSlider("lForeArmRotY", "L FOREARM ROT Y", -Math.PI, Math.PI, 0.01);
+  createDevSlider("lForeArmRotZ", "L FOREARM ROT Z", -Math.PI, Math.PI, 0.01);
+
+  createDevSlider("lHandPosX", "L HAND POS X", -2, 2, 0.01);
+  createDevSlider("lHandPosY", "L HAND POS Y", -2, 2, 0.01);
+  createDevSlider("lHandPosZ", "L HAND POS Z", -2, 2, 0.01);
+  createDevSlider("lHandRotX", "L HAND ROT X", -Math.PI, Math.PI, 0.01);
+  createDevSlider("lHandRotY", "L HAND ROT Y", -Math.PI, Math.PI, 0.01);
+  createDevSlider("lHandRotZ", "L HAND ROT Z", -Math.PI, Math.PI, 0.01);
 
   panelContainer.appendChild(slidersContainer);
 

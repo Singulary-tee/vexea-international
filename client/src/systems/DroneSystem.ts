@@ -3,6 +3,7 @@ import { MatchController } from "../../MatchController";
 import { DroneState, DroneType, DRONE_CONFIGS } from "../../../shared/constants";
 import * as SkeletonUtils from "three/addons/utils/SkeletonUtils.js";
 import { createProceduralState, updateProceduralState, applyNodeRotation } from "./DroneProcedural";
+import { fixSkinnedMeshBones } from "../../StudioPreviewManager";
 
 export class DroneSystem {
 
@@ -489,6 +490,10 @@ export class DroneSystem {
       if (!group) {
         if ((window as any).riflemanModel) {
           group = SkeletonUtils.clone((window as any).riflemanModel) as THREE.Group;
+          
+          // Rebind cloned skinned mesh elements to cloned bone instances
+          fixSkinnedMeshBones(group, (window as any).riflemanModel);
+
           group.name = "RemotePlayer";
           match.scene.add(group);
           match.remotePlayersMeshes.set(id, group);

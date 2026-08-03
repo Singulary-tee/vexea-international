@@ -577,6 +577,7 @@ function initializeLocalMatchScene(requestedMap: string) {
   const gltfLoader = createConfiguredGLTFLoader();
   gltfLoader.load(getAssetUrl(ASSET_STRUCTURE["Player_one-optimized.glb"].fileName), (gltf) => {
     riflemanModel = gltf.scene;
+    (riflemanModel as any).animations = gltf.animations;
     riflemanModel.traverse((child) => {
       if ((child as any).isMesh) {
         child.castShadow = true;

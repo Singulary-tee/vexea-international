@@ -3,6 +3,7 @@ import { DS } from "./design-system";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import * as SkeletonUtils from "three/addons/utils/SkeletonUtils.js";
 import { getCachedOrFetchUrl, createConfiguredGLTFLoader } from "./asset-cache";
+import { applyScenicGripPose } from "./weapons/GripSystem";
 
 export type StudioMode = 'MAIN_MENU' | 'ARMORY' | 'STORE' | 'LOBBY' | 'INACTIVE';
 
@@ -222,7 +223,17 @@ class StudioPreviewManagerImpl {
     let glbName = "";
     if (itemKey.endsWith(".glb")) {
       glbName = itemKey;
-    } else if (itemKey === 'rifle' || itemKey === 'm4_rifle' || itemKey === 'lmg' || itemKey === 'shotgun' || itemKey === 'sniper' || itemKey.includes('rifle_')) {
+    } else if (itemKey === 'scar_l' || itemKey === 'rifle') {
+      glbName = "scar_l-optimized.glb";
+    } else if (itemKey === 'brn_180') {
+      glbName = "brn_180-optimized.glb";
+    } else if (itemKey === 'f_90') {
+      glbName = "f_90-optimized.glb";
+    } else if (itemKey === 'hk_51') {
+      glbName = "hk_51-optimized.glb";
+    } else if (itemKey === 'scar_h_mk_17') {
+      glbName = "scar_h_mk_17-optimized.glb";
+    } else if (itemKey === 'm4_rifle' || itemKey === 'lmg' || itemKey === 'shotgun' || itemKey === 'sniper' || itemKey.includes('rifle_')) {
       glbName = "smg_fps_animations.glb";
     } else if (itemKey === 'pistol' || itemKey === 'viper_pistol' || itemKey.includes('pistol_')) {
       glbName = "animated_pistol.glb";
@@ -244,6 +255,9 @@ class StudioPreviewManagerImpl {
       
       // Use SkeletonUtils to clone model safely
       const model = SkeletonUtils.clone(gltf.scene) as THREE.Group;
+      
+      // Fix bone binding mapping for SkinnedMesh in cloned WebGPU model hierarchy
+      fixSkinnedMeshBones(model, gltf.scene);
       
       // Setup Animation Mixer if clips are available
       this.activeMixer = null;
@@ -487,6 +501,14 @@ class StudioPreviewManagerImpl {
       this.activeMixer.update(dt);
     }
 
+    // Call procedural skeletal pose to maintain low-ready alignment over animations
+    if (this.lastLoadedModel && this.lastLoadedGlbName.toLowerCase().includes("player")) {
+      const activeWeapon = this.lastLoadedModel.userData.activeWeapon;
+      if (activeWeapon) {
+        applyScenicGripPose(this.lastLoadedModel, activeWeapon, this.lastLoadedModel.userData.poseConfig);
+      }
+    }
+
     // Slow turntable rotation when idle
     if (!this.isDragging && this.turntableEnabled) {
       this.activeModelGroup.rotation.y += dt * 0.4;
@@ -498,3 +520,31 @@ class StudioPreviewManagerImpl {
 }
 
 export const StudioPreviewManager = new StudioPreviewManagerImpl();
+
+export function fixSkinnedMeshBones(clonedModel: THREE.Object3D, originalModel: THREE.Object3D): void {
+  clonedModel.traverse((child: any) => {
+    if (child.isSkinnedMesh) {
+      let originalMesh: any = null;
+      originalModel.traverse((origChild: any) => {
+        if (origChild.isSkinnedMesh && origChild.name === child.name) {
+          originalMesh = origChild;
+        }
+      });
+
+      if (originalMesh && originalMesh.skeleton) {
+        const clonedBones: THREE.Bone[] = [];
+        originalMesh.skeleton.bones.forEach((origBone: any) => {
+          const clonedBone = clonedModel.getObjectByName(origBone.name) as THREE.Bone;
+          if (clonedBone) {
+            clonedBones.push(clonedBone);
+          } else {
+            clonedBones.push(origBone);
+          }
+        });
+
+        const newSkeleton = new THREE.Skeleton(clonedBones, originalMesh.skeleton.boneInverses);
+        child.bind(newSkeleton, child.bindMatrix);
+      }
+    }
+  });
+}

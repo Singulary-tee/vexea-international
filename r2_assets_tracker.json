@@ -138,6 +138,42 @@
       "category": "Asset",
       "source": "CloudflareR2",
       "path": "Models/Entities/robodog-optimized.glb"
+    },
+    {
+      "name": "attachments-optimized.glb",
+      "category": "Asset",
+      "source": "CloudflareR2",
+      "path": "Models/Weapons/attachments-optimized.glb"
+    },
+    {
+      "name": "brn_180-optimized.glb",
+      "category": "Asset",
+      "source": "CloudflareR2",
+      "path": "Models/Weapons/brn_180-optimized.glb"
+    },
+    {
+      "name": "f_90-optimized.glb",
+      "category": "Asset",
+      "source": "CloudflareR2",
+      "path": "Models/Weapons/f_90-optimized.glb"
+    },
+    {
+      "name": "hk_51-optimized.glb",
+      "category": "Asset",
+      "source": "CloudflareR2",
+      "path": "Models/Weapons/hk_51-optimized.glb"
+    },
+    {
+      "name": "scar_h_mk_17-optimized.glb",
+      "category": "Asset",
+      "source": "CloudflareR2",
+      "path": "Models/Weapons/scar_h_mk_17-optimized.glb"
+    },
+    {
+      "name": "scar_l-optimized.glb",
+      "category": "Asset",
+      "source": "CloudflareR2",
+      "path": "Models/Weapons/scar_l-optimized.glb"
     }
   ],
   "sounds": [
