@@ -13,15 +13,17 @@ This file is the authoritative index of all directories and source files within 
     *   *Key Functions/Exports:* `MatchManager` class (exported as default and as `matchManager` instance), `getOrCreateRoom(roomId, geminiKey, mapId)` (returns or provisions rooms), `findMatchmakingRoom(geminiKey)` (allocates players to empty rooms under 10 players), `deleteRoom(roomId)` (initiates cleanup), `getRooms()` and `getRoomCount()`.
 *   **`Matchmaker.ts`**
     *   *Purpose:* Real player pooling system for matchmaking. Groups players into matches without bot-fill.
-    *   *Key Functions/Exports:* `Matchmaker` class, `matchmaker` default/named export instance, `MATCHMAKER_MAX_WAIT_SECONDS` (45s placeholder constant), `addPlayerToPool`, `removePlayerFromPool`, `signalPlayerLoadingComplete`, `handlePlayerClassChange`.
+    *   *Key Functions/Exports:* `Matchmaker` class, `matchmaker` default/named export instance, `MATCHMAKER_MAX_WAIT_SECONDS` (45s constant), `addPlayerToPool`, `removePlayerFromPool`, `signalPlayerLoadingComplete`, `handlePlayerClassChange`.
 *   **`MatchRoom.ts`**
-    *   *Purpose:* The complete server-side simulation environment. Manages the 60Hz physics update loop, 20Hz state-synchronization packets, and autonomous AI events.
+    *   *Purpose:* The complete server-side simulation environment. Manages the 60Hz physics update loop, 20Hz state-synchronization packets, autonomous AI events, and per-match token budget tracking (`llmTokensUsedThisMatch`).
     *   *Key Functions/Exports:* `MatchRoom` class, handles player join/leave, bot integration, collision handling, hitscan/rewind raycasting, objective point timers, score accounting, and shutdown processing.
 *   **`index.ts`**
     *   *Purpose:* Primary server entry point. Configures the Express server, initializes WASM physics modules, binds HTTP and Socket.IO ports, hosts developer API endpoints, handles network reconnect tolerances, and serves static files.
 *   **`ai/` (Strategic AI)**
     *   **`DroneIntelligence.ts`**: Governs spatial awareness for individual drones. Computes sight lines (3D orientation quaternions to check forward vectors and cone of vision angles), performs static map and dynamic Rapier line-of-sight raycasts, and handles memory decay mechanics.
-    *   **`LLMCommander.ts`**: High-level strategic controller powered by Gemini 3.5 Flash. Formulates formatted prompt strings, parses structured tool call arrays (Spawn, Move, Split, Merge, Hold), and manages strategic AP resource pools.
+    *   **`LLMCommander.ts`**: High-level strategic controller powered by Gemini 3.5 Flash. Formulates formatted prompt strings, parses structured tool call arrays (Spawn, Move, Split, Merge, Hold), manages strategic AP resource pools, and enforces the `MAX_LLM_TOKENS_PER_MATCH` (55,000 token) token budget ceiling.
+*   **`gates/` (Server Gates)**
+    *   **`verification.gate.ts`**: Encapsulates server-authoritative purchase, reward, and match state verification checks via `ServerVerificationGate`.
 *   **`map/` (Spatial Structure)**
     *   **`ZoneRegistry.ts`**: Maps geometric boundaries to specific Named Zones (e.g., Core, Warehouse, Bridge), handles player zone occupancy queries, and stores localized waypoint indices.
 *   **`physics/` (Server Simulation)**
@@ -34,11 +36,19 @@ This file is the authoritative index of all directories and source files within 
     *   **`run_avoidance_test.ts`**: Verifies dynamic pathing adjustment when friendly drone clusters collide.
 *   **`transport/` (Server Connectivity)**
     *   **`adapter.ts`**: Defines the unified `ChannelAdapter` and `ServerTransport` interface layer. Implements the `SocketIOServerAdapter`/`SocketIOChannelAdapter` (the active transport, utilizing JSON events and number-array binary emulations) and `GeckosAdapter`/`GeckosChannelAdapter` (inactive/experimental).
+*   **`validation/` (Validation Service Wrapper)**
+    *   **`validation-service.ts`**: Backwards-compatibility alias re-exporting `VerificationService`.
+*   **`verification/` (Server & Worker Verification)**
+    *   **`verification-service.ts`**: Server and worker verification handler processing post-match results (`processMatchResults`), store purchases (`processPurchase`), and claim checks (`processClaim`).
 
 ---
 
 ### 1.2 Shared Space (`/shared`)
 
+*   **`asset-structure.ts`**
+    *   *Purpose:* Comprehensive metadata registry (`ASSET_STRUCTURE`) cataloging GLB node hierarchies, bounding boxes, animation sequences, skin joints, and mesh details for all 3D assets (Player, Humanoid, Bomber, Recon, Rotary Shooter, Fixed Wing, Wheeled Drone).
+*   **`classes.ts`**
+    *   *Purpose:* Operative class definitions (`CLASSES`: Assault, Medic, Recon, Demolitions) and primary/secondary/utility slot mappings.
 *   **`collision.ts`**
     *   *Purpose:* Zero-allocation AABB collision system.
     *   *Key Functions/Exports:* `CollisionSystem` class, `globalCollisionSystem` instance, `loadFromSpec(specJson)` (parses building layouts into active boxes), `rayIntersectsAABB` and `rayIntersectsAny` (highly efficient hitscan calculations for projectiles and sight lines).
@@ -46,21 +56,32 @@ This file is the authoritative index of all directories and source files within 
     *   *Purpose:* Absolute single source of truth for game variables, network sizes, and entity shapes.
     *   *Key Functions/Exports:* `ZONES` registry, `WAYPOINTS` center-points, `TOPOLOGY` adjacency graph, `ZONE_BOUNDS` half-sizes, `DroneState` enum, `DroneType` enum, limits (`PLAYER_MAX_HP`, `CAMERA_MAX_HP`), and the `DRONE_CONFIGS` dictionary containing comprehensive visual, physical, and behavioral parameters per drone type.
 *   **`gamemode-configs.ts`**
-    *   *Purpose:* Governs rulesets, friendly fire options, victory requirements, and score scaling.
+    *   *Purpose:* Governs rulesets, friendly fire options, victory requirements, score scaling, and timer labels.
     *   *Key Functions/Exports:* `GameModeConfig` interface, `GAMEMODES` registry, and the active `ACTIVE_GAMEMODE` constant.
 *   **`gate.ts`**
     *   *Purpose:* Gating system designed to separate development-only interfaces and network backdoors from production.
     *   *Key Functions/Exports:* `IS_DEV` environment check, `assertDev(featureName)` (denies execution in production environments).
-*   **`weapons.ts`**
-    *   *Purpose:* Stores performance matrices, damage variables, and recoil metrics.
-    *   *Key Functions/Exports:* `WeaponPerformance` and `DamageFalloff` definitions, `DETAILED_WEAPONS` dictionary (containing Rifle and Pistol metrics), and `calculateDamageWithFalloff(baseDamage, distance, falloff)` (determines actual hit intensity).
 *   **`transport.config.ts`**
     *   *Purpose:* Static transport router configuration.
     *   *Key Functions/Exports:* `TRANSPORT_MODE` constant (hardcoded to `'socketio'`).
+*   **`utilities.ts`**
+    *   *Purpose:* Field utility definitions (`UTILITIES`: Grenade, Flashbang, Med Kit, Revive Tool, Radio, Signal Disruptor, EMP, C4), cooldown constants, charge limits, and utility state creation helpers (`createInitialUtilityState`).
+*   **`weapons.ts`**
+    *   *Purpose:* Stores performance matrices, damage variables, and recoil metrics.
+    *   *Key Functions/Exports:* `WeaponPerformance` and `DamageFalloff` definitions, `DETAILED_WEAPONS` dictionary (containing Rifle and Pistol metrics), and `calculateDamageWithFalloff(baseDamage, distance, falloff)` (determines actual hit intensity).
+*   **`gates/` (Shared Environment & Content Gates)**
+    *   **`production.gate.ts`**: Master environment check (`IS_DEV`) and security assertion function (`assertDev`).
+    *   **`validator.gate.ts`**: Input format sanitization and content gate (`ValidatorGate`) validating emails, passwords, codenames, chat messages, and numerical values against XSS injection and profanity.
 *   **`maps/` (Spatial Layout JSONs)**
     *   **`map-registry.ts`**: Combines static facility models and inventory registries.
     *   **`map_1_facility.spec.json`**: Structure blueprints (positions, sizes, building heights) of the Facility level.
     *   **`map_1_inventory.json`**: Static placement points for terminal objectives, security cameras, and spawn nodes.
+*   **`validation/` (Shared Validation Aliases)**
+    *   **`types.ts`**: Re-export alias mapping to verification types.
+    *   **`validator.ts`**: Re-export alias mapping to verification logic.
+*   **`verification/` (Shared Verification Contracts & Logic)**
+    *   **`types.ts`**: Interface contracts for post-match verification (`VerifyPostMatchInput`/`Result`), purchases (`VerifyPurchaseInput`/`Result`), claims (`VerifyClaimInput`/`Result`), level metrics, and catalog items.
+    *   **`verifier.ts`**: Pure verification routines auditing post-match rewards (`verifyPostMatchRewards`), store purchases (`verifyPurchase`), claim cooldowns (`verifyClaim`), and level progress metrics (`calculateLevelMetrics`).
 
 ---
 
@@ -69,12 +90,16 @@ This file is the authoritative index of all directories and source files within 
 *   **`MatchController.ts`**
     *   *Purpose:* Transitory session controller created upon entering matches and destroyed on termination. Isolates state variables to prevent memory leaks.
     *   *Key Functions/Exports:* `MatchController` class, manages sub-system state machines (minimap, network sync, input processing, visuals, UI, and audio) and tracks player properties (HP, score, ground states, camera recoil, ADS lerp, and ring buffers of drone updates).
+*   **`StudioCharacterPreview.ts`**
+    *   *Purpose:* Developer overlay controls for adjusting 3D character preview positioning, rotation presets, lighting, and scenic weapon grip pose alignment.
+*   **`StudioPreviewManager.ts`**
+    *   *Purpose:* Global 3D studio scene manager orchestrating background 3D character and weapon model rendering across menu views (Main Menu, Armory, Store, Lobby).
 *   **`asset-cache.ts`**
-    *   *Purpose:* Facilitates model and sound file caching.
+    *   *Purpose:* Facilitates GLB model and sound file caching, Cloudflare R2 bucket mappings, and preloading routines.
 *   **`audio.ts`**
-    *   *Purpose:* Handles spatial sound positioning and 2D UI playback.
+    *   *Purpose:* Handles spatial sound positioning and 2D UI audio playback.
 *   **`design-system.ts`**
-    *   *Purpose:* Governs UI rendering themes and CSS constraints.
+    *   *Purpose:* Governs UI rendering themes, color palettes, typography specs (Exo 2, Rajdhani, Barlow Condensed), and CSS constants.
 *   **`dev_menu.ts`**
     *   *Purpose:* Dev UI for spawning assets, switching maps, and toggling invulnerability.
 *   **`dev_visual_diagnosis.ts`**
@@ -82,23 +107,21 @@ This file is the authoritative index of all directories and source files within 
 *   **`drone_models.ts`**
     *   *Purpose:* Resolves asset configurations and custom procedural materials for drone glTF structures.
 *   **`firebase.ts`**
-    *   *Purpose:* Integrates client authentication and leaderboards.
+    *   *Purpose:* Client-side Firebase Authentication, Firestore initialization, Realtime Database (`rtdb`) export, and anonymous account linking helpers (`linkAnonymousAccount`, `signInWithLinkedAccount`).
 *   **`hitscan.ts`**
     *   *Purpose:* Standard 3D raycaster implementation for targeting and crosshair alignment.
-*   **`hud_template.ts`**
-    *   *Purpose:* HTML structures dynamically appended to structure the overlay UI.
 *   **`hud_snippets.ts`**
     *   *Purpose:* Backup holder for preserved HUD UI snippets (e.g. original top-left squad character avatars).
+*   **`hud_template.ts`**
+    *   *Purpose:* HTML structures dynamically appended to structure the overlay UI.
 *   **`index.css`**
-    *   *Purpose:* Central Tailwind loading point and visual font imports.
+    *   *Purpose:* Central Tailwind loading point, scrollbar suppression rules, font imports, and keyframe animations.
 *   **`index.html`**
-    *   *Purpose:* Mounts the canvas structure and references `/client/main.ts`.
+    *   *Purpose:* Mounts the canvas structure, loads Google Fonts (Exo 2, Rajdhani, Orbitron, Titillium Web), and references `/client/main.ts`.
 *   **`input.ts`**
     *   *Purpose:* Captures mouse clicks, screen touch joystick inputs, and key bindings.
 *   **`main.ts`**
-    *   *Purpose:* Initializer and state coordinator. Preloads screens, instantiates Three.js stages (WebGPU or WebGL fallbacks), and hooks connection clicks.
-*   **`screens/matchmaking-overlay.ts`**
-    *   *Purpose:* Renders matchmaking waiting overlay box with cancel option and pre-match countdown banner.
+    *   *Purpose:* Initializer and state coordinator. Preloads screens, instantiates Three.js stages (WebGPU pipeline), and handles connection clicks and socket events (`MATCHMAKING_STATUS`, `MATCH_FOUND`, `PRE_MATCH_COUNTDOWN`).
 *   **`map_editor.ts`**
     *   *Purpose:* Level-building sandbox interface.
 *   **`physics.worker.ts`**
@@ -106,30 +129,57 @@ This file is the authoritative index of all directories and source files within 
 *   **`platform-gate.ts`**
     *   *Purpose:* Centralizes platform detection (mobile vs. desktop) at initialization. Responsible for gating UI elements, applying platform-specific CSS classes, and managing device-specific default settings.
 *   **`settings.ts`**
-    *   *Purpose:* Volume levels and mouse sensitivity configurations.
+    *   *Purpose:* Volume levels, mouse sensitivity configurations, and dynamic resolution scaling toggles.
+*   **`social.ts`**
+    *   *Purpose:* Client social module managing Firestore friends graph (`sendFriendRequest`, `respondToFriendRequest`, `getFriendsList`), display name claims and lookups (`claimDisplayName`, `resolveDisplayName`), lobby invites (`sendLobbyInvite`, `getLobbyInvites`), and RTDB presence tracking (`initPresence`).
 *   **`state.ts`**
-    *   *Purpose:* Local state machine tracking lobby choices and connection status.
+    *   *Purpose:* Local state machine tracking lobby choices, user credentials, and connection status.
 *   **`test_measure.ts`**
     *   *Purpose:* Renders diagnostics and framing metrics overlays.
 *   **`ui_editor.ts`**
     *   *Purpose:* Panel positioning system for custom HUD configurations.
 *   **`weapons_model.ts`**
     *   *Purpose:* Handles first-person weapon meshes, reload animations, and procedural recoil offsets.
+*   **`data/` (JSON Data Registries)**
+    *   **`catalog.json`**: Store catalog items, cosmetics, blueprints, pricing, and level requirements.
+    *   **`challenges.json`**: Daily and weekly operational challenge definitions, targets, and rewards.
+    *   **`offers.json`**: Store special promotions, featured bundles, and limited-time offer parameters.
+*   **`gates/` (Client Environment & Screen Gates)**
+    *   **`platform.gate.ts`**: Mobile vs desktop device detector (`IS_MOBILE`, `IS_DESKTOP`, `initPlatformGate`) applying platform CSS classes to `document.body`.
+    *   **`screen.gate.ts`**: Centralized screen lock manager (`ScreenGate`) enforcing rotation overlay locks, loading locks, splash locks, UI editor locks, and gameplay input suppression.
+*   **`screens/` (Client View Screens)**
+    *   **`armory-screen.ts`**: Weapon loadout customization, attachment selection, weapon skin selection, and 3D preview.
+    *   **`dev-entities.ts`**: Developer entity inspector for spawning, tracking, and debugging live match entities.
+    *   **`dev-map-editor.ts`**: Level editor interface for placing and editing map colliders, spawn nodes, and zone volumes.
+    *   **`faction-screen.ts`**: Faction/INTEL screen displaying operative lore, faction data, contractor dossiers, and intelligence updates.
+    *   **`lobby.ts`**: Pre-match staging screen handling class selection, ready toggling, friend invites, and game mode info.
+    *   **`main-menu.ts`**: Central navigation dashboard containing top bar, user profile, nav links, and action cards (PLAY, UPDATES, INTEL, LOADOUT, FACTION, STORE, CHALLENGES).
+    *   **`map_viewer.ts`**: Interactive 3D map viewer for inspecting level architecture and capture zones.
+    *   **`matchmaking-overlay.ts`**: Matchmaking waiting overlay box with pre-match countdown display and cancel option.
+    *   **`post-match-screen.ts`**: After-action report screen displaying victory/defeat state, earned XP, credits, kills/deaths, and level progression.
+    *   **`screen-manager.ts`**: Screen navigation manager controlling view transitions, active screen lifecycles, and DOM rendering.
+    *   **`splash.ts`**: Initial splash screen handling game branding, asset preloading, and system initialization.
+    *   **`stats-screen.ts`**: Player statistics dashboard showing career performance metrics, kill/death ratios, and match history.
+    *   **`store-screen.ts`**: In-game store screen for purchasing cosmetics, blueprints, and currency refills.
 *   **`transport/` (Client Connectivity)**
     *   **`adapter.ts`**: Client-side transport. Implements `SocketIOClientAdapter` and `GeckosClientAdapter` wrappers.
-*   **`src/` (Client Subsystems)**
+*   **`src/` (Client Subsystems & FX)**
+    *   **`camera/`**
+        *   **`CameraEffects.ts`**: Computes dynamic camera head bobbing, weapon follow lag, landing jolts, bank tilting, and viewmodel pullback.
+        *   **`constants.ts`**: Tuning constants for camera movement, sway, recoil response, and head-bob dynamics.
     *   **`input/`**
         *   **`InputSynchronizer.ts`**: Structures the 20-byte input payload buffer containing sequential numbers, yaw/pitch floats, action codes, and bitmasks to send at monitor refresh speeds.
     *   **`map/`**
-        *   **`LoadingOrchestrator.ts`**: Monitors assets load states.
+        *   **`LoadingOrchestrator.ts`**: Monitors asset load states and handles panoramic 6-directional prewarming.
         *   **`MapLoader.ts`**: Spawns structural walls and facility bounds.
     *   **`systems/`**
         *   **`CombatSystem.ts`**: Local visual hit detection, impact spark spawning, ammunition state tracking, and local weapon animations.
+        *   **`CompassSystem.ts`**: Zero-allocation horizontal compass tape rendering cardinal directions, degree ticks, and active landmark indicators.
         *   **`DiagnosisSystem.ts`**: Interactive debug box rendering, rendering coordinates, ping monitors, and tick metrics.
         *   **`DroneProcedural.ts`**: Drives local visual loops like rotor spins, wheel rolling, hover bob, and yaw/pitch tracking of turrets.
         *   **`DroneSystem.ts`**: Manages local models, instancing, and material updates for active drones.
-        *   **`DynamicResolutionSystem.ts`**: Manages automatic resolution scaling based on frame time performance budgets.
-        *   **`HUDSystem.ts`**: Injects real-time status telemetry into the HTML HUD (HP, Ammo, score, and active hold progress).
+        *   **`DynamicResolutionSystem.ts`**: Automatic pixel ratio scaling subsystem maintaining frame rates within performance budgets.
+        *   **`HUDSystem.ts`**: Injects real-time status telemetry into the HTML HUD (HP, Ammo, score, countdown timer, and active hold progress).
         *   **`InputSystem.ts`**: Processes inputs, sets rotation values, and triggers the `InputSynchronizer` stream.
         *   **`MinimapSystem.ts`**: Manages the 2D visual radar map tracking captured zone boundaries and detected targets.
         *   **`NetworkSyncSystem.ts`**: Unpacks global binary server payloads, interpolates remote entities, and tracks historic rewinds.
@@ -145,6 +195,47 @@ This file is the authoritative index of all directories and source files within 
         *   **`firing.ts`**: Controls muzzle flashes and glowing tracers.
         *   **`hits.ts`**: Controls impact sparks and splatter visuals.
         *   **`large.ts`**: Controls explosion particle rings and fireballs.
+*   **`weapons/` (Weapons Systems)**
+    *   **`AttachmentSystem.ts`**: Preloads optic attachment models (Holosight, ACOG, ATACR) and manages scope attachment/detachment onto weapon meshes.
+    *   **`GripSystem.ts`**: Zero-allocation procedural right/left hand grip pose calculations and matrix-based weapon snapping for characters.
+
+---
+
+### 1.4 Root & Configuration Space (`/`)
+
+*   **`package.json` & `package-lock.json`**
+    *   *Purpose:* Node project configuration, script definitions (`dev`, `build`), dependencies (`three`, `socket.io`, `@google/genai`, `firebase`), and locked lockfile.
+*   **`tsconfig.json`**
+    *   *Purpose:* TypeScript compiler choices, module resolution rules, and target specs.
+*   **`vite.config.ts`**
+    *   *Purpose:* Vite server configuration, port binding (3000), static path aliases, and build output targets.
+*   **`metadata.json`**
+    *   *Purpose:* AI Studio application metadata cataloging app name ("VEXEΛ"), description, frame permissions, and major capabilities.
+*   **`firestore.rules` & `database.rules.json`**
+    *   *Purpose:* Security rules for Firestore collections (`Users`, `usernames`, `lobbyInvites`) and Firebase Realtime Database (`presence`).
+*   **`firebase.json` & `firebase-blueprint.json` & `firebase-applet-config.json` & `.firebaserc`**
+    *   *Purpose:* Firebase project configuration, database blueprint schema, applet credentials, and deployment settings.
+*   **`.env.example`**
+    *   *Purpose:* Template environment variable declarations for server and client deployment.
+*   **`assets_tracker.json` & `assets_tracker.md`**
+    *   *Purpose:* Asset budget log and local GLB model tracking inventory.
+*   **`r2_assets_tracker.json` & `r2_assets_tracker.md`**
+    *   *Purpose:* Cloudflare R2 bucket asset inventory and URL mapping manifest for background card graphics.
+*   **`hud_layout.json`**
+    *   *Purpose:* Custom HUD element layout coordinates, scale factors, and visibility toggles.
+*   **`parse_glbs.cjs` & `tick_success_box.sh`**
+    *   *Purpose:* CLI node script for inspecting GLB node trees and automated shell verification helper.
+*   **Architectural Specifications & Project Documents:**
+    *   **`AGENTS.md`**: Master agent instructions, user rules, and core project skill references.
+    *   **`ARCHITECTURE.md`**: Single-source locked architecture document defining stack, security, zero-GC server pipeline, and LLM commander specifications.
+    *   **`CODEBASE_INDEX.md`**: Authoritative index of all directories and source files across the codebase (this document).
+    *   **`GAMEMODE_CONFIG.md`**: Rulesets, scoring parameters, and duration specs for game modes.
+    *   **`GAMEPLAY.md`**: Game design, movement mechanics, weapon stats, and utility abilities.
+    *   **`IMPLEMENTATION_PLAN.md`**: Development roadmap, task checklists, and implementation state.
+    *   **`NETWORKING_AUDIT.md`**: Socket.IO transport audit log, payload schemas, and byte offset layouts.
+    *   **`PRE_MATCH_OPTIMIZATION_PLAN.md`**: Performance pre-warming and scene loading optimization strategy.
+    *   **`WORKSPACE_HYGIENE.md`**: Project cleanliness rules and file organization standards.
+    *   **`gemini_wall_of_shame.md`**: Log of identified anti-patterns and prohibited code idioms.
 
 ---
 
@@ -200,8 +291,6 @@ Every file change in the VEXEA codebase must follow this strict three-step proto
     *   `/client/main.ts`: Ticked compass subsystem updates during logic frames. (Completed)
 *   **Verification:** `lint_applet` passed successfully, `compile_applet` completed with zero errors, production build verified.
 
-
-
 ### Cycle 2026-07-20-01: Shift FOV sight math to Server and use boolean flag
 *   **Target Files:** `/server/MatchRoom.ts`, `/server/ai/DroneIntelligence.ts`, `/client/MatchController.ts`, `/client/src/systems/NetworkSyncSystem.ts`, `/client/src/systems/DiagnosisSystem.ts`
 *   **Status:** Verified & Finalized
@@ -224,9 +313,9 @@ Every file change in the VEXEA codebase must follow this strict three-step proto
 *   **Target Files:** `/client/index.css`, `/client/screens/main-menu.ts`
 *   **Status:** Verified & Finalized
 *   **Modifications:**
-*   `/client/index.css`: Injected global scrollbar suppression rules so scrollbars are completely hidden across all views, lists, panels, and frames.
-*   `/client/screens/main-menu.ts`: Added a high-fidelity dynamic fullscreen toggle next to the profile/user icon that changes SVG path states automatically. Toggle is separated by a sleek 1px vertical divider.
-*   `/client/screens/main-menu.ts`: Hidden the bottom featured operation banner during active card modes to resolve overlay conflicts with the back button and the right panel.
+    *   `/client/index.css`: Injected global scrollbar suppression rules so scrollbars are completely hidden across all views, lists, panels, and frames.
+    *   `/client/screens/main-menu.ts`: Added a high-fidelity dynamic fullscreen toggle next to the profile/user icon that changes SVG path states automatically. Toggle is separated by a sleek 1px vertical divider.
+    *   `/client/screens/main-menu.ts`: Hidden the bottom featured operation banner during active card modes to resolve overlay conflicts with the back button and the right panel.
 *   **Verification:** `lint_applet` passed successfully, `compile_applet` completed with zero errors, production build verified.
 
 ### Cycle 2026-07-21-03: Lobby Screen Class Selection Redesign
@@ -480,8 +569,23 @@ Every file change in the VEXEA codebase must follow this strict three-step proto
     *   **Point 4: Zero-Allocation Hot Paths**: Pre-allocated math vectors, quaternions, and set lookups in `hits.ts`, `firing.ts`, and `physics.worker.ts`. (Completed)
     *   **Point 5: Drone Raycasting & Sensor Opts**: Distributed obstacle-detection raycasts across frames with a tick-offset modulo to run 3x less frequently. (Completed)
     *   **Point 6: Minimap Render Optimization**: Separated static geometry layers to an offscreen cached static canvas, and throttled dynamic drone update scans to 20Hz. (Completed)
-    *   **Point 7: MatchRoom and Network Efficiencies**: Replaced linear search lookups in `findHitEntity` with $O(1)$ constant-time collider handle mapping, and optimized client network move-history searching to $O(1)$ direct offsets. (Completed)
+    *   **Point 7: MatchRoom and Network Efficiencies**: Replaced linear search lookups in `findHitEntity` with O(1) constant-time collider handle mapping, and optimized client network move-history searching to O(1) direct offsets. (Completed)
     *   **Point 8: WebGL Render Check**: Aligned fully with WebGPU rendering and verified zero occurrences of legacy `WebGLRenderer`. (Completed)
     *   **Point 9: Verification**: Verified that the entire engine compiles cleanly and performs with high-fidelity, smooth updates. (Completed)
 *   **Verification:** `lint_applet` and `compile_applet` passed successfully with zero errors.
 
+### Cycle 2026-08-03-01: Per-Match LLM Token Budget Ceiling
+*   **Target Files:** `/server/MatchRoom.ts`, `/server/ai/LLMCommander.ts`, `/CODEBASE_INDEX.md`
+*   **Status:** Verified & Finalized
+*   **Modifications:**
+    *   `/server/MatchRoom.ts`: Added `public llmTokensUsedThisMatch = 0` counter on `MatchRoom` and reset it to `0` alongside `apiCallCount = 0` inside `triggerStartMatch()`.
+    *   `/server/ai/LLMCommander.ts`: Added `MAX_LLM_TOKENS_PER_MATCH = 55000` constant. Added a proactive ceiling check at the start of `executeLLMStep()` to skip API calls and fallback to `offlineSystemFallbackAI()` if the budget is reached. Extracted exact token consumption from `@google/genai` `response.usageMetadata` (`totalTokenCount` or sum of prompt and candidate token counts) and updated `llmTokensUsedThisMatch`. Added `tokensUsed` field to `dev_llm_feed` reliable broadcast event payloads.
+*   **Verification:** `lint_applet` and `compile_applet` passed cleanly with zero errors.
+
+### Cycle 2026-08-03-02: Comprehensive Audit & Synchronization of CODEBASE_INDEX.md
+*   **Target Files:** `/CODEBASE_INDEX.md`
+*   **Status:** Verified & Finalized
+*   **Modifications:**
+    *   Synchronized `/CODEBASE_INDEX.md` with the full file tree across Server (`/server`), Shared (`/shared`), Client (`/client`), and Root (`/`) spaces.
+    *   Indexed previously missing modules: `server/gates/verification.gate.ts`, `server/validation/validation-service.ts`, `server/verification/verification-service.ts`, `shared/asset-structure.ts`, `shared/classes.ts`, `shared/utilities.ts`, `shared/gates/`, `shared/validation/`, `shared/verification/`, `client/StudioCharacterPreview.ts`, `client/StudioPreviewManager.ts`, `client/social.ts`, `client/data/`, `client/gates/`, `client/screens/` (all 13 screen modules), `client/src/camera/`, `client/weapons/`, and root level configuration manifests and architectural specifications.
+*   **Verification:** `lint_applet` and `compile_applet` completed with zero errors.
