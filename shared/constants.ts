@@ -287,7 +287,7 @@ export const DRONE_CONFIGS: Record<DroneType, DroneConfig> = {
     damage: 8,
     speed: 15,
     maxAccelPerTick: 0.5,
-    apCost: 2,
+    apCost: 1,
     isAirUnit: true,
     groupSizeMin: 3,
     groupSizeMax: 5,

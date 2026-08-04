@@ -670,6 +670,11 @@ export function createConfiguredGLTFLoader(customManager?: THREE.LoadingManager,
   manager.setURLModifier((url: string) => {
     let resolvedUrl = existingModifier ? existingModifier(url) : url;
 
+    // Direct blob: object URLs (e.g. textures extracted from embedded GLB buffers) are passed directly
+    if (resolvedUrl.startsWith("blob:")) {
+      return resolvedUrl;
+    }
+
     // Prevent GLTFLoader from failing on sub-resource texture/bin lookups relative to blob: or relative URLs
     const lower = resolvedUrl.toLowerCase();
     const isTexture = lower.includes(".jpg") || lower.includes(".jpeg") || lower.includes(".png") || lower.includes(".webp") || lower.includes(".ktx2") || lower.includes(".dds") || lower.includes(".tga");
@@ -685,17 +690,13 @@ export function createConfiguredGLTFLoader(customManager?: THREE.LoadingManager,
       }
     }
 
-    // Catch-all: if the URL is a blob: URL that isn't the known fallback,
-    // it may be a revoked or invalid blob URL — return the safe fallback instead.
-    if (resolvedUrl.startsWith("blob:") && resolvedUrl !== fallback1x1Url) {
-      return fallback1x1Url;
-    }
-
     return resolvedUrl;
   });
 
+  const activeRenderer = rendererInstance || (typeof window !== 'undefined' ? ((window as any).renderer || (window as any).W?.renderer) : null);
+
   const loader = new GLTFLoader(manager);
   loader.setDRACOLoader(getSharedDracoLoader());
-  loader.setKTX2Loader(getSharedKtx2Loader(rendererInstance));
+  loader.setKTX2Loader(getSharedKtx2Loader(activeRenderer));
   return loader;
 }

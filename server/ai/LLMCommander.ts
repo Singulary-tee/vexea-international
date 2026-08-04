@@ -7,7 +7,9 @@ import {
   DroneState,
   DroneType,
   BehaviorProfile,
+  DRONE_CONFIGS,
 } from "../../shared/constants";
+import { ACTIVE_GAMEMODE } from "../../shared/gamemode-configs.js";
 import { ServerDrone } from "../MatchRoom";
 
 const MAX_DRONES = 40; // Hardcoded from MatchRoom
@@ -70,11 +72,56 @@ export class LLMCommander {
     const _llmStartTime = Date.now();
     this.room.apiCallCount++;
 
+    // Regenerate AP pool per 8s cycle
+    const elapsedSeconds = (Date.now() - this.room.matchStartTime) / 1000;
+    const currentApRegen = ACTIVE_GAMEMODE.llmDifficultyScaling
+      ? ACTIVE_GAMEMODE.llmApRegenPerCycle +
+        Math.floor(elapsedSeconds / ACTIVE_GAMEMODE.llmDifficultyScaleInterval) *
+          ACTIVE_GAMEMODE.llmDifficultyScaleAmount
+      : ACTIVE_GAMEMODE.llmApRegenPerCycle;
+    this.room.commanderAP += currentApRegen;
+
+    // Evaluate unresolved outstanding orders
+    const pendingOrders: { group_id: string; destination: string; cycles_outstanding: number }[] = [];
+    for (const [groupId, order] of this.room.outstandingOrders.entries()) {
+      const activeGroupDrones = this.room.drones.filter(
+        (d) => d.groupId === groupId && d.state !== DroneState.DEAD,
+      );
+      if (activeGroupDrones.length === 0) {
+        this.room.outstandingOrders.delete(groupId);
+        continue;
+      }
+      const allReached = activeGroupDrones.every((d) => d.zone === order.targetZone);
+      if (allReached) {
+        this.room.outstandingOrders.delete(groupId);
+      } else {
+        order.cyclesOutstanding++;
+        pendingOrders.push({
+          group_id: groupId,
+          destination: order.targetZone,
+          cycles_outstanding: order.cyclesOutstanding,
+        });
+      }
+    }
+
     const statePayload = JSON.stringify(this.room.zoneSummary);
-    const payloadToLLM = `Dynamic payload: Current Zone Summary: ${statePayload}\nFailed operations from previous cycle: ${JSON.stringify(this.room.failedOperations)}`;
+    const outstandingPayload =
+      pendingOrders.length > 0
+        ? `\nOutstanding Orders: ${JSON.stringify(pendingOrders)}`
+        : "";
+    const payloadToLLM = `Dynamic payload: Current Zone Summary: ${statePayload}${outstandingPayload}\nCommander AP Pool: ${this.room.commanderAP}\nFailed operations from previous cycle: ${JSON.stringify(this.room.failedOperations)}`;
     this.room.failedOperations.length = 0;
 
     const systemInstructions = `You are an automated state-machine orchestrator managing unit group allocations and zone routing. Respond strictly and exclusively with tool calls. Do not roleplay, invent narrative, adopt a persona, or output natural language. Clinical mechanical execution only.
+
+Unit types:
+- Recon Drone (recon_drone): HP 20, Speed Highest, Air. Non-combat intelligence unit that maintains confirmed player presence in its zone summary.
+- Rotary Shooter (rotary_shooter): HP 40, Dmg 8, Speed High, Air. Mobile aerial pressure unit for zone harassment and location confirmation.
+- Bomber Drone (bomber_drone): HP 30, Dmg 80 (explosion, 4u radius), Speed High, Air. Single-use kamikaze unit that flies directly at players to detonate.
+- Fixed Wing (fixed_wing): HP 60, Dmg 15, Speed Highest Sustained, Air. Fast strafing unit for open zones; hard-capped at 1 deployment per match.
+- Wheeled Drone (wheeled_drone): HP 80, Dmg 12, Speed Medium, Ground. Backbone ground unit that pathfinds aggressively toward player zones.
+- Robot Dog (robot_dog): HP 150, Dmg 18, Speed Slow, Ground. Relentless defensive unit that holds long LOS corridors for zone denial.
+- Humanoid (humanoid): HP 200, Dmg 20, Speed Slow, Ground. Elite anchor unit using cover actively to hold critical chokepoints.
 
 Topological graph adjacency (Zones):
 - zone_spawn connected to: zone_courtyard
@@ -154,7 +201,18 @@ Topological graph adjacency (Zones):
                             type: Type.STRING,
                             enum: Object.values(ZONES),
                           },
-                          unit_type: { type: Type.STRING, enum: ["ground", "air"] },
+                          unit_type: {
+                            type: Type.STRING,
+                            enum: [
+                              "recon_drone",
+                              "rotary_shooter",
+                              "bomber_drone",
+                              "fixed_wing",
+                              "wheeled_drone",
+                              "robot_dog",
+                              "humanoid",
+                            ],
+                          },
                           count: { type: Type.INTEGER },
                           behavior_profile: {
                             type: Type.STRING,
@@ -288,6 +346,34 @@ Topological graph adjacency (Zones):
           switch (call.name) {
             case "spawn_units": {
               const { zone_id, unit_type, count, behavior_profile } = args;
+
+              const typeMapping: Record<string, DroneType> = {
+                recon_drone: DroneType.RECON,
+                rotary_shooter: DroneType.ROTARY_SHOOTER,
+                bomber_drone: DroneType.BOMBER,
+                fixed_wing: DroneType.FIXED_WING,
+                wheeled_drone: DroneType.WHEELED,
+                robot_dog: DroneType.ROBOT_DOG,
+                humanoid: DroneType.HUMANOID,
+              };
+
+              const requestedDroneType = typeMapping[unit_type];
+              if (requestedDroneType === undefined) {
+                this.room.failedOperations.push(
+                  `Spawn rejected: Unknown unit_type ${unit_type}`,
+                );
+                break;
+              }
+
+              const droneConfig = DRONE_CONFIGS[requestedDroneType];
+              if (!droneConfig) {
+                this.room.failedOperations.push(
+                  `Spawn rejected: Missing config for ${unit_type}`,
+                );
+                break;
+              }
+
+              // 1. Active capacity check
               let currentActiveCount = 0;
               for (let j = 0; j < this.room.drones.length; j++) {
                 if (this.room.drones[j].state !== DroneState.DEAD)
@@ -300,6 +386,35 @@ Topological graph adjacency (Zones):
                 break;
               }
 
+              // 2. Fixed Wing hard cap check (1 per match)
+              if (requestedDroneType === DroneType.FIXED_WING) {
+                if (
+                  this.room.fixedWingDeploymentsThisMatch >= 1 ||
+                  count > 1
+                ) {
+                  this.room.failedOperations.push(
+                    `Spawn rejected: Fixed Wing deployment hard cap (1 per match) reached`,
+                  );
+                  break;
+                }
+              }
+
+              // 3. AP cost check against commander AP pool
+              const requiredAP = droneConfig.apCost * count;
+              if (this.room.commanderAP < requiredAP) {
+                this.room.failedOperations.push(
+                  `Spawn rejected: Insufficient AP pool (${this.room.commanderAP} AP available, ${requiredAP} AP required for ${count}x ${unit_type})`,
+                );
+                break;
+              }
+
+              // Deduct AP cost
+              this.room.commanderAP -= requiredAP;
+
+              if (requestedDroneType === DroneType.FIXED_WING) {
+                this.room.fixedWingDeploymentsThisMatch++;
+              }
+
               let successfullySpawned = 0;
               const newGroupId = `G_INC_${Math.floor(Math.random() * 1000)}`;
               for (let j = 0; j < this.room.drones.length; j++) {
@@ -307,15 +422,12 @@ Topological graph adjacency (Zones):
                 if (d.state === DroneState.DEAD) {
                   const b = ZONE_BOUNDS[zone_id as ZoneName];
                   d.id = this.room.nextDroneId++;
-                  d.type =
-                    unit_type === "air"
-                      ? DroneType.ROTARY_SHOOTER
-                      : DroneType.WHEELED;
+                  d.type = requestedDroneType;
                   d.state = DroneState.IDLE;
                   d.behavior = behavior_profile as BehaviorProfile;
                   d.zone = zone_id as ZoneName;
 
-                  const isAir = unit_type === "air";
+                  const isAir = droneConfig.isAirUnit;
                   const isTunnels =
                     zone_id === ZONES.TUNNELS ||
                     String(zone_id).toLowerCase().includes("tunnel");
@@ -344,7 +456,7 @@ Topological graph adjacency (Zones):
                   d.velX = 0;
                   d.velY = 0;
                   d.velZ = 0;
-                  d.hp = 100;
+                  d.hp = droneConfig.hp;
                   d.groupId = newGroupId;
                   d.cooldown = 40;
                   this.room.initDronePhysics.bind(this.room)(d);
@@ -437,6 +549,10 @@ Topological graph adjacency (Zones):
                   `Move rejected: No active members found for group: ${group_id}`,
                 );
               } else {
+                this.room.outstandingOrders.set(group_id, {
+                  targetZone: target_zone as ZoneName,
+                  cyclesOutstanding: 0,
+                });
                 this.room.broadcastReliableEvent.bind(this.room)({
                   type: "group_movement",
                   id: group_id,
@@ -448,6 +564,7 @@ Topological graph adjacency (Zones):
 
             case "hold_position": {
               const { group_id } = args;
+              let foundGroupZone: ZoneName | null = null;
               for (let j = 0; j < this.room.drones.length; j++) {
                 const d = this.room.drones[j];
                 if (d.groupId === group_id && d.state !== DroneState.DEAD) {
@@ -455,7 +572,14 @@ Topological graph adjacency (Zones):
                   d.velY = 0;
                   d.velZ = 0;
                   d.state = DroneState.PURSUING;
+                  foundGroupZone = d.zone;
                 }
+              }
+              if (foundGroupZone) {
+                this.room.outstandingOrders.set(group_id, {
+                  targetZone: foundGroupZone,
+                  cyclesOutstanding: 0,
+                });
               }
               break;
             }

@@ -2503,9 +2503,9 @@ function drawZones() {
                 groupsDisplay = liveData.droneGroups.map((g: string) => `${g} (${groupCounts.get(g) || 0})`).join(", ");
             }
 
-            const livePresence = liveData.playerPresence || 'unknown';
-            const snapPresence = snapData.playerPresence || 'unknown';
-            const presenceColor = livePresence !== snapPresence ? '${DS.colors.danger}' : '${DS.colors.textMuted}';
+            const livePresence = typeof liveData.confidence === 'number' ? liveData.confidence.toFixed(2) : (liveData.playerPresence || '0.00');
+            const snapPresence = typeof snapData.confidence === 'number' ? snapData.confidence.toFixed(2) : (snapData.playerPresence || '0.00');
+            const presenceColor = livePresence !== snapPresence ? `${DS.colors.danger}` : `${DS.colors.textMuted}`;
 
             html += `
             <div style="border:${DS.borders.thin} #444; padding:${DS.spacing.md}; cursor:pointer; background:#222;" onclick="window.inspectZone('${zoneName}')">
@@ -2513,14 +2513,14 @@ function drawZones() {
                 <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-top:5px;">
                     <div>
                         <b style="color:${DS.colors.textMuted}">LIVE (Server Tick)</b><br/>
-                        Presence: ${livePresence}<br/>
+                        Confidence: ${livePresence}<br/>
                         Combat: ${liveData.combatEffectiveness || 'N/A'}<br/>
                         Groups: ${groupsDisplay}<br/>
                         Updated: ${liveData.lastSeenTimestamp ? new Date(liveData.lastSeenTimestamp).toLocaleTimeString() : 'N/A'}
                     </div>
                     <div>
                         <b style="color:${DS.colors.textMuted}">LLM BELIEF (Snapshot)</b><br/>
-                        Presence: <span style="color:${presenceColor}">${snapPresence}</span><br/>
+                        Confidence: <span style="color:${presenceColor}">${snapPresence}</span><br/>
                         Combat: ${snapData.combatEffectiveness || 'N/A'}<br/>
                         Groups: ${(snapData.droneGroups && snapData.droneGroups.length > 0) ? snapData.droneGroups.join(", ") : 'None'}<br/>
                         Updated: ${snapData.lastSeenTimestamp ? new Date(snapData.lastSeenTimestamp).toLocaleTimeString() : 'N/A'}

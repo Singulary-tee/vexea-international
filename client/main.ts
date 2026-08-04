@@ -15,6 +15,8 @@ declare global {
  * Rejects React overlays, ensuring strict Zero-GC 60fps thermal loops on Mobile.
  */
 
+import "./sentry";
+import "./doppler";
 import "./index.css";
 import { DS } from "./design-system";
 if ((import.meta as any).env?.DEV) {
@@ -574,7 +576,7 @@ function initializeLocalMatchScene(requestedMap: string) {
 
   (window as any)._serverMatchReady = false;
 
-  const gltfLoader = createConfiguredGLTFLoader();
+  const gltfLoader = createConfiguredGLTFLoader(undefined, renderer || (window as any).renderer);
   gltfLoader.load(getAssetUrl(ASSET_STRUCTURE["Player_one-optimized.glb"].fileName), (gltf) => {
     riflemanModel = gltf.scene;
     (riflemanModel as any).animations = gltf.animations;

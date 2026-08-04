@@ -230,7 +230,7 @@ export interface ServerZoneState {
   bounds: { minX: number; maxX: number; minZ: number; maxZ: number };
   connectedZones: string[];
   droneGroups: string[];
-  playerPresence: "confirmed" | "last_seen" | "unknown";
+  confidence: number;
   lastSeenTimestamp: number;
   activeOperations: { type: string; eta: number; progress: number }[];
   combatEffectiveness: "full" | "degraded" | "critical" | "destroyed";
@@ -299,6 +299,9 @@ export class MatchRoom {
   public cameras: ServerCamera[] = [];
   public apiCallCount = 0;
   public llmTokensUsedThisMatch = 0;
+  public commanderAP: number = ACTIVE_GAMEMODE.llmApStartPool;
+  public fixedWingDeploymentsThisMatch: number = 0;
+  public outstandingOrders: Map<string, { targetZone: ZoneName; cyclesOutstanding: number }> = new Map();
   public failedOperations: string[] = [];
   public zoneSummary!: Record<ZoneName, ServerZoneState>;
 
@@ -513,7 +516,7 @@ export class MatchRoom {
         bounds: { minX: 0, maxX: 128, minZ: 640, maxZ: 768 },
         connectedZones: [ZONES.COURTYARD],
         droneGroups: [],
-        playerPresence: "unknown",
+        confidence: 0.0,
         lastSeenTimestamp: 0,
         activeOperations: [],
         combatEffectiveness: "full",
@@ -526,7 +529,7 @@ export class MatchRoom {
         bounds: { minX: 0, maxX: 288, minZ: 352, maxZ: 640 },
         connectedZones: [ZONES.SPAWN, ZONES.WAREHOUSE, ZONES.BRIDGE],
         droneGroups: [],
-        playerPresence: "unknown",
+        confidence: 0.0,
         lastSeenTimestamp: 0,
         activeOperations: [],
         combatEffectiveness: "full",
@@ -539,7 +542,7 @@ export class MatchRoom {
         bounds: { minX: 0, maxX: 288, minZ: 128, maxZ: 352 },
         connectedZones: [ZONES.COURTYARD, ZONES.TUNNELS, ZONES.PLANT],
         droneGroups: [],
-        playerPresence: "unknown",
+        confidence: 0.0,
         lastSeenTimestamp: 0,
         activeOperations: [],
         combatEffectiveness: "full",
@@ -552,7 +555,7 @@ export class MatchRoom {
         bounds: { minX: 248, maxX: 328, minZ: 456, maxZ: 536 },
         connectedZones: [ZONES.COURTYARD, ZONES.PLANT],
         droneGroups: [],
-        playerPresence: "unknown",
+        confidence: 0.0,
         lastSeenTimestamp: 0,
         activeOperations: [],
         combatEffectiveness: "full",
@@ -565,7 +568,7 @@ export class MatchRoom {
         bounds: { minX: 288, maxX: 768, minZ: 128, maxZ: 768 },
         connectedZones: [ZONES.WAREHOUSE, ZONES.BRIDGE, ZONES.CORE],
         droneGroups: [],
-        playerPresence: "unknown",
+        confidence: 0.0,
         lastSeenTimestamp: 0,
         activeOperations: [],
         combatEffectiveness: "full",
@@ -578,7 +581,7 @@ export class MatchRoom {
         bounds: { minX: 128, maxX: 768, minZ: 0, maxZ: 128 },
         connectedZones: [ZONES.WAREHOUSE, ZONES.CORE],
         droneGroups: [],
-        playerPresence: "unknown",
+        confidence: 0.0,
         lastSeenTimestamp: 0,
         activeOperations: [],
         combatEffectiveness: "full",
@@ -591,7 +594,7 @@ export class MatchRoom {
         bounds: { minX: 320, maxX: 448, minZ: 320, maxZ: 448 },
         connectedZones: [ZONES.PLANT, ZONES.TUNNELS],
         droneGroups: [],
-        playerPresence: "unknown",
+        confidence: 0.0,
         lastSeenTimestamp: 0,
         activeOperations: [],
         combatEffectiveness: "full",
@@ -1963,7 +1966,7 @@ export class MatchRoom {
         }
       }
 
-      // Signal Disruptor suppresses detection & degrades zone presence to UNKNOWN
+      // Signal Disruptor suppresses detection & degrades zone presence confidence to 0.0
       const isSignalDisrupted =
         targetPlayer.signalDisruptorUntil && targetPlayer.signalDisruptorUntil > nowMs;
       if (isSignalDisrupted) {
@@ -1973,21 +1976,13 @@ export class MatchRoom {
       for (const zoneId of ZONES_ARRAY) {
         const z = this.zoneSummary[zoneId];
         if (isSignalDisrupted && zoneId === playerZone) {
-          z.playerPresence = "unknown";
+          z.confidence = 0.0;
         } else if (detectedZones.has(zoneId)) {
-          z.playerPresence = "confirmed";
+          z.confidence = 1.0;
           z.lastSeenTimestamp = nowMs;
         } else {
-          const elapsed = nowMs - z.lastSeenTimestamp;
-          if (z.playerPresence === "confirmed" && elapsed >= 30000) {
-            z.playerPresence = "last_seen";
-          } else if (
-            (z.playerPresence === "confirmed" ||
-              z.playerPresence === "last_seen") &&
-            elapsed >= 60000
-          ) {
-            z.playerPresence = "unknown";
-          }
+          const elapsed = z.lastSeenTimestamp > 0 ? nowMs - z.lastSeenTimestamp : 60000;
+          z.confidence = Math.max(0.0, Math.min(1.0, Math.round((1.0 - elapsed / 60000) * 100) / 100));
 
           for (let i = 0; i < this.drones.length; i++) {
             if (
@@ -1995,8 +1990,7 @@ export class MatchRoom {
               this.drones[i].type === DroneType.RECON &&
               this.drones[i].zone === zoneId
             ) {
-              if (z.playerPresence !== "confirmed")
-                z.playerPresence = "confirmed";
+              z.confidence = 1.0;
             }
           }
         }
@@ -3149,6 +3143,9 @@ export class MatchRoom {
       this.matchStartTime = Date.now();
       this.apiCallCount = 0;
       this.llmTokensUsedThisMatch = 0;
+      this.commanderAP = ACTIVE_GAMEMODE.llmApStartPool;
+      this.fixedWingDeploymentsThisMatch = 0;
+      this.outstandingOrders.clear();
       console.log(
         `[VEXEA SERVER] Match active! Triggering Loops in Room: ${this.roomId}`,
       );
