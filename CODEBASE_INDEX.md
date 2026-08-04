@@ -589,3 +589,13 @@ Every file change in the VEXEA codebase must follow this strict three-step proto
     *   Synchronized `/CODEBASE_INDEX.md` with the full file tree across Server (`/server`), Shared (`/shared`), Client (`/client`), and Root (`/`) spaces.
     *   Indexed previously missing modules: `server/gates/verification.gate.ts`, `server/validation/validation-service.ts`, `server/verification/verification-service.ts`, `shared/asset-structure.ts`, `shared/classes.ts`, `shared/utilities.ts`, `shared/gates/`, `shared/validation/`, `shared/verification/`, `client/StudioCharacterPreview.ts`, `client/StudioPreviewManager.ts`, `client/social.ts`, `client/data/`, `client/gates/`, `client/screens/` (all 13 screen modules), `client/src/camera/`, `client/weapons/`, and root level configuration manifests and architectural specifications.
 *   **Verification:** `lint_applet` and `compile_applet` completed with zero errors.
+
+### Cycle 2026-08-04-01: LLM Commander 4-Part Expansion & Confidence Score Integration
+*   **Target Files:** `/server/ai/LLMCommander.ts`, `/server/MatchRoom.ts`, `/shared/constants.ts`, `/client/dev_menu.ts`, `/CODEBASE_INDEX.md`
+*   **Status:** Verified & Finalized
+*   **Modifications:**
+    *   **Part 1**: Added unit-type descriptions for all 7 drone types (Recon Drone, Rotary Shooter, Bomber Drone, Fixed Wing, Wheeled Drone, Robot Dog, Humanoid) to `systemInstructions` in `/server/ai/LLMCommander.ts` with real HP, speed, and damage values from `GAMEPLAY.md`.
+    *   **Part 2**: Expanded `spawn_units` tool schema in `/server/ai/LLMCommander.ts` to accept a string enum of all 7 drone types. Added mapping to `DroneType`, AP economy checks against `commanderAP` using `DRONE_CONFIGS` costs, and Fixed Wing hard-cap check (1 per match). Set `apCost: 1` for RECON in `/shared/constants.ts`.
+    *   **Part 3**: Implemented outstanding-order tracking via `outstandingOrders` map on `MatchRoom`. Tracks destination and cycle counts for active orders, auto-resolves when groups arrive at target zones, and appends pending unresolved orders to `payloadToLLM`.
+    *   **Part 4**: Replaced 3-state `playerPresence` with continuous `confidence` float (1.0 to 0.0) in `ServerZoneState` and `updateZoneSummary` in `/server/MatchRoom.ts`, preserving Recon Drone (1.0) and Signal Disruptor (0.0) overrides. Updated `/client/dev_menu.ts` to render `confidence` score.
+*   **Verification:** `lint_applet` and `compile_applet` passed cleanly with zero errors.

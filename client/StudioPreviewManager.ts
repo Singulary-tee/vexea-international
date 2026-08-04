@@ -249,7 +249,7 @@ class StudioPreviewManagerImpl {
     }
 
     try {
-      const loader = createConfiguredGLTFLoader();
+      const loader = createConfiguredGLTFLoader(undefined, (window as any).renderer);
       const url = await getCachedOrFetchUrl(glbName, "Asset");
       const gltf = await loader.loadAsync(url);
       

@@ -4,6 +4,8 @@
  * Enforces Zero-GC, authoritative validation, and server-side LLM loop per room.
  */
 
+import "./sentry";
+import { loadDopplerSecrets } from "./doppler";
 import dotenv from "dotenv";
 import express from "express";
 import http from "http";
@@ -352,6 +354,12 @@ app.get("/api/health", (req, res) => {
   res.status(200).send("OK");
 });
 
+app.get("/api/debug-sentry", (req, res) => {
+  // Intentional error test snippet
+  (global as any).myUndefinedFunction();
+  res.send("Triggered Sentry test error");
+});
+
 app.post("/api/log", (req, res) => {
     console.log("[CLIENT LOG]", ...req.body);
     res.sendStatus(200);
@@ -359,6 +367,42 @@ app.post("/api/log", (req, res) => {
 
 app.get("/api/logs", (req, res) => {
     res.json((global as any).serverLogs || []);
+});
+
+app.get("/api/doppler-client-secrets", async (req, res) => {
+  const token =
+    (req.query.token as string) ||
+    process.env.VITE_DOPPLER_TOKEN ||
+    process.env.DOPPLER_TOKEN;
+
+  if (!token) {
+    return res.status(400).json({ error: "No Doppler token provided" });
+  }
+
+  try {
+    const response = await fetch(
+      "https://api.doppler.com/v3/configs/config/secrets/download?format=json",
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "User-Agent": "Vexea-Server/1.0",
+        },
+      }
+    );
+
+    if (!response.ok) {
+      return res
+        .status(response.status)
+        .json({ error: `Doppler API error: ${response.statusText}` });
+    }
+
+    const secrets = await response.json();
+    return res.json(secrets);
+  } catch (err: any) {
+    return res
+      .status(500)
+      .json({ error: err.message || "Failed to fetch Doppler client secrets" });
+  }
 });
 
 app.get("/api/proxy-asset", async (req, res) => {
@@ -1174,6 +1218,9 @@ io.onConnection((channel: ChannelAdapter) => {
 });
 
 const serveApp = async () => {
+  // Load production secrets from Doppler if DOPPLER_TOKEN is provided
+  await loadDopplerSecrets();
+
   // Setup Rapier globally once before room allocation
   await RAPIER.init();
 

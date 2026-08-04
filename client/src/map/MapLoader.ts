@@ -68,7 +68,7 @@ export class MapLoader {
       return url;
     });
 
-    const loader = createConfiguredGLTFLoader(manager);
+    const loader = createConfiguredGLTFLoader(manager, (window as any).renderer);
 
     let loaded = 0;
     const total = uniqueMeshes.size;
