@@ -35,7 +35,7 @@
   },
   {
     "filename": "single_arm_1.glb",
-    "originalFile": "StreetLightPoles.gltf",
+    "originalFile": "StreetLightPoles.glb",
     "boundingBox": {
       "x": 1.1572506427764893,
       "y": -2.384185791015625e-7,
@@ -52,7 +52,7 @@
   },
   {
     "filename": "double_arm_1.glb",
-    "originalFile": "StreetLightPoles.gltf",
+    "originalFile": "StreetLightPoles.glb",
     "boundingBox": {
       "x": -3.93436598777771,
       "y": 2.384185791015625e-7,
@@ -261,7 +261,7 @@
   },
   {
     "filename": "asphalt_02_1k.glb",
-    "originalFile": "asphalt_02_1k.gltf",
+    "originalFile": "asphalt_02_1k.glb",
     "boundingBox": {
       "x": -1.5069290399551392,
       "y": -1.5185885429382324,
@@ -278,7 +278,7 @@
   },
   {
     "filename": "concrete_tiles_02_1k.glb",
-    "originalFile": "concrete_tiles_02_1k.gltf",
+    "originalFile": "concrete_tiles_02_1k.glb",
     "boundingBox": {
       "x": -0.9222022294998169,
       "y": -0.9219768047332764,
@@ -295,7 +295,7 @@
   },
   {
     "filename": "red_brick_03_1k.glb",
-    "originalFile": "red_brick_03_1k.gltf",
+    "originalFile": "red_brick_03_1k.glb",
     "boundingBox": {
       "x": -0.5138037204742432,
       "y": -0.5105189681053162,
@@ -312,7 +312,7 @@
   },
   {
     "filename": "rocks_ground_01_1k.glb",
-    "originalFile": "rocks_ground_01_1k.gltf",
+    "originalFile": "rocks_ground_01_1k.glb",
     "boundingBox": {
       "x": -1.0127055644989014,
       "y": -1.0311801433563232,
@@ -329,7 +329,7 @@
   },
   {
     "filename": "rocky_trail_1k.glb",
-    "originalFile": "rocky_trail_1k.gltf",
+    "originalFile": "rocky_trail_1k.glb",
     "boundingBox": {
       "x": -1.007501482963562,
       "y": -1.014905571937561,

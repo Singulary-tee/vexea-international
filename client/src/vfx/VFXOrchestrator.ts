@@ -274,6 +274,7 @@ export function updateVFX(deltaTime: number, camera: THREE.PerspectiveCamera, ma
   // 2. Update Tracers
   if (tracerBatch && tracerActive && tracerInstIds) {
     let tracerUpdateNeeded = false;
+    camera.getWorldDirection(_vfxCamFwd);
     for (let i = 0; i < tracerSlots; i++) {
       if (!tracerActive[i]) continue;
       
@@ -291,7 +292,6 @@ export function updateVFX(deltaTime: number, camera: THREE.PerspectiveCamera, ma
       
       _vfxPos.set(tracerPosX![i], tracerPosY![i], tracerPosZ![i]);
       _vfxDir.set(tracerDirX![i], tracerDirY![i], tracerDirZ![i]);
-      camera.getWorldDirection(_vfxCamFwd);
       
       _vfxUp.crossVectors(_vfxDir, _vfxCamFwd).normalize();
       if (_vfxUp.lengthSq() < 0.001) {

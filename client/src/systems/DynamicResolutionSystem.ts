@@ -29,7 +29,7 @@ export class DynamicResolutionSystem {
     this.overBudgetFrames = 0;
     this.underBudgetFrames = 0;
     this.lastFrameTime = 0;
-    const s = getSettings();
+    const s = (window as any).vexeaSettings || getSettings();
     if (s.dynamicResolutionEnabled) {
       const cap = Math.min(window.devicePixelRatio || 1.0, DYNAMIC_RES_MAX);
       this.currentPixelRatio = Math.max(DYNAMIC_RES_MIN, cap);
@@ -40,7 +40,7 @@ export class DynamicResolutionSystem {
   }
 
   public update(nowMs: number, frameDurationMs?: number): void {
-    const s = getSettings();
+    const s = (window as any).vexeaSettings || getSettings();
 
     // When toggled off mid-session: immediately hand control back to manual pixelRatioMode
     if (!s.dynamicResolutionEnabled) {

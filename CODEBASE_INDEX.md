@@ -17,8 +17,14 @@ This file is the authoritative index of all directories and source files within 
 *   **`MatchRoom.ts`**
     *   *Purpose:* The complete server-side simulation environment. Manages the 60Hz physics update loop, 20Hz state-synchronization packets, autonomous AI events, and per-match token budget tracking (`llmTokensUsedThisMatch`).
     *   *Key Functions/Exports:* `MatchRoom` class, handles player join/leave, bot integration, collision handling, hitscan/rewind raycasting, objective point timers, score accounting, and shutdown processing.
+*   **`doppler.ts`**
+    *   *Purpose:* Server Doppler secrets manager. Integrates with Doppler REST API to load production environment secrets (`FIREBASE_SERVICE_ACCOUNT`, `SENTRY_DSN`) into `process.env`.
+    *   *Key Functions/Exports:* `loadDopplerSecrets()`, `getFirebaseServiceAccount()`.
 *   **`index.ts`**
     *   *Purpose:* Primary server entry point. Configures the Express server, initializes WASM physics modules, binds HTTP and Socket.IO ports, hosts developer API endpoints, handles network reconnect tolerances, and serves static files.
+*   **`sentry.ts`**
+    *   *Purpose:* Server-side Sentry error logging and exception monitoring initialization.
+    *   *Key Functions/Exports:* `initSentry()`, `Sentry`.
 *   **`ai/` (Strategic AI)**
     *   **`DroneIntelligence.ts`**: Governs spatial awareness for individual drones. Computes sight lines (3D orientation quaternions to check forward vectors and cone of vision angles), performs static map and dynamic Rapier line-of-sight raycasts, and handles memory decay mechanics.
     *   **`LLMCommander.ts`**: High-level strategic controller powered by Gemini 3.5 Flash. Formulates formatted prompt strings, parses structured tool call arrays (Spawn, Move, Split, Merge, Hold), manages strategic AP resource pools, and enforces the `MAX_LLM_TOKENS_PER_MATCH` (55,000 token) token budget ceiling.
@@ -104,6 +110,9 @@ This file is the authoritative index of all directories and source files within 
     *   *Purpose:* Dev UI for spawning assets, switching maps, and toggling invulnerability.
 *   **`dev_visual_diagnosis.ts`**
     *   *Purpose:* Visual overlays rendering raw lines for wireframe colliders, raycast tracks, and velocity vectors.
+*   **`doppler.ts`**
+    *   *Purpose:* Client-side Doppler integration fetching production secrets (`VITE_SENTRY_DSN`, `VITE_SERVER_URL`) via API/proxy.
+    *   *Key Functions/Exports:* `loadClientDopplerSecrets()`, `getClientDopplerSecret()`, `getClientServerUrl()`.
 *   **`drone_models.ts`**
     *   *Purpose:* Resolves asset configurations and custom procedural materials for drone glTF structures.
 *   **`firebase.ts`**
@@ -128,6 +137,9 @@ This file is the authoritative index of all directories and source files within 
     *   *Purpose:* Web worker script for client physics predictions.
 *   **`platform-gate.ts`**
     *   *Purpose:* Centralizes platform detection (mobile vs. desktop) at initialization. Responsible for gating UI elements, applying platform-specific CSS classes, and managing device-specific default settings.
+*   **`sentry.ts`**
+    *   *Purpose:* Client-side Sentry exception and console error tracking initialization.
+    *   *Key Functions/Exports:* `initClientSentry()`, `Sentry`.
 *   **`settings.ts`**
     *   *Purpose:* Volume levels, mouse sensitivity configurations, and dynamic resolution scaling toggles.
 *   **`social.ts`**
@@ -599,3 +611,29 @@ Every file change in the VEXEA codebase must follow this strict three-step proto
     *   **Part 3**: Implemented outstanding-order tracking via `outstandingOrders` map on `MatchRoom`. Tracks destination and cycle counts for active orders, auto-resolves when groups arrive at target zones, and appends pending unresolved orders to `payloadToLLM`.
     *   **Part 4**: Replaced 3-state `playerPresence` with continuous `confidence` float (1.0 to 0.0) in `ServerZoneState` and `updateZoneSummary` in `/server/MatchRoom.ts`, preserving Recon Drone (1.0) and Signal Disruptor (0.0) overrides. Updated `/client/dev_menu.ts` to render `confidence` score.
 *   **Verification:** `lint_applet` and `compile_applet` passed cleanly with zero errors.
+
+### Cycle 2026-08-04-02: Register Sentry and Doppler Modules & Update Node Deploy Pipeline
+*   **Target Files:** `/client/sentry.ts`, `/client/doppler.ts`, `/server/sentry.ts`, `/server/doppler.ts`, `/.github/workflows/deploy.yml`, `/package.json`, `/CODEBASE_INDEX.md`
+*   **Status:** Verified & Finalized
+*   **Modifications:**
+    *   Indexed `/client/sentry.ts` and `/client/doppler.ts` in Section 1.3 of `/CODEBASE_INDEX.md`.
+    *   Indexed `/server/sentry.ts` and `/server/doppler.ts` in Section 1.1 of `/CODEBASE_INDEX.md`.
+    *   Updated `/.github/workflows/deploy.yml` `actions/setup-node` `node-version` from `20` to `22`.
+    *   Restored `firebase-admin` dependency version in `/package.json` to `^14.0.0` requiring Node 22+.
+*   **Verification:** `lint_applet` and `compile_applet` passed cleanly with zero errors.
+
+### Cycle 2026-08-04-03: DynamicResolutionSystem Settings Propagation Fix
+*   **Target Files:** `/client/src/systems/DynamicResolutionSystem.ts`, `/CODEBASE_INDEX.md`
+*   **Status:** Verified & Finalized
+*   **Modifications:**
+    *   Updated `DynamicResolutionSystem.ts` (`reset()` and `update()`) to consume in-memory `(window as any).vexeaSettings` instead of invoking `getSettings()` every render tick, eliminating per-frame `localStorage.getItem()` and `JSON.parse()` overhead.
+*   **Verification:** `lint_applet` and `compile_applet` passed cleanly with zero errors.
+
+### Cycle 2026-08-04-04: Camera World Direction & Concurrent Preload Optimizations
+*   **Target Files:** `/client/src/vfx/VFXOrchestrator.ts`, `/client/asset-cache.ts`, `/CODEBASE_INDEX.md`
+*   **Status:** Verified & Finalized
+*   **Modifications:**
+    *   Updated `VFXOrchestrator.ts` tracer loop to calculate `camera.getWorldDirection(_vfxCamFwd)` once per frame before iterating over active tracer slots instead of recalculating for every active tracer.
+    *   Refactored `downloadMapAssets` in `asset-cache.ts` from a sequential `for..of` loop to a 4-worker concurrent queue to drastically reduce map asset load times.
+*   **Verification:** `lint_applet` and `compile_applet` passed cleanly with zero errors.
+

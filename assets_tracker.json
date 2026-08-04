@@ -31,11 +31,6 @@
       "source": "Release"
     },
     {
-      "name": "StreetLightPoles.gltf",
-      "category": "Model",
-      "source": "Release"
-    },
-    {
       "name": "StreetLightPoles.bin",
       "category": "Model",
       "source": "Release"
@@ -156,11 +151,6 @@
       "source": "Release"
     },
     {
-      "name": "Server_rack.gltf",
-      "category": "Model",
-      "source": "ImageOnly"
-    },
-    {
       "name": "T_AntennaTower_D.png",
       "category": "Texture",
       "source": "ImageOnly"
@@ -256,11 +246,6 @@
       "source": "ImageOnly"
     },
     {
-      "name": "antenna.tower.gltf",
-      "category": "Model",
-      "source": "ImageOnly"
-    },
-    {
       "name": "industrial_asset_pack_free.glb",
       "category": "Model",
       "source": "ImageOnly"
@@ -272,16 +257,6 @@
     },
     {
       "name": "model.bin",
-      "category": "Model",
-      "source": "ImageOnly"
-    },
-    {
-      "name": "security_camera_01_1k.gltf.glb",
-      "category": "Model",
-      "source": "ImageOnly"
-    },
-    {
-      "name": "security_camera_02_1k.gltf.glb",
       "category": "Model",
       "source": "ImageOnly"
     },
@@ -301,22 +276,12 @@
       "source": "ImageOnly"
     },
     {
-      "name": "utility_box_02_1k.gltf.glb",
-      "category": "Model",
-      "source": "ImageOnly"
-    },
-    {
       "name": "warehouse_building.glb",
       "category": "Model",
       "source": "ImageOnly"
     },
     {
       "name": "asphalt_02.bin",
-      "category": "Texture",
-      "source": "TexturesFolder"
-    },
-    {
-      "name": "asphalt_02_1k.gltf",
       "category": "Texture",
       "source": "TexturesFolder"
     },
@@ -341,11 +306,6 @@
       "source": "TexturesFolder"
     },
     {
-      "name": "concrete_tiles_02_1k.gltf",
-      "category": "Texture",
-      "source": "TexturesFolder"
-    },
-    {
       "name": "concrete_tiles_02_arm_1k.jpg",
       "category": "Texture",
       "source": "TexturesFolder"
@@ -362,11 +322,6 @@
     },
     {
       "name": "red_brick_03.bin",
-      "category": "Texture",
-      "source": "TexturesFolder"
-    },
-    {
-      "name": "red_brick_03_1k.gltf",
       "category": "Texture",
       "source": "TexturesFolder"
     },
@@ -391,11 +346,6 @@
       "source": "TexturesFolder"
     },
     {
-      "name": "rocks_ground_01_1k.gltf",
-      "category": "Texture",
-      "source": "TexturesFolder"
-    },
-    {
       "name": "rocks_ground_01_arm_1k.jpg",
       "category": "Texture",
       "source": "TexturesFolder"
@@ -412,11 +362,6 @@
     },
     {
       "name": "rocky_trail.bin",
-      "category": "Texture",
-      "source": "TexturesFolder"
-    },
-    {
-      "name": "rocky_trail_1k.gltf",
       "category": "Texture",
       "source": "TexturesFolder"
     },
