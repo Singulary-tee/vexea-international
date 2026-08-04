@@ -784,7 +784,7 @@
     "cameras": [
       {
         "id": "cam_zone_spawn_0",
-        "meshFile": "security_camera_01_1k.gltf.glb",
+        "meshFile": "quadcopter_camera.glb",
         "position": {
           "x": 68.51317040252204,
           "y": 4,
@@ -796,7 +796,7 @@
       },
       {
         "id": "cam_zone_spawn_1",
-        "meshFile": "security_camera_02_1k.gltf.glb",
+        "meshFile": "quadcopter_camera.glb",
         "position": {
           "x": 123.69011706718953,
           "y": 4,
@@ -808,7 +808,7 @@
       },
       {
         "id": "cam_zone_spawn_2",
-        "meshFile": "security_camera_01_1k.gltf.glb",
+        "meshFile": "quadcopter_camera.glb",
         "position": {
           "x": 12.309726596027758,
           "y": 4,
@@ -820,7 +820,7 @@
       },
       {
         "id": "cam_zone_spawn_3",
-        "meshFile": "security_camera_02_1k.gltf.glb",
+        "meshFile": "quadcopter_camera.glb",
         "position": {
           "x": 35.84892246414353,
           "y": 4,
@@ -832,7 +832,7 @@
       },
       {
         "id": "cam_zone_spawn_4",
-        "meshFile": "security_camera_01_1k.gltf.glb",
+        "meshFile": "quadcopter_camera.glb",
         "position": {
           "x": 15.733772588308938,
           "y": 4,
@@ -844,7 +844,7 @@
       },
       {
         "id": "cam_zone_spawn_5",
-        "meshFile": "security_camera_02_1k.gltf.glb",
+        "meshFile": "quadcopter_camera.glb",
         "position": {
           "x": 35.91430639903754,
           "y": 4,
@@ -856,7 +856,7 @@
       },
       {
         "id": "cam_zone_spawn_6",
-        "meshFile": "security_camera_01_1k.gltf.glb",
+        "meshFile": "quadcopter_camera.glb",
         "position": {
           "x": 63.86770347447032,
           "y": 4,
@@ -868,7 +868,7 @@
       },
       {
         "id": "cam_zone_spawn_7",
-        "meshFile": "security_camera_02_1k.gltf.glb",
+        "meshFile": "quadcopter_camera.glb",
         "position": {
           "x": 106.16275193924872,
           "y": 4,
@@ -880,7 +880,7 @@
       },
       {
         "id": "cam_zone_spawn_8",
-        "meshFile": "security_camera_01_1k.gltf.glb",
+        "meshFile": "quadcopter_camera.glb",
         "position": {
           "x": 57.21683290360369,
           "y": 4,
@@ -892,7 +892,7 @@
       },
       {
         "id": "cam_zone_spawn_9",
-        "meshFile": "security_camera_02_1k.gltf.glb",
+        "meshFile": "quadcopter_camera.glb",
         "position": {
           "x": 107.73822884490335,
           "y": 4,
@@ -904,7 +904,7 @@
       },
       {
         "id": "cam_zone_spawn_10",
-        "meshFile": "security_camera_01_1k.gltf.glb",
+        "meshFile": "quadcopter_camera.glb",
         "position": {
           "x": 91.69953277388132,
           "y": 4,
@@ -916,7 +916,7 @@
       },
       {
         "id": "cam_zone_spawn_11",
-        "meshFile": "security_camera_02_1k.gltf.glb",
+        "meshFile": "quadcopter_camera.glb",
         "position": {
           "x": 13.23796801701019,
           "y": 4,
@@ -928,7 +928,7 @@
       },
       {
         "id": "cam_zone_spawn_12",
-        "meshFile": "security_camera_01_1k.gltf.glb",
+        "meshFile": "quadcopter_camera.glb",
         "position": {
           "x": 17.861016307700254,
           "y": 4,
@@ -940,7 +940,7 @@
       },
       {
         "id": "cam_zone_spawn_13",
-        "meshFile": "security_camera_02_1k.gltf.glb",
+        "meshFile": "quadcopter_camera.glb",
         "position": {
           "x": 49.74447330877649,
           "y": 4,
@@ -952,7 +952,7 @@
       },
       {
         "id": "cam_zone_spawn_14",
-        "meshFile": "security_camera_01_1k.gltf.glb",
+        "meshFile": "quadcopter_camera.glb",
         "position": {
           "x": 122.2337254252289,
           "y": 4,
@@ -964,7 +964,7 @@
       },
       {
         "id": "cam_zone_spawn_15",
-        "meshFile": "security_camera_02_1k.gltf.glb",
+        "meshFile": "quadcopter_camera.glb",
         "position": {
           "x": 3.440009825616869,
           "y": 4,
@@ -976,7 +976,7 @@
       },
       {
         "id": "cam_zone_spawn_16",
-        "meshFile": "security_camera_01_1k.gltf.glb",
+        "meshFile": "quadcopter_camera.glb",
         "position": {
           "x": 22.225291080096753,
           "y": 4,
@@ -988,7 +988,7 @@
       },
       {
         "id": "cam_zone_spawn_17",
-        "meshFile": "security_camera_02_1k.gltf.glb",
+        "meshFile": "quadcopter_camera.glb",
         "position": {
           "x": 41.97290867074477,
           "y": 4,
@@ -1000,7 +1000,7 @@
       },
       {
         "id": "cam_zone_spawn_18",
-        "meshFile": "security_camera_01_1k.gltf.glb",
+        "meshFile": "quadcopter_camera.glb",
         "position": {
           "x": 119.6797718177528,
           "y": 4,
@@ -1012,7 +1012,7 @@
       },
       {
         "id": "cam_zone_spawn_19",
-        "meshFile": "security_camera_02_1k.gltf.glb",
+        "meshFile": "quadcopter_camera.glb",
         "position": {
           "x": 70.04662442996525,
           "y": 4,

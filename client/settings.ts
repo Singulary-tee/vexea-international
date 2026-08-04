@@ -1133,16 +1133,6 @@ export function openSettings() {
             devTabBtn.style.display = 'block';
             
             // Logic for the Dev tab
-            const clearCacheBtn = document.getElementById("btn-clear-cache");
-            if (clearCacheBtn) {
-                bind(clearCacheBtn, 'click', async () => {
-                    if (confirm("Are you sure you want to clear the entire local cache? All assets will be redownloaded.")) {
-                        await clearCache();
-                        refreshDevFileList();
-                    }
-                });
-            }
-
             const refreshDevFileList = async () => {
                 const listEl = document.getElementById("dev-file-list");
                 if (!listEl) return;
@@ -1162,8 +1152,8 @@ export function openSettings() {
                     const row = document.createElement("div");
                     Object.assign(row.style, {
                         display: "flex", alignItems: "center", justifyContent: "space-between",
-                        padding: "8px 12px", background: "${DS.utils.rgba(DS.colors.text, 0.03)}",
-                        border: "1px solid ${DS.utils.rgba(DS.colors.text, 0.05)}", borderRadius: "4px"
+                        padding: "8px 12px", background: `${DS.utils.rgba(DS.colors.text, 0.03)}`,
+                        border: `1px solid ${DS.utils.rgba(DS.colors.text, 0.05)}`, borderRadius: "4px"
                     });
 
                     const info = document.createElement("div");
@@ -1205,6 +1195,28 @@ export function openSettings() {
                     listEl.appendChild(row);
                 });
             };
+
+            const clearCacheBtn = document.getElementById("btn-clear-cache");
+            if (clearCacheBtn) {
+                bind(clearCacheBtn, 'click', async () => {
+                    const originalText = clearCacheBtn.textContent;
+                    clearCacheBtn.textContent = "CLEARING...";
+                    (clearCacheBtn as HTMLButtonElement).disabled = true;
+                    try {
+                        await clearCache();
+                        await refreshDevFileList();
+                        clearCacheBtn.textContent = "CACHE CLEARED!";
+                    } catch (err) {
+                        console.error("Failed to clear cache:", err);
+                        clearCacheBtn.textContent = "ERROR CLEARING CACHE";
+                    } finally {
+                        setTimeout(() => {
+                            clearCacheBtn.textContent = originalText;
+                            (clearCacheBtn as HTMLButtonElement).disabled = false;
+                        }, 2000);
+                    }
+                });
+            }
 
             // Initial load when tab is clicked
             bind(devTabBtn, 'click', () => {

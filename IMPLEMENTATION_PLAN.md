@@ -66,8 +66,6 @@ export const MAP_1_ASSETS = [
   "scar_l-optimized.glb",
   ...Object.keys(ASSET_STRUCTURE),
   "concrete_fence_low-poly.glb",
-  "security_camera_01_1k.gltf.glb",
-  "security_camera_02_1k.gltf.glb",
   "concrete_block_low_poly.glb",
   "StreetLightPoles.glb"
 ];

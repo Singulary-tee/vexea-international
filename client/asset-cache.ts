@@ -244,8 +244,6 @@ export const MAP_1_ASSETS = [
   "scar_l-optimized.glb",
   ...Object.keys(ASSET_STRUCTURE),
   "concrete_fence_low-poly.glb",
-  "security_camera_01_1k.gltf.glb",
-  "security_camera_02_1k.gltf.glb",
   "concrete_block_low_poly.glb",
   "StreetLightPoles.glb"
 ];
@@ -299,18 +297,28 @@ export async function downloadMapAssets(
   const total = missing.length;
   let loaded = 0;
 
-  for (const item of missing) {
-    onProgress({ loaded, total, currentFile: item.name, filePercent: 0 });
-    try {
-      await getCachedOrFetchUrl(item.name, item.cat, (percent) => {
-        onProgress({ loaded, total, currentFile: item.name, filePercent: percent });
-      });
-    } catch (e) {
-      console.error(`[Cache] Error preloading ${item.name}:`, e);
+  const queue = [...missing];
+  const workerCount = 4;
+
+  const processQueue = async () => {
+    while (queue.length > 0) {
+      const item = queue.shift();
+      if (!item) break;
+
+      onProgress({ loaded, total, currentFile: item.name, filePercent: 0 });
+      try {
+        await getCachedOrFetchUrl(item.name, item.cat, (percent) => {
+          onProgress({ loaded, total, currentFile: item.name, filePercent: percent });
+        });
+      } catch (e) {
+        console.error(`[Cache] Error preloading ${item.name}:`, e);
+      }
+      loaded++;
+      onProgress({ loaded, total, currentFile: item.name, filePercent: 100 });
     }
-    loaded++;
-    onProgress({ loaded, total, currentFile: item.name, filePercent: 100 });
-  }
+  };
+
+  await Promise.all(Array(workerCount).fill(0).map(() => processQueue()));
 }
 
 /**
