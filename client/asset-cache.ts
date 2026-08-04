@@ -191,16 +191,21 @@ export function mapRequestedFileToReal(filename: string): string {
 
 export const blobUrlMap = new Map<string, string>();
 
+let isPopulatingBlobUrlMap = false;
+
 export async function populateBlobUrlMap(): Promise<void> {
+  // Prevent concurrent repopulation from revoking URLs mid-load
+  if (isPopulatingBlobUrlMap) return;
+  isPopulatingBlobUrlMap = true;
+
   const db = await initDB();
   return new Promise((resolve) => {
     const transaction = db.transaction(STORE_NAME, "readonly");
     const store = transaction.objectStore(STORE_NAME);
     const request = store.openCursor();
 
-    for (const url of blobUrlMap.values()) {
-      URL.revokeObjectURL(url);
-    }
+    // Snapshot old URLs to revoke AFTER new ones are created
+    const oldUrls = Array.from(blobUrlMap.values());
     blobUrlMap.clear();
 
     request.onsuccess = (event: any) => {
@@ -211,10 +216,18 @@ export async function populateBlobUrlMap(): Promise<void> {
         blobUrlMap.set(record.filename, blobUrl);
         cursor.continue();
       } else {
+        // Revoke old URLs only after the new map is fully populated
+        for (const url of oldUrls) {
+          URL.revokeObjectURL(url);
+        }
+        isPopulatingBlobUrlMap = false;
         resolve();
       }
     };
-    request.onerror = () => resolve();
+    request.onerror = () => {
+      isPopulatingBlobUrlMap = false;
+      resolve();
+    };
   });
 }
 
@@ -670,6 +683,12 @@ export function createConfiguredGLTFLoader(customManager?: THREE.LoadingManager,
       if (isTexture) {
         return fallback1x1Url;
       }
+    }
+
+    // Catch-all: if the URL is a blob: URL that isn't the known fallback,
+    // it may be a revoked or invalid blob URL — return the safe fallback instead.
+    if (resolvedUrl.startsWith("blob:") && resolvedUrl !== fallback1x1Url) {
+      return fallback1x1Url;
     }
 
     return resolvedUrl;
