@@ -678,8 +678,8 @@ export function createConfiguredGLTFLoader(customManager?: THREE.LoadingManager,
   manager.setURLModifier((url: string) => {
     let resolvedUrl = existingModifier ? existingModifier(url) : url;
 
-    // Direct blob: object URLs (e.g. textures extracted from embedded GLB buffers) are passed directly
-    if (resolvedUrl.startsWith("blob:")) {
+    // Direct blob: object URLs (e.g. textures extracted from embedded GLB buffers) are passed directly only if known to be valid in blobUrlMap
+    if (resolvedUrl.startsWith("blob:") && Array.from(blobUrlMap.values()).includes(resolvedUrl)) {
       return resolvedUrl;
     }
 
