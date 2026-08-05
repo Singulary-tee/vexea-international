@@ -11,6 +11,9 @@ import { DS } from "./design-system";
 import { CLASSES, ClassId } from "../shared/classes";
 import { PanZoomSurface } from "./src/ui/PanZoomSurface";
 import { CAMERA_EFFECTS_CONFIG } from "./src/camera/constants";
+import { isClientSentryInitialized, getSentryDSN } from "./sentry";
+import { clientFlagService } from "./flags/flag-service";
+import { FeatureFlagKey } from "../shared/feature-flags";
 
 let isMenuOpen = false;
 let activePanel = "CONSOLE";
@@ -779,6 +782,7 @@ export function initDevMenu(channel: any, jitterMap: any) {
     overlay.id = "dev-overlay";
     overlay.style.cssText = `display:none;position:absolute;inset:0;background:rgba(10,10,12,0.95);backdrop-filter:blur(6px);z-index:999998;pointer-events:auto;color:${DS.colors.success};font-family:${DS.typography.fontFamilyMono};padding:${DS.spacing.md};flex-direction:column;`;
     
+    // PURELY FOR IN-MATCH DEVELOPMENT. NOT FOR ANYTHING PRE-MATCH.
     const tabs = ["VIS DIAG", "GAME CONTROL", "PHYSICS", "CHEATS", "WEPS", "CAM_FX", "CONSOLE", "LLM FEED", "AI NAV", "PERF", "NETWORK", "ZONES", "ENTITIES", "COLLISIONS"];
     const header = document.createElement("div");
     header.style.cssText = "display:flex;gap:10px;margin-bottom:10px;overflow-x:auto;";

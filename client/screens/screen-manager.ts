@@ -66,6 +66,10 @@ export function showLobby() {
   if (backdrop) {
     StudioPreviewManager.attachTo(backdrop, 'LOBBY');
   }
+  const videoBg = document.getElementById('lobby-video-bg') as HTMLVideoElement | null;
+  if (videoBg) {
+    videoBg.play().catch(() => {});
+  }
 }
 
 export function showDevMapEditor() {

@@ -40,7 +40,7 @@ let hasLastValidQuat = false;
 
 const offsetVec = new THREE.Vector3();
 const finalWorldPos = new THREE.Vector3();
-const scaleVec = new THREE.Vector3(0.050625, 0.050625, 0.050625);
+const scaleVec = new THREE.Vector3(0.015, 0.015, 0.015);
 const worldMat = new THREE.Matrix4();
 const invCharMat = new THREE.Matrix4();
 const localMat = new THREE.Matrix4();
@@ -139,6 +139,9 @@ export function applyScenicGripPose(character: THREE.Object3D, weapon: THREE.Obj
   if (weapon.parent !== character) {
     character.add(weapon);
   }
+
+  // Preserve the mathematically calculated scale of the weapon
+  scaleVec.copy(weapon.scale);
 
   // Clear previous bone rotations to get clean matrices
   const rightTop = findBoneContaining(character, "arm_right_top") || findBoneContaining(character, "RightArm");

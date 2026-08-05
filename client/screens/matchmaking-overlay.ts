@@ -1,4 +1,5 @@
 import { DS } from "../design-system";
+import { ScreenGate } from "../gates/screen.gate";
 
 export interface MatchmakingOverlayOptions {
   mapId: string;
@@ -11,24 +12,37 @@ let countdownOverlayContainer: HTMLElement | null = null;
 export function showMatchmakingOverlay(options: MatchmakingOverlayOptions): void {
   hideMatchmakingOverlay();
 
-  const el = document.createElement("div");
-  el.id = "matchmaking-overlay";
-  Object.assign(el.style, {
+  // Register screen lock in ScreenGate to suppress all underlying UI button interactions
+  ScreenGate.lockScreenGroup('matchmaking');
+
+  // Full-screen backdrop modal blocker
+  const backdrop = document.createElement("div");
+  backdrop.id = "matchmaking-overlay";
+  Object.assign(backdrop.style, {
     position: "fixed",
-    top: "24px",
-    left: "50%",
-    transform: "translateX(-50%)",
+    inset: "0",
     zIndex: "99999",
-    background: "radial-gradient(ellipse at center, rgba(18, 18, 18, 0.96) 0%, rgba(8, 8, 8, 0.90) 100%)",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    background: "rgba(0, 0, 0, 0.75)",
+    backdropFilter: "blur(8px)",
+    pointerEvents: "auto"
+  });
+
+  // Modal box
+  const el = document.createElement("div");
+  Object.assign(el.style, {
+    background: "radial-gradient(ellipse at center, rgba(18, 18, 18, 0.98) 0%, rgba(8, 8, 8, 0.90) 100%)",
     border: `1px solid ${DS.colors.accent}`,
     borderRadius: "0px",
-    padding: "16px 28px",
+    padding: "24px 36px",
     display: "flex",
     flexDirection: "column",
     alignItems: "center",
-    gap: "10px",
+    gap: "12px",
     fontFamily: DS.typography.fontFamily,
-    boxShadow: "0 4px 20px rgba(0, 0, 0, 0.8)",
+    boxShadow: "0 8px 32px rgba(0, 0, 0, 0.9)",
     pointerEvents: "auto",
     minWidth: "320px",
     maxWidth: "90vw"
@@ -124,8 +138,9 @@ export function showMatchmakingOverlay(options: MatchmakingOverlayOptions): void
     document.head.appendChild(style);
   }
 
-  document.body.appendChild(el);
-  overlayContainer = el;
+  backdrop.appendChild(el);
+  document.body.appendChild(backdrop);
+  overlayContainer = backdrop;
 }
 
 export function updateMatchmakingOverlayStatus(data: { mapId?: string; queueSize?: number; minPlayers?: number; maxPlayers?: number }): void {
@@ -140,6 +155,7 @@ export function updateMatchmakingOverlayStatus(data: { mapId?: string; queueSize
 }
 
 export function hideMatchmakingOverlay(): void {
+  ScreenGate.unlockScreenGroup('matchmaking');
   if (overlayContainer && overlayContainer.parentNode) {
     overlayContainer.parentNode.removeChild(overlayContainer);
   }

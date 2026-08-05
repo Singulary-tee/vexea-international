@@ -8,6 +8,12 @@
       "path": "Video/Backgrounds/main_menu_1.webm"
     },
     {
+      "name": "lobby_1.webm",
+      "category": "Video",
+      "source": "CloudflareR2",
+      "path": "Video/Backgrounds/lobby_1.webm"
+    },
+    {
       "name": "armory_1.webp",
       "category": "Image",
       "source": "CloudflareR2",
@@ -72,6 +78,30 @@
       "category": "Image",
       "source": "CloudflareR2",
       "path": "Images/Cards/update_card_1.webp"
+    },
+    {
+      "name": "assault_card_1.webp",
+      "category": "Image",
+      "source": "CloudflareR2",
+      "path": "Images/Cards/assault_card_1.webp"
+    },
+    {
+      "name": "demolition_card_1.webp",
+      "category": "Image",
+      "source": "CloudflareR2",
+      "path": "Images/Cards/demolition_card_1.webp"
+    },
+    {
+      "name": "medic_card_1.webp",
+      "category": "Image",
+      "source": "CloudflareR2",
+      "path": "Images/Cards/medic_card_1.webp"
+    },
+    {
+      "name": "recon_card_1.webp",
+      "category": "Image",
+      "source": "CloudflareR2",
+      "path": "Images/Cards/recon_card_1.webp"
     },
     {
       "name": "promo_rifle_1.webp",

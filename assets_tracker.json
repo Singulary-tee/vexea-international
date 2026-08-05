@@ -429,6 +429,31 @@
       "name": "vibeCo_card.png",
       "category": "Image",
       "source": "Release"
+    },
+    {
+      "name": "lobby_1.webm",
+      "category": "Video",
+      "source": "CloudflareR2"
+    },
+    {
+      "name": "assault_card_1.webp",
+      "category": "Image",
+      "source": "CloudflareR2"
+    },
+    {
+      "name": "demolition_card_1.webp",
+      "category": "Image",
+      "source": "CloudflareR2"
+    },
+    {
+      "name": "medic_card_1.webp",
+      "category": "Image",
+      "source": "CloudflareR2"
+    },
+    {
+      "name": "recon_card_1.webp",
+      "category": "Image",
+      "source": "CloudflareR2"
     }
   ],
   "sounds": [

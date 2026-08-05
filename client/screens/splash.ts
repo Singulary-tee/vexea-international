@@ -22,6 +22,10 @@ const MODELS_TO_PRELOAD = [
 
 const IMAGES_TO_PRELOAD = [
   'splash_screen.webp',
+  'assault_card_1.webp',
+  'demolition_card_1.webp',
+  'medic_card_1.webp',
+  'recon_card_1.webp',
   'infiltration_card_1.webp',
   'intel_card_1.webp',
   'leaderboard_card_1.webp',
@@ -38,7 +42,8 @@ const IMAGES_TO_PRELOAD = [
 ];
 
 const VIDEOS_TO_PRELOAD: string[] = [
-  'main_menu_1.webm'
+  'main_menu_1.webm',
+  'lobby_1.webm'
 ];
 
 // The rest of the game assets

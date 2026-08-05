@@ -28,6 +28,15 @@
  *      and vertical space (multi-column grids, responsive font/padding scaling, flex layouts)
  *      so that all content fits within the viewport without clipping or scrollbars.
  *    - Converting unoptimized layouts into scrollable containers or tiny scroll strips is strictly prohibited.
+ *
+ * 6. EYEBALLING IS ABSOLUTELY FORBIDDEN & STRICT MATHEMATICAL GUARANTEES MANDATED.
+ *    - Eyeballing any layout sizes, element positions, HUD components, UI alignments,
+ *      or 3D canvas models is strictly prohibited.
+ *    - Every sizing, gap, offset, padding, and layout structure must have a proven,
+ *      strict mathematical guarantee to prevent overlap, clipping, or scrolling.
+ *    - You must allocate available space (using exact percentages, clamp bounds, or
+ *      box-sizing) mathematically so that the elements are guaranteed never to collide
+ *      or overflow. Do not resize or position based on arbitrary visual estimation.
  * ============================================================================
  */
 

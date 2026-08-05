@@ -3,6 +3,18 @@ import { getAuth } from "firebase/auth";
 import { getFirestore, doc, updateDoc } from "firebase/firestore";
 import { audioManager } from "../audio";
 import { getDefaultMap } from "../../shared/maps/map-registry";
+import { clientFlagService } from "../flags/flag-service";
+import { FeatureFlagKey } from "../../shared/feature-flags";
+
+interface FactionSector {
+  id: string;
+  name: string;
+  controller: 'apex' | 'vanguard' | 'nexus' | 'contested';
+  controlPercentage: number;
+  activeBattles: number;
+  resourceYield: number;
+  defenseLevel: number;
+}
 
 function createTerritoryArcSVG(vibePct: number, slopPct: number): string {
   const size = 64;
@@ -28,6 +40,12 @@ function createTerritoryArcSVG(vibePct: number, slopPct: number): string {
 
 export function renderFactionScreen(container: HTMLElement, registeredUserData: any): void {
   container.innerHTML = '';
+
+  const sectors: FactionSector[] = [
+    { id: 'sec_0', name: 'APEX CORE', controller: 'apex', controlPercentage: 85, activeBattles: 2, resourceYield: 1.2, defenseLevel: 5 },
+    { id: 'sec_1', name: 'NEXUS JUNCTION', controller: 'contested', controlPercentage: 45, activeBattles: 12, resourceYield: 2.5, defenseLevel: 2 },
+    { id: 'sec_2', name: 'VANGUARD RIM', controller: 'vanguard', controlPercentage: 70, activeBattles: 4, resourceYield: 1.0, defenseLevel: 4 },
+  ];
 
   const wrap = document.createElement('div');
   Object.assign(wrap.style, {

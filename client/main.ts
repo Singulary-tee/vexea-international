@@ -16,6 +16,8 @@ declare global {
  */
 
 import "./sentry";
+import { initClientSentry, recordClientFrameTime, recordClientDrawCalls } from "./sentry";
+import { clientFlagService } from "./flags/flag-service";
 import "./doppler";
 import "./index.css";
 import { DS } from "./design-system";
@@ -23,6 +25,7 @@ if ((import.meta as any).env?.DEV) {
   import("./dev_menu");
 }
 import { initPlatformGate, IS_MOBILE } from "./gates/platform.gate";
+import { ScreenGate } from "./gates/screen.gate";
 import { IS_DEV } from "../shared/gates/production.gate";
 import { initSplash } from "./screens/splash";
 import map1Spec from "../shared/maps/map_1_facility.spec.json";
@@ -237,6 +240,10 @@ export let wheeledDroneModel: THREE.Group | null = null;
 
 // Initialize Game loop
 const initClient = async () => {
+  // Wait for feature flags to be ready before Sentry so we respect Replay/Profiling settings
+  await clientFlagService.waitForReady();
+  initClientSentry();
+
   // 1. Core DOM setup
   const root = document.getElementById("root");
   if (!root) return;
@@ -278,6 +285,8 @@ const initClient = async () => {
   }
 
   const isUIInteractionLocked = () => {
+    if (ScreenGate.isScreenLocked()) return true;
+
     const splash = document.getElementById("splash-screen");
     if (splash && splash.style.display !== "none" && splash.style.pointerEvents !== "none") return true;
 
@@ -577,7 +586,7 @@ function initializeLocalMatchScene(requestedMap: string) {
   (window as any)._serverMatchReady = false;
 
   const gltfLoader = createConfiguredGLTFLoader(undefined, renderer || (window as any).renderer);
-  gltfLoader.load(getAssetUrl(ASSET_STRUCTURE["Player_one-optimized.glb"].fileName), (gltf) => {
+  gltfLoader.load(getAssetUrl("Player_one-optimized.glb"), (gltf) => {
     riflemanModel = gltf.scene;
     (riflemanModel as any).animations = gltf.animations;
     riflemanModel.traverse((child) => {
@@ -673,6 +682,10 @@ const connectEngineSocket = () => {
         (window as any).initDevMenu(channel, match ? match.droneJitterMap : new Map());
       }
       
+      channel.on("session_init", (data: any) => {
+        (window as any).vexServerConfig = data.config;
+      });
+
       channel.on("match_ready", () => {
         console.log("[MAIN] Received match_ready from server.");
         (window as any)._serverMatchReady = true;
@@ -991,6 +1004,8 @@ const animateFrame = async () => {
     StudioPreviewManager.update(dt);
     if (renderer) {
       renderer.render(StudioPreviewManager.getStudioScene(), StudioPreviewManager.getStudioCamera());
+      recordClientFrameTime(dt * 1000);
+      recordClientDrawCalls(renderer.info.render.calls);
     }
     dynamicResolutionSystem.update(now);
     return;

@@ -23,8 +23,10 @@ This file is the authoritative index of all directories and source files within 
 *   **`index.ts`**
     *   *Purpose:* Primary server entry point. Configures the Express server, initializes WASM physics modules, binds HTTP and Socket.IO ports, hosts developer API endpoints, handles network reconnect tolerances, and serves static files.
 *   **`sentry.ts`**
-    *   *Purpose:* Server-side Sentry error logging and exception monitoring initialization.
-    *   *Key Functions/Exports:* `initSentry()`, `Sentry`.
+    *   *Purpose:* Server-side Sentry initialization, error tracking, and metrics recording (latency, active units, player counts, security exploits).
+    *   *Key Functions/Exports:* `initSentry()`, `recordServerTickDuration(ms)`, `recordServerActiveDrones(count)`, `recordServerConnectedPlayers(count)`, `recordLLMLatency(ms, model)`, `recordHitscanRejected(reason)`, `recordSecurityExploit(exploitType, extra)`.
+*   **`flags/` (Server Feature Flags)**
+    *   **`flag-service.ts`**: Resolves server-side feature flags via Doppler secrets with local fallbacks.
 *   **`ai/` (Strategic AI)**
     *   **`DroneIntelligence.ts`**: Governs spatial awareness for individual drones. Computes sight lines (3D orientation quaternions to check forward vectors and cone of vision angles), performs static map and dynamic Rapier line-of-sight raycasts, and handles memory decay mechanics.
     *   **`LLMCommander.ts`**: High-level strategic controller powered by Gemini 3.5 Flash. Formulates formatted prompt strings, parses structured tool call arrays (Spawn, Move, Split, Merge, Hold), manages strategic AP resource pools, and enforces the `MAX_LLM_TOKENS_PER_MATCH` (55,000 token) token budget ceiling.
@@ -138,8 +140,10 @@ This file is the authoritative index of all directories and source files within 
 *   **`platform-gate.ts`**
     *   *Purpose:* Centralizes platform detection (mobile vs. desktop) at initialization. Responsible for gating UI elements, applying platform-specific CSS classes, and managing device-specific default settings.
 *   **`sentry.ts`**
-    *   *Purpose:* Client-side Sentry exception and console error tracking initialization.
-    *   *Key Functions/Exports:* `initClientSentry()`, `Sentry`.
+    *   *Purpose:* Client-side Sentry initialization, error tracking, and performance metrics (frame time, draw calls, network RTT).
+    *   *Key Functions/Exports:* `initClientSentry()`, `recordClientFrameTime(ms)`, `recordClientDrawCalls(count)`, `recordClientNetworkRTT(ms)`, `recordDeadReckoningSnap()`.
+*   **`flags/` (Client Feature Flags)**
+    *   **`flag-service.ts`**: Manages client-side feature flags, supporting runtime overrides and server-supplied gate states.
 *   **`settings.ts`**
     *   *Purpose:* Volume levels, mouse sensitivity configurations, and dynamic resolution scaling toggles.
 *   **`social.ts`**
@@ -643,4 +647,33 @@ Every file change in the VEXEA codebase must follow this strict three-step proto
 *   **Modifications:**
     *   Updated `setURLModifier` in `/client/asset-cache.ts` to verify that `blob:` URLs exist in `blobUrlMap` before returning them early. Untracked or relative-resolved `blob:` URLs now fall through to filename lookup and `fallback1x1Url` resolution.
 *   **Verification:** `compile_applet` passed cleanly with zero build errors.
+
+### Cycle 2026-08-05-02: Precomputed Sine Lookup Table for DroneProcedural Ambient Sway
+*   **Target Files:** `/client/src/systems/DroneProcedural.ts`, `/CODEBASE_INDEX.md`
+*   **Status:** Verified & Finalized
+*   **Modifications:**
+    *   Precomputed a 128-sample Float32Array sine lookup table in `/client/src/systems/DroneProcedural.ts` to replace live `Math.sin()` and `Math.cos()` calls for the time-based ambient hover sway (`timeSwayX`, `timeSwayZ`, and `verticalBob`).
+    *   Converted propeller spin calculation (`spinAngle`) to direct calculation from `accumulatedTime * propellerSpinRate` without incremental accumulator drift.
+    *   Preserved all reactive gameplay mechanics (recoil state machine, wheel steering, turret tracking, velocity-derived banking/tilt, and wheel roll) completely untouched.
+*   **Verification:** `lint_applet` and `compile_applet` passed cleanly with zero errors.
+
+### Cycle 2026-08-05-04: Implemented Object Pooling for Drone Procedural States
+*   **Target Files:** `/client/src/systems/DroneSystem.ts`, `/CODEBASE_INDEX.md`
+*   **Status:** Verified & Finalized
+*   **Modifications:**
+    *   Implemented `proceduralStatePool` recycling in `DroneSystem.ts`. On drone despawn/inactivity, procedural state objects are cleared and returned to the pool; on spawn, recycled instances are popped to achieve 0-GC allocations during active drone lifecycle churn.
+*   **Verification:** `lint_applet` and `compile_applet` passed cleanly with zero errors.
+
+### Cycle 2026-08-05-06: Sentry Metrics & Feature Flags Implementation
+*   **Target Files:** `/client/sentry.ts`, `/server/sentry.ts`, `/client/flags/flag-service.ts`, `/server/flags/flag-service.ts`, `/client/main.ts`, `/server/MatchRoom.ts`, `/server/index.ts`, `/CODEBASE_INDEX.md`, `/ARCHITECTURE.md`
+*   **Status:** Verified & Finalized
+*   **Modifications:**
+    *   **Metrics Integration**: Implemented comprehensive metrics recording for both client (frame time, draw calls, RTT) and server (tick duration, drone counts, player counts, LLM latency, hitscan rejections).
+    *   **Feature Flags**: Introduced `FlagService` on client and server to micro-gate all Sentry features and metrics, allowing remote toggling via Doppler.
+    *   **Security Monitoring**: Added server-side detection and Sentry recording for speed hacks/teleportation exploits and invalid hitscan requests.
+    *   **Documentation**: Updated `ARCHITECTURE.md` and `CODEBASE_INDEX.md` to reflect the new monitoring and gating infrastructure.
+*   **Verification:** `lint_applet` passed successfully.
+
+
+
 

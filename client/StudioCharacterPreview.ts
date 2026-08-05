@@ -72,16 +72,16 @@ export interface TransformConfig {
 
 const DEFAULT_CONFIGS: Record<string, TransformConfig> = {
   "Player_one-optimized.glb": {
-    posX: 3.49,
-    posY: -4.74,
-    posZ: -0.44,
-    rotX: -0.001592653589793,
-    rotY: 2.78840734641021,
-    rotZ: 0.008407346410207,
-    scale: 0.1,
-    keyLightIntensity: 0,
-    rimLightIntensity: 2.5,
-    ambLightIntensity: 0.1,
+    posX: 0.45,
+    posY: -1.0,
+    posZ: 0,
+    rotX: 0,
+    rotY: -0.35,
+    rotZ: 0,
+    scale: 1.0,
+    keyLightIntensity: 2.2,
+    rimLightIntensity: 1.5,
+    ambLightIntensity: 0.8,
     wepPosX: -0.09,
     wepPosY: -0.17,
     wepPosZ: -0.47,
@@ -126,16 +126,16 @@ const DEFAULT_CONFIGS: Record<string, TransformConfig> = {
     lHandRotZ: -0.411592653589793
   },
   "player-on_optimised.glb": {
-    posX: 3.49,
-    posY: -4.74,
-    posZ: -0.44,
-    rotX: -0.001592653589793,
-    rotY: 2.78840734641021,
-    rotZ: 0.008407346410207,
-    scale: 0.1,
-    keyLightIntensity: 0,
-    rimLightIntensity: 2.5,
-    ambLightIntensity: 0.1,
+    posX: 0.45,
+    posY: -1.0,
+    posZ: 0,
+    rotX: 0,
+    rotY: -0.35,
+    rotZ: 0,
+    scale: 1.0,
+    keyLightIntensity: 2.2,
+    rimLightIntensity: 1.5,
+    ambLightIntensity: 0.8,
     wepPosX: -0.09,
     wepPosY: -0.17,
     wepPosZ: -0.47,
@@ -180,16 +180,16 @@ const DEFAULT_CONFIGS: Record<string, TransformConfig> = {
     lHandRotZ: -0.411592653589793
   },
   "default": {
-    posX: 3.49,
-    posY: -4.74,
-    posZ: -0.44,
-    rotX: -0.001592653589793,
-    rotY: 2.78840734641021,
-    rotZ: 0.008407346410207,
-    scale: 0.1,
-    keyLightIntensity: 0,
-    rimLightIntensity: 2.5,
-    ambLightIntensity: 0.1,
+    posX: 0.45,
+    posY: -1.0,
+    posZ: 0,
+    rotX: 0,
+    rotY: -0.35,
+    rotZ: 0,
+    scale: 1.0,
+    keyLightIntensity: 2.2,
+    rimLightIntensity: 1.5,
+    ambLightIntensity: 0.8,
     wepPosX: -0.09,
     wepPosY: -0.17,
     wepPosZ: -0.47,
@@ -250,21 +250,35 @@ let valueLabels: Record<string, HTMLSpanElement> = {};
 function applyConfigToScene(model: THREE.Group, config: TransformConfig) {
   if (!model) return;
 
-  // Set position
-  model.position.set(config.posX, config.posY, config.posZ);
-
-  // Set rotation
-  model.rotation.set(config.rotX, config.rotY, config.rotZ);
+  // DEV PLACEMENT IS STRICTLY FOR THE MAIN_MENU SCREEN ONLY AND NOTHING ELSE.
+  // IT IS COMPLETELY FORBIDDEN TO APPLY TO THE LOBBY OR OTHER MODES.
+  const mode = StudioPreviewManager.getMode();
+  const panelExists = document.getElementById("dev-placement-panel");
+  const modelGroup = StudioPreviewManager.getActiveModelGroup();
+  
+  if (modelGroup && panelExists && mode === 'MAIN_MENU') {
+    modelGroup.position.set(config.posX, config.posY, config.posZ);
+    modelGroup.rotation.set(config.rotX, config.rotY, config.rotZ);
+  }
 
   // Apply scale relative to base scale computed in StudioPreviewManager
   const baseScaleVal = model.userData.baseScaleVal || 1.0;
+  const scaleMult = config.scale;
   const finalScale = new THREE.Vector3(
-    baseScaleVal * config.scale,
-    baseScaleVal * config.scale,
-    baseScaleVal * config.scale
+    baseScaleVal * scaleMult,
+    baseScaleVal * scaleMult,
+    baseScaleVal * scaleMult
   );
   model.userData.targetScale = finalScale;
   model.scale.copy(finalScale);
+
+  // Keep model position centered inside modelGroup
+  if (model.userData.centerLocalOffset) {
+    const scaledOffset = model.userData.centerLocalOffset.clone().multiplyScalar(scaleMult);
+    model.position.copy(scaledOffset).negate();
+  } else {
+    model.position.set(0, 0, 0);
+  }
 
   // Apply light adjustments
   const keyLight = StudioPreviewManager.getKeyLight();
@@ -305,6 +319,26 @@ function updatePanelFields(config: TransformConfig) {
   }
 }
 
+function computePreciseMeshBox(object: THREE.Object3D): THREE.Box3 {
+  const box = new THREE.Box3();
+  object.traverse((child: any) => {
+    if (child.isMesh && child.visible) {
+      child.updateMatrixWorld(true);
+      const geom = child.geometry;
+      if (geom) {
+        if (!geom.boundingBox) {
+          geom.computeBoundingBox();
+        }
+        if (geom.boundingBox) {
+          const m = geom.boundingBox.clone().applyMatrix4(child.matrixWorld);
+          box.union(m);
+        }
+      }
+    }
+  });
+  return box;
+}
+
 /**
  * Helper to immediately load the SCAR-L and equip it with the ACOG scope in the low-ready scenic stance.
  */
@@ -319,8 +353,29 @@ async function loadAndEquipWeapon(characterModel: THREE.Group) {
     const gltf = await loader.loadAsync(url);
     const weapon = SkeletonUtils.clone(gltf.scene) as THREE.Group;
 
-    // Apply proportional scaling relative to the player
-    weapon.scale.set(0.42, 0.42, 0.42);
+    // Calculate exact bounding box of the player model to determine height
+    const characterBox = computePreciseMeshBox(characterModel);
+    if (characterBox.isEmpty()) {
+      characterBox.setFromObject(characterModel);
+    }
+    const characterSize = new THREE.Vector3();
+    characterBox.getSize(characterSize);
+    const characterHeight = characterSize.y > 0 ? characterSize.y : 1.8;
+
+    // Calculate exact unscaled bounding box of the weapon model using visible geometries only
+    const weaponBox = computePreciseMeshBox(weapon);
+    if (weaponBox.isEmpty()) {
+      weaponBox.setFromObject(weapon);
+    }
+    const weaponSize = new THREE.Vector3();
+    weaponBox.getSize(weaponSize);
+    const weaponLength = Math.max(weaponSize.x, weaponSize.y, weaponSize.z) || 1.0;
+
+    // Standard real-world rifle (0.85m) to human (1.8m) proportion: 0.85 / 1.8 = ~0.4722
+    const targetWeaponLength = characterHeight * (0.85 / 1.8);
+    const weaponScale = targetWeaponLength / weaponLength;
+
+    weapon.scale.set(weaponScale, weaponScale, weaponScale);
 
     // Ensure any skeleton components on the weapon are properly mapped
     import("./StudioPreviewManager").then(({ fixSkinnedMeshBones }) => {
@@ -345,6 +400,10 @@ async function loadAndEquipWeapon(characterModel: THREE.Group) {
  * Set up the model loaded hook of StudioPreviewManager
  */
 StudioPreviewManager.onModelLoaded = (model: THREE.Group, glbName: string) => {
+  const mode = StudioPreviewManager.getMode();
+  if (mode !== 'MAIN_MENU' && mode !== 'LOBBY') {
+    return;
+  }
   const isCharacter = glbName.toLowerCase().includes('player') || 
                       glbName.toLowerCase().includes('character') || 
                       glbName.toLowerCase().includes('humanoid') ||

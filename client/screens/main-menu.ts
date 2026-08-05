@@ -3,7 +3,10 @@ import { getFirestore, collection, addDoc, serverTimestamp, doc, getDoc, onSnaps
 import { getAuth, onAuthStateChanged } from "firebase/auth";
 import { DS } from "../design-system";
 import { IS_DEV } from "../../shared/gates/production.gate";
-import { getDevMap, getDefaultMap, MAP_REGISTRY } from "../../shared/maps/map-registry";
+import { isClientSentryInitialized, getSentryDSN, sendUserFeedback } from "../sentry";
+import { clientFlagService } from "../flags/flag-service";
+import { FeatureFlagKey } from "../../shared/feature-flags";
+import { getDevMap, getDefaultMap, getMapById, MAP_REGISTRY } from "../../shared/maps/map-registry";
 import { hasCachedBlob, getCachedOrFetchUrl, ensureAssetsDownloaded, getAssetUrl } from "../asset-cache";
 import { EXTENDED_SOUNDS, EXTENDED_TEXTURES } from "./splash";
 import offersData from "../data/offers.json";
@@ -112,6 +115,7 @@ export function initMainMenu() {
       userSubscriptionUnsubscribe = onSnapshot(doc(db, 'Users', uid), async (snapshot) => {
         if (snapshot.exists()) {
           registeredUserData = snapshot.data();
+          (window as any).registeredUserData = registeredUserData;
           userFaction = registeredUserData.faction || null;
 
           const overlay = document.getElementById('vex-unified-auth-modal') || document.getElementById('vex-enlistment-overlay');
@@ -140,6 +144,7 @@ export function initMainMenu() {
             }
           } else {
             registeredUserData = null;
+            (window as any).registeredUserData = null;
             userFaction = null;
             enableLeftColumnMenu(false);
             showEnlistmentOverlay(db, auth);
@@ -153,6 +158,7 @@ export function initMainMenu() {
       });
     } else {
       registeredUserData = null;
+      (window as any).registeredUserData = null;
       userFaction = null;
       enableLeftColumnMenu(false);
       updateProfileBox();
@@ -787,7 +793,8 @@ export function initMainMenu() {
   playObj.titleEl.style.fontSize = 'clamp(17px, 12.5cqi, 42px)';
   playCard.onclick = (e) => {
     e.stopPropagation();
-    setActiveCard('PLAY');
+    const lastMapId = localStorage.getItem('lastChosenMap') || getDefaultMap().id;
+    ensureAssetsDownloaded(() => screenManager.showLobby(), lastMapId);
   };
   
   const playContent = document.createElement('div');
@@ -836,35 +843,57 @@ export function initMainMenu() {
         e.stopPropagation();
         screenManager.showDevPlacement();
     });
+    createDevBtn('DEV ANALYSIS', (e) => {
+        e.stopPropagation();
+        showArchitecturalAnalysis();
+    });
     playContent.appendChild(devContainer);
   }
 
-  const qmBtn = document.createElement('div');
-  qmBtn.textContent = 'QUICK MATCH';
-  qmBtn.className = 'mm-deploy-btn-glow';
-  Object.assign(qmBtn.style, {
-    color: DS.colors.background, background: DS.colors.accent, border: 'none',
-    padding: '8px 20px',
-    fontFamily: DS.typography.fontFamily, fontWeight: DS.typography.weightBold,
-    fontSize: 'clamp(16px, 4cqi, 24px)', cursor: 'pointer', pointerEvents: 'auto',
-    borderRadius: '0px', textAlign: 'center', whiteSpace: 'nowrap', boxShadow: '0 2px 6px rgba(0,0,0,0.5)', zIndex: '5',
-    marginTop: 'auto'
-  });
-  qmBtn.onclick = (e) => {
-      e.stopPropagation();
-      const mapId = getDefaultMap().id;
-      ensureAssetsDownloaded(() => {
-          try {
-              const docEl = document.documentElement as any;
-              if (!document.fullscreenElement && !(document as any).webkitFullscreenElement) {
-                  if (docEl.requestFullscreen) docEl.requestFullscreen();
-                  else if (docEl.webkitRequestFullscreen) docEl.webkitRequestFullscreen();
-              }
-          } catch (err) {}
-          window.dispatchEvent(new CustomEvent('start-match', { detail: { mode: 'STANDARD', class: CLASSES.ASSAULT.id, map: getDefaultMap(), isDevQuickStart: false }}));
-      }, mapId);
+  const getMatchesPlayed = (): number => {
+    const localCount = parseInt(localStorage.getItem('matchesPlayed') || '0', 10);
+    const cloudCount = registeredUserData?.playedCount || 0;
+    return Math.max(localCount, cloudCount);
   };
-  playContent.appendChild(qmBtn);
+
+  if (getMatchesPlayed() >= 1) {
+    const qmBtn = document.createElement('div');
+    qmBtn.textContent = 'QUICK MATCH';
+    qmBtn.className = 'mm-deploy-btn-glow';
+    Object.assign(qmBtn.style, {
+      color: DS.colors.background, background: DS.colors.accent, border: 'none',
+      padding: '8px 20px',
+      fontFamily: DS.typography.fontFamily, fontWeight: DS.typography.weightBold,
+      fontSize: 'clamp(16px, 4cqi, 24px)', cursor: 'pointer', pointerEvents: 'auto',
+      borderRadius: '0px', textAlign: 'center', whiteSpace: 'nowrap', boxShadow: '0 2px 6px rgba(0,0,0,0.5)', zIndex: '5',
+      marginTop: 'auto'
+    });
+    qmBtn.onclick = (e) => {
+        e.stopPropagation();
+        const selectedClass = localStorage.getItem('selectedClass') || CLASSES.ASSAULT.id;
+        const lastMapId = localStorage.getItem('lastChosenMap') || getDefaultMap().id;
+        const lastMap = getMapById(lastMapId) || getDefaultMap();
+        ensureAssetsDownloaded(() => {
+            try {
+                const docEl = document.documentElement as any;
+                if (!document.fullscreenElement && !(document as any).webkitFullscreenElement) {
+                    if (docEl.requestFullscreen) docEl.requestFullscreen();
+                    else if (docEl.webkitRequestFullscreen) docEl.webkitRequestFullscreen();
+                }
+            } catch (err) {}
+            window.dispatchEvent(new CustomEvent('start-match', { 
+              detail: { 
+                mode: localStorage.getItem('lastChosenGameMode') || 'INFILTRATION', 
+                class: selectedClass, 
+                map: lastMap, 
+                isDevQuickStart: false 
+              }
+            }));
+        }, lastMapId);
+    };
+    playContent.appendChild(qmBtn);
+  }
+
   playCard.appendChild(playContent);
 
 
@@ -1410,6 +1439,13 @@ function setActiveCard(id: string) {
       (btn as HTMLElement).style.borderBottom = '2px solid transparent';
     }
   });
+
+  if (id !== 'LOADOUT' && id !== 'STORE') {
+    const backdrop = document.getElementById('main-menu-3d-backdrop');
+    if (backdrop && StudioPreviewManager.getMode() !== 'MAIN_MENU') {
+      StudioPreviewManager.attachTo(backdrop, 'MAIN_MENU');
+    }
+  }
 }
 
 function clearActiveCard() {
@@ -1963,17 +1999,43 @@ function renderRightPanel() {
            });
            btn.onclick = async () => {
              const auth = getAuth();
-             const uid = auth.currentUser ? auth.currentUser.uid : "guest";
+             const user = auth.currentUser;
+             const uid = user ? user.uid : "guest";
              const txt = container.querySelector('textarea');
+             const message = txt?.value || '';
+
+             // Respect Sentry Feedback feature flag
+             const feedbackEnabled = clientFlagService.getBoolean(FeatureFlagKey.SENTRY_FEEDBACK_ENABLED, true);
+             if (feedbackEnabled && isClientSentryInitialized) {
+                 const sent = await sendUserFeedback({
+                     message,
+                     rating: sr,
+                     name: user?.displayName || undefined,
+                     email: user?.email || undefined,
+                     screen: 'MAIN_MENU'
+                 });
+                 if (sent) {
+                     if(txt) txt.value = '';
+                     sr = 0;
+                     stars.forEach(st => st.style.color = DS.colors.border);
+                     btn.textContent = 'SENT';
+                     setTimeout(() => btn.textContent = 'SUBMIT', 2000);
+                     return;
+                 }
+             }
+
+             // Fallback to Firebase if Sentry is disabled or failed
              try {
                  await addDoc(collection(getFirestore(), "feedback"), {
-                     rating: sr, text: txt?.value || '', timestamp: serverTimestamp(), userId: uid
+                     rating: sr, text: message, timestamp: serverTimestamp(), userId: uid
                  });
                  if(txt) txt.value = '';
                  sr = 0; stars.forEach(st => st.style.color = DS.colors.border);
                  btn.textContent = 'SENT';
                  setTimeout(() => btn.textContent = 'SUBMIT', 2000);
-             } catch(e) {}
+             } catch(e) {
+                 console.error("[Feedback] Firebase submission failed:", e);
+             }
            };
            c.appendChild(btn);
          }, true));
@@ -2075,6 +2137,92 @@ function checkDailyRefresh(userData: any, userDocRef: any) {
       }
     });
   }
+}
+
+function showArchitecturalAnalysis() {
+  const dopplerToken = (import.meta as any).env?.VITE_DOPPLER_TOKEN ? "PRESENT" : "MISSING";
+  const hasClientKey = clientFlagService.hasClientKey() ? "ACTIVE" : "USING DEFAULTS";
+  const hasSharedKey = clientFlagService.hasSharedKey() ? "ACTIVE" : "USING DEFAULTS";
+  const sentryFlag = clientFlagService.getBoolean(FeatureFlagKey.SENTRY_CLIENT_ENABLED, true) ? "ENABLED" : "DISABLED";
+  const sentryStatus = isClientSentryInitialized ? "INITIALIZED" : "NOT INITIALIZED";
+  const sentryDsn = getSentryDSN() ? "PRESENT" : "MISSING";
+
+  const modal = document.createElement('div');
+  modal.id = 'architectural-analysis-modal';
+  
+  // Section 11 Mathematization: Viewport-relative centering with zero-overlap guarantee
+  Object.assign(modal.style, {
+    position: 'fixed',
+    top: '0',
+    left: '0',
+    width: '100vw',
+    height: '100vh',
+    zIndex: '2000',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    background: 'rgba(0,0,0,0.85)',
+    backdropFilter: 'blur(8px)',
+    fontFamily: DS.typography.fontFamilyMono
+  });
+
+  const content = document.createElement('div');
+  // Section 11: Content box size precisely calculated
+  const contentWidth = 'clamp(320px, 90vw, 500px)';
+  const contentPadding = DS.spacing.lg; // Assuming lg is a fixed pixel value, e.g., 24px
+  
+  Object.assign(content.style, {
+    width: contentWidth,
+    padding: contentPadding,
+    background: DS.colors.surface,
+    border: `${DS.borders.thin} ${DS.colors.border}`,
+    borderRadius: DS.borders.radius.sm,
+    position: 'relative',
+    boxSizing: 'border-box', // Ensure padding doesn't cause overflow
+    maxHeight: '90vh',
+    overflowY: 'auto'
+  });
+
+  // Section 11: Internal spacing using consistent multipliers of DS.spacing
+  const sectionMargin = 'clamp(15px, 3vh, 20px)';
+  const labelMargin = '6px';
+  const subtextMargin = '4px';
+
+  content.innerHTML = `
+    <div style="font-weight:bold; color:${DS.colors.accent}; margin-bottom:${sectionMargin}; font-size:clamp(14px, 2vw, 18px); letter-spacing:1px;">[ARCHITECTURAL SERVICE ANALYSIS]</div>
+    
+    <div style="margin-bottom:${sectionMargin}; border-bottom:1px solid #333; padding-bottom:clamp(10px, 2vh, 15px);">
+      <div style="color:${DS.colors.success}; font-weight:bold; margin-bottom:${labelMargin}; font-size:clamp(11px, 1.5vw, 14px);">DOPPLER (Secret Management)</div>
+      <div style="font-size:clamp(10px, 1.2vw, 12px);">VITE_DOPPLER_TOKEN: <span style="color:${dopplerToken === 'PRESENT' ? DS.colors.success : DS.colors.danger};">${dopplerToken}</span></div>
+      <div style="color:${DS.colors.textMuted}; font-size:clamp(8px, 1vw, 10px); margin-top:${subtextMargin};">* Required for dynamic secret injection on client-side if enabled.</div>
+    </div>
+
+    <div style="margin-bottom:${sectionMargin}; border-bottom:1px solid #333; padding-bottom:clamp(10px, 2vh, 15px);">
+      <div style="color:${DS.colors.accent}; font-weight:bold; margin-bottom:${labelMargin}; font-size:clamp(11px, 1.5vw, 14px);">CONFIGCAT (Feature Flags)</div>
+      <div style="font-size:clamp(10px, 1.2vw, 12px);">CLIENT SCOPE: <span style="color:${hasClientKey === 'ACTIVE' ? DS.colors.success : DS.colors.warning};">${hasClientKey}</span></div>
+      <div style="font-size:clamp(10px, 1.2vw, 12px);">SHARED SCOPE: <span style="color:${hasSharedKey === 'ACTIVE' ? DS.colors.success : DS.colors.warning};">${hasSharedKey}</span></div>
+      <div style="color:${DS.colors.textMuted}; font-size:clamp(8px, 1vw, 10px); margin-top:${subtextMargin};">* Checks if SDK keys are present in environment variables.</div>
+    </div>
+
+    <div style="margin-bottom:${sectionMargin}; border-bottom:1px solid #333; padding-bottom:clamp(10px, 2vh, 15px);">
+      <div style="color:${DS.colors.dev}; font-weight:bold; margin-bottom:${labelMargin}; font-size:clamp(11px, 1.5vw, 14px);">SENTRY (Error & Perf Tracking)</div>
+      <div style="font-size:clamp(10px, 1.2vw, 12px);">ENABLED FLAG: <span style="color:${sentryFlag === 'ENABLED' ? DS.colors.success : DS.colors.danger};">${sentryFlag}</span></div>
+      <div style="font-size:clamp(10px, 1.2vw, 12px);">DSN STATUS: <span style="color:${sentryDsn === 'PRESENT' ? DS.colors.success : DS.colors.danger};">${sentryDsn}</span></div>
+      <div style="font-size:clamp(10px, 1.2vw, 12px);">INIT STATUS: <span style="color:${sentryStatus === 'INITIALIZED' ? DS.colors.success : DS.colors.danger}; font-weight:bold;">${sentryStatus}</span></div>
+      <div style="color:${DS.colors.textMuted}; font-size:clamp(8px, 1vw, 10px); margin-top:${subtextMargin};">* Sentry only initializes if BOTH flag is true and DSN is present.</div>
+    </div>
+
+    <div style="margin-top:${sectionMargin}; display:flex; justify-content:flex-end;">
+      <button id="close-analysis-btn" style="background:${DS.colors.accent}; color:#000; border:none; padding:clamp(6px, 1vh, 8px) clamp(16px, 2vw, 24px); font-family:${DS.typography.fontFamily}; font-weight:bold; cursor:pointer; font-size:clamp(10px, 1.2vw, 12px);">CLOSE ANALYSIS</button>
+    </div>
+  `;
+
+  modal.appendChild(content);
+  document.body.appendChild(modal);
+
+  content.querySelector('#close-analysis-btn')?.addEventListener('click', () => {
+    modal.remove();
+  });
 }
 
 export function showMenuNotification(msg: string, type: 'info' | 'warning' = 'info') {

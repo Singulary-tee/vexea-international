@@ -360,6 +360,7 @@ export async function getCachedOrFetchUrl(
         return acc;
       }, {} as Record<string, string>),
       "main_menu_1.webm": "Video/Backgrounds/main_menu_1.webm",
+      "lobby_1.webm": "Video/Backgrounds/lobby_1.webm",
       "click.opus": "Audio/Sfx/click.opus",
       "vexea_theme.opus": "Audio/Music/vexea_theme.opus",
       "iron_march.opus": "Audio/Music/iron_march.opus",
@@ -369,6 +370,10 @@ export async function getCachedOrFetchUrl(
       "store_1.webp": "Images/Backgrounds/store_1.webp",
       "splash_screen.webp": "Images/Backgrounds/splash_screen.webp",
       "file_00000000cdd071f48495d22753c89fa1.webp": "Images/Backgrounds/file_00000000cdd071f48495d22753c89fa1.webp",
+      "assault_card_1.webp": "Images/Cards/assault_card_1.webp",
+      "demolition_card_1.webp": "Images/Cards/demolition_card_1.webp",
+      "medic_card_1.webp": "Images/Cards/medic_card_1.webp",
+      "recon_card_1.webp": "Images/Cards/recon_card_1.webp",
       "infiltration_card_1.webp": "Images/Cards/infiltration_card_1.webp",
       "intel_card_1.webp": "Images/Cards/intel_card_1.webp",
       "leaderboard_card_1.webp": "Images/Cards/leaderboard_card_1.webp",
@@ -678,8 +683,8 @@ export function createConfiguredGLTFLoader(customManager?: THREE.LoadingManager,
   manager.setURLModifier((url: string) => {
     let resolvedUrl = existingModifier ? existingModifier(url) : url;
 
-    // Direct blob: object URLs (e.g. textures extracted from embedded GLB buffers) are passed directly only if known to be valid in blobUrlMap
-    if (resolvedUrl.startsWith("blob:") && Array.from(blobUrlMap.values()).includes(resolvedUrl)) {
+    // Direct blob: object URLs (e.g. textures extracted from embedded GLB buffers) are passed directly
+    if (resolvedUrl.startsWith("blob:")) {
       return resolvedUrl;
     }
 

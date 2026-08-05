@@ -3,6 +3,24 @@ import { DroneType, DRONE_CONFIGS } from "../../../shared/constants";
 
 const tempEuler = new THREE.Euler();
 
+const SINE_TABLE_SIZE = 128;
+const TWO_PI = Math.PI * 2;
+const SINE_TABLE = new Float32Array(SINE_TABLE_SIZE);
+for (let i = 0; i < SINE_TABLE_SIZE; i++) {
+  SINE_TABLE[i] = Math.sin((i / SINE_TABLE_SIZE) * TWO_PI);
+}
+
+function lookupSin(phase: number): number {
+  let norm = phase % TWO_PI;
+  if (norm < 0) norm += TWO_PI;
+  const index = (norm * (SINE_TABLE_SIZE / TWO_PI)) | 0;
+  return SINE_TABLE[index % SINE_TABLE_SIZE];
+}
+
+function lookupCos(phase: number): number {
+  return lookupSin(phase + Math.PI * 0.5);
+}
+
 export interface DroneProceduralState {
   spinAngle: number;
   wheelAngle: number;
@@ -43,20 +61,20 @@ export function updateProceduralState(
   const config = DRONE_CONFIGS[typeId as DroneType];
   if (!config) return;
 
-  if (config.animations.includes('spin')) {
-    state.spinAngle += dt * (config.propellerSpinRate ?? 20.0);
-  }
-
   if (state.accumulatedTime === undefined) state.accumulatedTime = 0;
   state.accumulatedTime += dt;
-  
+
+  if (config.animations.includes('spin')) {
+    state.spinAngle = state.accumulatedTime * (config.propellerSpinRate ?? 20.0);
+  }
+
   if (config.animations.includes('sway')) {
     const swayAmount = config.hoverSwayAmount ?? 0.05;
     const swaySpeed = config.hoverSwaySpeed ?? 2.0;
 
     // Time-based continuous sway (runs regardless of movement/velocity)
-    const timeSwayX = Math.sin(state.accumulatedTime * swaySpeed) * swayAmount;
-    const timeSwayZ = Math.cos(state.accumulatedTime * swaySpeed * 0.9) * swayAmount;
+    const timeSwayX = lookupSin(state.accumulatedTime * swaySpeed) * swayAmount;
+    const timeSwayZ = lookupCos(state.accumulatedTime * swaySpeed * 0.9) * swayAmount;
 
     // Velocity-derived tilt
     let velocityTiltX = smoothedVelocity.z * 0.05;
@@ -78,7 +96,7 @@ export function updateProceduralState(
     // Calculate vertical bob
     const bobAmount = config.verticalBobAmount ?? 0.08;
     const bobSpeed = config.verticalBobSpeed ?? 1.5;
-    state.verticalBob = Math.sin(state.accumulatedTime * bobSpeed) * bobAmount;
+    state.verticalBob = lookupSin(state.accumulatedTime * bobSpeed) * bobAmount;
   } else if (config.animations.includes('banking') || typeId === DroneType.FIXED_WING) {
     const maxPitch = config.pitchAngle ?? 0.25;
     const maxBank = config.bankingAngle ?? 0.35;

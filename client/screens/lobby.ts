@@ -1,6 +1,6 @@
 import * as screenManager from "./screen-manager";
-import { getDefaultMap } from "../../shared/maps/map-registry";
-import { ensureAssetsDownloaded } from "../asset-cache";
+import { getDefaultMap, getMapById, MAP_REGISTRY } from "../../shared/maps/map-registry";
+import { ensureAssetsDownloaded, getCachedOrFetchUrl, getAssetUrl } from "../asset-cache";
 import { IS_DESKTOP } from "../gates/platform.gate";
 import { DS } from "../design-system";
 import { StudioPreviewManager } from "../StudioPreviewManager";
@@ -38,7 +38,7 @@ function openLobbyInvitePopup(lobbyId: string) {
     width: 'min(90vw, 420px)',
     background: 'linear-gradient(180deg, rgba(14, 14, 18, 0.98) 0%, rgba(8, 8, 12, 0.99) 100%)',
     border: `1px solid rgba(255, 69, 0, 0.3)`,
-    borderRadius: '6px',
+    borderRadius: '0px',
     padding: '16px 20px',
     display: 'flex',
     flexDirection: 'column',
@@ -101,7 +101,7 @@ function openLobbyInvitePopup(lobbyId: string) {
       const isAlreadyInvited = sentInviteUids.includes(friend.uid);
       inviteBtn.textContent = isAlreadyInvited ? 'INVITED' : 'INVITE';
       Object.assign(inviteBtn.style, {
-        fontSize: '10px', fontWeight: 'bold', color: isAlreadyInvited ? '#888' : DS.colors.accent, background: 'transparent', border: `1px solid ${isAlreadyInvited ? '#444' : DS.colors.accent}`, padding: '4px 10px', cursor: isAlreadyInvited ? 'default' : 'pointer', borderRadius: '2px'
+        fontSize: '10px', fontWeight: 'bold', color: isAlreadyInvited ? '#888' : DS.colors.accent, background: 'transparent', border: `1px solid ${isAlreadyInvited ? '#444' : DS.colors.accent}`, padding: '4px 10px', cursor: isAlreadyInvited ? 'default' : 'pointer', borderRadius: '0px'
       });
 
       if (!isAlreadyInvited) {
@@ -144,39 +144,103 @@ export function initLobby() {
       zIndex: '800',
       background: DS.colors.background,
       display: 'none',
-      flexDirection: 'column',
       width: '100vw',
       height: '100vh',
-      padding: DS.spacing.md,
       boxSizing: 'border-box',
-      justifyContent: 'space-between'
+      overflow: 'hidden'
     });
 
-    // Top Section Container
-    const topRow = document.createElement('div');
-    Object.assign(topRow.style, {
+    // Lobby Video Background Layer (Ambient underneath 3D render)
+    const videoBg = document.createElement('video');
+    videoBg.id = 'lobby-video-bg';
+    videoBg.autoplay = true;
+    videoBg.loop = true;
+    videoBg.muted = true;
+    (videoBg as any).playsInline = true;
+    Object.assign(videoBg.style, {
+      position: 'absolute',
+      top: '50%',
+      left: '50%',
+      minWidth: '100%',
+      minHeight: '100%',
+      width: 'auto',
+      height: 'auto',
+      transform: 'translate(-50%, -50%)',
+      objectFit: 'cover',
+      zIndex: '0',
+      pointerEvents: 'none',
+      display: 'block'
+    });
+
+    getCachedOrFetchUrl("lobby_1.webm", "Video").then(url => {
+      videoBg.src = url;
+      videoBg.play().catch(() => {});
+    }).catch(err => {
+      console.error("Failed to load lobby video background:", err);
+    });
+
+    el.appendChild(videoBg);
+
+    // 1. 3D CANVASES BACKDROP (Covers the whole screen behind everything)
+    const middleSpacer = document.createElement('div');
+    middleSpacer.id = 'lobby-3d-backdrop';
+    Object.assign(middleSpacer.style, {
+      position: 'absolute',
+      inset: '0',
+      zIndex: '1',
+      pointerEvents: 'auto'
+    });
+    el.appendChild(middleSpacer);
+
+    requestAnimationFrame(() => {
+      StudioPreviewManager.attachTo(middleSpacer, 'LOBBY');
+    });
+
+    // 2. ABSOLUTE UI OVERLAY (Floating HUD Layer with click events enabled for elements)
+    const uiOverlay = document.createElement('div');
+    uiOverlay.id = 'lobby-ui-overlay';
+    Object.assign(uiOverlay.style, {
+      position: 'absolute',
+      inset: '0',
+      zIndex: '10',
+      pointerEvents: 'none',
+      boxSizing: 'border-box'
+    });
+
+    // --- LEFT COLUMN PANEL (No overlapping, elegant vertical layout) ---
+    const leftPanel = document.createElement('div');
+    leftPanel.id = 'lobby-left-panel';
+    Object.assign(leftPanel.style, {
+      position: 'absolute',
+      left: '12px',
+      top: '12px',
+      bottom: '12px',
+      width: 'clamp(550px, 60vw, 850px)',
       display: 'flex',
+      flexDirection: 'column',
       justifyContent: 'space-between',
-      alignItems: 'flex-start',
-      width: '100%',
-      pointerEvents: 'none'
+      alignItems: 'stretch',
+      pointerEvents: 'none',
+      boxSizing: 'border-box'
     });
 
-    // 1. BACK button (Top Left)
+    // --- TOP LEFT: BACK BUTTON ---
     const backBtn = document.createElement('div');
     backBtn.textContent = '← BACK';
     Object.assign(backBtn.style, {
+      alignSelf: 'flex-start',
       fontFamily: DS.typography.fontFamily,
-      fontSize: 'clamp(12px, 1.8vh, 16px)',
+      fontSize: 'clamp(11px, 1.5vh, 14px)',
       fontWeight: 'bold',
       textTransform: 'uppercase',
       color: DS.colors.textSecondary,
       letterSpacing: DS.typography.letterSpacing.wide,
       cursor: 'pointer',
-      padding: `${DS.spacing.md} ${DS.spacing.xl}`,
-      background: 'rgba(10, 10, 10, 0.65)',
-      border: `${DS.borders.thin} rgba(255, 255, 255, 0.05)`,
-      borderRadius: DS.borders.radius.sm,
+      padding: 'clamp(6px, 1vh, 10px) clamp(12px, 2vw, 20px)',
+      background: 'rgba(10, 10, 10, 0.75)',
+      border: 'none',
+      borderBottom: '2px solid rgba(255, 255, 255, 0.1)',
+      borderRadius: '0px',
       pointerEvents: 'auto',
       transition: 'all 0.2s ease-out'
     });
@@ -192,184 +256,98 @@ export function initLobby() {
     });
     backBtn.addEventListener('mouseenter', () => {
       backBtn.style.color = DS.colors.textPrimary;
-      backBtn.style.borderColor = 'rgba(255, 255, 255, 0.2)';
+      backBtn.style.borderBottomColor = DS.colors.accent;
     });
     backBtn.addEventListener('mouseleave', () => {
       backBtn.style.color = DS.colors.textSecondary;
-      backBtn.style.borderColor = 'rgba(255, 255, 255, 0.05)';
+      backBtn.style.borderBottomColor = 'rgba(255, 255, 255, 0.1)';
     });
-    topRow.appendChild(backBtn);
+    leftPanel.appendChild(backBtn);
 
-    // 2. GAMEMODE DETAILS (Top Right)
-    const gamemodeBox = document.createElement('div');
-    Object.assign(gamemodeBox.style, {
-      background: 'rgba(10, 10, 10, 0.65)',
-      backdropFilter: DS.glass.blur,
-      webkitBackdropFilter: DS.glass.blur,
-      border: `${DS.borders.thin} rgba(255, 255, 255, 0.05)`,
-      borderRadius: DS.borders.radius.sm,
-      padding: `${DS.spacing.lg} ${DS.spacing.xxl}`,
-      pointerEvents: 'auto',
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'flex-end',
-      gap: '4px'
-    });
-
-    const gmTitle = document.createElement('div');
-    gmTitle.textContent = (localStorage.getItem('lastChosenGameMode') || 'INFILTRATION').toUpperCase();
-    Object.assign(gmTitle.style, {
-      fontFamily: DS.typography.fontFamily,
-      fontSize: 'clamp(16px, 2.5vh, 22px)',
-      fontWeight: 'bold',
-      color: DS.colors.accent,
-      letterSpacing: DS.typography.letterSpacing.wide
-    });
-
-    const gmSubtitle = document.createElement('div');
-    gmSubtitle.textContent = 'STANDARD - OPEN MATCH';
-    Object.assign(gmSubtitle.style, {
-      fontFamily: DS.typography.fontFamily,
-      fontSize: 'clamp(11px, 1.5vh, 14px)',
-      color: DS.colors.textSecondary,
-      letterSpacing: DS.typography.letterSpacing.tight
-    });
-
-    const gmContractors = document.createElement('div');
-    gmContractors.textContent = 'CONTRACTORS: 1 / 10';
-    Object.assign(gmContractors.style, {
-      fontFamily: DS.typography.fontFamily,
-      fontSize: 'clamp(10px, 1.3vh, 12px)',
-      color: '#555555',
-      letterSpacing: '1px',
-      marginTop: '4px'
-    });
-
-    gamemodeBox.appendChild(gmTitle);
-    gamemodeBox.appendChild(gmSubtitle);
-    gamemodeBox.appendChild(gmContractors);
-    topRow.appendChild(gamemodeBox);
-
-    el.appendChild(topRow);
-
-    // 3. MIDDLE AREA (Hosts persistent 3D Studio Canvas Backdrop)
-    const middleSpacer = document.createElement('div');
-    middleSpacer.id = 'lobby-3d-backdrop';
-    Object.assign(middleSpacer.style, {
-      flex: '1',
+    // --- BOTTOM LEFT TO BOTTOM MIDDLE: CLASS CARDS GRID (FLOATING OVER BACKGROUND) ---
+    const classCardsContainer = document.createElement('div');
+    Object.assign(classCardsContainer.style, {
       width: '100%',
-      position: 'relative',
-      pointerEvents: 'auto'
-    });
-    el.appendChild(middleSpacer);
-
-    requestAnimationFrame(() => {
-      StudioPreviewManager.attachTo(middleSpacer, 'LOBBY');
-    });
-
-    // 4. BOTTOM CONTAINER (Cards on the left, Ready on the right)
-    const bottomRow = document.createElement('div');
-    Object.assign(bottomRow.style, {
-      display: 'flex',
-      justifyContent: 'space-between',
-      alignItems: 'flex-end',
-      width: '100%',
-      gap: '24px',
-      pointerEvents: 'none'
-    });
-
-    // Class cards list (4-column grid layout across available width, no horizontal scrolling)
-    const cardsContainer = document.createElement('div');
-    Object.assign(cardsContainer.style, {
       display: 'grid',
       gridTemplateColumns: 'repeat(4, 1fr)',
-      gap: '12px',
+      gap: '8px',
       pointerEvents: 'auto',
-      flex: '1',
-      maxWidth: 'calc(100% - clamp(160px, 18vw, 220px) - 24px)',
-      overflow: 'hidden'
+      boxSizing: 'border-box'
     });
+
+    const CLASS_IMAGES: Record<string, string> = {
+      ASSAULT: 'assault_card_1.webp',
+      DEMOLITIONS: 'demolition_card_1.webp',
+      MEDIC: 'medic_card_1.webp',
+      RECON: 'recon_card_1.webp'
+    };
 
     let selectedClassIdx = 0;
     const cards: HTMLElement[] = [];
 
-    const createClassCard = (idx: number, name: string, desc: string, utils: string[]) => {
+    const createClassCard = (idx: number, id: string, name: string) => {
       const card = document.createElement('div');
+      const cardImg = CLASS_IMAGES[id] || 'assault_card_1.webp';
+      card.dataset.classId = id;
+      card.dataset.cardImg = cardImg;
       Object.assign(card.style, {
         width: '100%',
-        height: 'clamp(130px, 20vh, 190px)',
-        background: 'rgba(10, 10, 10, 0.75)',
-        backdropFilter: DS.glass.blur,
-        webkitBackdropFilter: DS.glass.blur,
-        border: '1px solid rgba(255, 255, 255, 0.05)',
-        borderRadius: '4px',
-        padding: '12px',
+        aspectRatio: '1',
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat',
+        border: 'none',
+        borderRadius: '0px',
         boxSizing: 'border-box',
         cursor: 'pointer',
         display: 'flex',
         flexDirection: 'column',
-        justifyContent: 'space-between',
-        transition: 'all 0.18s ease-out'
+        alignItems: 'center',
+        justifyContent: 'flex-end',
+        transition: 'all 0.18s ease-out',
+        position: 'relative',
+        overflow: 'hidden'
       });
 
-      const topContent = document.createElement('div');
-      topContent.style.display = 'flex';
-      topContent.style.flexDirection = 'column';
-      topContent.style.gap = '4px';
+      getCachedOrFetchUrl(cardImg, "Image").then(url => {
+        card.dataset.resolvedUrl = url;
+        updateSelection();
+      }).catch(err => {
+        console.error(`Failed to load card image for ${id}:`, err);
+      });
 
       const cardName = document.createElement('div');
-      cardName.textContent = name;
+      cardName.className = 'class-card-name';
+      cardName.textContent = name.toUpperCase();
       Object.assign(cardName.style, {
         fontFamily: DS.typography.fontFamily,
-        fontSize: 'clamp(16px, 2.5vh, 22px)',
+        fontSize: 'clamp(8px, 1.1vh, 11px)',
         fontWeight: 'bold',
-        color: '#E8E8E8',
-        letterSpacing: '1px'
+        color: '#CCCCCC',
+        letterSpacing: '0.5px',
+        textAlign: 'center',
+        width: '100%',
+        padding: '6px 2px',
+        boxSizing: 'border-box',
+        marginTop: 'auto',
+        background: 'transparent',
+        transition: 'color 0.18s ease-out',
+        textShadow: '0 2px 4px rgba(0,0,0,1), 0 1px 2px rgba(0,0,0,0.9)',
+        overflow: 'hidden',
+        textOverflow: 'ellipsis',
+        whiteSpace: 'nowrap'
       });
-
-      const cardDesc = document.createElement('div');
-      cardDesc.textContent = desc.toUpperCase();
-      Object.assign(cardDesc.style, {
-        fontFamily: DS.typography.fontFamily,
-        fontSize: 'clamp(10px, 1.4vh, 12px)',
-        color: '#888888',
-        lineHeight: '1.3'
-      });
-
-      topContent.appendChild(cardName);
-      topContent.appendChild(cardDesc);
-      card.appendChild(topContent);
-
-      const utilsContainer = document.createElement('div');
-      utilsContainer.style.display = 'flex';
-      utilsContainer.style.flexDirection = 'column';
-      utilsContainer.style.gap = '2px';
-
-      utils.forEach(u => {
-        const uDiv = document.createElement('div');
-        uDiv.textContent = `• ${u.toUpperCase()}`;
-        uDiv.className = 'lobby-card-ability';
-        Object.assign(uDiv.style, {
-          fontFamily: DS.typography.fontFamily,
-          fontSize: 'clamp(9px, 1.2vh, 11px)',
-          color: '#555555',
-          letterSpacing: '1px',
-          transition: 'color 0.18s ease-out'
-        });
-        utilsContainer.appendChild(uDiv);
-      });
-
-      card.appendChild(utilsContainer);
+      card.appendChild(cardName);
 
       card.addEventListener('mouseenter', () => {
         if (selectedClassIdx !== idx) {
-          card.style.borderColor = 'rgba(255, 255, 255, 0.15)';
+          card.style.filter = 'brightness(1.15)';
         }
       });
 
       card.addEventListener('mouseleave', () => {
         if (selectedClassIdx !== idx) {
-          card.style.borderColor = 'rgba(255, 255, 255, 0.05)';
+          card.style.filter = 'none';
         }
       });
 
@@ -379,74 +357,343 @@ export function initLobby() {
       });
 
       cards.push(card);
-      cardsContainer.appendChild(card);
+      classCardsContainer.appendChild(card);
     };
 
     const classList = Object.values(CLASSES);
     classList.forEach((cls, idx) => {
-      createClassCard(idx, cls.displayName, cls.role, [cls.primaryWeapon, cls.secondaryWeapon, cls.utility1, cls.utility2]);
+      createClassCard(idx, cls.id, cls.displayName);
     });
 
     const updateSelection = () => {
       cards.forEach((c, i) => {
+        const nameEl = c.querySelector('.class-card-name') as HTMLElement;
+        const cardImg = c.dataset.cardImg || 'assault_card_1.webp';
+        const imgUrl = c.dataset.resolvedUrl || getAssetUrl(cardImg);
+        c.style.border = 'none';
         if (i === selectedClassIdx) {
-          c.style.borderColor = DS.colors.accent;
-          c.style.boxShadow = DS.shadows.accent;
-          c.style.background = 'rgba(255, 69, 0, 0.05)';
-          const abDivs = c.querySelectorAll('.lobby-card-ability');
-          abDivs.forEach(ab => {
-            (ab as HTMLElement).style.color = DS.colors.accent;
-          });
+          c.style.filter = 'none';
+          c.style.boxShadow = '0 0 12px rgba(255, 69, 0, 0.3)';
+          c.style.backgroundImage = `linear-gradient(180deg, rgba(255, 69, 0, 0.2) 0%, rgba(0, 0, 0, 0.3) 100%), url('${imgUrl}')`;
+          c.style.borderBottom = `3px solid ${DS.colors.accent}`;
+          if (nameEl) {
+            nameEl.style.color = '#FFFFFF';
+            nameEl.style.background = 'transparent';
+          }
         } else {
-          c.style.borderColor = 'rgba(255, 255, 255, 0.05)';
           c.style.boxShadow = 'none';
-          c.style.background = 'rgba(10, 10, 10, 0.75)';
-          const abDivs = c.querySelectorAll('.lobby-card-ability');
-          abDivs.forEach(ab => {
-            (ab as HTMLElement).style.color = '#555555';
-          });
+          c.style.backgroundImage = `linear-gradient(180deg, rgba(0, 0, 0, 0.05) 0%, rgba(0, 0, 0, 0.55) 100%), url('${imgUrl}')`;
+          c.style.borderBottom = '3px solid transparent';
+          if (nameEl) {
+            nameEl.style.color = '#AAAAAA';
+            nameEl.style.background = 'transparent';
+          }
         }
       });
     };
 
     updateSelection();
-    bottomRow.appendChild(cardsContainer);
 
-    // 5. READY & INVITE Button Container (Bottom Right)
-    const actionContainer = document.createElement('div');
-    Object.assign(actionContainer.style, {
+    // --- STYLISH MINIMALIST VERTICAL PROGRESSION (NO WORDS, NUMBERS ONLY) ---
+    const progressionContainer = document.createElement('div');
+    Object.assign(progressionContainer.style, {
       display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'flex-end',
-      gap: '8px',
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'flex-start',
+      gap: '16px',
+      height: 'clamp(70px, 15vh, 120px)',
       pointerEvents: 'auto',
-      flexShrink: '0'
+      boxSizing: 'border-box',
+      paddingLeft: '12px'
     });
 
+    const trackCol = document.createElement('div');
+    Object.assign(trackCol.style, {
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      position: 'relative',
+      width: '12px',
+      height: '100%'
+    });
+
+    const trackLine = document.createElement('div');
+    Object.assign(trackLine.style, {
+      position: 'absolute',
+      top: '4px',
+      bottom: '4px',
+      width: '2px',
+      background: 'rgba(255, 255, 255, 0.1)',
+      zIndex: '1'
+    });
+    trackCol.appendChild(trackLine);
+
+    const trackActiveLine = document.createElement('div');
+    Object.assign(trackActiveLine.style, {
+      position: 'absolute',
+      top: '4px',
+      bottom: '33%',
+      width: '2px',
+      background: DS.colors.accent,
+      zIndex: '2'
+    });
+    trackCol.appendChild(trackActiveLine);
+
+    const numbersCol = document.createElement('div');
+    Object.assign(numbersCol.style, {
+      display: 'flex',
+      flexDirection: 'column',
+      justifyContent: 'space-between',
+      height: '100%'
+    });
+
+    // Replace hardcoded values with actual registered user progression stats, padded nicely
+    const uData = (window as any).registeredUserData;
+    const values = [
+      String(uData?.battlePass || 1).padStart(2, '0'),
+      String(uData?.totalMatches || 0).padStart(2, '0'),
+      String(uData?.totalWins || 0).padStart(2, '0'),
+      String(uData?.credits || 100).padStart(2, '0')
+    ];
+    values.forEach((val, index) => {
+      const dot = document.createElement('div');
+      Object.assign(dot.style, {
+        width: '6px',
+        height: '6px',
+        borderRadius: '50%',
+        background: index <= 2 ? DS.colors.accent : 'rgba(255, 255, 255, 0.2)',
+        zIndex: '3',
+        boxShadow: index <= 2 ? '0 0 6px ' + DS.colors.accent : 'none'
+      });
+      trackCol.appendChild(dot);
+
+      const valEl = document.createElement('div');
+      valEl.textContent = val;
+      Object.assign(valEl.style, {
+        fontFamily: DS.typography.fontFamily,
+        fontSize: 'clamp(12px, 1.8vh, 16px)',
+        fontWeight: '900',
+        color: index <= 2 ? '#FFFFFF' : '#444444',
+        letterSpacing: '1px',
+        lineHeight: '1'
+      });
+      numbersCol.appendChild(valEl);
+    });
+
+    progressionContainer.appendChild(trackCol);
+    progressionContainer.appendChild(numbersCol);
+    leftPanel.appendChild(progressionContainer);
+
+    leftPanel.appendChild(classCardsContainer);
+    uiOverlay.appendChild(leftPanel);
+
+    // --- RIGHT COLUMN PANEL (No overlapping, elegant vertical layout) ---
+    const rightPanel = document.createElement('div');
+    rightPanel.id = 'lobby-right-panel';
+    Object.assign(rightPanel.style, {
+      position: 'absolute',
+      right: '12px',
+      top: '12px',
+      bottom: '12px',
+      width: 'clamp(220px, 24vw, 280px)',
+      display: 'flex',
+      flexDirection: 'column',
+      justifyContent: 'space-between',
+      alignItems: 'stretch',
+      pointerEvents: 'none',
+      boxSizing: 'border-box'
+    });
+
+    // --- TOP TO MIDDLE RIGHT: GAMEMODE & MAP SELECTOR (CARDS WITH IMAGES) ---
+    const selectionContainer = document.createElement('div');
+    Object.assign(selectionContainer.style, {
+      width: '100%',
+      display: 'flex',
+      flexDirection: 'column',
+      gap: '8px',
+      pointerEvents: 'auto',
+      boxSizing: 'border-box'
+    });
+
+    const availableModes = ['INFILTRATION', 'TEAM DEATHMATCH', 'HARDPOINT'];
+    const MODE_IMAGES: Record<string, string> = {
+      'INFILTRATION': 'infiltration_card_1.webp',
+      'TEAM DEATHMATCH': 'squad_card_1.webp',
+      'HARDPOINT': 'intel_card_1.webp'
+    };
+    let currentModeIdx = Math.max(0, availableModes.indexOf(localStorage.getItem('lastChosenGameMode') || 'INFILTRATION'));
+    if (currentModeIdx < 0) currentModeIdx = 0;
+
+    const availableMaps = MAP_REGISTRY.filter(m => !m.isDevMap || (window as any).IS_DEV);
+    let currentMapId = localStorage.getItem('lastChosenMap') || getDefaultMap().id;
+    let currentMapIdx = Math.max(0, availableMaps.findIndex(m => m.id === currentMapId));
+    if (currentMapIdx < 0) currentMapIdx = 0;
+
+    // Gamemode Card with Real Image Background
+    const modeCard = document.createElement('div');
+    Object.assign(modeCard.style, {
+      width: '100%',
+      height: 'clamp(65px, 10vh, 85px)',
+      borderRadius: '0px',
+      border: 'none',
+      borderBottom: `3px solid ${DS.colors.accent}`,
+      padding: 'clamp(8px, 1.5vh, 16px)',
+      display: 'flex',
+      flexDirection: 'column',
+      justifyContent: 'flex-end',
+      cursor: 'pointer',
+      boxSizing: 'border-box',
+      backgroundSize: 'cover',
+      backgroundPosition: 'center',
+      position: 'relative',
+      overflow: 'hidden',
+      boxShadow: '0 4px 12px rgba(0, 0, 0, 0.5)'
+    });
+
+    const updateModeBg = () => {
+      const modeName = availableModes[currentModeIdx];
+      const imgFile = MODE_IMAGES[modeName] || 'infiltration_card_1.webp';
+      modeCard.style.backgroundImage = `linear-gradient(180deg, rgba(0, 0, 0, 0.1) 0%, rgba(0, 0, 0, 0.8) 100%), url('${getAssetUrl(imgFile)}')`;
+    };
+    updateModeBg();
+
+    const modeLabel = document.createElement('span');
+    modeLabel.textContent = 'GAME MODE';
+    Object.assign(modeLabel.style, {
+      fontFamily: DS.typography.fontFamily,
+      fontSize: 'clamp(8px, 1vh, 10px)',
+      color: DS.colors.accent,
+      fontWeight: '800',
+      letterSpacing: '2px',
+      marginBottom: '2px'
+    });
+
+    const modeTitle = document.createElement('div');
+    modeTitle.textContent = availableModes[currentModeIdx];
+    Object.assign(modeTitle.style, {
+      fontFamily: DS.typography.fontFamily,
+      fontSize: 'clamp(14px, 2vh, 18px)',
+      color: '#FFFFFF',
+      fontWeight: '800',
+      letterSpacing: '1px',
+      textTransform: 'uppercase'
+    });
+
+    modeCard.appendChild(modeLabel);
+    modeCard.appendChild(modeTitle);
+
+    modeCard.onclick = () => {
+      currentModeIdx = (currentModeIdx + 1) % availableModes.length;
+      const newMode = availableModes[currentModeIdx];
+      modeTitle.textContent = newMode;
+      updateModeBg();
+      localStorage.setItem('lastChosenGameMode', newMode);
+      import('../audio').then(({ audioManager }) => audioManager.play('click'));
+    };
+
+    // Map Card with Real Image Background
+    const mapCard = document.createElement('div');
+    Object.assign(mapCard.style, {
+      width: '100%',
+      height: 'clamp(65px, 10vh, 85px)',
+      borderRadius: '0px',
+      border: 'none',
+      borderBottom: '3px solid rgba(255, 255, 255, 0.4)',
+      padding: 'clamp(8px, 1.5vh, 16px)',
+      display: 'flex',
+      flexDirection: 'column',
+      justifyContent: 'flex-end',
+      cursor: 'pointer',
+      boxSizing: 'border-box',
+      backgroundSize: 'cover',
+      backgroundPosition: 'center',
+      position: 'relative',
+      overflow: 'hidden',
+      boxShadow: '0 4px 12px rgba(0, 0, 0, 0.4)'
+    });
+
+    const mapLabel = document.createElement('span');
+    mapLabel.textContent = 'MAP';
+    Object.assign(mapLabel.style, {
+      fontFamily: DS.typography.fontFamily,
+      fontSize: 'clamp(8px, 1vh, 10px)',
+      color: '#BBBBBB',
+      fontWeight: '800',
+      letterSpacing: '2px',
+      marginBottom: '2px'
+    });
+
+    const mapTitle = document.createElement('div');
+    const updateMapTitle = () => {
+      const selectedMapObj = availableMaps[currentMapIdx] || getDefaultMap();
+      mapTitle.textContent = selectedMapObj.displayName.toUpperCase();
+    };
+    updateMapTitle();
+    Object.assign(mapTitle.style, {
+      fontFamily: DS.typography.fontFamily,
+      fontSize: 'clamp(14px, 2vh, 18px)',
+      color: '#FFFFFF',
+      fontWeight: '800',
+      letterSpacing: '1px'
+    });
+
+    mapCard.appendChild(mapLabel);
+    mapCard.appendChild(mapTitle);
+
+    mapCard.onclick = () => {
+      currentMapIdx = (currentMapIdx + 1) % availableMaps.length;
+      const newMapObj = availableMaps[currentMapIdx];
+      localStorage.setItem('lastChosenMap', newMapObj.id);
+      updateMapTitle();
+      import('../audio').then(({ audioManager }) => audioManager.play('click'));
+    };
+
+    selectionContainer.appendChild(modeCard);
+    selectionContainer.appendChild(mapCard);
+    rightPanel.appendChild(selectionContainer);
+
+    // --- BOTTOM RIGHT: PRIMARY READY BUTTON & MUCH SMALLER SECONDARY INVITE BUTTON ---
+    const actionsContainer = document.createElement('div');
+    Object.assign(actionsContainer.style, {
+      width: '100%',
+      display: 'flex',
+      flexDirection: 'column',
+      gap: '8px',
+      pointerEvents: 'auto',
+      boxSizing: 'border-box'
+    });
+
+    // Secondary, much smaller Invite Friends button
     const inviteFriendsBtn = document.createElement('button');
     inviteFriendsBtn.textContent = 'INVITE FRIENDS';
     Object.assign(inviteFriendsBtn.style, {
-      width: 'clamp(140px, 15vw, 200px)',
-      height: 'clamp(32px, 4.5vh, 40px)',
-      background: 'rgba(255, 69, 0, 0.15)',
-      border: `1px solid ${DS.colors.accent}`,
-      color: DS.colors.accent,
+      alignSelf: 'flex-end',
+      padding: '4px 10px',
+      background: 'rgba(255, 255, 255, 0.05)',
+      border: '1px solid rgba(255, 255, 255, 0.2)',
+      color: '#AAAAAA',
       fontFamily: DS.typography.fontFamily,
-      fontSize: 'clamp(11px, 1.6vh, 14px)',
-      fontWeight: 'bold',
+      fontSize: 'clamp(9px, 1.2vh, 11px)',
+      fontWeight: '700',
       textTransform: 'uppercase',
-      borderRadius: DS.borders.radius.sm,
+      borderRadius: '0px',
       cursor: 'pointer',
       transition: 'all 0.15s ease-out',
       letterSpacing: '1px'
     });
 
     inviteFriendsBtn.addEventListener('mouseenter', () => {
-      inviteFriendsBtn.style.background = 'rgba(255, 69, 0, 0.3)';
+      inviteFriendsBtn.style.background = 'rgba(255, 255, 255, 0.1)';
+      inviteFriendsBtn.style.color = '#FFFFFF';
+      inviteFriendsBtn.style.borderColor = 'rgba(255, 255, 255, 0.4)';
     });
 
     inviteFriendsBtn.addEventListener('mouseleave', () => {
-      inviteFriendsBtn.style.background = 'rgba(255, 69, 0, 0.15)';
+      inviteFriendsBtn.style.background = 'rgba(255, 255, 255, 0.05)';
+      inviteFriendsBtn.style.color = '#AAAAAA';
+      inviteFriendsBtn.style.borderColor = 'rgba(255, 255, 255, 0.2)';
     });
 
     inviteFriendsBtn.addEventListener('click', () => {
@@ -456,21 +703,23 @@ export function initLobby() {
       openLobbyInvitePopup(lobbyId);
     });
 
+    // Big, Primary, bold Ready Button
     const readyBtn = document.createElement('button');
     readyBtn.textContent = 'READY';
     Object.assign(readyBtn.style, {
-      width: 'clamp(140px, 15vw, 200px)',
-      height: 'clamp(44px, 6vh, 56px)',
+      width: '100%',
+      height: 'clamp(40px, 8vh, 56px)',
       background: DS.colors.accent,
       border: 'none',
       color: DS.colors.background,
       fontFamily: DS.typography.fontFamily,
-      fontSize: 'clamp(18px, 2.5vh, 26px)',
-      fontWeight: 'bold',
+      fontSize: 'clamp(18px, 3vh, 24px)',
+      fontWeight: '900',
       textTransform: 'uppercase',
-      borderRadius: DS.borders.radius.sm,
+      borderRadius: '0px',
       cursor: 'pointer',
-      transition: 'all 0.15s ease-out'
+      transition: 'all 0.15s ease-out',
+      letterSpacing: '1px'
     });
 
     readyBtn.addEventListener('mouseenter', () => {
@@ -508,7 +757,6 @@ export function initLobby() {
         sentInviteUids.length = 0;
       }
 
-      // Synchronously request fullscreen and pointer lock on canvas-container
       if (!IS_DESKTOP) {
         const docEl = document.documentElement as any;
         if (!document.fullscreenElement && !(document as any).webkitFullscreenElement) {
@@ -517,11 +765,14 @@ export function initLobby() {
         }
       }
 
-      const map = getDefaultMap();
+      const selectedMapId = localStorage.getItem('lastChosenMap') || getDefaultMap().id;
+      const map = getMapById(selectedMapId) || getDefaultMap();
       const selectedClassId: ClassId = classList[selectedClassIdx]?.id || 'ASSAULT';
+      const selectedMode = localStorage.getItem('lastChosenGameMode') || 'INFILTRATION';
       ensureAssetsDownloaded(() => {
         window.dispatchEvent(new CustomEvent("start-match", {
           detail: {
+            mode: selectedMode,
             map,
             class: selectedClassId,
             isDevQuickStart: false
@@ -530,11 +781,13 @@ export function initLobby() {
       }, map.id);
     });
 
-    actionContainer.appendChild(inviteFriendsBtn);
-    actionContainer.appendChild(readyBtn);
-    bottomRow.appendChild(actionContainer);
+    actionsContainer.appendChild(inviteFriendsBtn);
+    actionsContainer.appendChild(readyBtn);
+    rightPanel.appendChild(actionsContainer);
 
-    el.appendChild(bottomRow);
+    uiOverlay.appendChild(rightPanel);
+
+    el.appendChild(uiOverlay);
     document.body.appendChild(el);
   }
 }
