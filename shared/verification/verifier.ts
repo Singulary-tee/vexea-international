@@ -6,8 +6,11 @@ import {
   VerifyClaimInput,
   VerifyClaimResult,
   LevelMetrics,
-  CatalogItem
+  CatalogItem,
+  VerifyBPClaimInput,
+  VerifyBPClaimResult
 } from "./types";
+import { BP_SEASON_01 } from "../battle-pass";
 
 export const XP_PER_LEVEL = 100;
 export const MAX_MATCH_KILL_RATE = 2.0; // Kills per second threshold sanity limit
@@ -226,6 +229,71 @@ export function verifyClaim(input: VerifyClaimInput): VerifyClaimResult {
     newCredits: input.currentCredits,
     newEnergy: input.currentEnergy,
     error: { code: 'UNKNOWN_CLAIM_TYPE', message: `Claim type ${input.claimType} is unrecognized.` }
+  };
+}
+
+/**
+ * Verifies Battle Pass tier claims.
+ */
+export function verifyBPClaim(input: VerifyBPClaimInput): VerifyBPClaimResult {
+  if (!input.playerId) {
+    return {
+      isApproved: false,
+      error: { code: 'INVALID_PLAYER_ID', message: 'Player ID is required for verification.' }
+    };
+  }
+
+  // Find the season
+  if (input.seasonId !== BP_SEASON_01.id) {
+    return {
+      isApproved: false,
+      error: { code: 'INVALID_SEASON_ID', message: `Season ${input.seasonId} not found.` }
+    };
+  }
+
+  const tier = BP_SEASON_01.tiers[input.tierIndex];
+  if (!tier) {
+    return {
+      isApproved: false,
+      error: { code: 'INVALID_TIER_INDEX', message: `Tier ${input.tierIndex} does not exist.` }
+    };
+  }
+
+  // Check if already claimed
+  if (input.claimedTiers && input.claimedTiers.includes(input.tierIndex)) {
+    return {
+      isApproved: false,
+      error: { code: 'TIER_ALREADY_CLAIMED', message: `Tier ${input.tierIndex} has already been claimed.` }
+    };
+  }
+
+  // Check XP requirement
+  if (input.currentBPXP < tier.xpRequired) {
+    return {
+      isApproved: false,
+      error: {
+        code: 'INSUFFICIENT_XP',
+        message: `Insufficient BP XP (${input.currentBPXP}) for Tier ${input.tierIndex} (requires ${tier.xpRequired}).`
+      }
+    };
+  }
+
+  if (!tier.freeReward) {
+    return {
+      isApproved: false,
+      error: { code: 'NO_REWARD_ON_TIER', message: `Tier ${input.tierIndex} does not have a free reward.` }
+    };
+  }
+
+  // Approve claim
+  const reward = tier.freeReward;
+  return {
+    isApproved: true,
+    reward: {
+      credits: reward.type === 'CREDITS' ? (reward.value as number) : undefined,
+      itemId: (reward.type === 'COSMETIC' || reward.type === 'BLUEPRINT') ? (reward.value as string) : undefined,
+      label: reward.label
+    }
   };
 }
 

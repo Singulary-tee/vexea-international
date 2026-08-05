@@ -3,7 +3,7 @@ import { audioManager } from "../audio";
 import { IS_DEV } from "../../shared/gates/production.gate";
 import { StudioPreviewManager } from "../StudioPreviewManager";
 
-const screens = ['splash-screen', 'main-menu-screen', 'lobby-screen', 'dev-map-editor-screen', 'dev-entities-screen', 'post-match-screen'];
+const screens = ['splash-screen', 'main-menu-screen', 'lobby-screen', 'dev-map-editor-screen', 'dev-entities-screen', 'post-match-screen', 'battle-pass-screen'];
 let transitionTimers: number[] = [];
 
 export function hideAll() {
@@ -153,6 +153,13 @@ export function showPostMatch(matchData?: any) {
   import("./post-match-screen").then(({ renderPostMatchScreen }) => {
     renderPostMatchScreen(matchData);
     showScreen('post-match-screen', 500, false);
+  });
+}
+
+export function showBattlePass() {
+  import("./battle-pass-screen").then(({ renderBattlePassScreen }) => {
+    renderBattlePassScreen();
+    showScreen('battle-pass-screen', 500, false);
   });
 }
 

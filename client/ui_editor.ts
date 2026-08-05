@@ -1,5 +1,7 @@
 import { getAssetUrl } from "./asset-cache";
 import { DS } from "./design-system";
+import { StudioPreviewManager } from "./StudioPreviewManager";
+import { hideAll, showMainMenu } from "./screens/screen-manager";
 
 export const initUIEditor = () => {
     const settingsModal = document.getElementById("settings-modal");
@@ -816,6 +818,8 @@ export const initUIEditor = () => {
     }, 0);
 
     (window as any).vexeaEditUI = () => {
+        hideAll();
+        StudioPreviewManager.detach();
     	const s = (window as any).vexeaSettings || {};
         const refImg = s.referenceImage || getAssetUrl("file_00000000cdd071f48495d22753c89fa1.webp");
         bgImage.style.backgroundImage = `url('${refImg}')`;
@@ -897,6 +901,7 @@ export const initUIEditor = () => {
         // Hide HUD container if not in active match
         if ((window as any).gameState !== "ACTIVE_MATCH") {
             hudContainer.style.setProperty("display", "none", "important");
+            showMainMenu();
         }
 
         const canvasContainer = document.getElementById("canvas-container");

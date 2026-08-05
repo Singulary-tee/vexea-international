@@ -20,6 +20,7 @@ import {
   Auth
 } from "firebase/auth";
 import { getStorage, FirebaseStorage } from "firebase/storage";
+import { getAnalytics, Analytics, logEvent } from "firebase/analytics";
 import type { Database } from "firebase/database";
 
 export enum OperationType {
@@ -52,6 +53,7 @@ export let db: Firestore | null = null;
 export let auth: Auth | null = null;
 export let storage: FirebaseStorage | null = null;
 export let rtdb: Database | null = null;
+export let analytics: Analytics | null = null;
 export let isFirebaseReady = false;
 
 function handleFirestoreError(error: unknown, operationType: OperationType, path: string | null) {
@@ -86,6 +88,7 @@ export async function initFirebase(): Promise<boolean> {
     db = getFirestore(app, firebaseConfig.firestoreDatabaseId);
     auth = getAuth(app);
     storage = getStorage(app);
+    analytics = getAnalytics(app);
     try {
       rtdb = getDatabase(app);
     } catch {

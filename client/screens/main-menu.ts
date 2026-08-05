@@ -16,7 +16,7 @@ import { verifyPurchase, verifyClaim, calculateLevelMetrics } from "../../shared
 import { CatalogItem } from "../../shared/verification/types";
 import { ValidatorGate } from "../../shared/gates/validator.gate";
 import { renderArmoryScreen } from "./armory-screen";
-import { renderStatsScreen } from "./stats-screen";
+import { renderStatsScreen, setActiveStatsSubTab } from "./stats-screen";
 import { renderFactionScreen } from "./faction-screen";
 import { renderStoreScreen } from "./store-screen";
 import { StudioPreviewManager } from "../StudioPreviewManager";
@@ -907,7 +907,7 @@ export function initMainMenu() {
   const updatesObj = createNewCard('UPDATES', 'update_card_1.webp');
   const updatesCard = updatesObj.card;
   updatesCard.id = 'mm-updates-card';
-  updatesCard.style.flex = '1';
+  updatesCard.style.flex = '1.0';
   updatesCard.style.height = '100%';
   updatesCard.style.minHeight = '0';
   updatesCard.style.backgroundSize = 'cover';
@@ -946,24 +946,11 @@ export function initMainMenu() {
   });
   updatesCard.appendChild(updatesSubtext);
 
-  // 2. LEADERBOARD CARD
-  const leaderboardObj = createNewCard('LEADERBOARD', 'leaderboard_card_1.webp');
-  const leaderboardCard = leaderboardObj.card;
-  leaderboardCard.id = 'leaderboard-card';
-  leaderboardCard.style.flex = '1';
-  leaderboardCard.style.height = '100%';
-  leaderboardCard.style.minHeight = '0';
-  leaderboardCard.style.backgroundPosition = 'top center';
-  leaderboardCard.onclick = (e) => {
-    e.stopPropagation();
-    setActiveCard('INTEL');
-  };
-
   // 3. INTEL CARD
   const intelObj = createNewCard('INTEL', 'intel_card_1.webp');
   const intelCard = intelObj.card;
   intelCard.id = 'mm-intel-card';
-  intelCard.style.flex = '1';
+  intelCard.style.flex = '1.0';
   intelCard.style.height = '100%';
   intelCard.style.minHeight = '0';
   intelCard.onclick = (e) => {
@@ -971,22 +958,55 @@ export function initMainMenu() {
     setActiveCard('INTEL');
   };
 
-  // 4. SQUAD RAID CARD
-  const squadRaidObj = createNewCard('SQUAD RAID', 'squad_card_1.webp');
-  const squadRaidCard = squadRaidObj.card;
-  squadRaidCard.id = 'mm-squad-card';
-  squadRaidCard.style.flex = '1';
-  squadRaidCard.style.height = '100%';
-  squadRaidCard.style.minHeight = '0';
-  squadRaidCard.onclick = (e) => {
+  // 4. BATTLE PASS CARD
+  const bpObj = createNewCard('BATTLE PASS', 'squad_card_1.webp'); // Reusing asset for now
+  const bpCard = bpObj.card;
+  bpCard.id = 'mm-bp-card';
+  bpCard.style.flex = '1.2';
+  bpCard.style.height = '100%';
+  bpCard.style.minHeight = '0';
+  bpCard.onclick = (e) => {
     e.stopPropagation();
-    ensureAssetsDownloaded(() => screenManager.showLobby(), getDefaultMap().id);
+    setActiveStatsSubTab('BATTLE_PASS');
+    setActiveCard('INTEL');
   };
 
+  const currentBPXP = registeredUserData?.battlePass || 0;
+  const currentTier = Math.floor(currentBPXP / 10);
+  const progressPct = ((currentBPXP % 10) / 10) * 100;
+
+  const bpInfo = document.createElement('div');
+  Object.assign(bpInfo.style, {
+    position: 'absolute', inset: '0', display: 'flex', flexDirection: 'column', justifyContent: 'flex-end',
+    padding: 'clamp(6px, 1vh, 10px)', pointerEvents: 'none', zIndex: '4'
+  });
+
+  const tierText = document.createElement('div');
+  tierText.textContent = `TIER ${String(currentTier).padStart(2, '0')}`;
+  Object.assign(tierText.style, {
+    fontFamily: DS.typography.fontFamily, fontSize: 'clamp(9px, 1.2vh, 11px)', color: '#FFFFFF',
+    fontWeight: '900', letterSpacing: '1px', textShadow: '0 2px 4px rgba(0,0,0,0.8)'
+  });
+  bpInfo.appendChild(tierText);
+
+  const barContainer = document.createElement('div');
+  Object.assign(barContainer.style, {
+    width: '100%', height: '3px', background: 'rgba(255,255,255,0.1)', marginTop: '4px',
+    position: 'relative', overflow: 'hidden', borderRadius: '0px'
+  });
+  
+  const barFill = document.createElement('div');
+  Object.assign(barFill.style, {
+    width: `${progressPct}%`, height: '100%', background: DS.colors.accent,
+    boxShadow: `0 0 10px ${DS.colors.accent}`, transition: 'width 0.5s ease-out'
+  });
+  barContainer.appendChild(barFill);
+  bpInfo.appendChild(barContainer);
+  bpCard.appendChild(bpInfo);
+
   row2Container.appendChild(updatesCard);
-  row2Container.appendChild(leaderboardCard);
   row2Container.appendChild(intelCard);
-  row2Container.appendChild(squadRaidCard);
+  row2Container.appendChild(bpCard);
 
 
   // --- ROW 3: CHALLENGES & STORE (50% of Row 1) ---
@@ -2146,6 +2166,7 @@ function showArchitecturalAnalysis() {
   const sentryFlag = clientFlagService.getBoolean(FeatureFlagKey.SENTRY_CLIENT_ENABLED, true) ? "ENABLED" : "DISABLED";
   const sentryStatus = isClientSentryInitialized ? "INITIALIZED" : "NOT INITIALIZED";
   const sentryDsn = getSentryDSN() ? "PRESENT" : "MISSING";
+  const flagsUsedEnabled = clientFlagService.getBoolean(FeatureFlagKey.FLAGS_USED_ENABLED, false) ? "TRUE" : "FALSE";
 
   const modal = document.createElement('div');
   modal.id = 'architectural-analysis-modal';
@@ -2209,6 +2230,7 @@ function showArchitecturalAnalysis() {
       <div style="font-size:clamp(10px, 1.2vw, 12px);">ENABLED FLAG: <span style="color:${sentryFlag === 'ENABLED' ? DS.colors.success : DS.colors.danger};">${sentryFlag}</span></div>
       <div style="font-size:clamp(10px, 1.2vw, 12px);">DSN STATUS: <span style="color:${sentryDsn === 'PRESENT' ? DS.colors.success : DS.colors.danger};">${sentryDsn}</span></div>
       <div style="font-size:clamp(10px, 1.2vw, 12px);">INIT STATUS: <span style="color:${sentryStatus === 'INITIALIZED' ? DS.colors.success : DS.colors.danger}; font-weight:bold;">${sentryStatus}</span></div>
+      <div style="font-size:clamp(10px, 1.2vw, 12px);">FLAGS_USED_ENABLED: <span style="color:${flagsUsedEnabled === 'TRUE' ? DS.colors.success : DS.colors.warning};">${flagsUsedEnabled}</span></div>
       <div style="color:${DS.colors.textMuted}; font-size:clamp(8px, 1vw, 10px); margin-top:${subtextMargin};">* Sentry only initializes if BOTH flag is true and DSN is present.</div>
     </div>
 

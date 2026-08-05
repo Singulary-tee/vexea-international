@@ -109,7 +109,5 @@ export function getClientServerUrl(): string {
 }
 
 // Automatically initiate load if VITE_DOPPLER_TOKEN is available at startup
-if ((import.meta as any).env?.VITE_DOPPLER_TOKEN) {
-  loadClientDopplerSecrets();
-}
+export const dopplerLoaded = (import.meta as any).env?.VITE_DOPPLER_TOKEN ? loadClientDopplerSecrets() : Promise.resolve({});
 
