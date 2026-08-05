@@ -76,6 +76,7 @@ import {
   globalChannels,
   globalServerLogs,
 } from "./index";
+import { Sentry, recordServerTickDuration, recordServerActiveDrones, recordServerConnectedPlayers, recordSecurityExploit } from "./sentry";
 
 export const MAX_PROJECTILES = 200;
 
@@ -1037,6 +1038,15 @@ export class MatchRoom {
         this.rapierWorld.step();
         this.processTestEntities(Number(PHYSICS_TIMESTEP) / 1000000000.0);
 
+        if (this.serverTick % 60 === 0) {
+          let activeDrones = 0;
+          for (let i = 0; i < this.drones.length; i++) {
+            if (this.drones[i].state !== DroneState.DEAD) activeDrones++;
+          }
+          recordServerActiveDrones(activeDrones);
+          recordServerConnectedPlayers(this.players.size);
+        }
+
         if (this.devCubeBody && this.devCubeSpawned) {
           const t = this.devCubeBody.translation();
           const vel = this.devCubeBody.linvel();
@@ -1449,6 +1459,16 @@ export class MatchRoom {
               const actualVx = (player.posX - prevX) / 0.0166;
               const actualVy = (player.posY - prevY) / 0.0166;
               const actualVz = (player.posZ - prevZ) / 0.0166;
+              
+              // Simple speed hack check (security exploit metric)
+              const speedSq = actualVx*actualVx + actualVz*actualVz;
+              if (speedSq > 900) { // > 30m/s
+                recordSecurityExploit("speed_teleport_detected", {
+                  playerId: player.id,
+                  speed: Math.sqrt(speedSq),
+                  pos: { x: player.posX, y: player.posY, z: player.posZ }
+                });
+              }
               player.velEmaX = player.velEmaX * 0.8 + actualVx * 0.2;
               player.velEmaY = player.velEmaY * 0.8 + actualVy * 0.2;
               player.velEmaZ = player.velEmaZ * 0.8 + actualVz * 0.2;
@@ -1524,6 +1544,7 @@ export class MatchRoom {
           lastMetricEmit = Date.now();
         }
 
+        recordServerTickDuration(Date.now() - tickStart);
         physicsAccumulator -= PHYSICS_TIMESTEP;
       }
     }, 5);

@@ -11,6 +11,9 @@ import {
 } from "../../shared/constants";
 import { ACTIVE_GAMEMODE } from "../../shared/gamemode-configs.js";
 import { ServerDrone } from "../MatchRoom";
+import { Sentry, recordServerLLMLatency } from "../sentry";
+import { serverFlagService } from "../flags/flag-service";
+import { FeatureFlagKey } from "../../shared/feature-flags";
 
 const MAX_DRONES = 40; // Hardcoded from MatchRoom
 const MAX_LLM_TOKENS_PER_MATCH = 55000; // Deliberate per-match token budget safety ceiling to protect against free-tier volatility
@@ -62,9 +65,16 @@ export class LLMCommander {
 
   public async executeLLMStep() {
     if (!this.geminiClient) return;
-    if (this.room.llmTokensUsedThisMatch >= MAX_LLM_TOKENS_PER_MATCH) {
+
+    const tokenCeiling = await serverFlagService.getNumber(
+      FeatureFlagKey.LLM_TOKEN_CEILING,
+      { roomId: this.room.roomId },
+      MAX_LLM_TOKENS_PER_MATCH
+    );
+
+    if (this.room.llmTokensUsedThisMatch >= tokenCeiling) {
       console.warn(
-        `[LLMCommander] Match token budget ceiling reached (${this.room.llmTokensUsedThisMatch} / ${MAX_LLM_TOKENS_PER_MATCH} tokens). Skipping API call and falling back to offline AI for rest of match.`,
+        `[LLMCommander] Match token budget ceiling reached (${this.room.llmTokensUsedThisMatch} / ${tokenCeiling} tokens). Skipping API call and falling back to offline AI for rest of match.`,
       );
       this.room.offlineSystemFallbackAI();
       return;
@@ -72,13 +82,19 @@ export class LLMCommander {
     const _llmStartTime = Date.now();
     this.room.apiCallCount++;
 
-    // Regenerate AP pool per 8s cycle
+    const apRegenFlag = await serverFlagService.getNumber(
+      FeatureFlagKey.LLM_AP_REGEN_RATE,
+      { roomId: this.room.roomId },
+      ACTIVE_GAMEMODE.llmApRegenPerCycle
+    );
+
+    // Regenerate AP pool per cycle
     const elapsedSeconds = (Date.now() - this.room.matchStartTime) / 1000;
     const currentApRegen = ACTIVE_GAMEMODE.llmDifficultyScaling
-      ? ACTIVE_GAMEMODE.llmApRegenPerCycle +
+      ? apRegenFlag +
         Math.floor(elapsedSeconds / ACTIVE_GAMEMODE.llmDifficultyScaleInterval) *
           ACTIVE_GAMEMODE.llmDifficultyScaleAmount
-      : ACTIVE_GAMEMODE.llmApRegenPerCycle;
+      : apRegenFlag;
     this.room.commanderAP += currentApRegen;
 
     // Evaluate unresolved outstanding orders
@@ -132,136 +148,189 @@ Topological graph adjacency (Zones):
 - zone_tunnels connected to: zone_warehouse, zone_core
 - zone_core connected to: zone_plant, zone_tunnels`;
 
+    const primaryModel = await serverFlagService.getString(
+      FeatureFlagKey.LLM_PRIMARY_MODEL,
+      { roomId: this.room.roomId },
+      "gemini-3.5-flash"
+    );
+    const fallbackList = await serverFlagService.getObject<string[]>(
+      FeatureFlagKey.LLM_FALLBACK_MODELS,
+      { roomId: this.room.roomId },
+      ["gemini-3.6-flash", "gemini-3.1-flash"]
+    );
+    const candidateModels = [primaryModel, ...(Array.isArray(fallbackList) ? fallbackList : [])];
+    const uniqueModels = Array.from(new Set(candidateModels));
+
     let response: any = null;
     let lastError: any = null;
     let usedModel = "";
 
     try {
-      for (const modelName of FLASH_MODELS) {
+      for (const modelName of uniqueModels) {
         try {
-          response = await this.geminiClient.models.generateContent({
-            model: modelName,
-            contents: payloadToLLM,
-            config: {
-              systemInstruction: systemInstructions,
-              tools: [
-                {
-                  functionDeclarations: [
-                    {
-                      name: "move_group",
-                      description: "Defines group zone movement order.",
-                      parameters: {
-                        type: Type.OBJECT,
-                        properties: {
-                          group_id: { type: Type.STRING },
-                          target_zone: {
-                            type: Type.STRING,
-                            enum: Object.values(ZONES),
+          const modelCallFn = async () => {
+            return await this.geminiClient!.models.generateContent({
+              model: modelName,
+              contents: payloadToLLM,
+              config: {
+                systemInstruction: systemInstructions,
+                tools: [
+                  {
+                    functionDeclarations: [
+                      {
+                        name: "move_group",
+                        description: "Defines group zone movement order.",
+                        parameters: {
+                          type: Type.OBJECT,
+                          properties: {
+                            group_id: { type: Type.STRING },
+                            target_zone: {
+                              type: Type.STRING,
+                              enum: Object.values(ZONES),
+                            },
+                            priority: {
+                              type: Type.STRING,
+                              enum: ["low", "normal", "high"],
+                            },
                           },
-                          priority: {
-                            type: Type.STRING,
-                            enum: ["low", "normal", "high"],
+                          required: ["group_id", "target_zone", "priority"],
+                        },
+                      },
+                      {
+                        name: "merge_groups",
+                        description: "Unifies two active control groups.",
+                        parameters: {
+                          type: Type.OBJECT,
+                          properties: {
+                            source_group_id: { type: Type.STRING },
+                            target_group_id: { type: Type.STRING },
                           },
+                          required: ["source_group_id", "target_group_id"],
                         },
-                        required: ["group_id", "target_zone", "priority"],
                       },
-                    },
-                    {
-                      name: "merge_groups",
-                      description: "Unifies two active control groups.",
-                      parameters: {
-                        type: Type.OBJECT,
-                        properties: {
-                          source_group_id: { type: Type.STRING },
-                          target_group_id: { type: Type.STRING },
-                        },
-                        required: ["source_group_id", "target_group_id"],
-                      },
-                    },
-                    {
-                      name: "split_group",
-                      description:
-                        "Subdivides a group to create supplementary wings.",
-                      parameters: {
-                        type: Type.OBJECT,
-                        properties: {
-                          source_group_id: { type: Type.STRING },
-                          unit_count: { type: Type.INTEGER },
-                        },
-                        required: ["source_group_id", "unit_count"],
-                      },
-                    },
-                    {
-                      name: "spawn_units",
-                      description: "Requests local swarm unit deployment.",
-                      parameters: {
-                        type: Type.OBJECT,
-                        properties: {
-                          zone_id: {
-                            type: Type.STRING,
-                            enum: Object.values(ZONES),
+                      {
+                        name: "split_group",
+                        description:
+                          "Subdivides a group to create supplementary wings.",
+                        parameters: {
+                          type: Type.OBJECT,
+                          properties: {
+                            source_group_id: { type: Type.STRING },
+                            unit_count: { type: Type.INTEGER },
                           },
-                          unit_type: {
-                            type: Type.STRING,
-                            enum: [
-                              "recon_drone",
-                              "rotary_shooter",
-                              "bomber_drone",
-                              "fixed_wing",
-                              "wheeled_drone",
-                              "robot_dog",
-                              "humanoid",
-                            ],
+                          required: ["source_group_id", "unit_count"],
+                        },
+                      },
+                      {
+                        name: "spawn_units",
+                        description: "Requests local swarm unit deployment.",
+                        parameters: {
+                          type: Type.OBJECT,
+                          properties: {
+                            zone_id: {
+                              type: Type.STRING,
+                              enum: Object.values(ZONES),
+                            },
+                            unit_type: {
+                              type: Type.STRING,
+                              enum: [
+                                "recon_drone",
+                                "rotary_shooter",
+                                "bomber_drone",
+                                "fixed_wing",
+                                "wheeled_drone",
+                                "robot_dog",
+                                "humanoid",
+                              ],
+                            },
+                            count: { type: Type.INTEGER },
+                            behavior_profile: {
+                              type: Type.STRING,
+                              enum: ["assault", "patrol", "recon"],
+                            },
                           },
-                          count: { type: Type.INTEGER },
-                          behavior_profile: {
-                            type: Type.STRING,
-                            enum: ["assault", "patrol", "recon"],
+                          required: [
+                            "zone_id",
+                            "unit_type",
+                            "count",
+                            "behavior_profile",
+                          ],
+                        },
+                      },
+                      {
+                        name: "hold_position",
+                        description: "Enforces defensive lock stance.",
+                        parameters: {
+                          type: Type.OBJECT,
+                          properties: {
+                            group_id: { type: Type.STRING },
+                            duration_seconds: { type: Type.INTEGER },
                           },
+                          required: ["group_id", "duration_seconds"],
                         },
-                        required: [
-                          "zone_id",
-                          "unit_type",
-                          "count",
-                          "behavior_profile",
-                        ],
                       },
-                    },
-                    {
-                      name: "hold_position",
-                      description: "Enforces defensive lock stance.",
-                      parameters: {
-                        type: Type.OBJECT,
-                        properties: {
-                          group_id: { type: Type.STRING },
-                          duration_seconds: { type: Type.INTEGER },
+                      {
+                        name: "sustain",
+                        description: "Pass execution for this cycle.",
+                        parameters: {
+                          type: Type.OBJECT,
+                          properties: {
+                            reason: { type: Type.STRING },
+                          },
+                          required: ["reason"],
                         },
-                        required: ["group_id", "duration_seconds"],
                       },
-                    },
-                    {
-                      name: "sustain",
-                      description: "Pass execution for this cycle.",
-                      parameters: {
-                        type: Type.OBJECT,
-                        properties: {
-                          reason: { type: Type.STRING },
-                        },
-                        required: ["reason"],
-                      },
-                    },
-                  ],
+                    ],
+                  },
+                ],
+              },
+            });
+          };
+
+          const tracingEnabled = await serverFlagService.getBoolean(
+            FeatureFlagKey.SENTRY_LLM_TRACING,
+            { roomId: this.room.roomId },
+            true
+          );
+
+          if (tracingEnabled && typeof (Sentry as any).startSpan === "function") {
+            response = await (Sentry as any).startSpan(
+              {
+                name: "gen_ai.chat_completions",
+                op: "gen_ai.chat_completions",
+                attributes: {
+                  "gen_ai.system": "google_genai",
+                  "gen_ai.request.model": modelName,
+                  "gen_ai.conversation.id": this.room.roomId,
                 },
-              ],
-            },
-          });
+              },
+              async (span: any) => {
+                const res = await modelCallFn();
+                if (span && res?.usageMetadata) {
+                  span.setAttribute("gen_ai.usage.prompt_tokens", res.usageMetadata.promptTokenCount || 0);
+                  span.setAttribute("gen_ai.usage.completion_tokens", res.usageMetadata.candidatesTokenCount || 0);
+                  span.setAttribute("gen_ai.usage.total_tokens", res.usageMetadata.totalTokenCount || 0);
+                  span.setAttribute("gen_ai.response.model", modelName);
+                }
+                return res;
+              }
+            );
+          } else {
+            response = await modelCallFn();
+          }
+
           usedModel = modelName;
           lastError = null;
           break;
         } catch (err: any) {
           lastError = err;
           if (isRateLimitedError(err)) {
-            console.warn(`[LLMCommander] Model '${modelName}' rate limited. Attempting fallback Flash model...`);
+            console.warn(`[LLMCommander] Model '${modelName}' rate limited. Attempting fallback model...`);
+            Sentry.addBreadcrumb({
+              category: "ai.fallback",
+              message: `Rate limit encountered on ${modelName}`,
+              level: "warning",
+            });
             continue;
           }
           break;
@@ -272,10 +341,10 @@ Topological graph adjacency (Zones):
         throw lastError;
       }
 
-      const callTokens =
-        response?.usageMetadata?.totalTokenCount ??
-        ((response?.usageMetadata?.promptTokenCount || 0) +
-          (response?.usageMetadata?.candidatesTokenCount || 0));
+      const promptTokens = response?.usageMetadata?.promptTokenCount || 0;
+      const candidateTokens = response?.usageMetadata?.candidatesTokenCount || 0;
+      const callTokens = response?.usageMetadata?.totalTokenCount ?? (promptTokens + candidateTokens);
+
       if (callTokens > 0) {
         this.room.llmTokensUsedThisMatch += callTokens;
       }
@@ -294,6 +363,8 @@ Topological graph adjacency (Zones):
         this.recentExecutionHistory.shift();
       }
       const llmLatency = Date.now() - _llmStartTime;
+      await recordServerLLMLatency(llmLatency, usedModel);
+
       this.room.broadcastReliableEvent.bind(this.room)({
         type: "dev_llm_feed",
         payload: statePayload,

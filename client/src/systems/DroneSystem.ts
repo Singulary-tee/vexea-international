@@ -8,11 +8,40 @@ import { fixSkinnedMeshBones } from "../../StudioPreviewManager";
 export class DroneSystem {
 
   private droneProceduralState = new Map<number, any>();
+  private proceduralStatePool: any[] = [];
+
+  private createNewProceduralState() {
+     return {
+       ...createProceduralState(),
+       lastPos: new THREE.Vector3(),
+       velocity: new THREE.Vector3(),
+       smoothedVelocity: new THREE.Vector3(),
+       lastFireTime: 0
+     };
+  }
 
   public getOrCreateProceduralState(id: number) {
      let state = this.droneProceduralState.get(id);
      if (!state) {
-         state = { ...createProceduralState(), lastPos: new THREE.Vector3(), velocity: new THREE.Vector3(), smoothedVelocity: new THREE.Vector3(), lastFireTime: 0 };
+         if (this.proceduralStatePool.length > 0) {
+           state = this.proceduralStatePool.pop();
+           // Reset state fields
+           state.spinAngle = 0;
+           state.wheelAngle = 0;
+           state.recoilAmount = 0;
+           state.pitch = 0;
+           state.roll = 0;
+           state.verticalBob = 0;
+           state.accumulatedTime = 0;
+           state.lastPos.set(0, 0, 0);
+           state.velocity.set(0, 0, 0);
+           state.smoothedVelocity.set(0, 0, 0);
+           state.lastFireTime = 0;
+           if (state.droneLocalMats) state.droneLocalMats.clear();
+           if (state.processedNodes) state.processedNodes.clear();
+         } else {
+           state = this.createNewProceduralState();
+         }
          this.droneProceduralState.set(id, state);
      }
      return state;
@@ -448,6 +477,13 @@ export class DroneSystem {
       }
        }
     });
+
+    for (const [id, state] of this.droneProceduralState.entries()) {
+      if (!this.activeThisTick.has(id)) {
+        this.proceduralStatePool.push(state);
+        this.droneProceduralState.delete(id);
+      }
+    }
 
     for (const [id, assignment] of this.droneSlots.entries()) {
       if (!this.activeThisTick.has(id)) {

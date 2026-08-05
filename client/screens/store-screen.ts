@@ -5,15 +5,31 @@ import { getAuth } from "firebase/auth";
 import { getFirestore, doc, updateDoc } from "firebase/firestore";
 import { audioManager } from "../audio";
 import { StudioPreviewManager } from "../StudioPreviewManager";
-
-let activeCategoryFilter: 'ALL' | 'cosmetic' | 'blueprint' = 'ALL';
+import { clientFlagService } from "../flags/flag-service";
+import { FeatureFlagKey } from "../../shared/feature-flags";
 
 const AVAILABLE_SKINS = {
   HAZARD: { id: 'HAZARD', label: 'HAZARD SKIN' }
 };
 
+let activeCategoryFilter: 'ALL' | 'cosmetic' | 'blueprint' = 'ALL';
+
 export function renderStoreScreen(container: HTMLElement, registeredUserData: any): void {
   container.innerHTML = '';
+
+  const discountActive = clientFlagService.getBoolean(FeatureFlagKey.STORE_DISCOUNT_ACTIVE);
+  const creditMultiplier = clientFlagService.getNumber(FeatureFlagKey.STORE_CREDIT_MULTIPLIER);
+
+  // Apply multipliers and discounts client-side
+  const processedOffers = offersDataList.map(offer => ({
+    ...offer,
+    priceCredits: Math.floor(offer.priceCredits * (discountActive ? 0.8 : 1.0) * creditMultiplier)
+  }));
+
+  const processedCatalog = catalogDataList.map(item => ({
+    ...item,
+    priceCredits: Math.floor(item.priceCredits * (discountActive ? 0.9 : 1.0) * creditMultiplier)
+  }));
 
   const wrap = document.createElement('div');
   Object.assign(wrap.style, {
@@ -62,7 +78,7 @@ export function renderStoreScreen(container: HTMLElement, registeredUserData: an
   });
   leftCol.appendChild(featuredLabel);
 
-  const featuredOffer = offersDataList[0] || {
+  const featuredOffer = processedOffers[0] || {
     id: "promo_hazard_set",
     title: "HAZARD SPEC OVERLOAD",
     priceCredits: 600,
@@ -237,7 +253,7 @@ export function renderStoreScreen(container: HTMLElement, registeredUserData: an
     overflow: 'hidden'
   });
 
-  const filteredCatalog = catalogDataList.filter((item: any) => {
+  const filteredCatalog = processedCatalog.filter((item: any) => {
     if (activeCategoryFilter !== 'ALL' && item.category !== activeCategoryFilter) return false;
     return true;
   }).slice(0, 4); // Display top 4 items perfectly fitted in 2x2 grid
@@ -412,6 +428,12 @@ function open3DSkinPreviewModal(title: string, skin: any): void {
   const closeBtn = modal.querySelector('#close-3d-modal') as HTMLElement;
   closeBtn.onclick = () => {
     overlay.remove();
+    const backdrop = document.getElementById('main-menu-3d-backdrop');
+    if (backdrop) {
+      StudioPreviewManager.attachTo(backdrop, 'MAIN_MENU');
+    } else {
+      StudioPreviewManager.detach();
+    }
   };
 
   requestAnimationFrame(() => {

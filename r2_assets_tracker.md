@@ -13,6 +13,12 @@
 
 | Asset Name | Category | R2 Path (Target) |
 | :--- | :--- | :--- |
+| `main_menu_1.webm` | Video | `Video/Backgrounds/main_menu_1.webm` |
+| `lobby_1.webm` | Video | `Video/Backgrounds/lobby_1.webm` |
+| `assault_card_1.webp` | Image | `Images/Cards/assault_card_1.webp` |
+| `demolition_card_1.webp` | Image | `Images/Cards/demolition_card_1.webp` |
+| `medic_card_1.webp` | Image | `Images/Cards/medic_card_1.webp` |
+| `recon_card_1.webp` | Image | `Images/Cards/recon_card_1.webp` |
 | `main_menu_1.jpg` | Image | `Images/Backgrounds/main_menu_1.jpg` |
 | `faction_card_1.jpg` | Image | `Images/Cards/faction_card_1.jpg` |
 | `infiltration_card_1.png` | Image | `Images/Cards/infiltration_card_1.png` |

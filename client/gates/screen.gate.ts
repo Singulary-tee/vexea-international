@@ -22,6 +22,24 @@ class ScreenGateManager {
     activeOverlayModal: null
   };
 
+  private screenLockGroups: Set<string> = new Set();
+
+  public lockScreenGroup(groupId: string) {
+    this.screenLockGroups.add(groupId);
+    this.setOverlayModal(groupId);
+  }
+
+  public unlockScreenGroup(groupId: string) {
+    this.screenLockGroups.delete(groupId);
+    if (this.state.activeOverlayModal === groupId) {
+      this.setOverlayModal(this.screenLockGroups.size > 0 ? Array.from(this.screenLockGroups)[0] : null);
+    }
+  }
+
+  public isScreenLocked(): boolean {
+    return this.screenLockGroups.size > 0 || this.isGameplayInputBlocked();
+  }
+
   public setRotateDeviceLock(locked: boolean) {
     this.state.rotateDeviceLocked = locked;
     const rotateEl = document.getElementById("rotate-device-overlay");

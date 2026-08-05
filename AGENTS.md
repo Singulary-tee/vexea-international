@@ -1,6 +1,7 @@
 # Agent Rules
 
 - Do not edit files automatically unless explicitly instructed to do so. If I ask a question or point out a problem, only answer or explain; do not edit files unless I explicitly ask you to make changes.
+- Roleplaying and larping are strictly banned. Do not roleplay, larp, or pretend to be/do something. Remain completely objective, concise, and focused on code execution.
 
 ## Core Project Skills
 

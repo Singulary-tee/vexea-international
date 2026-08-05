@@ -4,7 +4,7 @@
  * Enforces Zero-GC, authoritative validation, and server-side LLM loop per room.
  */
 
-import "./sentry";
+import { Sentry, recordHitscanRejected, recordSecurityExploit } from "./sentry";
 import { loadDopplerSecrets } from "./doppler";
 import dotenv from "dotenv";
 import express from "express";
@@ -17,6 +17,8 @@ import { initializeApp, cert, getApps } from "firebase-admin/app";
 import { getFirestore, FieldValue } from "firebase-admin/firestore";
 
 import { createTransport, ChannelAdapter } from "./transport/adapter";
+import { serverFlagService } from "./flags/flag-service";
+import { serverEconomyService } from "./data/economy-service";
 import { matchManager } from "./MatchManager";
 import { matchmaker } from "./Matchmaker";
 import { CLASSES, ClassId } from "../shared/classes.js";
@@ -325,6 +327,7 @@ const server = http.createServer(app);
 app.use((req, res, next) => {
   res.setHeader("Cross-Origin-Opener-Policy", "same-origin");
   res.setHeader("Cross-Origin-Embedder-Policy", "require-corp");
+  res.setHeader("Document-Policy", "js-profiling");
   next();
 });
 
@@ -460,9 +463,40 @@ app.get("/api/test-compile", (req, res) => {
   res.json({ success: true, timestamp: Date.now(), customLabel: "VEXEA_COMPILED_VERSION" });
 });
 
+app.get("/api/economy/store", async (req, res) => {
+  try {
+    const discountActive = String(req.query.discount || "false") === "true";
+    const creditMultiplier = parseFloat(String(req.query.multiplier || "1.0"));
+    const offers = serverEconomyService.getOffers(discountActive, creditMultiplier);
+    res.json({ success: true, offers });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message || err });
+  }
+});
+
+app.get("/api/economy/factions", async (req, res) => {
+  try {
+    const warMultiplier = parseFloat(String(req.query.warMultiplier || "1.0"));
+    const sectors = serverEconomyService.getFactionSectors(warMultiplier);
+    res.json({ success: true, sectors, globalWarStatus: "active", epoch: 4 });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message || err });
+  }
+});
+
 io.onConnection((channel: ChannelAdapter) => {
   globalChannels.push(channel);
   const playerId = `PL_${Math.floor(Math.random() * 100000)}`;
+
+  // Send initial configuration to client
+  channel.emit("session_init", {
+    playerId,
+    serverTime: Date.now(),
+    config: {
+      gameVersion: "0.1.0",
+      environment: process.env.NODE_ENV || "development"
+    }
+  });
 
   // Default connection starts in the dedicated lobby pool room
   let currentRoom = matchManager.getOrCreateRoom(
@@ -949,6 +983,8 @@ io.onConnection((channel: ChannelAdapter) => {
         if (Math.abs(timestamp - expectedT) <= 50) {
           const rewindMs = Math.min(200, Date.now() - timestamp);
           targetTick = currentRoom.serverTick - Math.floor(rewindMs / 16.66);
+        } else {
+          recordHitscanRejected("lag_compensation_out_of_bounds");
         }
 
         let distSqMin = 99999;
@@ -1181,6 +1217,8 @@ io.onConnection((channel: ChannelAdapter) => {
             });
           }
         }
+      } else {
+        recordHitscanRejected("rate_limit_exceeded");
       }
     }
   });

@@ -19,6 +19,73 @@ export const AVAILABLE_SKINS: Record<string, WeaponSkin> = {
   HAZARD: { id: 'HAZARD', name: 'HAZARD COATING', textureFile: null, previewBg: '#2a1a10' }
 };
 
+function isFirearm(itemKey: string, glbName: string): boolean {
+  const key = (itemKey || "").toLowerCase();
+  const name = (glbName || "").toLowerCase();
+  return (
+    key.includes("rifle") ||
+    key.includes("pistol") ||
+    key.includes("shotgun") ||
+    key.includes("sniper") ||
+    key.includes("lmg") ||
+    key.includes("smg") ||
+    key === "scar_l" ||
+    key === "brn_180" ||
+    key === "f_90" ||
+    key === "hk_51" ||
+    key === "scar_h_mk_17" ||
+    name.includes("smg") ||
+    name.includes("pistol") ||
+    name.includes("rifle")
+  );
+}
+
+function computeLocalBox(model: THREE.Object3D): THREE.Box3 {
+  const box = new THREE.Box3();
+  model.updateMatrixWorld(true);
+  model.traverse((child: any) => {
+    if (child.isMesh && child.visible) {
+      child.updateMatrixWorld(true);
+      const geom = child.geometry;
+      if (geom) {
+        if (!geom.boundingBox) {
+          geom.computeBoundingBox();
+        }
+        if (geom.boundingBox) {
+          const localMatrix = new THREE.Matrix4();
+          localMatrix.copy(model.matrixWorld).invert().multiply(child.matrixWorld);
+          const m = geom.boundingBox.clone().applyMatrix4(localMatrix);
+          box.union(m);
+        }
+      }
+    }
+  });
+  return box;
+}
+
+function computeBoxRelativeToParent(object: THREE.Object3D, parent: THREE.Object3D): THREE.Box3 {
+  const box = new THREE.Box3();
+  parent.updateMatrixWorld(true);
+  object.traverse((child: any) => {
+    if (child.isMesh && child.visible) {
+      child.updateMatrixWorld(true);
+      const geom = child.geometry;
+      if (geom) {
+        if (!geom.boundingBox) {
+          geom.computeBoundingBox();
+        }
+        if (geom.boundingBox) {
+          const localMatrix = new THREE.Matrix4();
+          localMatrix.copy(parent.matrixWorld).invert().multiply(child.matrixWorld);
+          const m = geom.boundingBox.clone().applyMatrix4(localMatrix);
+          box.union(m);
+        }
+      }
+    }
+  });
+  return box;
+}
+
 class StudioPreviewManagerImpl {
   private studioScene: THREE.Scene;
   private studioCamera: THREE.PerspectiveCamera;
@@ -60,14 +127,16 @@ class StudioPreviewManagerImpl {
   // Active showcase item state
   private activeItemKey = 'Player_one-optimized.glb';
   private activeSkinId = 'STANDARD';
+  private currentLoadRequestId = 0;
+  private gltfCache = new Map<string, any>();
 
   constructor() {
     this.studioScene = new THREE.Scene();
     this.studioScene.background = null; // TRANSPARENT CANVAS
 
     this.studioCamera = new THREE.PerspectiveCamera(45, 16 / 9, 0.1, 100);
-    this.studioCamera.position.set(0, 0.0, 2.0);
-    this.studioCamera.lookAt(0, 0, 0);
+    this.studioCamera.position.set(0, 0.0, 2.7);
+    this.studioCamera.lookAt(0, 0.1, 0);
 
     // Setup Studio Lighting (Clean, neutral colors - NO NEON)
     this.ambientLight = new THREE.AmbientLight(0xffffff, 1.2);
@@ -87,9 +156,6 @@ class StudioPreviewManagerImpl {
     this.stageGroup.add(this.activeModelGroup);
 
     this.studioScene.add(this.stageGroup);
-
-    // Build default character model
-    this.buildShowcaseModel('Player_one-optimized.glb', 'STANDARD');
   }
 
   public getStudioScene(): THREE.Scene {
@@ -139,6 +205,13 @@ class StudioPreviewManagerImpl {
   public detach(): void {
     this.currentMode = 'INACTIVE';
     this.containerEl = null;
+    this.currentLoadRequestId++;
+
+    while (this.activeModelGroup.children.length > 0) {
+      this.activeModelGroup.remove(this.activeModelGroup.children[0]);
+    }
+    this.activeMixer = null;
+    this.lastLoadedModel = null;
 
     if (!this.canvasContainerEl) {
       this.canvasContainerEl = document.getElementById('canvas-container');
@@ -171,12 +244,29 @@ class StudioPreviewManagerImpl {
   }
 
   public attachTo(container: HTMLElement, mode: StudioMode, options?: { itemKey?: string; skinId?: string }): void {
+    if (!container) return;
     this.currentMode = mode;
     this.containerEl = container;
 
+    // Immediately invalidate pending async loads and wipe old models
+    this.currentLoadRequestId++;
+    while (this.activeModelGroup.children.length > 0) {
+      this.activeModelGroup.remove(this.activeModelGroup.children[0]);
+    }
+    this.activeMixer = null;
+    this.lastLoadedModel = null;
+    this.activeModelGroup.position.set(0, 0, 0);
+    this.activeModelGroup.rotation.set(0, 0, 0);
+
     let itemToLoad = options?.itemKey || this.activeItemKey;
-    if (mode === 'MAIN_MENU' && !options?.itemKey) {
+    if ((mode === 'MAIN_MENU' || mode === 'LOBBY') && !options?.itemKey) {
       itemToLoad = "Player_one-optimized.glb";
+    }
+
+    if (this.currentMode === 'LOBBY' || this.currentMode === 'MAIN_MENU') {
+      this.setTurntableEnabled(false);
+    } else {
+      this.setTurntableEnabled(true);
     }
 
     this.setShowcaseItem(itemToLoad, options?.skinId || this.activeSkinId);
@@ -220,6 +310,15 @@ class StudioPreviewManagerImpl {
   }
 
   private async buildShowcaseModel(itemKey: string, skinId: string): Promise<void> {
+    const requestId = ++this.currentLoadRequestId;
+
+    // Synchronously clear previous active models
+    while (this.activeModelGroup.children.length > 0) {
+      this.activeModelGroup.remove(this.activeModelGroup.children[0]);
+    }
+    this.activeMixer = null;
+    this.lastLoadedModel = null;
+
     let glbName = "";
     if (itemKey.endsWith(".glb")) {
       glbName = itemKey;
@@ -249,37 +348,26 @@ class StudioPreviewManagerImpl {
     }
 
     try {
-      const loader = createConfiguredGLTFLoader(undefined, (window as any).renderer);
-      const url = await getCachedOrFetchUrl(glbName, "Asset");
-      const gltf = await loader.loadAsync(url);
+      let gltf;
+      if (this.gltfCache.has(glbName)) {
+        gltf = this.gltfCache.get(glbName);
+      } else {
+        const loader = createConfiguredGLTFLoader(undefined, (window as any).renderer);
+        const url = await getCachedOrFetchUrl(glbName, "Asset");
+        gltf = await loader.loadAsync(url);
+        this.gltfCache.set(glbName, gltf);
+      }
       
+      // Cancel if a newer load request arrived while fetching
+      if (requestId !== this.currentLoadRequestId) {
+        return;
+      }
+
       // Use SkeletonUtils to clone model safely
       const model = SkeletonUtils.clone(gltf.scene) as THREE.Group;
       
       // Fix bone binding mapping for SkinnedMesh in cloned WebGPU model hierarchy
       fixSkinnedMeshBones(model, gltf.scene);
-      
-      // Setup Animation Mixer if clips are available
-      this.activeMixer = null;
-      if (gltf.animations && gltf.animations.length > 0) {
-        const mixer = new THREE.AnimationMixer(model);
-        this.activeMixer = mixer;
-        let clip = gltf.animations.find(a => a.name.toLowerCase().includes("idle"));
-        if (!clip) {
-          clip = gltf.animations[0];
-        }
-        if (clip) {
-          mixer.clipAction(clip).play();
-        }
-      }
-
-      // Initial clean rotation
-      model.rotation.set(0, -Math.PI / 2, 0);
-
-      // Hide temporarily during calculations and texture setup
-      model.visible = false;
-      this.activeModelGroup.add(model);
-      model.updateMatrixWorld(true);
 
       // Ensure crisp high quality texture rendering on model materials
       model.traverse((child: any) => {
@@ -296,22 +384,93 @@ class StudioPreviewManagerImpl {
         }
       });
 
+      const skin = AVAILABLE_SKINS[skinId] || AVAILABLE_SKINS.STANDARD;
+      await this.applySkinToModelAsync(model, skin.textureFile);
+
+      // Cancel if a newer load request arrived while applying skin texture
+      if (requestId !== this.currentLoadRequestId) {
+        return;
+      }
+
       const isCharacter = glbName.toLowerCase().includes('player') || 
                           glbName.toLowerCase().includes('character') || 
                           glbName.toLowerCase().includes('humanoid') || 
                           glbName.toLowerCase().includes('soldier');
 
-      let targetScaleVal = 1.0;
-
       if (isCharacter) {
-        model.position.set(-0.43, -1.35, 0.69);
-        model.rotation.set(-0.001592653589793, 2.09840734641021, 0);
-        model.scale.set(1.35, 1.35, 1.35);
+        model.updateMatrixWorld(true);
+        const bbox = new THREE.Box3().setFromObject(model);
+        const size = new THREE.Vector3();
+        bbox.getSize(size);
 
-        if (this.keyLight) this.keyLight.intensity = 0;
-        if (this.rimLight) this.rimLight.intensity = 1.9;
-        if (this.ambientLight) this.ambientLight.intensity = 0.2;
+        // Normalize character height mathematically to standard 1.8 units (meters)
+        const targetHeight = 1.8;
+        const scaleFactor = (size.y > 0) ? (targetHeight / size.y) : 1.0;
+        model.scale.set(scaleFactor, scaleFactor, scaleFactor);
+        model.updateMatrixWorld(true);
+
+        // Position feet on Y = 0, centered in X and Z
+        const scaledBox = new THREE.Box3().setFromObject(model);
+        const scaledCenter = new THREE.Vector3();
+        scaledBox.getCenter(scaledCenter);
+        model.userData.baseScaleVal = scaleFactor;
+        model.userData.centerLocalOffset = new THREE.Vector3(-scaledCenter.x, -scaledBox.min.y, -scaledCenter.z);
+
+        // Trigonometric camera distance & focal target calculation
+        const fovRad = (this.studioCamera.fov * Math.PI) / 180;
+        const padding = 1.15; // 15% vertical margin
+        const distance = (targetHeight / 2) / Math.tan(fovRad / 2) * padding;
+        const targetY = targetHeight * 0.5;
+
+        this.activeModelGroup.rotation.set(0, 0, 0);
+
+        if (this.currentMode === 'LOBBY') {
+          this.activeModelGroup.position.set(0, 0, 0);
+
+          this.studioCamera.position.set(0, targetY, distance);
+          this.studioCamera.lookAt(0, targetY, 0);
+
+          if (this.keyLight) this.keyLight.intensity = 2.5;
+          if (this.rimLight) this.rimLight.intensity = 1.8;
+          if (this.ambientLight) this.ambientLight.intensity = 0.9;
+        } else {
+          // MAIN_MENU mode
+          const aspect = this.studioCamera.aspect || (window.innerWidth / window.innerHeight);
+          const visibleHeight = 2 * distance * Math.tan(fovRad / 2);
+          const visibleWidth = visibleHeight * aspect;
+          const offsetX = visibleWidth * 0.20;
+
+          this.activeModelGroup.position.set(offsetX, 0, 0);
+          this.activeModelGroup.rotation.set(0, -0.35, 0);
+
+          this.studioCamera.position.set(0, targetY, distance);
+          this.studioCamera.lookAt(0, targetY, 0);
+
+          if (this.keyLight) this.keyLight.intensity = 2.2;
+          if (this.rimLight) this.rimLight.intensity = 1.5;
+          if (this.ambientLight) this.ambientLight.intensity = 0.8;
+        }
+
+        // Setup Animation Mixer
+        this.activeMixer = null;
+        if (gltf.animations && gltf.animations.length > 0) {
+          const mixer = new THREE.AnimationMixer(model);
+          this.activeMixer = mixer;
+          let clip = gltf.animations.find(a => a.name.toLowerCase().includes("idle"));
+          if (!clip) clip = gltf.animations[0];
+          if (clip) mixer.clipAction(clip).play();
+        }
+
+        this.activeModelGroup.add(model);
+        model.visible = true;
+
       } else {
+        // WEAPON SHOWCASE: Upright 3/4 diagonal presentation angle
+        // Temporarily reset activeModelGroup and model transforms to identity
+        // to prevent any async turntable or drag rotation from poisoning the centering math.
+        this.activeModelGroup.position.set(0, 0, 0);
+        this.activeModelGroup.rotation.set(0, 0, 0);
+
         let weaponMeshes: THREE.Mesh[] = [];
         model.traverse((child: any) => {
           if (child.isMesh && child.visible) {
@@ -330,44 +489,128 @@ class StudioPreviewManagerImpl {
           });
         }
 
-        if (weaponMeshes.length > 0) {
-          const box = new THREE.Box3();
-          weaponMeshes.forEach(mesh => {
-            mesh.updateMatrixWorld(true);
-            const meshBox = new THREE.Box3().setFromObject(mesh);
-            box.union(meshBox);
-          });
+        const firearm = isFirearm(itemKey, glbName);
+        this.activeModelGroup.add(model);
+        
+        // 1. Reset model transforms
+        model.position.set(0, 0, 0);
+        model.scale.set(1.0, 1.0, 1.0);
+        model.rotation.set(0, 0, 0);
+        model.updateMatrixWorld(true);
 
-          const center = new THREE.Vector3();
-          box.getCenter(center);
-          const size = new THREE.Vector3();
-          box.getSize(size);
+        // 2. Mathematically orient the rifle if it is a firearm
+        if (firearm) {
+          const localBox = computeLocalBox(model);
+          if (!localBox.isEmpty()) {
+            const localSize = new THREE.Vector3();
+            localBox.getSize(localSize);
 
-          model.position.sub(center);
+            const dims = [
+              { axis: 'x', value: localSize.x },
+              { axis: 'y', value: localSize.y },
+              { axis: 'z', value: localSize.z }
+            ];
+            dims.sort((a, b) => b.value - a.value);
 
-          const maxDim = Math.max(size.x, size.y, size.z);
-          if (maxDim > 0) {
-            targetScaleVal = 0.65 / maxDim;
+            const longAxis = dims[0].axis;
+            const heightAxis = dims[1].axis;
+
+            // Construct alignment rotation matrix R
+            const R = new THREE.Matrix4();
+            const m = R.elements;
+
+            // Row 0 is the longest axis (length) -> World X (horizontal)
+            const r00 = (longAxis === 'x') ? 1 : 0;
+            const r01 = (longAxis === 'y') ? 1 : 0;
+            const r02 = (longAxis === 'z') ? 1 : 0;
+
+            // Row 1 is the second longest axis (height) -> World Y (upright)
+            const r10 = (heightAxis === 'x') ? 1 : 0;
+            const r11 = (heightAxis === 'y') ? 1 : 0;
+            const r12 = (heightAxis === 'z') ? 1 : 0;
+
+            // Row 2 is the shortest axis (thickness) -> World Z (depth)
+            // We use the cross product of Row 0 and Row 1 to guarantee a right-handed orthogonal matrix
+            const r20 = r01 * r12 - r02 * r11;
+            const r21 = r02 * r10 - r00 * r12;
+            const r22 = r00 * r11 - r01 * r10;
+
+            m[0] = r00; m[4] = r01; m[8] = r02; m[12] = 0;
+            m[1] = r10; m[5] = r11; m[9] = r12; m[13] = 0;
+            m[2] = r20; m[6] = r21; m[10] = r22; m[14] = 0;
+            m[3] = 0;   m[7] = 0;   m[11] = 0;   m[15] = 1;
+
+            model.quaternion.setFromRotationMatrix(R);
+            model.updateMatrixWorld(true);
+
+            // Apply elegant 3/4 presentation rotation on top of standardized orientation
+            const presentationRot = new THREE.Quaternion().setFromEuler(new THREE.Euler(0.20, -0.60, 0.05));
+            model.quaternion.premultiply(presentationRot);
+            model.updateMatrixWorld(true);
           }
         } else {
-          model.position.set(0, 0, 0);
-          targetScaleVal = 1.5;
+          model.rotation.set(0.15, -0.30, 0);
+          model.updateMatrixWorld(true);
         }
+
+        // 3. Get exact bounding box of the oriented meshes in parent space
+        const boundsBox = computeBoxRelativeToParent(model, this.activeModelGroup);
+
+        if (!boundsBox.isEmpty()) {
+          const rawSize = new THREE.Vector3();
+          boundsBox.getSize(rawSize);
+
+          const centerWorld = new THREE.Vector3();
+          boundsBox.getCenter(centerWorld);
+
+          // Get exact canvas dimensions for 100% mathematical, zero-eyeballing sizing
+          const width = this.containerEl ? (this.containerEl.clientWidth || window.innerWidth) : window.innerWidth;
+          const height = this.containerEl ? (this.containerEl.clientHeight || window.innerHeight) : window.innerHeight;
+          const aspect = (width / height) || (16 / 9);
+
+          const fovRad = (this.studioCamera.fov * Math.PI) / 180;
+          const dist = 1.2;
+          this.studioCamera.position.set(0, 0, dist);
+          this.studioCamera.lookAt(0, 0, 0);
+
+          const visibleHeight = 2 * dist * Math.tan(fovRad / 2);
+          const visibleWidth = visibleHeight * aspect;
+
+          let weaponScaleFactor = 1.0;
+          if (firearm) {
+            // For rifles: width/depth (rawSize.x) sets final size. Safe horizontal ratio = 0.70, vertical ratio = 0.55
+            const scaleX = (visibleWidth * 0.70) / (rawSize.x || 1.0);
+            const scaleY = (visibleHeight * 0.55) / (rawSize.y || 1.0);
+            weaponScaleFactor = Math.min(scaleX, scaleY);
+          } else {
+            // For grenades/other: height (rawSize.y) sets final size. Safe vertical ratio = 0.55, horizontal ratio = 0.65
+            const scaleX = (visibleWidth * 0.65) / (rawSize.x || 1.0);
+            const scaleY = (visibleHeight * 0.55) / (rawSize.y || 1.0);
+            weaponScaleFactor = Math.min(scaleX, scaleY);
+          }
+
+          // Apply scale and translation to perfectly center the meshes around activeModelGroup's pivot
+          model.scale.set(weaponScaleFactor, weaponScaleFactor, weaponScaleFactor);
+          model.position.copy(centerWorld).negate().multiplyScalar(weaponScaleFactor);
+          model.updateMatrixWorld(true);
+
+          // Calculate final bounds of the centered weapon in parent space to frame the camera perfectly
+          const finalBox = computeBoxRelativeToParent(model, this.activeModelGroup);
+          const size = new THREE.Vector3();
+          finalBox.getSize(size);
+
+          this.autoFrameCameraForSize(size);
+        } else {
+          this.studioCamera.position.set(0, 0, 1.2);
+          this.studioCamera.lookAt(0, 0, 0);
+        }
+
+        if (this.keyLight) this.keyLight.intensity = 2.8;
+        if (this.rimLight) this.rimLight.intensity = 2.0;
+        if (this.ambientLight) this.ambientLight.intensity = 1.0;
+
+        model.visible = true;
       }
-
-      model.userData.baseScaleVal = targetScaleVal;
-
-      const skin = AVAILABLE_SKINS[skinId] || AVAILABLE_SKINS.STANDARD;
-      await this.applySkinToModelAsync(model, skin.textureFile);
-
-      model.userData.targetScale = new THREE.Vector3(targetScaleVal, targetScaleVal, targetScaleVal);
-      model.scale.copy(model.userData.targetScale);
-      model.visible = true;
-
-      const childrenToRemove = this.activeModelGroup.children.filter(child => child !== model);
-      childrenToRemove.forEach(child => {
-        this.activeModelGroup.remove(child);
-      });
 
       this.lastLoadedModel = model;
       this.lastLoadedGlbName = glbName;
@@ -378,6 +621,22 @@ class StudioPreviewManagerImpl {
     } catch (err) {
       console.error("[StudioPreview] GLTF Showcase Load Failed:", err);
     }
+  }
+
+  private autoFrameCameraForSize(size: THREE.Vector3): void {
+    const width = this.containerEl ? (this.containerEl.clientWidth || window.innerWidth) : window.innerWidth;
+    const height = this.containerEl ? (this.containerEl.clientHeight || window.innerHeight) : window.innerHeight;
+    const aspect = (width / height) || (16 / 9);
+
+    const dist = 1.2;
+
+    this.studioCamera.fov = 45;
+    this.studioCamera.aspect = aspect;
+    this.studioCamera.position.set(0, 0, dist);
+    this.studioCamera.lookAt(0, 0, 0);
+    this.studioCamera.near = 0.05; // Set low near plane to prevent clipping inside weapon geometries
+    this.studioCamera.far = dist + 10.0;
+    this.studioCamera.updateProjectionMatrix();
   }
 
   private applySkinToModelAsync(model: THREE.Object3D, textureFile: string | null): Promise<void> {
@@ -406,6 +665,9 @@ class StudioPreviewManagerImpl {
           
           model.traverse((child: any) => {
             if (child.isMesh) {
+              if (child.material) {
+                child.material = child.material.clone();
+              }
               // Backup original map
               if (child.userData.originalMap === undefined) {
                 child.userData.originalMap = child.material.map;
@@ -428,16 +690,8 @@ class StudioPreviewManagerImpl {
     const height = this.containerEl.clientHeight || window.innerHeight;
 
     const aspect = width / height;
-    const baseAspect = 16 / 9;
-    const baseFov = 45;
 
-    if (aspect < baseAspect) {
-      const vFovRad = 2 * Math.atan(Math.tan((baseFov * Math.PI / 180) / 2) * (baseAspect / aspect));
-      this.studioCamera.fov = vFovRad * (180 / Math.PI);
-    } else {
-      this.studioCamera.fov = baseFov;
-    }
-
+    this.studioCamera.fov = 45;
     this.studioCamera.aspect = aspect;
     this.studioCamera.updateProjectionMatrix();
 
@@ -509,8 +763,8 @@ class StudioPreviewManagerImpl {
       }
     }
 
-    // Slow turntable rotation when idle
-    if (!this.isDragging && this.turntableEnabled) {
+    // Slow turntable rotation when idle (disabled in LOBBY mode per requirement: DONT SPIN AUTOMATICALLY)
+    if (!this.isDragging && this.turntableEnabled && this.currentMode !== 'LOBBY') {
       this.activeModelGroup.rotation.y += dt * 0.4;
     }
 

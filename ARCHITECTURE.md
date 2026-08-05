@@ -183,3 +183,21 @@
 
 ## 10. Barred Terminology & Themes
 *   **Barred Words:** The words **"neon"**, **"scifi"**, **"tactical"**, **"futuristic"**, **"cyberpunk"**, and **"mecha"** are strictly barred from this workspace. They must not be used in the design, UI text, labels, descriptors, code comments, or architecture. All content, aesthetic choices, and lighting must remain completely grounded, neutral, and clean without leaning into speculative or stylized subgenres.
+
+---
+
+## 11. Strict Sizing Mathematization & Anti-Eyeballing Protocol (LAW)
+*   **Absolute Ban on Eyeballing:** Eyeballing layout sizes, margins, gaps, font sizes, paddings, HUD elements, or 3D canvas model scaling is strictly forbidden.
+*   **Mathematical Proof Required:** Every visual element must be laid out using precise percentages, viewport-relative math (`vh`, `vw`, `vmax`, `vmin`, `clamp`), or pixel budgets that sum up to ≤ 100% of the available container.
+*   **Zero-Overlapping Guarantee:** Every developer or agent must mathematically prove that elements inside any viewport container cannot overlap or clip under any supported screen sizes and ratios. Sizing elements arbitrarily and "hoping" they fit or adjusting bounds visually without fractional/ratio math is a critical failure. All dimensions, boundaries, and offsets must enforce a strict geometric guarantee of zero collision.
+
+---
+
+## 12. Monitoring, Metrics & Feature Flags
+*   **Sentry Integration:** Comprehensive error tracking and performance monitoring.
+    *   **Metrics:** Real-time recording of distributions (latencies), gauges (counts), and counters (events).
+    *   **Attributes:** Typed context attached to all metrics for filtering (e.g., `model` for LLM latency, `reason` for hitscan rejection).
+*   **Feature Gating (Feature Flags):** All non-critical features, visual experiments, and monitoring probes must be gated by the `FlagService`.
+    *   **Client-Side Flags:** Stored in `window.vexeaFlags`, initialized from server-supplied values or Doppler defaults.
+    *   **Server-Side Flags:** Resolution via Doppler secrets with fallback to hardcoded defaults.
+    *   **Micro-Gating:** Individual metrics (e.g., frame time, network RTT) are independently togglable to minimize overhead and budget consumption.
