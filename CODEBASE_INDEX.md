@@ -637,3 +637,10 @@ Every file change in the VEXEA codebase must follow this strict three-step proto
     *   Refactored `downloadMapAssets` in `asset-cache.ts` from a sequential `for..of` loop to a 4-worker concurrent queue to drastically reduce map asset load times.
 *   **Verification:** `lint_applet` and `compile_applet` passed cleanly with zero errors.
 
+### Cycle 2026-08-05-01: Asset Cache setURLModifier Blob URL Validity Check
+*   **Target Files:** `/client/asset-cache.ts`, `/CODEBASE_INDEX.md`
+*   **Status:** Verified & Finalized
+*   **Modifications:**
+    *   Updated `setURLModifier` in `/client/asset-cache.ts` to verify that `blob:` URLs exist in `blobUrlMap` before returning them early. Untracked or relative-resolved `blob:` URLs now fall through to filename lookup and `fallback1x1Url` resolution.
+*   **Verification:** `compile_applet` passed cleanly with zero build errors.
+
