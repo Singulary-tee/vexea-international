@@ -1258,6 +1258,7 @@ io.onConnection((channel: ChannelAdapter) => {
 const serveApp = async () => {
   // Load production secrets from Doppler if DOPPLER_TOKEN is provided
   await loadDopplerSecrets();
+  await serverFlagService.initialize();
 
   // Setup Rapier globally once before room allocation
   await RAPIER.init();

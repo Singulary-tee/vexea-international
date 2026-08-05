@@ -34,12 +34,18 @@ export enum FeatureFlagKey {
   FACTION_WAR_MULTIPLIER = 'faction_war_multiplier',
   FACTION_TERRITORY_DECAY_RATE = 'faction_territory_decay_rate',
 
+  // Battle Pass Flags (Shared)
+  BP_SEASON_ID = 'bp_season_id',
+  BP_TIER_COUNT = 'bp_tier_count',
+  BP_XP_PER_TIER = 'bp_xp_per_tier',
+
   // Match Difficulty & Gameplay Tuning Flags
   MATCH_DIFFICULTY_PRESET = 'match_difficulty_preset',
   TELEMETRY_WEBGPU_ERRORS = 'telemetry_webgpu_errors',
   TELEMETRY_PHYSICS_WORKER_LATENCY = 'telemetry_physics_worker_latency',
   SECURITY_EXPLOIT_LOGGING = 'security_exploit_logging',
   TELEMETRY_DESYNC_THRESHOLD = 'telemetry_desync_threshold',
+  FLAGS_USED_ENABLED = 'flags_used_enabled',
 }
 
 export type FeatureFlagValue = boolean | string | number | Record<string, unknown> | unknown[];
@@ -71,11 +77,16 @@ export interface FeatureFlagSchema {
   [FeatureFlagKey.FACTION_WAR_MULTIPLIER]: number;
   [FeatureFlagKey.FACTION_TERRITORY_DECAY_RATE]: number;
 
+  [FeatureFlagKey.BP_SEASON_ID]: string;
+  [FeatureFlagKey.BP_TIER_COUNT]: number;
+  [FeatureFlagKey.BP_XP_PER_TIER]: number;
+
   [FeatureFlagKey.MATCH_DIFFICULTY_PRESET]: 'EASY' | 'STANDARD' | 'HARD' | 'NIGHTMARE';
   [FeatureFlagKey.TELEMETRY_WEBGPU_ERRORS]: boolean;
   [FeatureFlagKey.TELEMETRY_PHYSICS_WORKER_LATENCY]: boolean;
   [FeatureFlagKey.SECURITY_EXPLOIT_LOGGING]: boolean;
   [FeatureFlagKey.TELEMETRY_DESYNC_THRESHOLD]: number;
+  [FeatureFlagKey.FLAGS_USED_ENABLED]: boolean;
 }
 
 export const DEFAULT_FEATURE_FLAGS: FeatureFlagSchema = {
@@ -105,11 +116,16 @@ export const DEFAULT_FEATURE_FLAGS: FeatureFlagSchema = {
   [FeatureFlagKey.FACTION_WAR_MULTIPLIER]: 1.0,
   [FeatureFlagKey.FACTION_TERRITORY_DECAY_RATE]: 0.05,
 
+  [FeatureFlagKey.BP_SEASON_ID]: 'SEASON_01',
+  [FeatureFlagKey.BP_TIER_COUNT]: 50,
+  [FeatureFlagKey.BP_XP_PER_TIER]: 10,
+
   [FeatureFlagKey.MATCH_DIFFICULTY_PRESET]: 'STANDARD',
   [FeatureFlagKey.TELEMETRY_WEBGPU_ERRORS]: true,
   [FeatureFlagKey.TELEMETRY_PHYSICS_WORKER_LATENCY]: true,
   [FeatureFlagKey.SECURITY_EXPLOIT_LOGGING]: true,
   [FeatureFlagKey.TELEMETRY_DESYNC_THRESHOLD]: 0.5,
+  [FeatureFlagKey.FLAGS_USED_ENABLED]: false,
 };
 
 export interface FlagEvaluationContext {
@@ -162,6 +178,9 @@ export function getFeatureFlagScope(key: FeatureFlagKey): FeatureFlagScope {
     case FeatureFlagKey.FACTION_WAR_ACTIVE:
     case FeatureFlagKey.FACTION_WAR_MULTIPLIER:
     case FeatureFlagKey.FACTION_TERRITORY_DECAY_RATE:
+    case FeatureFlagKey.BP_SEASON_ID:
+    case FeatureFlagKey.BP_TIER_COUNT:
+    case FeatureFlagKey.BP_XP_PER_TIER:
     case FeatureFlagKey.MATCH_DIFFICULTY_PRESET:
     case FeatureFlagKey.TELEMETRY_DESYNC_THRESHOLD:
       return FeatureFlagScope.SHARED;

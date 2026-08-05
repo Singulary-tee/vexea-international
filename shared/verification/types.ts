@@ -8,7 +8,7 @@ export type PlayerId = string;
 export type ItemId = string;
 export type ChallengeId = string;
 
-export type ClaimType = 'DAILY_LOGIN' | 'CHALLENGE_REWARD' | 'DEV_REFILL';
+export type ClaimType = 'DAILY_LOGIN' | 'CHALLENGE_REWARD' | 'DEV_REFILL' | 'BATTLE_PASS_TIER';
 
 export interface APIErrorDetails {
   code: string;
@@ -110,4 +110,28 @@ export interface LevelMetrics {
   readonly xpForCurrentLevel: number;
   readonly xpForNextLevel: number;
   readonly progressPercent: number;
+}
+
+/**
+ * Input contract for claiming Battle Pass tier rewards.
+ */
+export interface VerifyBPClaimInput {
+  readonly playerId: PlayerId;
+  readonly tierIndex: number;
+  readonly currentBPXP: number;
+  readonly claimedTiers?: readonly number[];
+  readonly seasonId: string;
+}
+
+/**
+ * Output result contract for BP tier reward claims.
+ */
+export interface VerifyBPClaimResult {
+  readonly isApproved: boolean;
+  readonly reward?: {
+    readonly credits?: number;
+    readonly itemId?: ItemId;
+    readonly label: string;
+  };
+  readonly error?: APIErrorDetails;
 }

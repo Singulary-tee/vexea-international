@@ -10,6 +10,8 @@ import {
   VerifyPurchaseResult,
   VerifyClaimInput,
   VerifyClaimResult,
+  VerifyBPClaimInput,
+  VerifyBPClaimResult,
   CatalogItem
 } from "../../shared/verification/types";
 
@@ -17,6 +19,7 @@ import {
   verifyPostMatchRewards,
   verifyPurchase,
   verifyClaim,
+  verifyBPClaim,
   calculateLevelMetrics
 } from "../../shared/verification/verifier";
 
@@ -39,6 +42,10 @@ export class VerificationService {
 
   public static processClaim(input: VerifyClaimInput): VerifyClaimResult {
     return verifyClaim(input);
+  }
+
+  public static processBPClaim(input: VerifyBPClaimInput): VerifyBPClaimResult {
+    return verifyBPClaim(input);
   }
 }
 

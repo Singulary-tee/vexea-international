@@ -32,7 +32,11 @@ VEXEA uses **ConfigCat** as the primary OpenFeature provider.
 | `llm_token_ceiling` | SERVER | NUMBER | `55000` | Token budget per match before AI fallback. |
 | `store_dynamic_offers` | SHARED | BOOLEAN | `true` | Enables store offer rotations (Server/Client/Verification sync). |
 | `faction_war_active` | SHARED | BOOLEAN | `true` | Toggles the active Faction Warfare season events. |
+| `bp_season_id` | SHARED | STRING | `"SEASON_01"` | Active Battle Pass season identifier. |
+| `bp_tier_count` | SHARED | NUMBER | `50` | Total number of tiers in the battle pass. |
+| `bp_xp_per_tier` | SHARED | NUMBER | `10` | XP required per tier (cumulative calculation). |
 | `match_difficulty_preset`| SERVER | STRING | `"STANDARD"` | Scales drone stats (Speed, Accuracy, Health). |
+| `flags_used_enabled` | SHARED | BOOLEAN | `false` | Test flag for architecture analysis. |
 
 ---
 *Last Updated: 2026-08-05*

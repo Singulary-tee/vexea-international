@@ -12,9 +12,23 @@ export class ServerFlagService {
   private static instance: ServerFlagService;
   private serverClient: Client;
   private sharedClient: Client;
-  private initialized: boolean = false;
+  private isInitialized = false;
 
   private constructor() {
+    this.serverClient = OpenFeature.getClient('server-scope');
+    this.sharedClient = OpenFeature.getClient('shared-scope');
+  }
+
+  public static getInstance(): ServerFlagService {
+    if (!ServerFlagService.instance) {
+      ServerFlagService.instance = new ServerFlagService();
+    }
+    return ServerFlagService.instance;
+  }
+
+  public async initialize(): Promise<void> {
+    if (this.isInitialized) return;
+
     const serverKey = process.env.SERVER_CONFIGCAT_SDK_KEY;
     const sharedKey = process.env.SHARED_CONFIGCAT_SDK_KEY;
 
@@ -27,17 +41,7 @@ export class ServerFlagService {
       console.log('[FlagService] Initializing Shared Provider.');
       OpenFeature.setProvider('shared-scope', ConfigCatProvider.create(sharedKey));
     }
-
-    this.serverClient = OpenFeature.getClient('server-scope');
-    this.sharedClient = OpenFeature.getClient('shared-scope');
-    this.initialized = true;
-  }
-
-  public static getInstance(): ServerFlagService {
-    if (!ServerFlagService.instance) {
-      ServerFlagService.instance = new ServerFlagService();
-    }
-    return ServerFlagService.instance;
+    this.isInitialized = true;
   }
 
   private getClient(key: FeatureFlagKey): Client {

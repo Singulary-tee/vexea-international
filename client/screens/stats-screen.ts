@@ -1,12 +1,17 @@
 import { DS } from "../design-system";
 import challengesDataList from "../data/challenges.json";
 import { getAuth } from "firebase/auth";
-import { getFirestore, doc, updateDoc } from "firebase/firestore";
+import { getFirestore, doc, updateDoc, increment, arrayUnion } from "firebase/firestore";
 import { audioManager } from "../audio";
 import { IS_DEV } from "../../shared/gates/production.gate";
 import { GAMEMODES } from "../../shared/gamemode-configs";
+import { BP_SEASON_01 } from "../../shared/battle-pass";
 
-let activeStatsSubTab: 'PROFILE' | 'INTEL' | 'CHALLENGES' | 'LEADERBOARD' = 'PROFILE';
+let activeStatsSubTab: 'PROFILE' | 'INTEL' | 'BATTLE_PASS' | 'CHALLENGES' | 'LEADERBOARD' = 'PROFILE';
+
+export function setActiveStatsSubTab(tab: 'PROFILE' | 'INTEL' | 'BATTLE_PASS' | 'CHALLENGES' | 'LEADERBOARD') {
+  activeStatsSubTab = tab;
+}
 
 // ==========================================
 // SVG GRAPHICS HELPER FUNCTIONS
@@ -138,8 +143,9 @@ export function renderStatsScreen(container: HTMLElement, registeredUserData: an
       flexShrink: '0'
     });
 
-    const subTabs: { id: 'PROFILE' | 'INTEL' | 'CHALLENGES' | 'LEADERBOARD'; label: string }[] = [
+    const subTabs: { id: 'PROFILE' | 'INTEL' | 'BATTLE_PASS' | 'CHALLENGES' | 'LEADERBOARD'; label: string }[] = [
       { id: 'PROFILE', label: 'CONTRACTOR PROFILE' },
+      { id: 'BATTLE_PASS', label: 'BATTLE PASS' },
       { id: 'INTEL', label: 'COMMANDER INTEL' },
       { id: 'CHALLENGES', label: 'DAILY CONTRACTS' },
       { id: 'LEADERBOARD', label: 'GLOBAL STANDINGS' }
@@ -206,6 +212,8 @@ export function renderStatsScreen(container: HTMLElement, registeredUserData: an
     contentBody.innerHTML = '';
     if (activeStatsSubTab === 'PROFILE') {
       renderProfileView(contentBody, registeredUserData);
+    } else if (activeStatsSubTab === 'BATTLE_PASS') {
+      renderBattlePassView(contentBody, registeredUserData);
     } else if (activeStatsSubTab === 'INTEL') {
       renderIntelView(contentBody, registeredUserData);
     } else if (activeStatsSubTab === 'CHALLENGES') {
@@ -589,5 +597,160 @@ function renderLeaderboardView(container: HTMLElement, userData: any): void {
 
   wrap.appendChild(table);
   container.appendChild(wrap);
+}
+
+// 5. BATTLE PASS VIEW
+function renderBattlePassView(container: HTMLElement, userData: any): void {
+  const currentXP = userData?.battlePass || 0;
+  const claimedTiers = userData?.claimedBPTiers || [];
+  const tierCount = BP_SEASON_01.tiers.length;
+  
+  const layout = document.createElement('div');
+  Object.assign(layout.style, {
+    display: 'flex',
+    flexDirection: 'column',
+    width: '100%',
+    height: '100%',
+    gap: '8px',
+    overflow: 'hidden'
+  });
+
+  const header = document.createElement('div');
+  Object.assign(header.style, {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    background: 'rgba(255, 255, 255, 0.02)',
+    padding: '8px 12px',
+    border: '1px solid rgba(255, 255, 255, 0.05)',
+    flexShrink: '0'
+  });
+
+  header.innerHTML = `
+    <div style="display:flex; flex-direction:column; gap:2px;">
+      <div style="font-family:${DS.typography.fontFamily}; font-size:12px; font-weight:bold; color:#FFFFFF; letter-spacing:1px;">${BP_SEASON_01.name}</div>
+      <div style="font-family:${DS.typography.fontFamily}; font-size:8px; color:${DS.colors.textMuted}; letter-spacing:0.5px;">SEASON ACTIVE: 84 DAYS REMAINING</div>
+    </div>
+    <div style="text-align:right;">
+      <div style="font-family:${DS.typography.fontFamily}; font-size:10px; font-weight:bold; color:${DS.colors.accent};">TOTAL XP: ${currentXP}</div>
+      <div style="font-family:${DS.typography.fontFamily}; font-size:7px; color:${DS.colors.textMuted};">TIERS COMPLETED: ${Math.floor(currentXP / 10)} / ${tierCount - 1}</div>
+    </div>
+  `;
+  layout.appendChild(header);
+
+  const tiersScroll = document.createElement('div');
+  Object.assign(tiersScroll.style, {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fill, minmax(110px, 1fr))',
+    gap: '6px',
+    flex: '1',
+    overflowY: 'auto',
+    padding: '2px',
+    minHeight: '0'
+  });
+
+  BP_SEASON_01.tiers.forEach((tier: any) => {
+    const isUnlocked = currentXP >= tier.xpRequired;
+    const isClaimed = claimedTiers.includes(tier.index);
+    
+    const card = document.createElement('div');
+    Object.assign(card.style, {
+      background: isUnlocked ? 'rgba(255, 255, 255, 0.04)' : 'rgba(10, 10, 10, 0.4)',
+      border: `1px solid ${isUnlocked ? (isClaimed ? 'rgba(255, 255, 255, 0.1)' : DS.colors.accent) : 'rgba(255, 255, 255, 0.03)'}`,
+      padding: '8px',
+      display: 'flex',
+      flexDirection: 'column',
+      gap: '4px',
+      position: 'relative',
+      minHeight: '100px',
+      transition: 'all 0.15s ease'
+    });
+
+    card.innerHTML = `
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <span style="font-family:${DS.typography.fontFamily}; font-size:9px; font-weight:900; color:${isUnlocked ? '#FFF' : DS.colors.textMuted};">${String(tier.index).padStart(2, '0')}</span>
+        <span style="font-family:${DS.typography.fontFamily}; font-size:7px; font-weight:bold; color:${isClaimed ? DS.colors.textMuted : (isUnlocked ? DS.colors.accent : 'rgba(255, 255, 255, 0.15)')};">${isClaimed ? 'CLAIMED' : (isUnlocked ? 'READY' : 'LOCKED')}</span>
+      </div>
+      <div style="flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; text-align:center;">
+        <div style="font-family:${DS.typography.fontFamily}; font-size:14px; font-weight:900; color:${isUnlocked ? DS.colors.accent : 'rgba(255,255,255,0.1)'};">${tier.freeReward ? (tier.freeReward.type === 'CREDITS' ? 'CR' : 'ITEM') : '—'}</div>
+        <div style="font-family:${DS.typography.fontFamily}; font-size:8px; font-weight:bold; color:${isUnlocked ? '#FFF' : DS.colors.textMuted}; line-height:1.1;">${tier.freeReward ? tier.freeReward.label : 'NO REWARD'}</div>
+      </div>
+    `;
+
+    if (isUnlocked && !isClaimed && tier.freeReward) {
+      const claimBtn = document.createElement('div');
+      claimBtn.textContent = 'CLAIM';
+      Object.assign(claimBtn.style, {
+        width: '100%',
+        padding: '4px 0',
+        background: DS.colors.accent,
+        color: '#000',
+        fontSize: '8px',
+        fontWeight: '900',
+        textAlign: 'center',
+        letterSpacing: '1px',
+        cursor: 'pointer',
+        marginTop: '4px'
+      });
+      claimBtn.onclick = (e) => {
+        e.stopPropagation();
+        handleBPClaim(tier.index, userData);
+      };
+      card.appendChild(claimBtn);
+    } else {
+      const trackLabel = document.createElement('div');
+      trackLabel.textContent = 'FREE TRACK';
+      Object.assign(trackLabel.style, {
+        width: '100%',
+        padding: '4px 0',
+        background: 'rgba(255, 255, 255, 0.03)',
+        color: DS.colors.textMuted,
+        fontSize: '7px',
+        fontWeight: 'bold',
+        textAlign: 'center',
+        letterSpacing: '1px',
+        marginTop: '4px'
+      });
+      card.appendChild(trackLabel);
+    }
+
+    tiersScroll.appendChild(card);
+  });
+
+  layout.appendChild(tiersScroll);
+  container.appendChild(layout);
+}
+
+async function handleBPClaim(index: number, userData: any) {
+  audioManager.play('click');
+
+  const auth = getAuth();
+  if (!auth.currentUser) return;
+
+  const db = getFirestore();
+  const userRef = doc(db, 'Users', auth.currentUser.uid);
+  const tier = BP_SEASON_01.tiers[index];
+
+  try {
+    const updates: any = {
+      claimedBPTiers: arrayUnion(index)
+    };
+
+    if (tier.freeReward.type === 'CREDITS') {
+      updates.credits = increment(tier.freeReward.value as number);
+    } else if (tier.freeReward.type === 'COSMETIC' || tier.freeReward.type === 'BLUEPRINT') {
+      updates.unlockedItems = arrayUnion(tier.freeReward.value as string);
+    }
+
+    await updateDoc(userRef, updates);
+    // Profile box is updated via window observer usually, but we need to re-render local tab
+    userData.claimedBPTiers = userData.claimedBPTiers || [];
+    userData.claimedBPTiers.push(index);
+    const container = document.querySelector('.stats-content-body') as HTMLElement;
+    if (container) renderBattlePassView(container, userData);
+    
+  } catch (err) {
+    console.error("[BP] Claim failed:", err);
+  }
 }
 

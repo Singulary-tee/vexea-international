@@ -7,29 +7,58 @@ import {
   getFeatureFlagScope,
   FeatureFlagScope,
 } from '../../shared/feature-flags';
-import { getClientDopplerSecret } from '../doppler';
+import { getClientDopplerSecret, dopplerLoaded } from '../doppler';
+import { analytics } from '../firebase';
+import { logEvent } from 'firebase/analytics';
 
 export class ClientFlagService {
   private static instance: ClientFlagService;
   private clientScopeClient: Client;
   private sharedScopeClient: Client;
+  private isInitialized = false;
 
   private constructor() {
-    const clientKey = (import.meta as any).env?.VITE_CONFIGCAT_SDK_KEY;
-    const sharedKey = (import.meta as any).env?.VITE_SHARED_CONFIGCAT_SDK_KEY;
+    // Just initialize with empty/dummy providers if needed, or delay initialization
+    this.clientScopeClient = OpenFeature.getClient('client-scope');
+    this.sharedScopeClient = OpenFeature.getClient('shared-scope');
+  }
+
+  public async initialize(): Promise<void> {
+    if (this.isInitialized) return;
+    await dopplerLoaded;
+
+    const clientKey = (import.meta as any).env?.VITE_CONFIGCAT_SDK_KEY || getClientDopplerSecret("VITE_CONFIGCAT_SDK_KEY");
+    const sharedKey = getClientDopplerSecret("SHARED_CONFIGCAT_SDK_KEY");
 
     if (clientKey) {
       console.log('[FlagService] Initializing Client Provider.');
-      OpenFeature.setProvider('client-scope', ConfigCatWebProvider.create(clientKey));
+      OpenFeature.setProvider('client-scope', ConfigCatWebProvider.create(clientKey, {
+        setupHooks: (hooks) => hooks.on('flagEvaluated', (evaluationDetails) => {
+          if (analytics) {
+            logEvent(analytics, 'experience_impression', {
+              'exp_variant_string': "configcat-" + evaluationDetails.key + "-" + evaluationDetails.value,
+              'variation_id': evaluationDetails.variationId
+            });
+          }
+        })
+      }));
     }
     
     if (sharedKey) {
       console.log('[FlagService] Initializing Shared Provider.');
-      OpenFeature.setProvider('shared-scope', ConfigCatWebProvider.create(sharedKey));
+      OpenFeature.setProvider('shared-scope', ConfigCatWebProvider.create(sharedKey, {
+        setupHooks: (hooks) => hooks.on('flagEvaluated', (evaluationDetails) => {
+          if (analytics) {
+            logEvent(analytics, 'experience_impression', {
+              'exp_variant_string': "configcat-" + evaluationDetails.key + "-" + evaluationDetails.value,
+              'variation_id': evaluationDetails.variationId
+            });
+          }
+        })
+      }));
     }
 
-    this.clientScopeClient = OpenFeature.getClient('client-scope');
-    this.sharedScopeClient = OpenFeature.getClient('shared-scope');
+    this.isInitialized = true;
   }
 
   public hasClientKey(): boolean {
@@ -37,7 +66,7 @@ export class ClientFlagService {
   }
 
   public hasSharedKey(): boolean {
-    return !!getClientDopplerSecret("VITE_SHARED_CONFIGCAT_SDK_KEY") || !!getClientDopplerSecret("SHARED_CONFIGCAT_SDK_KEY") || !!(import.meta as any).env?.VITE_SHARED_CONFIGCAT_SDK_KEY;
+    return !!getClientDopplerSecret("VITE_SHARED_CONFIGCAT_SDK_KEY") || !!getClientDopplerSecret("SHARED_CONFIGCAT_SDK_KEY");
   }
 
   public static getInstance(): ClientFlagService {

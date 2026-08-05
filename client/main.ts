@@ -31,6 +31,7 @@ import { initSplash } from "./screens/splash";
 import map1Spec from "../shared/maps/map_1_facility.spec.json";
 import { initMainMenu } from "./screens/main-menu";
 import { initLobby } from "./screens/lobby";
+import { initBattlePass } from "./screens/battle-pass-screen";
 import { initPostMatch } from "./screens/post-match-screen";
 import { initMapViewerGlobally } from "./screens/map_viewer";
 import * as screenManager from "./screens/screen-manager";
@@ -241,6 +242,7 @@ export let wheeledDroneModel: THREE.Group | null = null;
 // Initialize Game loop
 const initClient = async () => {
   // Wait for feature flags to be ready before Sentry so we respect Replay/Profiling settings
+  await clientFlagService.initialize();
   await clientFlagService.waitForReady();
   initClientSentry();
 
@@ -531,6 +533,7 @@ const initClient = async () => {
 
   initMainMenu();
   initLobby();
+  initBattlePass();
   initPostMatch();
   // initDevEntities(); deferred until activation
 
@@ -1350,10 +1353,10 @@ let serverCubeMesh: THREE.Mesh | undefined;
   }
 };
 
-window.addEventListener("DOMContentLoaded", () => {
+window.addEventListener("DOMContentLoaded", async () => {
   initPlatformGate();
   initMapViewerGlobally();
-  initClient();
+  await initClient();
   initUIEditor();
 });
 
