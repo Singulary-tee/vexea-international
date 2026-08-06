@@ -6,6 +6,7 @@ import { audioManager } from "../audio";
 import { IS_DEV } from "../../shared/gates/production.gate";
 import { GAMEMODES } from "../../shared/gamemode-configs";
 import { BP_SEASON_01 } from "../../shared/battle-pass";
+import { calculateLevelMetrics } from "../../shared/verification/verifier";
 
 let activeStatsSubTab: 'PROFILE' | 'INTEL' | 'BATTLE_PASS' | 'CHALLENGES' | 'LEADERBOARD' = 'PROFILE';
 
@@ -238,8 +239,10 @@ function renderProfileView(container: HTMLElement, userData: any): void {
   });
 
   const callsign = userData?.displayName?.toUpperCase() || 'UNREGISTERED CONTRACTOR';
-  const level = userData?.battlePass || 1;
-  const xp = userData?.xp !== undefined ? userData.xp : 65;
+  const lifetimeXpVal = userData?.lifetimeXP || 0;
+  const levelMetrics = calculateLevelMetrics(lifetimeXpVal);
+  const level = levelMetrics.level;
+  const xp = levelMetrics.totalXp - levelMetrics.xpForCurrentLevel;
   const faction = userData?.faction || 'UNAFFILIATED';
   const kills = userData?.totalDroneEliminations || userData?.kills || 0;
   const deaths = userData?.totalDeaths || 1;
@@ -626,10 +629,13 @@ function renderBattlePassView(container: HTMLElement, userData: any): void {
     flexShrink: '0'
   });
 
+  const nowMs = Date.now();
+  const bpRemainingDays = Math.max(0, Math.ceil((BP_SEASON_01.endDate - nowMs) / (1000 * 60 * 60 * 24)));
+
   header.innerHTML = `
     <div style="display:flex; flex-direction:column; gap:2px;">
       <div style="font-family:${DS.typography.fontFamily}; font-size:12px; font-weight:bold; color:#FFFFFF; letter-spacing:1px;">${BP_SEASON_01.name}</div>
-      <div style="font-family:${DS.typography.fontFamily}; font-size:8px; color:${DS.colors.textMuted}; letter-spacing:0.5px;">SEASON ACTIVE: 84 DAYS REMAINING</div>
+      <div style="font-family:${DS.typography.fontFamily}; font-size:8px; color:${DS.colors.textMuted}; letter-spacing:0.5px;">SEASON ACTIVE: ${bpRemainingDays} DAYS REMAINING</div>
     </div>
     <div style="text-align:right;">
       <div style="font-family:${DS.typography.fontFamily}; font-size:10px; font-weight:bold; color:${DS.colors.accent};">TOTAL XP: ${currentXP}</div>
@@ -736,9 +742,9 @@ async function handleBPClaim(index: number, userData: any) {
       claimedBPTiers: arrayUnion(index)
     };
 
-    if (tier.freeReward.type === 'CREDITS') {
+    if (tier.freeReward && tier.freeReward.type === 'CREDITS') {
       updates.credits = increment(tier.freeReward.value as number);
-    } else if (tier.freeReward.type === 'COSMETIC' || tier.freeReward.type === 'BLUEPRINT') {
+    } else if (tier.freeReward && tier.freeReward.type === 'COSMETIC') {
       updates.unlockedItems = arrayUnion(tier.freeReward.value as string);
     }
 

@@ -140,6 +140,72 @@ class AudioManager {
             console.warn(`Audio ${name} not found`);
         }
     }
+
+    public playPositional(
+        name: string,
+        sourceX: number,
+        sourceY: number,
+        sourceZ: number,
+        listenerX: number,
+        listenerY: number,
+        listenerZ: number,
+        maxDistance = 120
+    ): number | null {
+        if (!this.sounds[name]) {
+            return null;
+        }
+
+        const s = (window as any).vexeaSettings;
+        const category = SOUND_CATEGORIES[name] || 'sfx';
+        let baseVol = 1.0;
+        if (s) {
+            if (category === 'music') {
+                baseVol = s.music ? s.musicVolume : 0;
+            } else if (category === 'ui') {
+                baseVol = s.uiSounds ? s.uiVolume : 0;
+            } else if (category === 'sfx') {
+                baseVol = s.sfxVolume;
+            }
+        }
+
+        if (baseVol <= 0) return null;
+
+        let effectiveVol = baseVol;
+
+        // If spatialAudio setting is enabled (default true), calculate quadratic distance attenuation
+        if (!s || s.spatialAudio !== false) {
+            const dx = sourceX - listenerX;
+            const dy = sourceY - listenerY;
+            const dz = sourceZ - listenerZ;
+            const distSq = dx * dx + dy * dy + dz * dz;
+            const maxDistSq = maxDistance * maxDistance;
+
+            if (distSq >= maxDistSq) {
+                return null; // Out of max hearing range
+            }
+
+            const dist = Math.sqrt(distSq);
+            const factor = Math.max(0, 1 - dist / maxDistance);
+            const attenuation = factor * factor; // Quadratic inverse distance rolloff
+            effectiveVol = baseVol * attenuation;
+        }
+
+        if (effectiveVol <= 0.001) return null;
+
+        const sound = this.sounds[name];
+        if (category === 'sfx' || category === 'ui') {
+            const pitch = 0.93 + Math.random() * 0.14;
+            sound.rate(pitch);
+        } else {
+            sound.rate(1.0);
+        }
+
+        const soundId = sound.play();
+        if (soundId !== undefined) {
+            sound.volume(effectiveVol, soundId);
+        }
+        return soundId;
+    }
     
     public setMatchState(inMatch: boolean) {
         this.isMatchPlaying = inMatch;

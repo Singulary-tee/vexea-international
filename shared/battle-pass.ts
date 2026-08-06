@@ -4,7 +4,7 @@
  * Architected to be premium-ready for Phase 2 additive changes.
  */
 
-export type BPRewardType = 'CREDITS' | 'COSMETIC' | 'BLUEPRINT';
+export type BPRewardType = 'CREDITS' | 'COSMETIC';
 
 export interface BPReward {
   type: BPRewardType;
@@ -36,20 +36,24 @@ export function generateSeasonOne(): BattlePassSeason {
   const TIER_COUNT = 50;
   const XP_PER_TIER = 10;
 
+  // Real current season window: Aug 2026 - Nov 2026 (~90 days)
+  const startDate = 1785984000000; // 2026-08-06
+  const endDate = startDate + (90 * 24 * 60 * 60 * 1000); // 1793760000000 (~90 days later)
+
   for (let i = 0; i <= TIER_COUNT; i++) {
     let freeReward: BPReward | null = null;
 
-    // Fixed Free-Track Rewards based on real catalog data
+    // Fixed Free-Track Rewards using real CREDITS system
     if (i === 5) freeReward = { type: 'CREDITS', value: 100, label: '100 CREDITS' };
-    else if (i === 10) freeReward = { type: 'COSMETIC', value: 'skin_vibe_stealth', label: 'PHANTOM BLACK SKIN' };
+    else if (i === 10) freeReward = { type: 'CREDITS', value: 100, label: '100 CREDITS' };
     else if (i === 15) freeReward = { type: 'CREDITS', value: 150, label: '150 CREDITS' };
-    else if (i === 20) freeReward = { type: 'BLUEPRINT', value: 'bp_vx88_digital', label: 'DIGITAL CAMO BLUEPRINT' };
+    else if (i === 20) freeReward = { type: 'CREDITS', value: 200, label: '200 CREDITS' };
     else if (i === 25) freeReward = { type: 'CREDITS', value: 200, label: '200 CREDITS' };
     else if (i === 30) freeReward = { type: 'CREDITS', value: 250, label: '250 CREDITS' };
     else if (i === 35) freeReward = { type: 'CREDITS', value: 300, label: '300 CREDITS' };
-    else if (i === 40) freeReward = { type: 'COSMETIC', value: 'skin_slop_heavy', label: 'INDUSTRIAL TITAN SKIN' };
+    else if (i === 40) freeReward = { type: 'CREDITS', value: 350, label: '350 CREDITS' };
     else if (i === 45) freeReward = { type: 'CREDITS', value: 400, label: '400 CREDITS' };
-    else if (i === 50) freeReward = { type: 'BLUEPRINT', value: 'bp_viper_gold', label: 'GILDED SPEC PISTOL' };
+    else if (i === 50) freeReward = { type: 'CREDITS', value: 500, label: '500 CREDITS' };
 
     tiers.push({
       index: i,
@@ -62,8 +66,8 @@ export function generateSeasonOne(): BattlePassSeason {
   return {
     id: 'SEASON_01',
     name: 'OPERATION: ZERO RESET',
-    startDate: 1722888000000, // 2024-08-05
-    endDate: 1730836800000,   // ~90 days later
+    startDate,
+    endDate,
     tiers
   };
 }

@@ -288,6 +288,18 @@ export class NetworkSyncSystem {
       }
     }
 
+    if (msg.type === "OBJECTIVE_PROGRESS") {
+      if (match.llmObjective) {
+        match.llmObjective.onServerProgressUpdate(msg.progressSec);
+      }
+    }
+
+    if (msg.type === "OBJECTIVE_INTERRUPTED") {
+      if (match.llmObjective) {
+        match.llmObjective.resetProgressOnDamage();
+      }
+    }
+
     if (msg.type === "dev_server_tick_ms") {
       (window as any).devServerTickMs = msg.tickMs;
     }
@@ -370,23 +382,51 @@ export class NetworkSyncSystem {
       if (typeof (window as any).spawnTracer === "function") (window as any).spawnTracer(_droneMuzzlePos, _droneFireDir);
       if (typeof (window as any).triggerFlash === "function") (window as any).triggerFlash(_droneMuzzlePos, scaleFactor, false, msg.droneId, this.match);
 
-      // Reusable Positional Audio to avoid dynamic allocation GC overhead during intense combat
+      // Trigger spatial audio for drone firing
       const camera = (window as any).camera;
-      const shotBuffer = (window as any).shotBuffer;
-      const audioListener = (window as any).audioListener;
-      if (camera && camera.position.distanceToSquared(_droneMuzzlePos) < 22500 && shotBuffer && audioListener) {
-         const s = (window as any).vexeaSettings;
-         const volume = s ? s.sfxVolume : 1.0;
-         droneAudioPool.play(scene, audioListener, shotBuffer, _droneMuzzlePos, volume, playbackRate);
+      const am = (window as any).audioManager;
+      if (am && am.playPositional && camera) {
+        am.playPositional(
+          "rifle_fire",
+          _droneMuzzlePos.x,
+          _droneMuzzlePos.y,
+          _droneMuzzlePos.z,
+          camera.position.x,
+          camera.position.y,
+          camera.position.z,
+          150
+        );
+      } else {
+        const shotBuffer = (window as any).shotBuffer;
+        const audioListener = (window as any).audioListener;
+        if (camera && camera.position.distanceToSquared(_droneMuzzlePos) < 22500 && shotBuffer && audioListener) {
+           const s = (window as any).vexeaSettings;
+           const volume = s ? s.sfxVolume : 1.0;
+           droneAudioPool.play(scene, audioListener, shotBuffer, _droneMuzzlePos, volume, playbackRate);
+        }
       }
     }
 
     if (msg.type === "DRONE_DEATH") {
-      if ((window as any).audioManager && (window as any).audioManager.play) {
-        (window as any).audioManager.play("drone_death");
-      }
+      const camera = (window as any).camera;
+      const am = (window as any).audioManager;
       if (msg.posX !== undefined && msg.posY !== undefined && msg.posZ !== undefined) {
         _droneDeathPos.set(msg.posX, msg.posY, msg.posZ);
+        if (am && am.playPositional && camera) {
+          am.playPositional(
+            "drone_death",
+            msg.posX,
+            msg.posY,
+            msg.posZ,
+            camera.position.x,
+            camera.position.y,
+            camera.position.z,
+            150
+          );
+        } else if (am && am.play) {
+          am.play("drone_death");
+        }
+
         if (typeof (window as any).spawnImpactSparks === "function") {
           (window as any).spawnImpactSparks(msg.posX, msg.posY, msg.posZ, 40); // 40 large sparks
         }
@@ -395,6 +435,8 @@ export class NetworkSyncSystem {
         } else if (typeof (window as any).triggerFlash === "function") {
           (window as any).triggerFlash(_droneDeathPos);
         }
+      } else if (am && am.play) {
+        am.play("drone_death");
       }
       match.droneJitterMap.delete(msg.droneId);
     }

@@ -13,6 +13,7 @@ import { VisualsSystem } from "./src/systems/VisualsSystem";
 import { ReconnectionSystem } from "./src/systems/ReconnectionSystem";
 import { CameraEffectsSystem } from "./src/camera/CameraEffects";
 import { CompassSystem } from "./src/systems/CompassSystem";
+import { LLMObjectiveSystem } from "./src/systems/LLMObjectiveSystem";
 
 
 export interface NetworkDroneState {
@@ -129,6 +130,7 @@ export class MatchController {
   public visuals: VisualsSystem | null = null;
   public reconnection: ReconnectionSystem | null = null;
   public cameraEffects: CameraEffectsSystem | null = null;
+  public llmObjective: LLMObjectiveSystem | null = null;
 
 
   // Match State
@@ -234,6 +236,8 @@ export class MatchController {
     this.visuals.init();
     this.cameraEffects = new CameraEffectsSystem(this);
     this.reconnection = new ReconnectionSystem(this);
+    this.llmObjective = new LLMObjectiveSystem(this);
+    this.llmObjective.init();
 
     this.reconnection.init();
   }
@@ -315,6 +319,11 @@ export class MatchController {
     if (this.minimap) {
         this.minimap.dispose();
         this.minimap = null;
+    }
+
+    if (this.llmObjective) {
+        this.llmObjective.destroy();
+        this.llmObjective = null;
     }
     
     if (this.networkSync) {

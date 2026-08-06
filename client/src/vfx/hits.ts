@@ -277,9 +277,18 @@ export function spawnEnvironmentDecalAndDust(ix: number, iy: number, iz: number,
         dustVelY![i] = _dustVec.y + dustSpeed * 0.5; // add upward buoyancy
         dustVelZ![i] = _dustVec.z;
         
+        // Immediate birth matrix initialization
+        _hitPos.set(ix, iy, iz);
+        _hitQuat.copy(_dustQuat);
+        _hitScale.setScalar(VFX_CONSTANTS.HITS.DUST_SIZE_START);
+        _hitMatrix.compose(_hitPos, _hitQuat, _hitScale);
+        dustBatch.setMatrixAt(dustInstIds[i], _hitMatrix);
         dustBatch.setVisibleAt(dustInstIds[i], true);
         activated++;
       }
+    }
+    if (activated > 0 && (dustBatch as any).instanceMatrix) {
+      (dustBatch as any).instanceMatrix.needsUpdate = true;
     }
   }
 

@@ -1,5 +1,5 @@
 import * as screenManager from "./screen-manager";
-import { getFirestore, collection, addDoc, serverTimestamp, doc, getDoc, onSnapshot, setDoc, updateDoc } from "firebase/firestore";
+import { getFirestore, collection, addDoc, serverTimestamp, doc, getDoc, onSnapshot, setDoc, updateDoc, query, where, documentId, getDocs } from "firebase/firestore";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
 import { DS } from "../design-system";
 import { IS_DEV } from "../../shared/gates/production.gate";
@@ -22,6 +22,9 @@ import { renderStoreScreen } from "./store-screen";
 import { StudioPreviewManager } from "../StudioPreviewManager";
 import { CLASSES } from "../../shared/classes";
 import { resolveDisplayName, sendFriendRequest, getFriendsList, getIncomingRequests, respondToFriendRequest, ensureUsernameMapped, getLobbyInvites, respondToLobbyInvite } from "../social";
+
+// In-memory cache to resolve user profiles without N+1 loops
+const userProfileCache = new Map<string, string>();
 
 let styleInjected = false;
 let activeCardId: string | null = null;
@@ -1048,9 +1051,9 @@ export function initMainMenu() {
   storeCard.appendChild(promoTextEl);
 
   const OFFERS = [
-    { image: 'promo_rifle_1.webp', promo: 'M4-HAZARD SKIN: 400 CR' },
-    { image: 'promo_pistol_1.webp', promo: 'SILENT ASSASSIN: 350 CR' },
-    { image: 'promo_shotgun_1.webp', promo: 'BREACHER SPECIAL: 450 CR' }
+    { image: 'promo_rifle_1.webp', promo: 'TEST COATING: 100 CR' },
+    { image: 'promo_pistol_1.webp', promo: 'VIPER TACTICAL: 150 CR' },
+    { image: 'promo_shotgun_1.webp', promo: 'BREACHER SPECIAL: 200 CR' }
   ];
   let currentOfferIdx = 0;
 
@@ -1608,7 +1611,7 @@ function renderRightPanel() {
         renderStatsScreen(container, registeredUserData);
       }
       else if (currentRightPanelMode === 'LOADOUT') {
-        renderArmoryScreen(container);
+        renderArmoryScreen(container, registeredUserData);
       }
       else if (currentRightPanelMode === 'FACTION') {
         renderFactionScreen(container, registeredUserData);
@@ -2101,7 +2104,7 @@ function renderRightPanel() {
        renderStatsScreen(container, registeredUserData);
     }
     else if (currentRightPanelMode === 'LOADOUT') {
-       renderArmoryScreen(container);
+       renderArmoryScreen(container, registeredUserData);
     }
     else if (currentRightPanelMode === 'FACTION') {
        renderFactionScreen(container, registeredUserData);
@@ -2570,6 +2573,109 @@ function createUnifiedAuthOverlay(db: any, auth: any, defaultTab: 'GUEST' | 'AUT
       }
     } else {
       // Tab AUTH
+      if (user && !user.isAnonymous) {
+        // Authenticated Profile Card (Section 11 Design Protocol)
+        const profileCard = document.createElement('div');
+        profileCard.className = 'mm-glass';
+        Object.assign(profileCard.style, {
+          padding: '16px', display: 'flex', flexDirection: 'column', gap: '12px',
+          border: `1px solid ${DS.colors.accent}`, background: 'rgba(0, 240, 255, 0.03)'
+        });
+
+        const headerRow = document.createElement('div');
+        Object.assign(headerRow.style, { display: 'flex', alignItems: 'center', justifyContent: 'space-between' });
+
+        const headerTitle = document.createElement('div');
+        const providerName = (user.providerData[0]?.providerId || 'GOOGLE / EMAIL').toUpperCase();
+        headerTitle.innerHTML = `
+          <div style="font-size:10px; color:${DS.colors.accent}; letter-spacing:2px; font-weight:bold;">AUTHENTICATED ACCOUNT</div>
+          <div style="font-size:10px; color:${DS.colors.textMuted}; margin-top:2px;">PROVIDER: ${providerName}</div>
+        `;
+
+        const statusBadge = document.createElement('div');
+        statusBadge.textContent = '[AUTHENTICATED]';
+        Object.assign(statusBadge.style, {
+          fontSize: '9px', fontWeight: 'bold', color: '#00FF66', border: '1px solid #00FF66',
+          padding: '2px 6px', background: 'rgba(0, 255, 102, 0.12)', letterSpacing: '1px'
+        });
+
+        headerRow.appendChild(headerTitle);
+        headerRow.appendChild(statusBadge);
+        profileCard.appendChild(headerRow);
+
+        // User Avatar & Info
+        const infoRow = document.createElement('div');
+        Object.assign(infoRow.style, { display: 'flex', alignItems: 'center', gap: '12px', marginTop: '2px' });
+
+        if (user.photoURL) {
+          const img = document.createElement('img');
+          img.src = user.photoURL;
+          img.alt = 'User Avatar';
+          Object.assign(img.style, { width: '42px', height: '42px', borderRadius: '50%', border: `1px solid ${DS.colors.accent}`, flexShrink: '0' });
+          infoRow.appendChild(img);
+        } else {
+          const avatarBadge = document.createElement('div');
+          avatarBadge.textContent = (registeredUserData?.displayName || user.displayName || user.email || 'OP').charAt(0).toUpperCase();
+          Object.assign(avatarBadge.style, {
+            width: '42px', height: '42px', borderRadius: '50%', background: DS.colors.accent,
+            color: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontSize: '18px', fontWeight: 'bold', flexShrink: '0'
+          });
+          infoRow.appendChild(avatarBadge);
+        }
+
+        const details = document.createElement('div');
+        Object.assign(details.style, { display: 'flex', flexDirection: 'column', gap: '2px', minWidth: '0' });
+        const nameStr = (registeredUserData?.displayName || user.displayName || user.email?.split('@')[0] || 'OPERATIVE').toUpperCase();
+        details.innerHTML = `
+          <div style="font-size:15px; font-weight:bold; color:${DS.colors.text}; letter-spacing:1px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${nameStr}</div>
+          <div style="font-size:11px; color:${DS.colors.textMuted}; font-family:monospace; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${user.email || user.uid}</div>
+          <div style="font-size:10px; color:${DS.colors.textMuted}; margin-top:2px;">FACTION: <span style="color:#FFF; font-weight:bold;">${registeredUserData?.faction || 'VIBE CO.'}</span></div>
+        `;
+        infoRow.appendChild(details);
+        profileCard.appendChild(infoRow);
+
+        // Action Buttons Row
+        const actionsRow = document.createElement('div');
+        Object.assign(actionsRow.style, { display: 'flex', gap: '10px', marginTop: '6px' });
+
+        const logoutBtn = document.createElement('button');
+        logoutBtn.textContent = 'LOG OUT OF ACCOUNT';
+        Object.assign(logoutBtn.style, {
+          flex: '1', padding: '10px', background: 'rgba(255, 68, 0, 0.15)', border: `1px solid ${DS.colors.accent}`,
+          color: DS.colors.accent, fontFamily: DS.typography.fontFamily, fontSize: '11px', fontWeight: 'bold',
+          letterSpacing: '1px', cursor: 'pointer', transition: 'all 0.2s'
+        });
+
+        logoutBtn.onclick = async () => {
+          try {
+            const { signOut } = await import('firebase/auth');
+            await signOut(auth);
+            showMenuNotification("LOGGED OUT. RETURNED TO GUEST SESSION.");
+            overlay.remove();
+          } catch (e: any) {
+            console.warn("Logout error:", e);
+            showMenuNotification(`Logout Error: ${e?.message || 'Unable to logout'}`, "warning");
+          }
+        };
+
+        const closeBtn = document.createElement('button');
+        closeBtn.textContent = 'CLOSE OVERLAY';
+        Object.assign(closeBtn.style, {
+          flex: '1', padding: '10px', background: 'rgba(255,255,255,0.08)', border: DS.glass.border,
+          color: DS.colors.text, fontFamily: DS.typography.fontFamily, fontSize: '11px', fontWeight: 'bold',
+          letterSpacing: '1px', cursor: 'pointer'
+        });
+        closeBtn.onclick = () => overlay.remove();
+
+        actionsRow.appendChild(logoutBtn);
+        actionsRow.appendChild(closeBtn);
+        profileCard.appendChild(actionsRow);
+
+        contentContainer.appendChild(profileCard);
+        return;
+      }
+
       if (pendingAuthAction) {
         // Confirmation prompt for guest progress overwrite
         const warnBox = document.createElement('div');
@@ -2649,6 +2755,7 @@ function createUnifiedAuthOverlay(db: any, auth: any, defaultTab: 'GUEST' | 'AUT
       });
 
       const execGoogleAuth = async () => {
+        const wasFullscreen = !!document.fullscreenElement;
         try {
           const { GoogleAuthProvider, signInWithPopup } = await import('firebase/auth');
           const provider = new GoogleAuthProvider();
@@ -2667,6 +2774,9 @@ function createUnifiedAuthOverlay(db: any, auth: any, defaultTab: 'GUEST' | 'AUT
               createdAt: serverTimestamp(), dailyRefreshedAt: serverTimestamp(),
               totalMatches: 0, totalWins: 0, totalDroneEliminations: 0, totalDeaths: 0
             });
+          }
+          if (wasFullscreen && !document.fullscreenElement) {
+            try { await document.documentElement.requestFullscreen(); } catch (e) {}
           }
           showMenuNotification(`SIGNED IN AS ${(loggedUser.displayName || loggedUser.email || 'OPERATIVE').toUpperCase()}`);
           overlay.remove();
@@ -2819,22 +2929,6 @@ function createUnifiedAuthOverlay(db: any, auth: any, defaultTab: 'GUEST' | 'AUT
       btnRow.appendChild(loginBtn);
       btnRow.appendChild(registerBtn);
       contentContainer.appendChild(btnRow);
-
-      if (user && !user.isAnonymous) {
-        const signOutBtn = document.createElement('button');
-        signOutBtn.textContent = 'SIGN OUT OF ACCOUNT';
-        Object.assign(signOutBtn.style, {
-          width: '100%', padding: '10px', background: 'rgba(255, 68, 0, 0.15)',
-          border: '1px solid #FF4400', color: '#FF4400', fontFamily: DS.typography.fontFamily,
-          fontSize: '11px', fontWeight: 'bold', cursor: 'pointer', marginTop: '6px'
-        });
-        signOutBtn.onclick = async () => {
-          await auth.signOut();
-          showMenuNotification("SIGNED OUT");
-          overlay.remove();
-        };
-        contentContainer.appendChild(signOutBtn);
-      }
 
       if (IS_DEV) {
         const devWipeBtn = document.createElement('button');
@@ -3067,19 +3161,39 @@ function openSquadFriendsModal() {
 
         const dbInstance = getFirestore();
 
+        // Optimize N+1 Firestore queries via Batch Fetch & Cache (PROPOSED_PLAN.md Issue 3)
+        const uncachedUids = Array.from(new Set(incomingList.map(req => req.senderUid)))
+          .filter(uid => !userProfileCache.has(uid));
+
+        if (uncachedUids.length > 0) {
+          const chunkSize = 30;
+          for (let i = 0; i < uncachedUids.length; i += chunkSize) {
+            const chunk = uncachedUids.slice(i, i + chunkSize);
+            try {
+              const usersQuery = query(
+                collection(dbInstance, "Users"),
+                where(documentId(), "in", chunk)
+              );
+              const querySnapshot = await getDocs(usersQuery);
+              querySnapshot.forEach(userDoc => {
+                const data = userDoc.data();
+                if (data && data.displayName) {
+                  userProfileCache.set(userDoc.id, data.displayName);
+                }
+              });
+            } catch (e) {
+              console.warn("Failed to batch fetch user profiles:", e);
+            }
+          }
+        }
+
         for (const req of incomingList) {
           const reqRow = document.createElement('div');
           Object.assign(reqRow.style, {
             display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '6px 8px', background: 'rgba(255,255,255,0.02)'
           });
 
-          let senderName = req.senderUid;
-          try {
-            const userDoc = await getDoc(doc(dbInstance, "Users", req.senderUid));
-            if (userDoc.exists() && userDoc.data()?.displayName) {
-              senderName = userDoc.data().displayName;
-            }
-          } catch (e) {}
+          const senderName = userProfileCache.get(req.senderUid) || req.senderUid;
 
           const nameLabel = document.createElement('div');
           nameLabel.innerHTML = `<span style="font-weight:bold;">${senderName}</span> <span style="font-size:9px; color:#ffaa00; margin-left:6px;">● FRIEND REQUEST</span>`;

@@ -1,29 +1,11 @@
 [
   {
-    "id": "offer_promo_rifle",
-    "title": "VX-88 BATTLE RIFLE BUNDLE",
-    "description": "High-velocity precision rifle with integrated muzzle break & holo sight.",
-    "priceCredits": 250,
+    "id": "offer_test_skin",
+    "title": "TEST COATING SPECIAL DEAL",
+    "description": "Cyan-themed weapon finish and high-tech vector testing suit.",
+    "priceCredits": 100,
     "image": "promo_rifle_1.webp",
     "itemType": "weapon_skin",
-    "discountPercent": 20
-  },
-  {
-    "id": "offer_promo_pistol",
-    "title": "SIDEARM VIPER SPEC-OPS",
-    "description": "Suppressed high-capacity sidearm engineered for silent breaches.",
-    "priceCredits": 150,
-    "image": "promo_pistol_1.webp",
-    "itemType": "weapon_skin",
-    "discountPercent": 15
-  },
-  {
-    "id": "offer_promo_shotgun",
-    "title": "TRENCH SWEEPER HEAVY SHOTGUN",
-    "description": "Close-quarters breach weapon with armor-piercing payload.",
-    "priceCredits": 300,
-    "image": "promo_shotgun_1.webp",
-    "itemType": "weapon_skin",
-    "discountPercent": 25
+    "discountPercent": 30
   }
 ]

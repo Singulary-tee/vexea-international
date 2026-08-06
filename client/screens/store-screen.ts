@@ -2,15 +2,11 @@ import { DS } from "../design-system";
 import catalogDataList from "../data/catalog.json";
 import offersDataList from "../data/offers.json";
 import { getAuth } from "firebase/auth";
-import { getFirestore, doc, updateDoc } from "firebase/firestore";
+import { getFirestore, doc, updateDoc, arrayUnion } from "firebase/firestore";
 import { audioManager } from "../audio";
-import { StudioPreviewManager } from "../StudioPreviewManager";
+import { StudioPreviewManager, AVAILABLE_SKINS } from "../StudioPreviewManager";
 import { clientFlagService } from "../flags/flag-service";
 import { FeatureFlagKey } from "../../shared/feature-flags";
-
-const AVAILABLE_SKINS = {
-  HAZARD: { id: 'HAZARD', label: 'HAZARD SKIN' }
-};
 
 let activeCategoryFilter: 'ALL' | 'cosmetic' | 'blueprint' = 'ALL';
 
@@ -79,10 +75,10 @@ export function renderStoreScreen(container: HTMLElement, registeredUserData: an
   leftCol.appendChild(featuredLabel);
 
   const featuredOffer = processedOffers[0] || {
-    id: "promo_hazard_set",
-    title: "HAZARD SPEC OVERLOAD",
-    priceCredits: 600,
-    description: "Full Hazard Spec weapon casing and high-threat contractor weave."
+    id: "test_skin",
+    title: "TEST COATING SPECIAL DEAL",
+    priceCredits: 100,
+    description: "Cyan-themed weapon finish and high-tech vector testing suit."
   };
 
   const featuredCard = document.createElement('div');
@@ -131,10 +127,10 @@ export function renderStoreScreen(container: HTMLElement, registeredUserData: an
     <div style="display:flex; flex-direction:column; gap:4px; background:rgba(255,255,255,0.01); border:1px solid rgba(255,255,255,0.03); padding:6px 8px; border-radius:2px;">
       <div style="font-family:${DS.typography.fontFamily}; font-size:7.5px; color:${DS.colors.textMuted}; font-weight:bold; letter-spacing:0.8px;">INCLUDED SPECS:</div>
       <div style="font-family:${DS.typography.fontFamily}; font-size:9px; color:${DS.colors.text}; font-weight:bold; display:flex; align-items:center; gap:4px;">
-        <span style="color:${DS.colors.accent};">•</span> VX-88 HAZARD SHELL ASSEMBLY
+        <span style="color:${DS.colors.accent};">•</span> VX-88 TEST COATING ASSEMBLY
       </div>
       <div style="font-family:${DS.typography.fontFamily}; font-size:9px; color:${DS.colors.text}; font-weight:bold; display:flex; align-items:center; gap:4px;">
-        <span style="color:${DS.colors.accent};">•</span> PRE-TUNED AP MUZZLE BRAKE
+        <span style="color:${DS.colors.accent};">•</span> PRE-TUNED INTEGRATION MATRIX
       </div>
     </div>
   `;
@@ -143,20 +139,41 @@ export function renderStoreScreen(container: HTMLElement, registeredUserData: an
   Object.assign(featActionRow.style, {
     display: 'flex',
     gap: '6px',
-    flexDirection: 'column',
+    flexDirection: 'row',
     flexShrink: '0'
   });
+
+  const featPreviewBtn = document.createElement('button');
+  featPreviewBtn.textContent = 'INSPECT';
+  Object.assign(featPreviewBtn.style, {
+    flex: '1',
+    padding: '8px',
+    background: 'rgba(255, 255, 255, 0.02)',
+    border: '1px solid rgba(255, 255, 255, 0.08)',
+    color: DS.colors.text,
+    fontFamily: DS.typography.fontFamily,
+    fontSize: '9px',
+    fontWeight: 'bold',
+    letterSpacing: '1px',
+    cursor: 'pointer',
+    borderRadius: '2px',
+    transition: 'all 0.15s ease'
+  });
+
+  featPreviewBtn.onclick = () => {
+    open3DSkinPreviewModal(featuredOffer.title, AVAILABLE_SKINS.test_skin, 'rifle');
+  };
 
   const featBuyBtn = document.createElement('button');
   featBuyBtn.textContent = `ACQUIRE DEAL — ${featuredOffer.priceCredits} CR`;
   Object.assign(featBuyBtn.style, {
-    width: '100%',
+    flex: '2.2',
     padding: '8px',
     background: DS.colors.accent,
     border: 'none',
     color: '#000000',
     fontFamily: DS.typography.fontFamily,
-    fontSize: '10px',
+    fontSize: '9px',
     fontWeight: 'bold',
     letterSpacing: '1px',
     cursor: 'pointer',
@@ -165,9 +182,10 @@ export function renderStoreScreen(container: HTMLElement, registeredUserData: an
   });
 
   featBuyBtn.onclick = async () => {
-    await handleStorePurchase(featuredOffer.priceCredits, featuredOffer.title, registeredUserData, container);
+    await handleStorePurchase(featuredOffer.priceCredits, 'test_skin', featuredOffer.title, registeredUserData, container);
   };
 
+  featActionRow.appendChild(featPreviewBtn);
   featActionRow.appendChild(featBuyBtn);
   featuredCard.appendChild(featActionRow);
   leftCol.appendChild(featuredCard);
@@ -308,7 +326,25 @@ export function renderStoreScreen(container: HTMLElement, registeredUserData: an
     });
 
     previewBtn.onclick = () => {
-      open3DSkinPreviewModal(item.title, AVAILABLE_SKINS.HAZARD);
+      let itemKey = 'rifle';
+      const titleLower = item.title.toLowerCase();
+      const idLower = (item.id || '').toLowerCase();
+      if (titleLower.includes('pistol') || idLower.includes('pistol') || titleLower.includes('viper')) {
+        itemKey = 'pistol';
+      } else if (item.category === 'cosmetic' || titleLower.includes('operative') || titleLower.includes('titan')) {
+        itemKey = 'Player_one-optimized.glb';
+      } else if (titleLower.includes('rifle') || titleLower.includes('vx-88') || titleLower.includes('vx88')) {
+        itemKey = 'rifle';
+      }
+
+      // Dynamically resolve correct skin configuration
+      let skinId = 'STANDARD';
+      if (idLower.includes('test_skin') || idLower.includes('test') || titleLower.includes('test')) {
+        skinId = 'test_skin';
+      }
+
+      const skinObj = AVAILABLE_SKINS[skinId] || AVAILABLE_SKINS.STANDARD;
+      open3DSkinPreviewModal(item.title, skinObj, itemKey);
     };
 
     const buyBtn = document.createElement('button');
@@ -329,7 +365,7 @@ export function renderStoreScreen(container: HTMLElement, registeredUserData: an
     });
 
     buyBtn.onclick = async () => {
-      await handleStorePurchase(item.priceCredits, item.title, registeredUserData, container);
+      await handleStorePurchase(item.priceCredits, item.id, item.title, registeredUserData, container);
     };
 
     btnRow.appendChild(previewBtn);
@@ -346,11 +382,22 @@ export function renderStoreScreen(container: HTMLElement, registeredUserData: an
   container.appendChild(wrap);
 }
 
-async function handleStorePurchase(price: number, itemTitle: string, userData: any, container: HTMLElement): Promise<void> {
+async function handleStorePurchase(price: number, itemId: string, itemTitle: string, userData: any, container: HTMLElement): Promise<void> {
   const currentCredits = userData?.credits !== undefined ? userData.credits : 1000;
   if (currentCredits < price) {
     alert(`INSUFFICIENT CREDITS. Required: ${price} CR | Current: ${currentCredits} CR`);
     return;
+  }
+
+  // Save ownership in LocalStorage
+  try {
+    const owned = JSON.parse(localStorage.getItem('vex_owned_skins') || '[]');
+    if (!owned.includes(itemId)) {
+      owned.push(itemId);
+      localStorage.setItem('vex_owned_skins', JSON.stringify(owned));
+    }
+  } catch (e) {
+    console.warn("Local storage ownership write failed:", e);
   }
 
   const auth = getAuth();
@@ -359,9 +406,16 @@ async function handleStorePurchase(price: number, itemTitle: string, userData: a
       const newCredits = currentCredits - price;
       const db = getFirestore();
       await updateDoc(doc(db, 'Users', auth.currentUser.uid), {
-        credits: newCredits
+        credits: newCredits,
+        unlockedItems: arrayUnion(itemId)
       });
-      if (userData) userData.credits = newCredits;
+      if (userData) {
+        userData.credits = newCredits;
+        if (!userData.unlockedItems) userData.unlockedItems = [];
+        if (!userData.unlockedItems.includes(itemId)) {
+          userData.unlockedItems.push(itemId);
+        }
+      }
       audioManager.play('click');
       alert(`PURCHASE SUCCESSFUL: ${itemTitle} for ${price} CR!`);
       renderStoreScreen(container, userData);
@@ -369,11 +423,18 @@ async function handleStorePurchase(price: number, itemTitle: string, userData: a
       console.warn("Purchase transaction failed:", e);
     }
   } else {
+    if (userData) {
+      if (!userData.unlockedItems) userData.unlockedItems = [];
+      if (!userData.unlockedItems.includes(itemId)) {
+        userData.unlockedItems.push(itemId);
+      }
+    }
     alert(`PURCHASED ${itemTitle}!`);
+    renderStoreScreen(container, userData);
   }
 }
 
-function open3DSkinPreviewModal(title: string, skin: any): void {
+function open3DSkinPreviewModal(title: string, skin: any, itemKey?: string): void {
   const overlay = document.createElement('div');
   Object.assign(overlay.style, {
     position: 'fixed',
@@ -381,52 +442,94 @@ function open3DSkinPreviewModal(title: string, skin: any): void {
     left: '0',
     width: '100vw',
     height: '100vh',
-    background: 'rgba(0,0,0,0.85)',
+    background: 'rgba(0,0,0,0.88)',
+    backdropFilter: 'blur(6px)',
     zIndex: '99999',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
+    padding: 'clamp(8px, 2vh, 16px)',
     boxSizing: 'border-box'
   });
 
   const modal = document.createElement('div');
   Object.assign(modal.style, {
-    width: '600px',
-    height: '480px',
+    width: 'min(640px, 95vw)',
+    height: 'min(500px, 92vh)',
+    maxHeight: '96vh',
     background: '#050508',
     border: `1px solid ${DS.colors.accent}`,
     display: 'flex',
     flexDirection: 'column',
     position: 'relative',
-    padding: '20px',
-    gap: '16px',
-    borderRadius: '4px'
+    padding: 'clamp(8px, 1.5vw, 12px)',
+    gap: '6px',
+    borderRadius: '4px',
+    boxSizing: 'border-box',
+    overflow: 'hidden'
   });
 
   modal.innerHTML = `
-    <div style="display:flex; justify-content:space-between; align-items:center;">
-      <div style="font-family:${DS.typography.fontFamily}; font-size:16px; font-weight:bold; color:${DS.colors.text}; letter-spacing:2px;">
+    <div style="display:flex; justify-content:space-between; align-items:center; height:clamp(36px, 8vh, 44px); flex-shrink:0;">
+      <div style="font-family:${DS.typography.fontFamily}; font-size:clamp(11px, 2.5vw, 15px); font-weight:bold; color:${DS.colors.text}; letter-spacing:1.5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; flex:1; margin-right:8px;">
         3D INSPECTOR — ${title}
       </div>
-      <button id="close-3d-modal" style="background:none; border:none; color:${DS.colors.accent}; font-family:${DS.typography.fontFamily}; font-size:14px; font-weight:bold; cursor:pointer;">CLOSE [X]</button>
+      <button id="close-3d-modal" style="background:none; border:1px solid ${DS.colors.accent}; color:${DS.colors.accent}; font-family:${DS.typography.fontFamily}; font-size:clamp(11px, 2.5vw, 13px); font-weight:bold; cursor:pointer; min-width:44px; height:36px; padding:0 12px; display:inline-flex; align-items:center; justify-content:center; flex-shrink:0; border-radius:2px;">CLOSE [X]</button>
     </div>
   `;
 
   const canvasContainer = document.createElement('div');
   Object.assign(canvasContainer.style, {
     flex: '1',
+    width: '100%',
+    minHeight: '0',
     background: '#020204',
-    border: '1px solid rgba(255,255,255,0.05)',
+    border: '1px solid rgba(255,255,255,0.06)',
     position: 'relative',
-    borderRadius: '2px'
+    borderRadius: '2px',
+    overflow: 'hidden',
+    touchAction: 'none'
   });
+
+  const tipNotice = document.createElement('div');
+  tipNotice.textContent = 'DRAG / TOUCH TO ROTATE 360°';
+  Object.assign(tipNotice.style, {
+    position: 'absolute',
+    bottom: '6px',
+    left: '50%',
+    transform: 'translateX(-50%)',
+    fontFamily: DS.typography.fontFamily,
+    fontSize: '8px',
+    color: 'rgba(255,255,255,0.4)',
+    letterSpacing: '1px',
+    pointerEvents: 'none',
+    textTransform: 'uppercase',
+    textAlign: 'center',
+    zIndex: '2'
+  });
+  canvasContainer.appendChild(tipNotice);
 
   modal.appendChild(canvasContainer);
   overlay.appendChild(modal);
   document.body.appendChild(overlay);
 
-  const closeBtn = modal.querySelector('#close-3d-modal') as HTMLElement;
-  closeBtn.onclick = () => {
+  let resizeObserver: ResizeObserver | null = null;
+  if (typeof ResizeObserver !== 'undefined') {
+    resizeObserver = new ResizeObserver(() => {
+      StudioPreviewManager.resizeToContainer();
+    });
+    resizeObserver.observe(canvasContainer);
+  }
+
+  const handleWindowResize = () => {
+    StudioPreviewManager.resizeToContainer();
+  };
+  window.addEventListener('resize', handleWindowResize);
+
+  const closeModal = () => {
+    if (resizeObserver) resizeObserver.disconnect();
+    window.removeEventListener('resize', handleWindowResize);
+    window.removeEventListener('keydown', handleKeyDown);
     overlay.remove();
     const backdrop = document.getElementById('main-menu-3d-backdrop');
     if (backdrop) {
@@ -436,10 +539,30 @@ function open3DSkinPreviewModal(title: string, skin: any): void {
     }
   };
 
+  const handleKeyDown = (e: KeyboardEvent) => {
+    if (e.key === 'Escape') {
+      closeModal();
+    }
+  };
+  window.addEventListener('keydown', handleKeyDown);
+
+  overlay.onclick = (e: MouseEvent) => {
+    if (e.target === overlay) {
+      closeModal();
+    }
+  };
+
+  const closeBtn = modal.querySelector('#close-3d-modal') as HTMLElement;
+  closeBtn.onclick = (e: MouseEvent) => {
+    e.stopPropagation();
+    closeModal();
+  };
+
   requestAnimationFrame(() => {
     StudioPreviewManager.attachTo(canvasContainer, 'STORE', {
-      itemKey: 'rifle',
+      itemKey: itemKey || 'rifle',
       skinId: skin?.id || 'STANDARD'
     });
+    StudioPreviewManager.resizeToContainer();
   });
 }

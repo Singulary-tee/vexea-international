@@ -241,6 +241,9 @@ export let wheeledDroneModel: THREE.Group | null = null;
 
 // Initialize Game loop
 const initClient = async () => {
+  // Initialize Firebase first so Analytics is ready when ConfigCat initializes and triggers evaluations
+  await initFirebase();
+
   // Wait for feature flags to be ready before Sentry so we respect Replay/Profiling settings
   await clientFlagService.initialize();
   await clientFlagService.waitForReady();
@@ -1263,6 +1266,11 @@ const animateFrame = async () => {
     // 4.7 Compass Draw
     if (match && match.compass) {
       match.compass.update(dt);
+    }
+
+    // 4.8 LLM Core Objective Update
+    if (match && match.llmObjective) {
+      match.llmObjective.update(dt);
     }
 
     // 5. Render Step

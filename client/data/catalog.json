@@ -1,38 +1,11 @@
 [
   {
-    "id": "skin_vibe_stealth",
-    "title": "VIBE OPERATIVE - PHANTOM BLACK",
+    "id": "test_skin",
+    "title": "TEST COATING",
     "category": "cosmetic",
-    "faction": "VIBE CO.",
-    "priceCredits": 200,
-    "requiredLevel": 2,
-    "description": "Grounded matte-black camo weave optimized for dark facility corridors."
-  },
-  {
-    "id": "skin_slop_heavy",
-    "title": "SLOP INC. - INDUSTRIAL TITAN",
-    "category": "cosmetic",
-    "faction": "SLOP INC.",
-    "priceCredits": 200,
-    "requiredLevel": 2,
-    "description": "Reinforced steel-plate exterior with hazard warning graphics."
-  },
-  {
-    "id": "bp_vx88_digital",
-    "title": "VX-88 DIGITAL CAMO BLUEPRINT",
-    "category": "blueprint",
     "faction": "ANY",
-    "priceCredits": 350,
-    "requiredLevel": 3,
-    "description": "Pre-tuned rifle variant featuring reduced recoil and extended mag capacity."
-  },
-  {
-    "id": "bp_viper_gold",
-    "title": "VIPER PISTOL GILDED SPEC",
-    "category": "blueprint",
-    "faction": "ANY",
-    "priceCredits": 500,
-    "requiredLevel": 5,
-    "description": "Custom gold-plated sidearm awarded to high-ranking contractors."
+    "priceCredits": 100,
+    "requiredLevel": 1,
+    "description": "Cyan and dark blue technical coating pattern for skin application testing."
   }
 ]

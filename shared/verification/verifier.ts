@@ -291,7 +291,7 @@ export function verifyBPClaim(input: VerifyBPClaimInput): VerifyBPClaimResult {
     isApproved: true,
     reward: {
       credits: reward.type === 'CREDITS' ? (reward.value as number) : undefined,
-      itemId: (reward.type === 'COSMETIC' || reward.type === 'BLUEPRINT') ? (reward.value as string) : undefined,
+      itemId: (reward.type === 'COSMETIC') ? (reward.value as string) : undefined,
       label: reward.label
     }
   };
