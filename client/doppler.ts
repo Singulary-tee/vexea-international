@@ -2,8 +2,8 @@ import { initClientSentry } from "./sentry";
 
 /**
  * Client-Side Doppler Integration for Production Secrets Management.
- * Fetches client-scoped secrets (including VITE_SENTRY_DSN and VITE_SERVER_URL)
- * from Doppler REST API using VITE_DOPPLER_TOKEN.
+ * Fetches client-scoped secrets from the server-side proxy in AI Studio.
+ * Outside AI Studio, relies entirely on baked-in environment variables.
  */
 
 export interface ClientDopplerSecrets {
@@ -13,71 +13,30 @@ export interface ClientDopplerSecrets {
 let clientSecrets: ClientDopplerSecrets = {};
 
 export async function loadClientDopplerSecrets(): Promise<ClientDopplerSecrets> {
-  const token =
-    (import.meta as any).env?.VITE_DOPPLER_TOKEN ||
-    (typeof process !== "undefined" ? (process.env as any)?.VITE_DOPPLER_TOKEN : undefined);
+  const isAiStudio =
+    typeof window !== "undefined" &&
+    (window.location.hostname.endsWith(".run.app") ||
+      window.location.hostname === "localhost" ||
+      window.location.hostname === "127.0.0.1");
 
-  if (!token) {
+  if (!isAiStudio) {
+    console.log("[Doppler Client] Outside AI Studio: relying on baked-in environment variables.");
     return clientSecrets;
   }
 
   try {
-    console.log("[Doppler Client] Fetching client secrets (VITE_SENTRY_DSN, VITE_SERVER_URL, etc.)...");
-    let response: Response | null = null;
+    console.log("[Doppler Client] AI Studio environment detected: Fetching client secrets from server proxy...");
+    const response = await fetch("/api/doppler-client-secrets");
 
-    const isAiStudio =
-      typeof window !== "undefined" &&
-      (window.location.hostname.endsWith(".run.app") ||
-        window.location.hostname === "localhost" ||
-        window.location.hostname === "127.0.0.1");
-
-    if (!isAiStudio) {
-      // In production outside of AI Studio, client fetches directly from Doppler API without server proxy
-      response = await fetch(
-        "https://api.doppler.com/v3/configs/config/secrets/download?format=json",
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-    } else {
-      // In AI Studio sandbox, try server proxy first as a workaround for CORS/preflight sandbox restrictions
-      try {
-        const proxyUrl = token
-          ? `/api/doppler-client-secrets?token=${encodeURIComponent(token)}`
-          : "/api/doppler-client-secrets";
-        const proxyRes = await fetch(proxyUrl);
-        if (proxyRes.ok) {
-          response = proxyRes;
-        }
-      } catch {
-        // Fallback to direct fetch in AI Studio if proxy is unavailable
-      }
-
-      if (!response) {
-        response = await fetch(
-          "https://api.doppler.com/v3/configs/config/secrets/download?format=json",
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
-      }
-    }
-
-    if (!response || !response.ok) {
-      console.warn(
-        `[Doppler Client] Could not load secrets from Doppler proxy or API.`
-      );
+    if (!response.ok) {
+      console.warn(`[Doppler Client] Could not load secrets from Doppler server proxy. Status: ${response.status}`);
       return clientSecrets;
     }
 
     const secrets = (await response.json()) as Record<string, string>;
     clientSecrets = secrets;
     console.log(
-      `[Doppler Client] Successfully loaded ${Object.keys(secrets).length} client secrets from Doppler.`
+      `[Doppler Client] Successfully loaded ${Object.keys(secrets).length} client secrets via server proxy.`
     );
 
     // Initialize client Sentry if VITE_SENTRY_DSN or SENTRY_DSN was retrieved
@@ -85,19 +44,30 @@ export async function loadClientDopplerSecrets(): Promise<ClientDopplerSecrets> 
     if (sentryDsn) {
       initClientSentry(sentryDsn);
     }
-
-    if (secrets["VITE_SERVER_URL"]) {
-      console.log(`[Doppler Client] VITE_SERVER_URL loaded: ${secrets["VITE_SERVER_URL"]}`);
-    }
   } catch (err) {
-    console.error("[Doppler Client] Exception while loading Doppler client secrets:", err);
+    console.error("[Doppler Client] Exception while fetching secrets via server proxy:", err);
   }
 
   return clientSecrets;
 }
 
 export function getClientDopplerSecret(key: string): string | undefined {
-  return clientSecrets[key] || (import.meta as any).env?.[key];
+  if (clientSecrets[key]) {
+    return clientSecrets[key];
+  }
+
+  // Explicit static inlining fallbacks for Vite production build compatibility
+  if (key === "VITE_SENTRY_DSN" || key === "SENTRY_DSN") {
+    return (import.meta as any).env?.VITE_SENTRY_DSN || (import.meta as any).env?.SENTRY_DSN;
+  }
+  if (key === "VITE_SERVER_URL") {
+    return (import.meta as any).env?.VITE_SERVER_URL;
+  }
+  if (key === "VITE_CONFIGCAT_SDK_KEY") {
+    return (import.meta as any).env?.VITE_CONFIGCAT_SDK_KEY;
+  }
+
+  return (import.meta as any).env?.[key];
 }
 
 export function getClientServerUrl(): string {
@@ -108,6 +78,5 @@ export function getClientServerUrl(): string {
   );
 }
 
-// Automatically initiate load if VITE_DOPPLER_TOKEN is available at startup
-export const dopplerLoaded = (import.meta as any).env?.VITE_DOPPLER_TOKEN ? loadClientDopplerSecrets() : Promise.resolve({});
-
+// Automatically initiate load at startup
+export const dopplerLoaded = loadClientDopplerSecrets();
