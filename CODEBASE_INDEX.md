@@ -63,6 +63,10 @@ This file is the authoritative index of all directories and source files within 
 *   **`constants.ts`**
     *   *Purpose:* Absolute single source of truth for game variables, network sizes, and entity shapes.
     *   *Key Functions/Exports:* `ZONES` registry, `WAYPOINTS` center-points, `TOPOLOGY` adjacency graph, `ZONE_BOUNDS` half-sizes, `DroneState` enum, `DroneType` enum, limits (`PLAYER_MAX_HP`, `CAMERA_MAX_HP`), and the `DRONE_CONFIGS` dictionary containing comprehensive visual, physical, and behavioral parameters per drone type.
+*   **`feature-flags.ts`**
+    *   *Purpose:* Shared feature flag definitions, types, and default schemas for Sentry, LLM, Store, Faction, and Match configurations.
+*   **`battle-pass.ts`**
+    *   *Purpose:* Shared contracts for the Battle Pass system, including tier structures, reward types (Credits/Cosmetic), and seasonal generation logic (Phase 1).
 *   **`gamemode-configs.ts`**
     *   *Purpose:* Governs rulesets, friendly fire options, victory requirements, score scaling, and timer labels.
     *   *Key Functions/Exports:* `GameModeConfig` interface, `GAMEMODES` registry, and the active `ACTIVE_GAMEMODE` constant.
@@ -154,6 +158,10 @@ This file is the authoritative index of all directories and source files within 
     *   *Purpose:* Renders diagnostics and framing metrics overlays.
 *   **`ui_editor.ts`**
     *   *Purpose:* Panel positioning system for custom HUD configurations.
+*   **`public/` (Engine Assets & Decoders)**
+    *   **`basis/`**: WebAssembly transcoder modules for Basis Universal texture compression.
+    *   **`draco/`**: WebAssembly decoder modules for Draco geometric mesh compression.
+    *   **`inverted_plus.svg`**: Specialized crosshair asset.
 *   **`weapons_model.ts`**
     *   *Purpose:* Handles first-person weapon meshes, reload animations, and procedural recoil offsets.
 *   **`data/` (JSON Data Registries)**
@@ -165,6 +173,7 @@ This file is the authoritative index of all directories and source files within 
     *   **`screen.gate.ts`**: Centralized screen lock manager (`ScreenGate`) enforcing rotation overlay locks, loading locks, splash locks, UI editor locks, and gameplay input suppression.
 *   **`screens/` (Client View Screens)**
     *   **`armory-screen.ts`**: Weapon loadout customization, attachment selection, weapon skin selection, and 3D preview.
+    *   **`battle-pass-screen.ts`**: UI system for Battle Pass progression, featuring a high-contrast industrial theme, tier reward claiming, and real-time XP tracking.
     *   **`dev-entities.ts`**: Developer entity inspector for spawning, tracking, and debugging live match entities.
     *   **`dev-map-editor.ts`**: Level editor interface for placing and editing map colliders, spawn nodes, and zone volumes.
     *   **`faction-screen.ts`**: Faction/INTEL screen displaying operative lore, faction data, contractor dossiers, and intelligence updates.
@@ -227,6 +236,8 @@ This file is the authoritative index of all directories and source files within 
     *   *Purpose:* TypeScript compiler choices, module resolution rules, and target specs.
 *   **`vite.config.ts`**
     *   *Purpose:* Vite server configuration, port binding (3000), static path aliases, and build output targets.
+*   **`vitest.config.ts`**
+    *   *Purpose:* Configuration for the Vitest test runner, defining environment setup, globals, and coverage reporting.
 *   **`metadata.json`**
     *   *Purpose:* AI Studio application metadata cataloging app name ("VEXEΛ"), description, frame permissions, and major capabilities.
 *   **`firestore.rules` & `database.rules.json`**
@@ -241,6 +252,19 @@ This file is the authoritative index of all directories and source files within 
     *   *Purpose:* Cloudflare R2 bucket asset inventory and URL mapping manifest for background card graphics.
 *   **`hud_layout.json`**
     *   *Purpose:* Custom HUD element layout coordinates, scale factors, and visibility toggles.
+*   **`FEATURE_FLAGS.md`**
+    *   *Purpose:* Registry of all feature flags, documenting evaluation strategies (ConfigCat), data types, and operational impacts.
+*   **`Gemini_HUD_Calculator.md`**
+    *   *Purpose:* Mathematical specification and audit record for the HUD Editor, enforcing strict sizing protocols and viewport-relative scaling proofs.
+*   **`OPTIMIZATION_PLAN.md`**
+    *   *Purpose:* System performance audit and optimization roadmap focusing on zero-GC goals and pre-allocation strategies.
+*   **`VEXEA — Project Status 394cb9a2be0b81a18b47c4bb300cad49.md`**
+    *   *Purpose:* External project status tracking and milestone log (Read-only reference).
+*   **`.github/workflows/` (CI/CD Automations)**
+    *   **`configcat-scan.yml`**: CI scan for feature flag consistency.
+    *   **`deploy.yml`**: Master pipeline handling testing, coverage reporting via Codecov, and Firebase deployment.
+*   **`.gitignore` & `.gitattributes`**
+    *   *Purpose:* Version control patterns and attribute configurations.
 *   **`parse_glbs.cjs` & `tick_success_box.sh`**
     *   *Purpose:* CLI node script for inspecting GLB node trees and automated shell verification helper.
 *   **Architectural Specifications & Project Documents:**
@@ -254,6 +278,20 @@ This file is the authoritative index of all directories and source files within 
     *   **`PRE_MATCH_OPTIMIZATION_PLAN.md`**: Performance pre-warming and scene loading optimization strategy.
     *   **`WORKSPACE_HYGIENE.md`**: Project cleanliness rules and file organization standards.
     *   **`gemini_wall_of_shame.md`**: Log of identified anti-patterns and prohibited code idioms.
+
+---
+
+### 1.5 UI Assets (`/ui_svgs`)
+
+*   **`ui_svgs/`**
+    *   *Purpose:* Collection of production-ready SVG icons for the HUD and menu interfaces (aim, reload, sprint, medkit, weapons, etc.).
+
+---
+
+### 1.6 Test Suite (`/tests`)
+
+*   **`tests/`**
+    *   *Purpose:* Comprehensive suite of unit and integration tests using Vitest. Covers `MatchManager`, `MatchRoom`, `Physics`, `Collision`, `Economy`, `LLMCommander`, and `DroneIntel` logic to ensure architectural stability.
 
 ---
 
