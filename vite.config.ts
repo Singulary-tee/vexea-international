@@ -2,6 +2,7 @@ import tailwindcss from '@tailwindcss/vite';
 import path from 'path';
 import fs from 'fs';
 import {defineConfig} from 'vite';
+import { codecovVitePlugin } from "@codecov/vite-plugin";
 
 export default defineConfig(() => {
   // Automatically restore Draco and Basis loader libraries from node_modules into client/public on build and dev start
@@ -48,7 +49,12 @@ export default defineConfig(() => {
             next();
           });
         },
-      }
+      },
+      codecovVitePlugin({
+        enableBundleAnalysis: process.env.CODECOV_TOKEN !== undefined,
+        bundleName: "vexea",
+        uploadToken: process.env.CODECOV_TOKEN,
+      }),
     ],
     resolve: {
       alias: {

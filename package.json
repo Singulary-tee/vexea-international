@@ -40,6 +40,7 @@
     "ws": "^8.21.0"
   },
   "devDependencies": {
+    "@codecov/vite-plugin": "^2.0.1",
     "@gltf-transform/core": "^4.4.2",
     "@gltf-transform/extensions": "^4.4.2",
     "@gltf-transform/functions": "^4.4.1",
