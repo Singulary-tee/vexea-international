@@ -11,15 +11,18 @@ jobs:
           api-user: ${{ secrets.CONFIGCAT_API_USER }}
           api-pass: ${{ secrets.CONFIGCAT_API_PASS }}
           config-id: ${{ secrets.CONFIG_ID_SHARED }}
+          sub-folder: shared
       - uses: configcat/scan-repository@v2
         name: Scan Frontend
         with:
           api-user: ${{ secrets.CONFIGCAT_API_USER }}
           api-pass: ${{ secrets.CONFIGCAT_API_PASS }}
           config-id: ${{ secrets.CONFIG_ID_FRONTEND }}
+          sub-folder: client
       - uses: configcat/scan-repository@v2
         name: Scan Server
         with:
           api-user: ${{ secrets.CONFIGCAT_API_USER }}
           api-pass: ${{ secrets.CONFIGCAT_API_PASS }}
           config-id: ${{ secrets.CONFIG_ID_SERVER }}
+          sub-folder: server

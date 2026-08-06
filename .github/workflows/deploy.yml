@@ -22,8 +22,13 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Build client
-        run: npx vite build
+      - name: Install Doppler CLI
+        uses: dopplerhq/cli-action@v3
+
+      - name: Build client with Doppler environment
+        env:
+          DOPPLER_TOKEN: ${{ secrets.VITE_DOPPLER_TOKEN }}
+        run: doppler run -- npx vite build
 
       - name: Deploy to Firebase Hosting
         uses: FirebaseExtended/action-hosting-deploy@v0
