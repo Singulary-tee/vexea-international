@@ -20,7 +20,7 @@ import {
   Auth
 } from "firebase/auth";
 import { getStorage, FirebaseStorage } from "firebase/storage";
-import { getAnalytics, Analytics, logEvent } from "firebase/analytics";
+import { getAnalytics, Analytics, logEvent, isSupported } from "firebase/analytics";
 import type { Database } from "firebase/database";
 
 export enum OperationType {
@@ -81,6 +81,7 @@ function handleFirestoreError(error: unknown, operationType: OperationType, path
 import firebaseConfig from "../firebase-applet-config.json";
 
 export async function initFirebase(): Promise<boolean> {
+  if (isFirebaseReady) return true;
   try {
     const { initializeApp } = await import("firebase/app");
     const { getDatabase } = await import("firebase/database");
@@ -88,7 +89,20 @@ export async function initFirebase(): Promise<boolean> {
     db = getFirestore(app, firebaseConfig.firestoreDatabaseId);
     auth = getAuth(app);
     storage = getStorage(app);
-    analytics = getAnalytics(app);
+    try {
+      if (await isSupported()) {
+        analytics = getAnalytics(app);
+        console.log("Firebase Analytics initialized successfully with measurement ID:", firebaseConfig.measurementId);
+        logEvent(analytics, "analytics_init", {
+          timestamp: new Date().toISOString(),
+          measurementId: firebaseConfig.measurementId
+        });
+      } else {
+        console.log("Firebase Analytics is not supported in this environment.");
+      }
+    } catch (analyticsErr) {
+      console.warn("Failed to initialize Firebase Analytics:", analyticsErr);
+    }
     try {
       rtdb = getDatabase(app);
     } catch {
@@ -108,6 +122,9 @@ export async function initFirebase(): Promise<boolean> {
 export async function authenticateAnonymously(): Promise<string | null> {
   if (!isFirebaseReady || !auth) return null;
   try {
+    if (auth.currentUser) {
+      return auth.currentUser.uid;
+    }
     const userCredential = await signInAnonymously(auth);
     return userCredential.user.uid;
   } catch (error) {

@@ -78,7 +78,9 @@ export function initBattlePass() {
   headerLeft.appendChild(seasonTitle);
 
   const seasonId = document.createElement('div');
-  seasonId.textContent = `ID: ${BP_SEASON_01.id} // REMAINING: 84D`;
+  const nowMs = Date.now();
+  const bpRemainingDays = Math.max(0, Math.ceil((BP_SEASON_01.endDate - nowMs) / (1000 * 60 * 60 * 24)));
+  seasonId.textContent = `ID: ${BP_SEASON_01.id} // REMAINING: ${bpRemainingDays}D`;
   Object.assign(seasonId.style, {
     fontSize: '12px',
     letterSpacing: '2px',
@@ -299,9 +301,9 @@ async function claimTier(index: number) {
       claimedBPTiers: arrayUnion(index)
     };
 
-    if (tier.freeReward.type === 'CREDITS') {
+    if (tier.freeReward && tier.freeReward.type === 'CREDITS') {
       updates.credits = increment(tier.freeReward.value as number);
-    } else if (tier.freeReward.type === 'COSMETIC' || tier.freeReward.type === 'BLUEPRINT') {
+    } else if (tier.freeReward && tier.freeReward.type === 'COSMETIC') {
       updates.unlockedItems = arrayUnion(tier.freeReward.value as string);
     }
 

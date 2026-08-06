@@ -61,6 +61,7 @@ export function renderFactionScreen(container: HTMLElement, registeredUserData: 
   const auth = getAuth();
   const currentFaction = registeredUserData?.faction || null;
   const activeMap = getDefaultMap();
+  const isFactionWarActive = clientFlagService.getBoolean(FeatureFlagKey.FACTION_WAR_ACTIVE, true);
 
   // Header Title & Territory Control Arc
   const headerCard = document.createElement('div');
@@ -78,8 +79,9 @@ export function renderFactionScreen(container: HTMLElement, registeredUserData: 
 
   headerCard.innerHTML = `
     <div style="display:flex; flex-direction:column; gap:2px;">
-      <div style="font-family:${DS.typography.fontFamily}; font-size:13px; font-weight:bold; color:${DS.colors.text}; letter-spacing:1.5px;">
+      <div style="font-family:${DS.typography.fontFamily}; font-size:13px; font-weight:bold; color:${DS.colors.text}; letter-spacing:1.5px; display:flex; align-items:center; gap:8px;">
         STRATEGIC FACTION WAR
+        ${!isFactionWarActive ? `<span style="font-size:9px; background:rgba(255,68,0,0.15); border:1px solid ${DS.colors.accent}; color:${DS.colors.accent}; padding:1px 6px;">[FACTION WAR CEASEFIRE / LOCKED]</span>` : ''}
       </div>
       <div style="font-family:${DS.typography.fontFamily}; font-size:8px; font-weight:bold; color:${DS.colors.accent}; letter-spacing:0.8px;">
         ACTIVE DEPLOYMENT: ${activeMap.displayName.toUpperCase()}
@@ -149,23 +151,34 @@ export function renderFactionScreen(container: HTMLElement, registeredUserData: 
   `;
 
   const vibeEnlistBtn = document.createElement('button');
-  vibeEnlistBtn.textContent = vibeSelected ? 'CURRENT AFFILIATION' : 'ENLIST IN VIBE CO.';
-  vibeEnlistBtn.disabled = vibeSelected || !auth.currentUser;
-  Object.assign(vibeEnlistBtn.style, {
-    width: '100%',
-    padding: '8px',
-    background: vibeSelected ? 'transparent' : '#00F0FF',
-    border: vibeSelected ? '1px solid rgba(0,240,255,0.3)' : 'none',
-    color: vibeSelected ? '#00F0FF' : '#000000',
-    fontFamily: DS.typography.fontFamily,
-    fontSize: '10px',
-    fontWeight: 'bold',
-    letterSpacing: '1px',
-    cursor: (vibeSelected || !auth.currentUser) ? 'default' : 'pointer',
-    borderRadius: '0px',
-    flexShrink: '0',
-    transition: 'all 0.15s ease'
-  });
+  if (!isFactionWarActive && !vibeSelected) {
+    vibeEnlistBtn.textContent = 'FACTION WARFARES LOCKED';
+    vibeEnlistBtn.disabled = true;
+    Object.assign(vibeEnlistBtn.style, {
+      width: '100%', padding: '8px', background: 'rgba(255, 255, 255, 0.05)',
+      border: '1px solid rgba(255, 255, 255, 0.1)', color: DS.colors.textMuted,
+      fontFamily: DS.typography.fontFamily, fontSize: '10px', fontWeight: 'bold',
+      letterSpacing: '1px', cursor: 'not-allowed', borderRadius: '0px', flexShrink: '0'
+    });
+  } else {
+    vibeEnlistBtn.textContent = vibeSelected ? 'CURRENT AFFILIATION' : 'ENLIST IN VIBE CO.';
+    vibeEnlistBtn.disabled = vibeSelected || !auth.currentUser;
+    Object.assign(vibeEnlistBtn.style, {
+      width: '100%',
+      padding: '8px',
+      background: vibeSelected ? 'transparent' : '#00F0FF',
+      border: vibeSelected ? '1px solid rgba(0,240,255,0.3)' : 'none',
+      color: vibeSelected ? '#00F0FF' : '#000000',
+      fontFamily: DS.typography.fontFamily,
+      fontSize: '10px',
+      fontWeight: 'bold',
+      letterSpacing: '1px',
+      cursor: (vibeSelected || !auth.currentUser) ? 'default' : 'pointer',
+      borderRadius: '0px',
+      flexShrink: '0',
+      transition: 'all 0.15s ease'
+    });
+  }
 
   vibeEnlistBtn.onclick = async () => {
     if (!auth.currentUser) return;
@@ -224,23 +237,34 @@ export function renderFactionScreen(container: HTMLElement, registeredUserData: 
   `;
 
   const slopEnlistBtn = document.createElement('button');
-  slopEnlistBtn.textContent = slopSelected ? 'CURRENT AFFILIATION' : 'ENLIST IN SLOP INC.';
-  slopEnlistBtn.disabled = slopSelected || !auth.currentUser;
-  Object.assign(slopEnlistBtn.style, {
-    width: '100%',
-    padding: '8px',
-    background: slopSelected ? 'transparent' : DS.colors.accent,
-    border: slopSelected ? `1px solid ${DS.utils.rgba(DS.colors.accent, 0.3)}` : 'none',
-    color: slopSelected ? DS.colors.accent : '#000000',
-    fontFamily: DS.typography.fontFamily,
-    fontSize: '10px',
-    fontWeight: 'bold',
-    letterSpacing: '1px',
-    cursor: (slopSelected || !auth.currentUser) ? 'default' : 'pointer',
-    borderRadius: '0px',
-    flexShrink: '0',
-    transition: 'all 0.15s ease'
-  });
+  if (!isFactionWarActive && !slopSelected) {
+    slopEnlistBtn.textContent = 'FACTION WARFARES LOCKED';
+    slopEnlistBtn.disabled = true;
+    Object.assign(slopEnlistBtn.style, {
+      width: '100%', padding: '8px', background: 'rgba(255, 255, 255, 0.05)',
+      border: '1px solid rgba(255, 255, 255, 0.1)', color: DS.colors.textMuted,
+      fontFamily: DS.typography.fontFamily, fontSize: '10px', fontWeight: 'bold',
+      letterSpacing: '1px', cursor: 'not-allowed', borderRadius: '0px', flexShrink: '0'
+    });
+  } else {
+    slopEnlistBtn.textContent = slopSelected ? 'CURRENT AFFILIATION' : 'ENLIST IN SLOP INC.';
+    slopEnlistBtn.disabled = slopSelected || !auth.currentUser;
+    Object.assign(slopEnlistBtn.style, {
+      width: '100%',
+      padding: '8px',
+      background: slopSelected ? 'transparent' : DS.colors.accent,
+      border: slopSelected ? `1px solid ${DS.utils.rgba(DS.colors.accent, 0.3)}` : 'none',
+      color: slopSelected ? DS.colors.accent : '#000000',
+      fontFamily: DS.typography.fontFamily,
+      fontSize: '10px',
+      fontWeight: 'bold',
+      letterSpacing: '1px',
+      cursor: (slopSelected || !auth.currentUser) ? 'default' : 'pointer',
+      borderRadius: '0px',
+      flexShrink: '0',
+      transition: 'all 0.15s ease'
+    });
+  }
 
   slopEnlistBtn.onclick = async () => {
     if (!auth.currentUser) return;

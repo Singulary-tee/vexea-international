@@ -29,7 +29,7 @@ export class MinimapSystem {
   private lastScaleZ = 0;
 
   // Dynamic Markers Caching (20Hz / 50ms)
-  private cachedMarkers: Array<{ dx: number; dz: number; color: string }> = [];
+  private cachedMarkers: Array<{ dx: number; dz: number; color: string; isPlayer?: boolean }> = [];
   private lastMarkerUpdate = 0;
 
   constructor(match: MatchController) {
@@ -255,9 +255,21 @@ export class MinimapSystem {
           color: markerColor
         });
       });
+
+      this.match.remotePlayersTargetData.forEach((data, id) => {
+        if (!data || !data.isAlive) return;
+        const isHostile = id.startsWith('bot_') || id.startsWith('ai_');
+        const markerColor = isHostile ? '#FF3366' : DS.colors.success;
+        this.cachedMarkers.push({
+          dx: data.pos.x,
+          dz: data.pos.z,
+          color: markerColor,
+          isPlayer: true
+        });
+      });
     }
 
-    // 3. Draw Drones from cached markers
+    // 3. Draw Drones and Remote Players from cached markers
     for (const marker of this.cachedMarkers) {
       const dx = cx + (marker.dx - (isFS ? 0 : px)) * scaleX;
       const dz = cy + (marker.dz - (isFS ? 0 : pz)) * scaleZ;
@@ -267,11 +279,20 @@ export class MinimapSystem {
       ctx.shadowBlur = 8;
       ctx.fillStyle = marker.color;
       ctx.beginPath();
-      ctx.arc(dx, dz, 4.5, 0, Math.PI * 2);
+      ctx.arc(dx, dz, marker.isPlayer ? 5.5 : 4.5, 0, Math.PI * 2);
       ctx.fill();
       ctx.strokeStyle = DS.colors.text;
-      ctx.lineWidth = 1;
+      ctx.lineWidth = marker.isPlayer ? 1.5 : 1;
       ctx.stroke();
+
+      if (marker.isPlayer) {
+        ctx.beginPath();
+        ctx.arc(dx, dz, 8.5, 0, Math.PI * 2);
+        ctx.strokeStyle = marker.color;
+        ctx.lineWidth = 1;
+        ctx.stroke();
+      }
+
       ctx.restore();
     }
 

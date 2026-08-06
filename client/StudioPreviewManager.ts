@@ -4,6 +4,8 @@ import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import * as SkeletonUtils from "three/addons/utils/SkeletonUtils.js";
 import { getCachedOrFetchUrl, createConfiguredGLTFLoader } from "./asset-cache";
 import { applyScenicGripPose } from "./weapons/GripSystem";
+import { ClassLoadoutSystem } from "./src/systems/ClassLoadoutSystem";
+import { attachScope, preloadAttachments } from "./weapons/AttachmentSystem";
 
 export type StudioMode = 'MAIN_MENU' | 'ARMORY' | 'STORE' | 'LOBBY' | 'INACTIVE';
 
@@ -16,7 +18,7 @@ export interface WeaponSkin {
 
 export const AVAILABLE_SKINS: Record<string, WeaponSkin> = {
   STANDARD: { id: 'STANDARD', name: 'STANDARD FINISH', textureFile: null, previewBg: '#111111' },
-  HAZARD: { id: 'HAZARD', name: 'HAZARD COATING', textureFile: null, previewBg: '#2a1a10' }
+  test_skin: { id: 'test_skin', name: 'TEST COATING', textureFile: null, previewBg: '#1d222e' }
 };
 
 function isFirearm(itemKey: string, glbName: string): boolean {
@@ -83,6 +85,44 @@ function computeBoxRelativeToParent(object: THREE.Object3D, parent: THREE.Object
       }
     }
   });
+  return box;
+}
+
+function computeWeaponBoxRelativeToParent(object: THREE.Object3D, parent: THREE.Object3D): THREE.Box3 {
+  const box = new THREE.Box3();
+  parent.updateMatrixWorld(true);
+  object.traverse((child: any) => {
+    if (child.isMesh && child.visible) {
+      const name = child.name.toLowerCase();
+      if (
+        name.includes('arm') || 
+        name.includes('hand') || 
+        name.includes('sleeve') || 
+        name.includes('body') || 
+        name.includes('character') || 
+        name.includes('player')
+      ) {
+        return;
+      }
+      child.updateMatrixWorld(true);
+      const geom = child.geometry;
+      if (geom) {
+        if (!geom.boundingBox) {
+          geom.computeBoundingBox();
+        }
+        if (geom.boundingBox) {
+          const localMatrix = new THREE.Matrix4();
+          localMatrix.copy(parent.matrixWorld).invert().multiply(child.matrixWorld);
+          const m = geom.boundingBox.clone().applyMatrix4(localMatrix);
+          box.union(m);
+        }
+      }
+    }
+  });
+
+  if (box.isEmpty()) {
+    return computeBoxRelativeToParent(object, parent);
+  }
   return box;
 }
 
@@ -384,8 +424,7 @@ class StudioPreviewManagerImpl {
         }
       });
 
-      const skin = AVAILABLE_SKINS[skinId] || AVAILABLE_SKINS.STANDARD;
-      await this.applySkinToModelAsync(model, skin.textureFile);
+      ClassLoadoutSystem.applySkin(model, skinId);
 
       // Cancel if a newer load request arrived while applying skin texture
       if (requestId !== this.currentLoadRequestId) {
@@ -463,6 +502,9 @@ class StudioPreviewManagerImpl {
 
         this.activeModelGroup.add(model);
         model.visible = true;
+
+        // Auto-equip selected weapon and skin to the character in Lobby/Menu
+        this.loadAndEquipWeaponAlways(model);
 
       } else {
         // WEAPON SHOWCASE: Upright 3/4 diagonal presentation angle
@@ -554,7 +596,7 @@ class StudioPreviewManagerImpl {
         }
 
         // 3. Get exact bounding box of the oriented meshes in parent space
-        const boundsBox = computeBoxRelativeToParent(model, this.activeModelGroup);
+        const boundsBox = computeWeaponBoxRelativeToParent(model, this.activeModelGroup);
 
         if (!boundsBox.isEmpty()) {
           const rawSize = new THREE.Vector3();
@@ -595,7 +637,7 @@ class StudioPreviewManagerImpl {
           model.updateMatrixWorld(true);
 
           // Calculate final bounds of the centered weapon in parent space to frame the camera perfectly
-          const finalBox = computeBoxRelativeToParent(model, this.activeModelGroup);
+          const finalBox = computeWeaponBoxRelativeToParent(model, this.activeModelGroup);
           const size = new THREE.Vector3();
           finalBox.getSize(size);
 
@@ -620,6 +662,92 @@ class StudioPreviewManagerImpl {
 
     } catch (err) {
       console.error("[StudioPreview] GLTF Showcase Load Failed:", err);
+    }
+  }
+
+  private async loadAndEquipWeaponAlways(characterModel: THREE.Group): Promise<void> {
+    try {
+      await preloadAttachments();
+
+      const loader = createConfiguredGLTFLoader();
+      const url = await getCachedOrFetchUrl("scar_l-optimized.glb", "Asset");
+      const gltf = await loader.loadAsync(url);
+      const weapon = SkeletonUtils.clone(gltf.scene) as THREE.Group;
+
+      fixSkinnedMeshBones(weapon, gltf.scene);
+
+      // Sizing proportion math: HUMAN 1.8m -> RIFLE 0.85m
+      const characterBox = new THREE.Box3().setFromObject(characterModel);
+      const characterSize = new THREE.Vector3();
+      characterBox.getSize(characterSize);
+      const characterHeight = characterSize.y > 0 ? characterSize.y : 1.8;
+
+      const weaponBox = new THREE.Box3().setFromObject(weapon);
+      const weaponSize = new THREE.Vector3();
+      weaponBox.getSize(weaponSize);
+      const weaponLength = Math.max(weaponSize.x, weaponSize.y, weaponSize.z) || 1.0;
+
+      const targetWeaponLength = characterHeight * (0.85 / 1.8);
+      const weaponScale = targetWeaponLength / weaponLength;
+      weapon.scale.set(weaponScale, weaponScale, weaponScale);
+
+      // Apply currently equipped weapon skin dynamically
+      const currentSkinId = ClassLoadoutSystem.getEquippedSkin("m4_rifle_assault");
+      ClassLoadoutSystem.applySkin(weapon, currentSkinId);
+
+      await attachScope(weapon, "ACOG");
+
+      characterModel.userData.activeWeapon = weapon;
+
+      // Apply hand-tuned scenic pose config
+      applyScenicGripPose(characterModel, weapon, {
+        wepPosX: -0.09,
+        wepPosY: -0.17,
+        wepPosZ: -0.47,
+        wepRotX: 2.95840734641021,
+        wepRotY: -0.161592653589793,
+        wepRotZ: 2.04840734641021,
+        rArmPosX: 0.02,
+        rArmPosY: 0.05,
+        rArmPosZ: 0.09,
+        rArmRotX: 0.678407346410207,
+        rArmRotY: -0.221592653589793,
+        rArmRotZ: 0.238407346410207,
+        rForeArmPosX: 0.02,
+        rForeArmPosY: 0.09,
+        rForeArmPosZ: 0,
+        rForeArmRotX: 0.918407346410207,
+        rForeArmRotY: -0.891592653589793,
+        rForeArmRotZ: 0.648407346410207,
+        rHandPosX: 0,
+        rHandPosY: 0,
+        rHandPosZ: -0.02,
+        rHandRotX: 0.648407346410207,
+        rHandRotY: 1.56840734641021,
+        rHandRotZ: 0,
+        lArmPosX: 0,
+        lArmPosY: 0,
+        lArmPosZ: 0,
+        lArmRotX: 0.838407346410207,
+        lArmRotY: 0.748407346410207,
+        lArmRotZ: -0.641592653589793,
+        lForeArmPosX: -0.01,
+        lForeArmPosY: 0,
+        lForeArmPosZ: -0.05,
+        lForeArmRotX: 0.788407346410207,
+        lForeArmRotY: -0.361592653589793,
+        lForeArmRotZ: 0.168407346410207,
+        lHandPosX: -0.7,
+        lHandPosY: 0.12,
+        lHandPosZ: 0,
+        lHandRotX: 0.198407346410207,
+        lHandRotY: -1.60159265358979,
+        lHandRotZ: -0.411592653589793
+      });
+
+      console.log("[StudioPreviewManager] Weapon loaded and scenic posed successfully on player avatar.");
+    } catch (err) {
+      console.error("[StudioPreviewManager] loadAndEquipWeaponAlways error:", err);
     }
   }
 

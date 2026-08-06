@@ -3,6 +3,7 @@ import { DETAILED_WEAPONS } from "../../shared/weapons";
 import { audioManager } from "../audio";
 import { StudioPreviewManager, AVAILABLE_SKINS } from "../StudioPreviewManager";
 import { CLASSES, ClassId } from "../../shared/classes";
+import { ClassLoadoutSystem } from "../src/systems/ClassLoadoutSystem";
 
 export interface LoadoutSlotItem {
   id: string;
@@ -40,24 +41,20 @@ export const CATALOG_LOADOUTS: Record<string, LoadoutSlotItem[]> = {
   ]
 };
 
-// Saved skin selections per item: itemId -> skinId
-const savedSkinSelections: Record<string, string> = JSON.parse(
-  localStorage.getItem('vex_armory_item_skins') || '{}'
-);
-
 function getEquippedSkin(itemId: string): string {
-  return savedSkinSelections[itemId] || 'STANDARD';
+  return ClassLoadoutSystem.getEquippedSkin(itemId);
 }
 
 function setEquippedSkin(itemId: string, skinId: string): void {
-  savedSkinSelections[itemId] = skinId;
-  localStorage.setItem('vex_armory_item_skins', JSON.stringify(savedSkinSelections));
+  ClassLoadoutSystem.equipSkin(itemId, skinId).catch(err => {
+    console.warn("Equipping skin failed dynamically:", err);
+  });
 }
 
 let activeCategory: ClassId = 'ASSAULT';
 let selectedItemIdx = 0;
 
-export function renderArmoryScreen(container: HTMLElement): void {
+export function renderArmoryScreen(container: HTMLElement, registeredUserData?: any): void {
   container.innerHTML = '';
   
   // Enable parent container to display absolute overflow nicely and fill the screen area
@@ -130,7 +127,7 @@ export function renderArmoryScreen(container: HTMLElement): void {
       audioManager.play('click');
       activeCategory = cat.id;
       selectedItemIdx = 0;
-      renderArmoryScreen(container);
+      renderArmoryScreen(container, registeredUserData);
     };
 
     categoryTabsRow.appendChild(tabBtn);
@@ -196,7 +193,7 @@ function getSlotIconSvg(weaponKey: string, category: string): string {
     itemCard.onclick = () => {
       audioManager.play('click');
       selectedItemIdx = idx;
-      renderArmoryScreen(container);
+      renderArmoryScreen(container, registeredUserData);
     };
 
     const shortSlotMap: Record<string, string> = {
@@ -332,6 +329,27 @@ function getSlotIconSvg(weaponKey: string, category: string): string {
   });
 
   Object.values(AVAILABLE_SKINS).forEach(skin => {
+    // Hide skins that are not owned by the user (STANDARD is always owned)
+    if (skin.id !== "STANDARD") {
+      let owned = false;
+      if (registeredUserData) {
+        if (Array.isArray(registeredUserData.unlockedItems) && registeredUserData.unlockedItems.includes(skin.id)) {
+          owned = true;
+        }
+        if (Array.isArray(registeredUserData.unlockedSkins) && registeredUserData.unlockedSkins.includes(skin.id)) {
+          owned = true;
+        }
+      }
+      try {
+        const localOwned = JSON.parse(localStorage.getItem("vex_owned_skins") || "[]");
+        if (Array.isArray(localOwned) && localOwned.includes(skin.id)) {
+          owned = true;
+        }
+      } catch (e) {}
+
+      if (!owned) return;
+    }
+
     const isSkinEquipped = skin.id === currentSkinId;
 
     const skinTile = document.createElement('div');
@@ -354,7 +372,7 @@ function getSlotIconSvg(weaponKey: string, category: string): string {
       if (!selectedItem) return;
       audioManager.play('click');
       setEquippedSkin(selectedItem.id, skin.id);
-      renderArmoryScreen(container);
+      renderArmoryScreen(container, registeredUserData);
     };
 
     let previewBox = '';

@@ -86,6 +86,11 @@ export function renderPostMatchScreen(payload?: MatchEndPayload) {
   const droneEliminations = stats.droneEliminations ?? 0;
   const revivesPerformed = stats.revivesPerformed ?? 0;
   const scoreIndividual = stats.scoreIndividual ?? 0;
+  const assists = stats.assists ?? 0;
+  const objectiveTimeHeld = Math.round(stats.objectiveTimeHeld ?? 0);
+  const distanceTravelled = Math.round(stats.distanceTravelled ?? 0);
+  const timeAliveSec = Math.round(stats.timeAlive ?? 0);
+  const timeAliveStr = `${Math.floor(timeAliveSec / 60)}m ${timeAliveSec % 60}s`;
 
   postMatchScreenEl.innerHTML = `
     <div style="
@@ -125,12 +130,12 @@ export function renderPostMatchScreen(payload?: MatchEndPayload) {
         </div>
       </div>
 
-      <!-- Real Active Stats Grid (6 Stats) -->
+      <!-- Real Active Stats Grid (10 Stats) -->
       <div>
         <div style="font-size: 11px; color: ${DS.colors.textMuted}; letter-spacing: 2px; font-weight: 700; font-family: ${DS.typography.fontFamilyMono}; margin-bottom: 10px; text-transform: uppercase;">
           TRACKED COMBAT METRICS
         </div>
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px;">
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px;">
           
           <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid ${DS.colors.border}; border-radius: 0px; padding: 12px; text-align: center;">
             <div style="font-size: 10px; color: ${DS.colors.textMuted}; letter-spacing: 1px; font-family: ${DS.typography.fontFamilyMono}; text-transform: uppercase;">DRONE ELIMINATIONS</div>
@@ -153,51 +158,33 @@ export function renderPostMatchScreen(payload?: MatchEndPayload) {
           </div>
 
           <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid ${DS.colors.border}; border-radius: 0px; padding: 12px; text-align: center;">
+            <div style="font-size: 10px; color: ${DS.colors.textMuted}; letter-spacing: 1px; font-family: ${DS.typography.fontFamilyMono}; text-transform: uppercase;">ASSISTS</div>
+            <div style="font-size: 24px; font-weight: 800; color: ${DS.colors.textPrimary}; margin-top: 4px; font-family: ${DS.typography.fontFamilyMono};">${assists}</div>
+          </div>
+
+          <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid ${DS.colors.border}; border-radius: 0px; padding: 12px; text-align: center;">
             <div style="font-size: 10px; color: ${DS.colors.textMuted}; letter-spacing: 1px; font-family: ${DS.typography.fontFamilyMono}; text-transform: uppercase;">REVIVES PERFORMED</div>
             <div style="font-size: 24px; font-weight: 800; color: ${DS.colors.textPrimary}; margin-top: 4px; font-family: ${DS.typography.fontFamilyMono};">${revivesPerformed}</div>
           </div>
 
           <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid ${DS.colors.border}; border-radius: 0px; padding: 12px; text-align: center;">
+            <div style="font-size: 10px; color: ${DS.colors.textMuted}; letter-spacing: 1px; font-family: ${DS.typography.fontFamilyMono}; text-transform: uppercase;">TIME ALIVE</div>
+            <div style="font-size: 24px; font-weight: 800; color: ${DS.colors.textPrimary}; margin-top: 4px; font-family: ${DS.typography.fontFamilyMono};">${timeAliveStr}</div>
+          </div>
+
+          <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid ${DS.colors.border}; border-radius: 0px; padding: 12px; text-align: center;">
+            <div style="font-size: 10px; color: ${DS.colors.textMuted}; letter-spacing: 1px; font-family: ${DS.typography.fontFamilyMono}; text-transform: uppercase;">DISTANCE TRAVELLED</div>
+            <div style="font-size: 24px; font-weight: 800; color: ${DS.colors.textPrimary}; margin-top: 4px; font-family: ${DS.typography.fontFamilyMono};">${distanceTravelled}m</div>
+          </div>
+
+          <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid ${DS.colors.border}; border-radius: 0px; padding: 12px; text-align: center;">
+            <div style="font-size: 10px; color: ${DS.colors.textMuted}; letter-spacing: 1px; font-family: ${DS.typography.fontFamilyMono}; text-transform: uppercase;">OBJECTIVE TIME</div>
+            <div style="font-size: 24px; font-weight: 800; color: ${DS.colors.textPrimary}; margin-top: 4px; font-family: ${DS.typography.fontFamilyMono};">${objectiveTimeHeld}s</div>
+          </div>
+
+          <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid ${DS.colors.border}; border-radius: 0px; padding: 12px; text-align: center;">
             <div style="font-size: 10px; color: ${DS.colors.textMuted}; letter-spacing: 1px; font-family: ${DS.typography.fontFamilyMono}; text-transform: uppercase;">INDIVIDUAL SCORE</div>
             <div style="font-size: 24px; font-weight: 800; color: ${DS.colors.accent}; margin-top: 4px; font-family: ${DS.typography.fontFamilyMono};">${scoreIndividual}</div>
-          </div>
-
-        </div>
-      </div>
-
-      <!-- Dead Stats Grid (4 Stats) - Visually De-emphasized -->
-      <div>
-        <div style="font-size: 11px; color: ${DS.colors.textMuted}; letter-spacing: 2px; font-weight: 700; font-family: ${DS.typography.fontFamilyMono}; margin-bottom: 10px; text-transform: uppercase;">
-          PENDING SUBSYSTEM METRICS
-        </div>
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px;">
-          
-          <div style="background: rgba(0, 0, 0, 0.25); border: 1px dashed rgba(255, 255, 255, 0.12); border-radius: 0px; padding: 10px; opacity: 0.65; text-align: center;">
-            <div style="font-size: 10px; color: ${DS.colors.textMuted}; letter-spacing: 1px; font-family: ${DS.typography.fontFamilyMono}; text-transform: uppercase;">ASSISTS</div>
-            <div style="font-size: 11px; font-weight: 700; color: ${DS.colors.textMuted}; margin-top: 6px; letter-spacing: 1px; font-family: ${DS.typography.fontFamilyMono}; border: 1px solid rgba(255, 255, 255, 0.1); padding: 2px 6px; display: inline-block;">
-              NOT YET TRACKED
-            </div>
-          </div>
-
-          <div style="background: rgba(0, 0, 0, 0.25); border: 1px dashed rgba(255, 255, 255, 0.12); border-radius: 0px; padding: 10px; opacity: 0.65; text-align: center;">
-            <div style="font-size: 10px; color: ${DS.colors.textMuted}; letter-spacing: 1px; font-family: ${DS.typography.fontFamilyMono}; text-transform: uppercase;">OBJECTIVE TIME HELD</div>
-            <div style="font-size: 11px; font-weight: 700; color: ${DS.colors.textMuted}; margin-top: 6px; letter-spacing: 1px; font-family: ${DS.typography.fontFamilyMono}; border: 1px solid rgba(255, 255, 255, 0.1); padding: 2px 6px; display: inline-block;">
-              NOT YET TRACKED
-            </div>
-          </div>
-
-          <div style="background: rgba(0, 0, 0, 0.25); border: 1px dashed rgba(255, 255, 255, 0.12); border-radius: 0px; padding: 10px; opacity: 0.65; text-align: center;">
-            <div style="font-size: 10px; color: ${DS.colors.textMuted}; letter-spacing: 1px; font-family: ${DS.typography.fontFamilyMono}; text-transform: uppercase;">DISTANCE TRAVELLED</div>
-            <div style="font-size: 11px; font-weight: 700; color: ${DS.colors.textMuted}; margin-top: 6px; letter-spacing: 1px; font-family: ${DS.typography.fontFamilyMono}; border: 1px solid rgba(255, 255, 255, 0.1); padding: 2px 6px; display: inline-block;">
-              NOT YET TRACKED
-            </div>
-          </div>
-
-          <div style="background: rgba(0, 0, 0, 0.25); border: 1px dashed rgba(255, 255, 255, 0.12); border-radius: 0px; padding: 10px; opacity: 0.65; text-align: center;">
-            <div style="font-size: 10px; color: ${DS.colors.textMuted}; letter-spacing: 1px; font-family: ${DS.typography.fontFamilyMono}; text-transform: uppercase;">TIME ALIVE</div>
-            <div style="font-size: 11px; font-weight: 700; color: ${DS.colors.textMuted}; margin-top: 6px; letter-spacing: 1px; font-family: ${DS.typography.fontFamilyMono}; border: 1px solid rgba(255, 255, 255, 0.1); padding: 2px 6px; display: inline-block;">
-              NOT YET TRACKED
-            </div>
           </div>
 
         </div>

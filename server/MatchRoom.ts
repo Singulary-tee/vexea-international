@@ -138,6 +138,8 @@ export interface PlayerState {
   firedThisTick?: boolean;
   godMode?: boolean;
   infiniteAmmo?: boolean;
+  isHoldingObjective?: boolean;
+  currentObjectiveProgress?: number;
   signalDisruptorUntil?: number;
 
   maxHp: number;
@@ -1422,6 +1424,59 @@ export class MatchRoom {
                 player.posZ = nextPos.z;
               }
 
+              // Telemetry Updates: timeAlive, distanceTravelled, objectiveTimeHeld
+              const dtSec = 0.016666;
+              player.stats.timeAlive += dtSec;
+
+              const pDx = player.posX - prevX;
+              const pDy = player.posY - prevY;
+              const pDz = player.posZ - prevZ;
+              const pDist = Math.sqrt(pDx * pDx + pDy * pDy + pDz * pDz);
+              player.stats.distanceTravelled += pDist;
+
+              // Objective Proximity Radius Check (Core Objective Waypoint: 384, 384)
+              const coreX = 384;
+              const coreZ = 384;
+              const objRad = ACTIVE_GAMEMODE.objectiveProximityRadius || 3;
+              const odx = player.posX - coreX;
+              const odz = player.posZ - coreZ;
+              const inObjRadius = (odx * odx + odz * odz <= objRad * objRad);
+
+              if (inObjRadius) {
+                player.stats.objectiveTimeHeld += dtSec;
+                if (player.isHoldingObjective) {
+                  player.currentObjectiveProgress = (player.currentObjectiveProgress || 0) + dtSec;
+                  const reqHold = ACTIVE_GAMEMODE.objectiveHoldTime || 8.0;
+
+                  if (this.serverTick % 10 === 0 || player.currentObjectiveProgress >= reqHold) {
+                    player.channel.emit("reliable_event", {
+                      type: "OBJECTIVE_PROGRESS",
+                      progressSec: player.currentObjectiveProgress,
+                      requiredSec: reqHold
+                    });
+                  }
+
+                  if (player.currentObjectiveProgress >= reqHold) {
+                    // Core Objective Accomplished - Rogue LLM Core Disabled!
+                    this.handleMatchEnd("win");
+                  }
+                } else {
+                  if (ACTIVE_GAMEMODE.objectiveResetOnExit && player.currentObjectiveProgress) {
+                    player.currentObjectiveProgress = 0;
+                  }
+                }
+              } else {
+                if (ACTIVE_GAMEMODE.objectiveResetOnExit && player.currentObjectiveProgress) {
+                  player.currentObjectiveProgress = 0;
+                  player.isHoldingObjective = false;
+                  player.channel.emit("reliable_event", {
+                    type: "OBJECTIVE_PROGRESS",
+                    progressSec: 0,
+                    requiredSec: ACTIVE_GAMEMODE.objectiveHoldTime || 8.0
+                  });
+                }
+              }
+
               if (Math.abs(correctedTrans.x) < Math.abs(desiredTranslation.x) * 0.9 || 
                   Math.abs(correctedTrans.z) < Math.abs(desiredTranslation.z) * 0.9) {
                   const iterStr = Array.from(this.players.entries())[0][0]; // just logic for logging
@@ -1848,6 +1903,12 @@ export class MatchRoom {
                 });
                 this.projActive[i] = 0;
                 if (d.hp <= 0) {
+                  this.processDroneKillAssists(d, this.projSourceId[i]);
+                  const killer = this.players.get(this.projSourceId[i]);
+                  if (killer) {
+                    killer.stats.droneEliminations += 1;
+                    killer.stats.scoreIndividual += 100;
+                  }
                   this.despawnDrone(d);
                   this.broadcastReliableEvent({
                     type: "drone_killed",
@@ -2873,6 +2934,14 @@ export class MatchRoom {
     p.stats.damageReceived += rawDamage;
     p.lastDamageSource = { type, entityId, entityType };
 
+    if (ACTIVE_GAMEMODE.objectiveResetOnDamage && (p.currentObjectiveProgress || 0) > 0) {
+      p.currentObjectiveProgress = 0;
+      p.isHoldingObjective = false;
+      p.channel.emit("reliable_event", {
+        type: "OBJECTIVE_INTERRUPTED"
+      });
+    }
+
     p.channel.emit("reliable_event", {
       type: "PLAYER_HIT",
       hp: p.hp,
@@ -2955,6 +3024,12 @@ export class MatchRoom {
             });
           }
           if (d.hp <= 0) {
+            this.processDroneKillAssists(d, sourceId);
+            const killer = this.players.get(sourceId);
+            if (killer) {
+              killer.stats.droneEliminations += 1;
+              killer.stats.scoreIndividual += 100;
+            }
             this.despawnDrone(d);
             this.broadcastReliableEvent({
               type: "drone_killed",
@@ -3034,6 +3109,7 @@ export class MatchRoom {
           dailyRefreshedAt: new Date(),
           
           score: awardedScore,
+          lifetimeXP: awardedScore,
           kills: droneKills,
           battlePass: bpRankChange + 1,
 
@@ -3061,6 +3137,7 @@ export class MatchRoom {
 
         transaction.update(userRef, {
           score: increment(awardedScore),
+          lifetimeXP: increment(awardedScore),
           kills: increment(droneKills),
           battlePass: increment(bpRankChange),
 
@@ -3444,6 +3521,16 @@ export class MatchRoom {
     }
   }
 
+  public setObjectiveHold(playerId: string, holding: boolean): void {
+    const player = this.players.get(playerId);
+    if (player && player.isAlive) {
+      player.isHoldingObjective = holding;
+      if (!holding && ACTIVE_GAMEMODE.objectiveResetOnExit) {
+        player.currentObjectiveProgress = 0;
+      }
+    }
+  }
+
   public useUtility(playerId: string, slot: "utility1" | "utility2") {
     const player = this.players.get(playerId);
     if (!player || !player.isAlive || !player.utilityState) return;
@@ -3658,6 +3745,26 @@ export class MatchRoom {
     }
   }
 
+  private processDroneKillAssists(drone: ServerDrone, killerId: string) {
+    if (!drone.damageLog || drone.damageLog.length === 0) return;
+    const now = Date.now();
+    const assistThresholdMs = 10000;
+    const creditedAssists = new Set<string>();
+
+    for (const entry of drone.damageLog) {
+      if (entry.playerId && entry.playerId !== killerId && !creditedAssists.has(entry.playerId)) {
+        if (now - entry.timestamp <= assistThresholdMs) {
+          creditedAssists.add(entry.playerId);
+          const assistingPlayer = this.players.get(entry.playerId);
+          if (assistingPlayer) {
+            assistingPlayer.stats.assists += 1;
+            assistingPlayer.stats.scoreIndividual += ACTIVE_GAMEMODE.scoreValues.assistElimination || 50;
+          }
+        }
+      }
+    }
+  }
+
   public resolveGrenadeExplosion(attackerId: string, origin: { x: number; y: number; z: number }) {
     if (this.isShutdown) return;
 
@@ -3682,6 +3789,7 @@ export class MatchRoom {
         const dmg = GRENADE_DAMAGE * falloff;
         d.hp -= dmg;
         if (d.hp <= 0) {
+          this.processDroneKillAssists(d, attackerId);
           this.despawnDrone(d);
           const attacker = this.players.get(attackerId);
           if (attacker) {

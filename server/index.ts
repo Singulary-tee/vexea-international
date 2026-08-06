@@ -880,6 +880,12 @@ io.onConnection((channel: ChannelAdapter) => {
       }
     }
 
+    if (args.type === "OBJECTIVE_HOLD") {
+      if (currentRoom) {
+        currentRoom.setObjectiveHold(pState.id, !!args.holding);
+      }
+    }
+
     if (args.type === "TOGGLE_FIRE_MODE") {
       const primary = pState.weaponState.primary;
       primary.fireMode = primary.fireMode === "auto" ? "burst" : "auto";
