@@ -22,6 +22,8 @@ import {
   TOTAL_STATE_BUFFER_SIZE as CONST_BUFFER_SIZE,
   PLAYER_CENTER_OFFSET,
   PLAYER_TOTAL_HEIGHT,
+  PLAYER_CAPSULE_HALF_HEIGHT,
+  PLAYER_CAPSULE_HALF_HEIGHT_CROUCH,
   PLAYER_BASE_SPEED,
   PLAYER_CROUCH_SPEED,
   PLAYER_SPRINT_MULTIPLIER,
@@ -1320,6 +1322,16 @@ export class MatchRoom {
               const isSprint = (inputMask & 0x20) !== 0;
               const isCrouch = (inputMask & 0x40) !== 0;
               const isDash = (inputMask & 0x80) !== 0;
+
+              // Synchronize collider height with client prediction
+              if (isCrouch !== (player as any).lastCrouchState) {
+                if (isCrouch) {
+                  player.collider.setHalfHeight(PLAYER_CAPSULE_HALF_HEIGHT_CROUCH);
+                } else {
+                  player.collider.setHalfHeight(PLAYER_CAPSULE_HALF_HEIGHT);
+                }
+                (player as any).lastCrouchState = isCrouch;
+              }
 
               let speedMultiplier = 1.0;
               if (isSprint) speedMultiplier = PLAYER_SPRINT_MULTIPLIER;

@@ -14,6 +14,8 @@ import {
   PLAYER_EYE_LEVEL, 
   PLAYER_CENTER_OFFSET, 
   PLAYER_EYE_LEVEL_CROUCH,
+  PLAYER_CAPSULE_HALF_HEIGHT,
+  PLAYER_CAPSULE_HALF_HEIGHT_CROUCH,
   PLAYER_BASE_SPEED,
   PLAYER_CROUCH_SPEED,
   PLAYER_SPRINT_MULTIPLIER,
@@ -616,9 +618,10 @@ export class InputSystem {
       }
     }
 
+    const currentHalfHeight = inputManager.isCrouching ? PLAYER_CAPSULE_HALF_HEIGHT_CROUCH : PLAYER_CAPSULE_HALF_HEIGHT;
     this.camera.position.set(
       this.match.playerPos.x,
-      this.match.playerPos.y + (this.match.localCrouchY - PLAYER_CENTER_OFFSET),
+      (this.match.playerPos.y - currentHalfHeight) + this.match.localCrouchY,
       this.match.playerPos.z,
     );
 
