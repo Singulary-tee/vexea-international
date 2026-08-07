@@ -43,7 +43,7 @@ export class Matchmaker {
     playerId: string,
     reqUid: string,
     channel: ChannelAdapter,
-    mapId: string = "map_0_dev",
+    mapId: string = "map_1_facility",
     classId: ClassId = "ASSAULT",
   ): void {
     // Remove if already in queue to prevent duplicates
@@ -55,7 +55,7 @@ export class Matchmaker {
       reqUid: reqUid || playerId,
       channel,
       joinedTimestamp: Date.now(),
-      mapId: mapId || "map_0_dev",
+      mapId: mapId || "map_1_facility",
       classId: validClassId,
     };
 

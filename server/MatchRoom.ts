@@ -60,6 +60,7 @@ import {
 } from "../shared/utilities";
 import { getMapById } from "../shared/maps/map-registry";
 import { ZoneRegistry } from "./map/ZoneRegistry";
+import { OutOfBoundsEnforcer } from "./map/OutOfBoundsEnforcer";
 import { CollisionSystem } from "../shared/collision";
 import * as fs from "fs";
 import * as path from "path";
@@ -306,7 +307,7 @@ export class MatchRoom {
   public llmTokensUsedThisMatch = 0;
   public commanderAP: number = ACTIVE_GAMEMODE.llmApStartPool;
   public fixedWingDeploymentsThisMatch: number = 0;
-  public outstandingOrders: Map<string, { targetZone: ZoneName; cyclesOutstanding: number }> = new Map();
+  public outstandingOrders: Map<string, { targetZone: ZoneName; cyclesOutstanding: number; holdRemainingCycles?: number }> = new Map();
   public failedOperations: string[] = [];
   public zoneSummary!: Record<ZoneName, ServerZoneState>;
 
@@ -366,6 +367,7 @@ export class MatchRoom {
 
   public mapId: string;
   public zoneRegistry: ZoneRegistry | null = null;
+  public outOfBoundsEnforcer: OutOfBoundsEnforcer = new OutOfBoundsEnforcer();
   public collisionMap: CollisionSystem | null = null;
   public specJson: any = null;
   public onShutdown?: (roomId: string) => void;
@@ -398,7 +400,7 @@ export class MatchRoom {
     return pts[index].position;
   }
 
-  constructor(roomId: string, geminiKey?: string, mapId = "map_0_dev") {
+  constructor(roomId: string, geminiKey?: string, mapId = "map_1_facility") {
     this.roomId = roomId;
     this.mapId = mapId;
     this.initMapConfig();
@@ -974,6 +976,7 @@ export class MatchRoom {
   public removePlayer(playerId: string) {
     const p = this.players.get(playerId);
     if (p) {
+      this.outOfBoundsEnforcer.resetPlayer(playerId);
       if (p.collider) {
         this.colliderToEntityMap.delete(p.collider.handle);
       }
@@ -1540,34 +1543,10 @@ export class MatchRoom {
               player.velEmaY = player.velEmaY * 0.8 + actualVy * 0.2;
               player.velEmaZ = player.velEmaZ * 0.8 + actualVz * 0.2;
             } // end if player.kcc...
-
-            // RESTRICTED GATE DAMAGE
-            if (
-              this.zoneRegistry &&
-              this.zoneRegistry.isInRestrictedGate(player.posX, player.posZ) &&
-              player.hp > 0 &&
-              !player.godMode
-            ) {
-              const damage = 25 * 0.0166;
-              player.hp -= damage;
-              if (player.hp <= 0) {
-                player.hp = 0;
-                this.applyDamage(
-                  player.id,
-                  9999,
-                  "explosion",
-                  "0",
-                  "environment",
-                );
-              } else {
-                player.channel.emit("reliable_event", {
-                  type: "GATE_DAMAGE",
-                  damage: damage,
-                  currentHp: player.hp,
-                });
-              }
-            }
           }
+
+          // Out of Bounds and Restricted Gate Enforcement
+          this.outOfBoundsEnforcer.tick(this, 16.66);
 
           // World updates (RVO avoidance, projectile updates)
           this.updateSystemEntities();

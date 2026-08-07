@@ -26,13 +26,9 @@ export enum FeatureFlagKey {
 
   // Store & Economy Flags
   STORE_DYNAMIC_OFFERS = 'store_dynamic_offers',
-  STORE_DISCOUNT_ACTIVE = 'store_discount_active',
-  STORE_CREDIT_MULTIPLIER = 'store_credit_multiplier',
 
   // Faction Warfare & Territory Flags
   FACTION_WAR_ACTIVE = 'faction_war_active',
-  FACTION_WAR_MULTIPLIER = 'faction_war_multiplier',
-  FACTION_TERRITORY_DECAY_RATE = 'faction_territory_decay_rate',
 
   // Battle Pass Flags (Shared)
   BP_SEASON_ID = 'bp_season_id',
@@ -70,12 +66,8 @@ export interface FeatureFlagSchema {
   [FeatureFlagKey.LLM_AP_REGEN_RATE]: number;
 
   [FeatureFlagKey.STORE_DYNAMIC_OFFERS]: boolean;
-  [FeatureFlagKey.STORE_DISCOUNT_ACTIVE]: boolean;
-  [FeatureFlagKey.STORE_CREDIT_MULTIPLIER]: number;
 
   [FeatureFlagKey.FACTION_WAR_ACTIVE]: boolean;
-  [FeatureFlagKey.FACTION_WAR_MULTIPLIER]: number;
-  [FeatureFlagKey.FACTION_TERRITORY_DECAY_RATE]: number;
 
   [FeatureFlagKey.BP_SEASON_ID]: string;
   [FeatureFlagKey.BP_TIER_COUNT]: number;
@@ -109,12 +101,8 @@ export const DEFAULT_FEATURE_FLAGS: FeatureFlagSchema = {
   [FeatureFlagKey.LLM_AP_REGEN_RATE]: 10,
 
   [FeatureFlagKey.STORE_DYNAMIC_OFFERS]: true,
-  [FeatureFlagKey.STORE_DISCOUNT_ACTIVE]: false,
-  [FeatureFlagKey.STORE_CREDIT_MULTIPLIER]: 1.0,
 
   [FeatureFlagKey.FACTION_WAR_ACTIVE]: true,
-  [FeatureFlagKey.FACTION_WAR_MULTIPLIER]: 1.0,
-  [FeatureFlagKey.FACTION_TERRITORY_DECAY_RATE]: 0.05,
 
   [FeatureFlagKey.BP_SEASON_ID]: 'SEASON_01',
   [FeatureFlagKey.BP_TIER_COUNT]: 50,
@@ -173,11 +161,7 @@ export function getFeatureFlagScope(key: FeatureFlagKey): FeatureFlagScope {
       return FeatureFlagScope.SERVER;
 
     case FeatureFlagKey.STORE_DYNAMIC_OFFERS:
-    case FeatureFlagKey.STORE_DISCOUNT_ACTIVE:
-    case FeatureFlagKey.STORE_CREDIT_MULTIPLIER:
     case FeatureFlagKey.FACTION_WAR_ACTIVE:
-    case FeatureFlagKey.FACTION_WAR_MULTIPLIER:
-    case FeatureFlagKey.FACTION_TERRITORY_DECAY_RATE:
     case FeatureFlagKey.BP_SEASON_ID:
     case FeatureFlagKey.BP_TIER_COUNT:
     case FeatureFlagKey.BP_XP_PER_TIER:

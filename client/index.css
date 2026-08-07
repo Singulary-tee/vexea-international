@@ -46,3 +46,56 @@ html, body, * {
     -ms-overflow-style: none !important; /* IE and Edge */
     scrollbar-width: none !important; /* Firefox */
 }
+
+/* VEXEA Tactical Skeleton Loader Styling */
+@keyframes vexea-skeleton-sweep {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+@keyframes vexea-skeleton-pulse {
+  0%, 100% {
+    opacity: 0.65;
+    border-color: rgba(255, 69, 0, 0.2);
+  }
+  50% {
+    opacity: 0.95;
+    border-color: rgba(255, 69, 0, 0.5);
+  }
+}
+
+.vexea-skeleton-box {
+  position: relative;
+  background: linear-gradient(90deg, #11141c 0%, #1e2636 50%, #11141c 100%);
+  background-size: 200% 100%;
+  animation: vexea-skeleton-sweep 1.8s infinite linear, vexea-skeleton-pulse 2s infinite ease-in-out;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-sizing: border-box;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.vexea-skeleton-box::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 6px;
+  height: 6px;
+  border-top: 1px solid #FF4500;
+  border-left: 1px solid #FF4500;
+}
+
+.vexea-skeleton-text {
+  position: relative;
+  background: linear-gradient(90deg, #161b26 0%, #252e42 50%, #161b26 100%);
+  background-size: 200% 100%;
+  animation: vexea-skeleton-sweep 1.8s infinite linear;
+  height: 14px;
+  margin-bottom: 6px;
+  border-left: 2px solid rgba(255, 69, 0, 0.4);
+}

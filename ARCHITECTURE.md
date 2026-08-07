@@ -186,10 +186,10 @@
 
 ---
 
-## 11. Strict Sizing Mathematization & Anti-Eyeballing Protocol (LAW)
-*   **Absolute Ban on Eyeballing:** Eyeballing layout sizes, margins, gaps, font sizes, paddings, HUD elements, or 3D canvas model scaling is strictly forbidden.
-*   **Mathematical Proof Required:** Every visual element must be laid out using precise percentages, viewport-relative math (`vh`, `vw`, `vmax`, `vmin`, `clamp`), or pixel budgets that sum up to ≤ 100% of the available container.
-*   **Zero-Overlapping Guarantee:** Every developer or agent must mathematically prove that elements inside any viewport container cannot overlap or clip under any supported screen sizes and ratios. Sizing elements arbitrarily and "hoping" they fit or adjusting bounds visually without fractional/ratio math is a critical failure. All dimensions, boundaries, and offsets must enforce a strict geometric guarantee of zero collision.
+## 11. Strict Sizing Mathematization, Algorithmic Rigor & Anti-Eyeballing Protocol (LAW)
+*   **Absolute Ban on Eyeballing & Magic Numbers:** Eyeballing layout sizes, margins, gaps, font sizes, paddings, HUD elements, 3D canvas model scaling, or inserting ad-hoc "magic numbers" and hacky calculation tweaks into physics, steering, collision avoidance, or AI systems is strictly forbidden.
+*   **Mathematical Proof Required for UI:** Every visual element must be laid out using precise percentages, viewport-relative math (`vh`, `vw`, `vmax`, `vmin`, `clamp`), or pixel budgets that sum up to ≤ 100% of the available container. Every developer or agent must mathematically prove that elements inside any viewport container cannot overlap or clip under any supported screen sizes and ratios.
+*   **Systematic Algorithmic Modeling Required:** All physics forces, steering behaviors, collision avoidance vectors, AI perception thresholds, and movement calculations must be implemented as clean, mathematically grounded modules (e.g., formal Reciprocal Velocity Obstacles / RVO, defined potential fields, explicit state machine transitions). Patching bugs with hardcoded, arbitrary offsets or ad-hoc conditional tweaks ("hoping" it fixes edge cases) is a critical failure. All behavior must be derived from verifiable physical or geometric principles inside dedicated domain modules.
 
 ---
 
@@ -201,3 +201,11 @@
     *   **Client-Side Flags:** Stored in `window.vexeaFlags`, initialized from server-supplied values or Doppler defaults.
     *   **Server-Side Flags:** Resolution via Doppler secrets with fallback to hardcoded defaults.
     *   **Micro-Gating:** Individual metrics (e.g., frame time, network RTT) are independently togglable to minimize overhead and budget consumption.
+
+---
+
+## 13. No Monoliths (LAW)
+*   **Modular Architecture Mandate:** Single monolithic files, gigantic functions, or centralized catch-all classes (e.g., multi-thousand line files or giant god-objects) are strictly prohibited.
+*   **Single-Responsibility Decomposition:** Every feature, sub-system, state machine, or complex logic loop must be broken down into isolated, single-responsibility modules (e.g., separating perception logic, memory decay, potential fields, loadout state, and out-of-bounds enforcement into dedicated files).
+*   **Strict Scope Bounds:** No file should accumulate unrelated domain concerns. When adding new functionality, create clean sub-modules or domain-specific helpers rather than expanding existing large source files.
+

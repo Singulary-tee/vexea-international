@@ -1,5 +1,6 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { MatchRoom, astarPath } from "../MatchRoom";
+import { LLMCommanderFeedback } from "./LLMCommanderFeedback";
 import {
   ZONES,
   ZoneName,
@@ -48,6 +49,7 @@ export class LLMCommander {
   public geminiClient: GoogleGenAI | null = null;
   public geminiThrottleCooldownUntil = 0;
   public recentExecutionHistory: ExecutionHistoryRecord[] = [];
+  public feedback: LLMCommanderFeedback = new LLMCommanderFeedback();
   
   constructor(public room: MatchRoom, geminiKey?: string) {
     this.initLLMCommander(geminiKey);
@@ -107,16 +109,31 @@ export class LLMCommander {
         this.room.outstandingOrders.delete(groupId);
         continue;
       }
-      const allReached = activeGroupDrones.every((d) => d.zone === order.targetZone);
-      if (allReached) {
-        this.room.outstandingOrders.delete(groupId);
+
+      if (order.holdRemainingCycles !== undefined) {
+        order.holdRemainingCycles--;
+        if (order.holdRemainingCycles <= 0) {
+          this.room.outstandingOrders.delete(groupId);
+        } else {
+          order.cyclesOutstanding++;
+          pendingOrders.push({
+            group_id: groupId,
+            destination: `HOLD_IN_${order.targetZone} (${order.holdRemainingCycles} cycles left)`,
+            cycles_outstanding: order.cyclesOutstanding,
+          });
+        }
       } else {
-        order.cyclesOutstanding++;
-        pendingOrders.push({
-          group_id: groupId,
-          destination: order.targetZone,
-          cycles_outstanding: order.cyclesOutstanding,
-        });
+        const allReached = activeGroupDrones.every((d) => d.zone === order.targetZone);
+        if (allReached) {
+          this.room.outstandingOrders.delete(groupId);
+        } else {
+          order.cyclesOutstanding++;
+          pendingOrders.push({
+            group_id: groupId,
+            destination: order.targetZone,
+            cycles_outstanding: order.cyclesOutstanding,
+          });
+        }
       }
     }
 
@@ -125,7 +142,8 @@ export class LLMCommander {
       pendingOrders.length > 0
         ? `\nOutstanding Orders: ${JSON.stringify(pendingOrders)}`
         : "";
-    const payloadToLLM = `Dynamic payload: Current Zone Summary: ${statePayload}${outstandingPayload}\nCommander AP Pool: ${this.room.commanderAP}\nFailed operations from previous cycle: ${JSON.stringify(this.room.failedOperations)}`;
+    const feedbackBlock = this.feedback.formatFeedbackPromptBlock();
+    const payloadToLLM = `Dynamic payload: Current Zone Summary: ${statePayload}${outstandingPayload}\nCommander AP Pool: ${this.room.commanderAP}\n${feedbackBlock}Failed operations from previous cycle: ${JSON.stringify(this.room.failedOperations)}`;
     this.room.failedOperations.length = 0;
 
     const systemInstructions = `You are an automated state-machine orchestrator managing unit group allocations and zone routing. Respond strictly and exclusively with tool calls. Do not roleplay, invent narrative, adopt a persona, or output natural language. Clinical mechanical execution only.
@@ -430,17 +448,17 @@ Topological graph adjacency (Zones):
 
               const requestedDroneType = typeMapping[unit_type];
               if (requestedDroneType === undefined) {
-                this.room.failedOperations.push(
-                  `Spawn rejected: Unknown unit_type ${unit_type}`,
-                );
+                const reason = `Spawn rejected: Unknown unit_type ${unit_type}`;
+                this.room.failedOperations.push(reason);
+                this.feedback.recordResult("spawn_units", args, "REJECTED", reason);
                 break;
               }
 
               const droneConfig = DRONE_CONFIGS[requestedDroneType];
               if (!droneConfig) {
-                this.room.failedOperations.push(
-                  `Spawn rejected: Missing config for ${unit_type}`,
-                );
+                const reason = `Spawn rejected: Missing config for ${unit_type}`;
+                this.room.failedOperations.push(reason);
+                this.feedback.recordResult("spawn_units", args, "REJECTED", reason);
                 break;
               }
 
@@ -451,9 +469,9 @@ Topological graph adjacency (Zones):
                   currentActiveCount++;
               }
               if (currentActiveCount + count > MAX_DRONES) {
-                this.room.failedOperations.push(
-                  `Spawn rejected: Count exceeded max active capacity of ${MAX_DRONES}`,
-                );
+                const reason = `Spawn rejected: Count exceeded max active capacity of ${MAX_DRONES}`;
+                this.room.failedOperations.push(reason);
+                this.feedback.recordResult("spawn_units", args, "REJECTED", reason);
                 break;
               }
 
@@ -463,9 +481,9 @@ Topological graph adjacency (Zones):
                   this.room.fixedWingDeploymentsThisMatch >= 1 ||
                   count > 1
                 ) {
-                  this.room.failedOperations.push(
-                    `Spawn rejected: Fixed Wing deployment hard cap (1 per match) reached`,
-                  );
+                  const reason = `Spawn rejected: Fixed Wing deployment hard cap (1 per match) reached`;
+                  this.room.failedOperations.push(reason);
+                  this.feedback.recordResult("spawn_units", args, "REJECTED", reason);
                   break;
                 }
               }
@@ -473,9 +491,9 @@ Topological graph adjacency (Zones):
               // 3. AP cost check against commander AP pool
               const requiredAP = droneConfig.apCost * count;
               if (this.room.commanderAP < requiredAP) {
-                this.room.failedOperations.push(
-                  `Spawn rejected: Insufficient AP pool (${this.room.commanderAP} AP available, ${requiredAP} AP required for ${count}x ${unit_type})`,
-                );
+                const reason = `Spawn rejected: Insufficient AP pool (${this.room.commanderAP} AP available, ${requiredAP} AP required for ${count}x ${unit_type})`;
+                this.room.failedOperations.push(reason);
+                this.feedback.recordResult("spawn_units", args, "REJECTED", reason);
                 break;
               }
 
@@ -536,6 +554,7 @@ Topological graph adjacency (Zones):
                   if (successfullySpawned >= count) break;
                 }
               }
+              this.feedback.recordResult("spawn_units", args, "SUCCESS");
               this.room.broadcastReliableEvent.bind(this.room)({
                 type: "group_spawned",
                 zone: zone_id,
@@ -557,15 +576,20 @@ Topological graph adjacency (Zones):
                 }
               }
               if (matches.length <= unit_count) {
-                this.room.failedOperations.push(
-                  `Split rejected: Source group ${source_group_id} has insufficient members (${matches.length})`,
-                );
+                const reason = `Split rejected: Source group ${source_group_id} has insufficient members (${matches.length})`;
+                this.room.failedOperations.push(reason);
+                this.feedback.recordResult("split_group", args, "REJECTED", reason);
                 break;
               }
               const newGroupId = `G_SPL_${Math.floor(Math.random() * 1000)}`;
               for (let j = 0; j < unit_count; j++) {
                 matches[j].groupId = newGroupId;
               }
+              const existingOrder = this.room.outstandingOrders.get(source_group_id);
+              if (existingOrder) {
+                this.room.outstandingOrders.set(newGroupId, { ...existingOrder, cyclesOutstanding: 0 });
+              }
+              this.feedback.recordResult("split_group", args, "SUCCESS");
               this.room.broadcastReliableEvent.bind(this.room)({
                 type: "group_split_status",
                 src: source_group_id,
@@ -590,10 +614,12 @@ Topological graph adjacency (Zones):
                 }
               }
               if (!srcFound || !dstFound) {
-                this.room.failedOperations.push(
-                  `Merge rejected: Missing target groupings.`,
-                );
+                const reason = `Merge rejected: Missing target groupings.`;
+                this.room.failedOperations.push(reason);
+                this.feedback.recordResult("merge_groups", args, "REJECTED", reason);
               } else {
+                this.room.outstandingOrders.delete(source_group_id);
+                this.feedback.recordResult("merge_groups", args, "SUCCESS");
                 this.room.broadcastReliableEvent.bind(this.room)({
                   type: "group_linked",
                   src: source_group_id,
@@ -616,14 +642,15 @@ Topological graph adjacency (Zones):
                 }
               }
               if (movedCount === 0) {
-                this.room.failedOperations.push(
-                  `Move rejected: No active members found for group: ${group_id}`,
-                );
+                const reason = `Move rejected: No active members found for group: ${group_id}`;
+                this.room.failedOperations.push(reason);
+                this.feedback.recordResult("move_group", args, "REJECTED", reason);
               } else {
                 this.room.outstandingOrders.set(group_id, {
                   targetZone: target_zone as ZoneName,
                   cyclesOutstanding: 0,
                 });
+                this.feedback.recordResult("move_group", args, "SUCCESS");
                 this.room.broadcastReliableEvent.bind(this.room)({
                   type: "group_movement",
                   id: group_id,
@@ -634,7 +661,8 @@ Topological graph adjacency (Zones):
             }
 
             case "hold_position": {
-              const { group_id } = args;
+              const { group_id, duration_seconds } = args;
+              const holdCycles = duration_seconds ? Math.max(1, Math.ceil(Number(duration_seconds) / 8.0)) : 4;
               let foundGroupZone: ZoneName | null = null;
               for (let j = 0; j < this.room.drones.length; j++) {
                 const d = this.room.drones[j];
@@ -650,7 +678,13 @@ Topological graph adjacency (Zones):
                 this.room.outstandingOrders.set(group_id, {
                   targetZone: foundGroupZone,
                   cyclesOutstanding: 0,
+                  holdRemainingCycles: holdCycles
                 });
+                this.feedback.recordResult("hold_position", args, "SUCCESS");
+              } else {
+                const reason = `Hold rejected: Group not found or dead: ${group_id}`;
+                this.room.failedOperations.push(reason);
+                this.feedback.recordResult("hold_position", args, "REJECTED", reason);
               }
               break;
             }

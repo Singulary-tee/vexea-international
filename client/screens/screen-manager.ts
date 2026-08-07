@@ -29,7 +29,7 @@ async function processQueue() {
   setTimeout(processQueue, 0);
 }
 
-export function queueTransition(target: ScreenId, durationMs = 500, immediate = false): Promise<void> {
+export function queueTransition(target: ScreenId, durationMs = 100, immediate = false): Promise<void> {
   return new Promise<void>((resolve, reject) => {
     transitionQueue.push({ target, durationMs, immediate, resolve, reject });
     processQueue();
@@ -178,7 +178,7 @@ export function showSplash() {
 }
 
 export function showMainMenu() {
-  queueTransition('main-menu-screen', 500, false).then(() => {
+  queueTransition('main-menu-screen', 100, false).then(() => {
     const backdrop = document.getElementById('main-menu-3d-backdrop');
     if (backdrop) {
       StudioPreviewManager.attachTo(backdrop, 'MAIN_MENU');
@@ -188,7 +188,7 @@ export function showMainMenu() {
 }
 
 export function showLobby() {
-  queueTransition('lobby-screen', 500, false).then(() => {
+  queueTransition('lobby-screen', 100, false).then(() => {
     const backdrop = document.getElementById('lobby-3d-backdrop');
     if (backdrop) {
       StudioPreviewManager.attachTo(backdrop, 'LOBBY');
@@ -204,7 +204,7 @@ export function showDevMapEditor() {
   if (!IS_DEV) return;
   import("./dev-map-editor").then(({ initDevMapEditor }) => {
     initDevMapEditor();
-    queueTransition('dev-map-editor-screen', 500, false);
+    queueTransition('dev-map-editor-screen', 100, false);
   });
 }
 if (typeof window !== 'undefined') {
@@ -216,7 +216,7 @@ export function showDevEntities() {
   import("./dev-entities").then(({ initDevEntities, activateScreen }) => {
     initDevEntities().then(() => {
       activateScreen();
-      queueTransition('dev-entities-screen', 500, false);
+      queueTransition('dev-entities-screen', 100, false);
     });
   });
 }
@@ -241,14 +241,14 @@ export function showGame() {
 export function showPostMatch(matchData?: any) {
   import("./post-match-screen").then(({ renderPostMatchScreen }) => {
     renderPostMatchScreen(matchData);
-    queueTransition('post-match-screen', 500, false);
+    queueTransition('post-match-screen', 100, false);
   });
 }
 
 export function showBattlePass() {
   import("./battle-pass-screen").then(({ renderBattlePassScreen }) => {
     renderBattlePassScreen();
-    queueTransition('battle-pass-screen', 500, false);
+    queueTransition('battle-pass-screen', 100, false);
   });
 }
 

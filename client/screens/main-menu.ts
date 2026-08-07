@@ -958,6 +958,7 @@ export function initMainMenu() {
   intelCard.style.minHeight = '0';
   intelCard.onclick = (e) => {
     e.stopPropagation();
+    setActiveStatsSubTab('INTEL');
     setActiveCard('INTEL');
   };
 
@@ -1114,11 +1115,26 @@ export function initMainMenu() {
   challengesHeader.appendChild(challengesTimer);
   challengesPanel.appendChild(challengesHeader);
 
-  const challengesData = [
-    { name: 'DRONE SWARM DISPATCH', desc: 'Eliminate 20 enemy drones', current: 14, target: 20, reward: '+200 CR' },
-    { name: 'HARDPOINT HOLDER', desc: 'Hold objectives for 180s', current: 125, target: 180, reward: '+150 CR' },
-    { name: 'PRECISION SHOTS', desc: 'Score 15 headshots', current: 9, target: 15, reward: '+100 EN' }
-  ];
+  const mmStats = registeredUserData?.stats || {};
+  const challengesData = challengesDataList.slice(0, 3).map((ch: any) => {
+    let current = 0;
+    if (ch.id === 'ch_drone_kills') {
+      current = Math.min(ch.target, mmStats.totalDroneEliminations || mmStats.kills || 0);
+    } else if (ch.id === 'ch_extraction_hp') {
+      current = Math.min(ch.target, mmStats.totalWins || mmStats.wins || 0);
+    } else if (ch.id === 'ch_capture_nodes') {
+      current = Math.min(ch.target, mmStats.totalObjectiveTimeHeld ? Math.floor(mmStats.totalObjectiveTimeHeld / 60) : 0);
+    } else {
+      current = registeredUserData?.challengesProgress?.[ch.id] || 0;
+    }
+    return {
+      name: ch.title,
+      desc: ch.description,
+      current,
+      target: ch.target,
+      reward: `+${ch.rewardCredits} CR`
+    };
+  });
 
   challengesData.forEach((ch) => {
     const item = document.createElement('div');
@@ -1187,6 +1203,8 @@ export function initMainMenu() {
 
   challengesPanel.onclick = (e) => {
     e.stopPropagation();
+    setActiveStatsSubTab('CHALLENGES');
+    setActiveCard('INTEL');
   };
 
   row3Container.appendChild(challengesPanel);
@@ -1215,61 +1233,6 @@ export function initMainMenu() {
     overflow: 'hidden'
   });
 
-  const tabHeaderRow = document.createElement('div');
-  Object.assign(tabHeaderRow.style, {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '10px',
-    width: '100%',
-    marginBottom: 'clamp(6px, 1.2vh, 12px)',
-    flexShrink: '0'
-  });
-
-  const tabTitle = document.createElement('div');
-  tabTitle.id = 'dynamic-panel-title';
-  Object.assign(tabTitle.style, {
-    fontFamily: DS.typography.fontFamily,
-    fontSize: 'clamp(16px, 2.2vh, 24px)',
-    color: DS.colors.text,
-    textTransform: 'uppercase',
-    fontWeight: 'bold',
-    textShadow: DS.shadows.text
-  });
-
-  const backBtn = document.createElement('div');
-  backBtn.innerHTML = `<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:block;"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>`;
-  Object.assign(backBtn.style, {
-    cursor: 'pointer',
-    border: 'none',
-    borderRadius: '0px',
-    width: '28px',
-    height: '28px',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    background: 'rgba(5, 5, 5, 0.92)',
-    backdropFilter: 'blur(16px)',
-    webkitBackdropFilter: 'blur(16px)',
-    color: '#FFFFFF',
-    transition: 'all 0.15s ease',
-    flexShrink: '0'
-  });
-  backBtn.onmouseenter = () => {
-    backBtn.style.background = 'rgba(25, 25, 25, 0.95)';
-    backBtn.style.color = '#FF4500';
-  };
-  backBtn.onmouseleave = () => {
-    backBtn.style.background = 'rgba(5, 5, 5, 0.92)';
-    backBtn.style.color = '#FFFFFF';
-  };
-  backBtn.onclick = () => {
-    setActiveCard('DEFAULT');
-  };
-
-  tabHeaderRow.appendChild(backBtn);
-  tabHeaderRow.appendChild(tabTitle);
-  tabContentLayout.appendChild(tabHeaderRow);
-
   rightPanelContent = document.createElement('div');
   Object.assign(rightPanelContent.style, {
     display: 'flex', flexDirection: 'column', gap: '6px', overflow: 'hidden',
@@ -1293,6 +1256,11 @@ function updateProfileBox() {
     import('../asset-cache').then(({ getAssetUrl }) => {
       leaderboardCard.style.backgroundImage = `url('${getAssetUrl('leaderboard_card_1.webp')}')`;
     });
+    leaderboardCard.onclick = (e) => {
+      e.stopPropagation();
+      setActiveStatsSubTab('LEADERBOARD');
+      setActiveCard('INTEL');
+    };
   }
 
   const coinSvg = `<svg viewBox="0 0 24 24" width="14" height="14" fill="${DS.colors.accent}" style="vertical-align: middle; display: inline-block;"><path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm0 18a8 8 0 1 1 8-8 8 8 0 0 1-8 8zm1-13h-2v1.17a3 3 0 0 0-1 5.66V13a3 3 0 0 0 2 2.83V17h2v-1.17a3 3 0 0 0 1-5.66V9a3 3 0 0 0-2-2.83z"/></svg>`;
@@ -1371,7 +1339,8 @@ function setActiveCard(id: string) {
   const titleEl = document.getElementById('dynamic-panel-title');
   if (titleEl) {
     let displayTitle = id;
-    if (id === 'DEFAULT') displayTitle = 'INTEL';
+    if (id === 'DEFAULT') displayTitle = 'OVERVIEW';
+    else if (id === 'INTEL') displayTitle = 'STATISTICS';
     else if (id === 'LOADOUT') displayTitle = 'ARMORY';
     titleEl.textContent = displayTitle;
   }
@@ -1547,7 +1516,7 @@ function updatePlayTabSelection() {
 }
 
 function renderRightPanel() {
-  rightPanelContent.style.opacity = '0';
+  rightPanelContent.style.opacity = '1';
   
   // Right Column Overflow Logic
   const rightCol = document.getElementById('mm-right-col');
@@ -1555,14 +1524,13 @@ function renderRightPanel() {
      rightCol.style.overflow = 'hidden';
   }
 
-  setTimeout(() => {
-    // Hide all existing persistent containers
-    for (const key in persistentContainers) {
-      persistentContainers[key].style.display = 'none';
-    }
+  // Hide all existing persistent containers
+  for (const key in persistentContainers) {
+    persistentContainers[key].style.display = 'none';
+  }
 
-    let container = persistentContainers[currentRightPanelMode];
-    if (!container) {
+  let container = persistentContainers[currentRightPanelMode];
+  if (!container) {
       container = document.createElement('div');
       Object.assign(container.style, {
         display: 'flex',
@@ -1577,7 +1545,7 @@ function renderRightPanel() {
 
       // Populate container based on currentRightPanelMode (ONCE)
       if (currentRightPanelMode === 'DEFAULT') {
-         container.appendChild(createPanelBlock('INTEL SUMMARY', c => {
+         container.appendChild(createPanelBlock('STATS SUMMARY', c => {
            const stats = [
              { key: 'totalMatches', l: 'MATCHES', v: '—' },
              { key: 'totalWins', l: 'WINS', v: '—' },
@@ -2117,7 +2085,6 @@ function renderRightPanel() {
     }
 
     rightPanelContent.style.opacity = '1';
-  }, 100);
 }
 
 function checkDailyRefresh(userData: any, userDocRef: any) {
@@ -3372,28 +3339,27 @@ function openSquadFriendsModal() {
 
 export function refreshCardImages() {
   if (playCardEl) {
-    playCardEl.style.backgroundImage = `url('${getAssetUrl(getPlayCardImageForMode(lastChosenGameMode))}')`;
+    const playUrl = `url('${getAssetUrl(getPlayCardImageForMode(lastChosenGameMode))}')`;
+    if (playCardEl.style.backgroundImage !== playUrl) {
+      playCardEl.style.backgroundImage = playUrl;
+    }
   }
-  const updatesCard = document.getElementById('mm-updates-card');
-  if (updatesCard) {
-    updatesCard.style.backgroundImage = `url('${getAssetUrl('update_card_1.webp')}')`;
-  }
-  const leaderboardCard = document.getElementById('leaderboard-card');
-  if (leaderboardCard) {
-    leaderboardCard.style.backgroundImage = `url('${getAssetUrl('leaderboard_card_1.webp')}')`;
-  }
-  const intelCard = document.getElementById('mm-intel-card');
-  if (intelCard) {
-    intelCard.style.backgroundImage = `url('${getAssetUrl('intel_card_1.webp')}')`;
-  }
-  const squadRaidCard = document.getElementById('mm-squad-card');
-  if (squadRaidCard) {
-    squadRaidCard.style.backgroundImage = `url('${getAssetUrl('squad_card_1.webp')}')`;
-  }
-  const storeCard = document.getElementById('mm-store-card');
-  if (storeCard) {
-    storeCard.style.backgroundImage = `url('${getAssetUrl('promo_rifle_1.webp')}')`;
-  }
+  const cards = [
+    { id: 'mm-updates-card', asset: 'update_card_1.webp' },
+    { id: 'leaderboard-card', asset: 'leaderboard_card_1.webp' },
+    { id: 'mm-intel-card', asset: 'intel_card_1.webp' },
+    { id: 'mm-squad-card', asset: 'squad_card_1.webp' },
+    { id: 'mm-store-card', asset: 'promo_rifle_1.webp' }
+  ];
+  cards.forEach(({ id, asset }) => {
+    const cardEl = document.getElementById(id);
+    if (cardEl) {
+      const cardUrl = `url('${getAssetUrl(asset)}')`;
+      if (cardEl.style.backgroundImage !== cardUrl) {
+        cardEl.style.backgroundImage = cardUrl;
+      }
+    }
+  });
 }
 
 if (typeof window !== 'undefined') {

@@ -146,6 +146,7 @@ export const DS = {
     slow: '2000ms ease-in-out'
   },
   transitions: {
+    screenDurationMs: 100,
     card: '180ms ease-out',
     panel: '250ms ease-out',
     expand: '320ms cubic-bezier(0.4, 0, 0.2, 1)',
@@ -159,3 +160,43 @@ export const DS = {
     }
   }
 };
+
+export function createSkeletonBox(width: string, height: string, label: string = 'SYNCING DATA...'): HTMLElement | null {
+  if (typeof document === 'undefined') return null;
+  const box = document.createElement('div');
+  box.className = 'vexea-skeleton-box';
+  Object.assign(box.style, {
+    width,
+    height,
+    position: 'relative',
+    display: 'flex',
+    alignItems: 'flex-end',
+    justifyContent: 'flex-end',
+    padding: '6px',
+    boxSizing: 'border-box'
+  });
+
+  const tag = document.createElement('span');
+  tag.textContent = label;
+  Object.assign(tag.style, {
+    fontFamily: DS.typography.fontFamilyMono,
+    fontSize: '9px',
+    letterSpacing: '2px',
+    color: 'rgba(255, 69, 0, 0.6)',
+    textTransform: 'uppercase'
+  });
+  box.appendChild(tag);
+  return box;
+}
+
+export function createSkeletonText(width: string, height: string = '14px'): HTMLElement | null {
+  if (typeof document === 'undefined') return null;
+  const text = document.createElement('div');
+  text.className = 'vexea-skeleton-text';
+  Object.assign(text.style, {
+    width,
+    height,
+    boxSizing: 'border-box'
+  });
+  return text;
+}

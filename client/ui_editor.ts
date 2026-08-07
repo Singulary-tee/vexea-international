@@ -44,20 +44,36 @@ export const initUIEditor = () => {
     const editorBar = document.createElement("div");
     editorBar.id = "ui-editor-bar";
     editorBar.style.position = "absolute";
-    editorBar.style.top = "50px";
-    editorBar.style.left = "50px";
-    editorBar.style.width = "320px";
-    editorBar.style.background = DS.utils.rgba('#0A0A0A', 0.95);
-    editorBar.style.color = "white";
+    editorBar.style.top = "5%";
+    editorBar.style.left = "5%";
+    editorBar.style.width = "clamp(280px, 30vw, 360px)";
+    editorBar.style.maxHeight = "90vh";
+    editorBar.style.background = `linear-gradient(135deg, ${DS.utils.rgba(DS.colors.background, 0.95)} 0%, ${DS.utils.rgba(DS.colors.background, 0.8)} 100%)`;
+    editorBar.style.backdropFilter = DS.glass.blur;
+    editorBar.style.color = DS.colors.textPrimary;
     editorBar.style.display = "none";
     editorBar.style.flexDirection = "column";
-    editorBar.style.padding = "20px";
+    editorBar.style.padding = DS.spacing.xl;
     editorBar.style.zIndex = "100000";
-    editorBar.style.border = `2px solid ${DS.colors.border}`;
-    editorBar.style.borderRadius = DS.borders.radius.md;
+    editorBar.style.border = `1px solid ${DS.colors.border}`;
+    editorBar.style.borderRadius = DS.borders.radius.none;
     editorBar.style.pointerEvents = "auto";
-    editorBar.style.cursor = "move";
-    editorBar.style.boxShadow = `0 8px 32px ${DS.utils.rgba('#000000', 0.8)}`;
+    editorBar.style.cursor = "grab";
+    editorBar.style.boxShadow = `0 10px 40px ${DS.utils.rgba('#000000', 0.9)}`;
+    editorBar.style.userSelect = "none";
+    editorBar.style.overflowY = "auto";
+    editorBar.style.scrollbarWidth = "thin";
+    editorBar.style.scrollbarColor = `${DS.colors.success} ${DS.colors.surface}`;
+
+    const dragHandle = document.createElement("div");
+    dragHandle.style.height = "8px";
+    dragHandle.style.width = "40px";
+    dragHandle.style.margin = "0 auto 16px auto";
+    dragHandle.style.background = DS.utils.rgba(DS.colors.textSecondary, 0.3);
+    dragHandle.style.borderRadius = "4px";
+    dragHandle.style.cursor = "grab";
+    dragHandle.id = "editor-drag-handle";
+    editorBar.appendChild(dragHandle);
 
     const blockEvents = ["pointerdown", "pointerup", "pointermove", "mousedown", "mouseup", "mousemove", "click", "touchstart", "touchend", "touchmove"];
     blockEvents.forEach(evt => {
@@ -66,155 +82,190 @@ export const initUIEditor = () => {
         });
     });
 
-    editorBar.innerHTML = `
-        <div style="font-weight: bold; color: #22c55e; margin-bottom: 15px; text-align: center; pointer-events: none; font-family: monospace; font-size: 14px; letter-spacing: 1px;">VEXEA HUD EDITOR</div>
-        <div id="editor-selected" style="margin-bottom: 15px; text-align: center; pointer-events: none; font-family: monospace; font-size: 11px; color: #aaa; background: #151515; padding: 6px; border-radius: 4px;">Selected: None</div>
+    const contentWrapper = document.createElement("div");
+    contentWrapper.style.display = "flex";
+    contentWrapper.style.flexDirection = "column";
+    contentWrapper.style.overflowY = "auto";
+    contentWrapper.style.paddingRight = "4px"; // Space for scrollbar
+    contentWrapper.innerHTML = `
+        <div id="editor-selected" style="margin-bottom: ${DS.spacing.lg}; text-align: center; pointer-events: none; font-family: ${DS.typography.fontFamilyMono}; font-size: ${DS.typography.tiny}; color: ${DS.colors.textSecondary}; background: ${DS.utils.rgba(DS.colors.surface, 0.8)}; padding: ${DS.spacing.md}; border-radius: ${DS.borders.radius.none}; border-left: 2px solid ${DS.colors.success};">Selected: None</div>
         
         <!-- Tab Headers -->
-        <div style="display: flex; background: #111; padding: 2px; border-radius: 6px; margin-bottom: 15px; gap: 2px; border: 1px solid #222;">
-            <button id="tab-element" style="flex: 1; padding: 6px; background: #22c55e; color: black; border: none; font-size: 11px; cursor: pointer; font-weight: bold; border-radius: 4px; transition: all 0.2s;">ELEMENT</button>
-            <button id="tab-grid" style="flex: 1; padding: 6px; background: transparent; color: #888; border: none; font-size: 11px; cursor: pointer; font-weight: bold; border-radius: 4px; transition: all 0.2s;">GRID & REF</button>
+        <div style="display: flex; background: ${DS.colors.surface}; padding: ${DS.spacing.xs}; border-radius: ${DS.borders.radius.none}; margin-bottom: ${DS.spacing.lg}; gap: ${DS.spacing.xs}; border: 1px solid ${DS.colors.border};">
+            <button id="tab-element" style="flex: 1; padding: ${DS.spacing.md}; background: ${DS.colors.success}; color: black; border: none; font-size: ${DS.typography.tiny}; cursor: pointer; font-weight: ${DS.typography.weightBold}; border-radius: ${DS.borders.radius.none}; transition: all ${DS.motion.fast}; font-family: ${DS.typography.fontFamilyMono};">ELEMENT</button>
+            <button id="tab-grid" style="flex: 1; padding: ${DS.spacing.md}; background: transparent; color: ${DS.colors.textSecondary}; border: none; font-size: ${DS.typography.tiny}; cursor: pointer; font-weight: ${DS.typography.weightBold}; border-radius: ${DS.borders.radius.none}; transition: all ${DS.motion.fast}; font-family: ${DS.typography.fontFamilyMono};">GRID & REF</button>
         </div>
 
         <!-- Panel 1: Element Properties -->
-        <div id="panel-element" style="display: flex; flex-direction: column; gap: 12px; font-family: monospace; font-size: 11px;">
+        <div id="panel-element" style="display: flex; flex-direction: column; gap: ${DS.spacing.md}; font-family: ${DS.typography.fontFamilyMono}; font-size: ${DS.typography.tiny};">
             <div style="display: flex; justify-content: space-between; align-items: center;">
-                <span>Slider Step:</span>
-                <div style="display: flex; align-items: center; gap: 6px;">
-                    <input type="range" id="editor-step" min="0.1" max="10" step="0.1" value="1" style="width: 100px; accent-color: #22c55e;">
-                    <input type="number" id="editor-step-num" min="0.1" max="10" step="0.1" value="1.0" style="width: 65px; background: #151515; color: #22c55e; border: 1px solid #333; border-radius: 4px; padding: 3px 6px; font-size: 11px; text-align: right; font-family: monospace;">
+                <span style="color: ${DS.colors.textSecondary};">SLIDER STEP:</span>
+                <div style="display: flex; align-items: center; gap: ${DS.spacing.md};">
+                    <input type="range" id="editor-step" min="0.1" max="10" step="0.1" value="1" style="width: 80px; accent-color: ${DS.colors.success};">
+                    <input type="number" id="editor-step-num" min="0.1" max="10" step="0.1" value="1.0" style="width: 55px; background: ${DS.colors.surface}; color: ${DS.colors.success}; border: 1px solid ${DS.colors.border}; border-radius: ${DS.borders.radius.none}; padding: ${DS.spacing.sm} ${DS.spacing.md}; font-size: ${DS.typography.tiny}; text-align: right; font-family: ${DS.typography.fontFamilyMono};">
                 </div>
             </div>
 
             <!-- Position Controls -->
             <div style="display: flex; justify-content: space-between; align-items: center;">
-                <span>Left (px):</span>
-                <div style="display: flex; align-items: center; gap: 6px;">
-                    <input type="range" id="editor-left" min="0" max="1920" step="1" value="0" disabled style="width: 100px; accent-color: #22c55e;">
-                    <input type="number" id="editor-left-num" min="-500" max="3840" step="1" value="0" disabled style="width: 65px; background: #151515; color: #fff; border: 1px solid #333; border-radius: 4px; padding: 3px 6px; font-size: 11px; text-align: right; font-family: monospace;">
+                <span style="color: ${DS.colors.textSecondary};">LEFT (PX):</span>
+                <div style="display: flex; align-items: center; gap: ${DS.spacing.md};">
+                    <input type="range" id="editor-left" min="0" max="1920" step="1" value="0" disabled style="width: 80px; accent-color: ${DS.colors.success}; opacity: 0.5;">
+                    <input type="number" id="editor-left-num" min="-500" max="3840" step="1" value="0" disabled style="width: 55px; background: ${DS.colors.surface}; color: ${DS.colors.textPrimary}; border: 1px solid ${DS.colors.border}; border-radius: ${DS.borders.radius.none}; padding: ${DS.spacing.sm} ${DS.spacing.md}; font-size: ${DS.typography.tiny}; text-align: right; font-family: ${DS.typography.fontFamilyMono};">
                 </div>
             </div>
 
             <div style="display: flex; justify-content: space-between; align-items: center;">
-                <span>Top (px):</span>
-                <div style="display: flex; align-items: center; gap: 6px;">
-                    <input type="range" id="editor-top" min="0" max="1080" step="1" value="0" disabled style="width: 100px; accent-color: #22c55e;">
-                    <input type="number" id="editor-top-num" min="-500" max="2160" step="1" value="0" disabled style="width: 65px; background: #151515; color: #fff; border: 1px solid #333; border-radius: 4px; padding: 3px 6px; font-size: 11px; text-align: right; font-family: monospace;">
+                <span style="color: ${DS.colors.textSecondary};">TOP (PX):</span>
+                <div style="display: flex; align-items: center; gap: ${DS.spacing.md};">
+                    <input type="range" id="editor-top" min="0" max="1080" step="1" value="0" disabled style="width: 80px; accent-color: ${DS.colors.success}; opacity: 0.5;">
+                    <input type="number" id="editor-top-num" min="-500" max="2160" step="1" value="0" disabled style="width: 55px; background: ${DS.colors.surface}; color: ${DS.colors.textPrimary}; border: 1px solid ${DS.colors.border}; border-radius: ${DS.borders.radius.none}; padding: ${DS.spacing.sm} ${DS.spacing.md}; font-size: ${DS.typography.tiny}; text-align: right; font-family: ${DS.typography.fontFamilyMono};">
                 </div>
             </div>
 
-            <div id="editor-size-wrap" style="display: flex; flex-direction: column; gap: 12px; width: 100%;">
+            <div id="editor-size-wrap" style="display: flex; flex-direction: column; gap: ${DS.spacing.md}; width: 100%;">
                 <div style="display: flex; justify-content: space-between; align-items: center;">
-                    <span>Scale:</span>
-                    <div style="display: flex; align-items: center; gap: 6px;">
-                        <input type="range" id="editor-scale" min="0.1" max="5" step="0.05" value="1" disabled style="width: 100px; accent-color: #22c55e;">
-                        <input type="number" id="editor-scale-num" min="0.1" max="5" step="0.01" value="1.00" disabled style="width: 65px; background: #151515; color: #fff; border: 1px solid #333; border-radius: 4px; padding: 3px 6px; font-size: 11px; text-align: right; font-family: monospace;">
+                    <span style="color: ${DS.colors.textSecondary};">SCALE:</span>
+                    <div style="display: flex; align-items: center; gap: ${DS.spacing.md};">
+                        <input type="range" id="editor-scale" min="0.1" max="5" step="0.05" value="1" disabled style="width: 80px; accent-color: ${DS.colors.success}; opacity: 0.5;">
+                        <input type="number" id="editor-scale-num" min="0.1" max="5" step="0.01" value="1.00" disabled style="width: 55px; background: ${DS.colors.surface}; color: ${DS.colors.textPrimary}; border: 1px solid ${DS.colors.border}; border-radius: ${DS.borders.radius.none}; padding: ${DS.spacing.sm} ${DS.spacing.md}; font-size: ${DS.typography.tiny}; text-align: right; font-family: ${DS.typography.fontFamilyMono};">
                     </div>
                 </div>
             </div>
 
-            <div id="editor-dim-wrap" style="display: flex; flex-direction: column; gap: 12px; width: 100%;">
+            <div id="editor-dim-wrap" style="display: flex; flex-direction: column; gap: ${DS.spacing.md}; width: 100%;">
                 <div style="display: flex; justify-content: space-between; align-items: center;">
-                    <span>Width (px):</span>
-                    <div style="display: flex; align-items: center; gap: 6px;">
-                        <input type="range" id="editor-width" min="10" max="1200" step="1" value="100" disabled style="width: 100px; accent-color: #22c55e;">
-                        <input type="number" id="editor-width-num" min="10" max="2000" step="1" value="100" disabled style="width: 65px; background: #151515; color: #fff; border: 1px solid #333; border-radius: 4px; padding: 3px 6px; font-size: 11px; text-align: right; font-family: monospace;">
+                    <span style="color: ${DS.colors.textSecondary};">WIDTH (PX):</span>
+                    <div style="display: flex; align-items: center; gap: ${DS.spacing.md};">
+                        <input type="range" id="editor-width" min="10" max="1200" step="1" value="100" disabled style="width: 80px; accent-color: ${DS.colors.success}; opacity: 0.5;">
+                        <input type="number" id="editor-width-num" min="10" max="2000" step="1" value="100" disabled style="width: 55px; background: ${DS.colors.surface}; color: ${DS.colors.textPrimary}; border: 1px solid ${DS.colors.border}; border-radius: ${DS.borders.radius.none}; padding: ${DS.spacing.sm} ${DS.spacing.md}; font-size: ${DS.typography.tiny}; text-align: right; font-family: ${DS.typography.fontFamilyMono};">
                     </div>
                 </div>
                 <div style="display: flex; justify-content: space-between; align-items: center;">
-                    <span>Height (px):</span>
-                    <div style="display: flex; align-items: center; gap: 6px;">
-                        <input type="range" id="editor-height" min="10" max="1200" step="1" value="100" disabled style="width: 100px; accent-color: #22c55e;">
-                        <input type="number" id="editor-height-num" min="10" max="2000" step="1" value="100" disabled style="width: 65px; background: #151515; color: #fff; border: 1px solid #333; border-radius: 4px; padding: 3px 6px; font-size: 11px; text-align: right; font-family: monospace;">
+                    <span style="color: ${DS.colors.textSecondary};">HEIGHT (PX):</span>
+                    <div style="display: flex; align-items: center; gap: ${DS.spacing.md};">
+                        <input type="range" id="editor-height" min="10" max="1200" step="1" value="100" disabled style="width: 80px; accent-color: ${DS.colors.success}; opacity: 0.5;">
+                        <input type="number" id="editor-height-num" min="10" max="2000" step="1" value="100" disabled style="width: 55px; background: ${DS.colors.surface}; color: ${DS.colors.textPrimary}; border: 1px solid ${DS.colors.border}; border-radius: ${DS.borders.radius.none}; padding: ${DS.spacing.sm} ${DS.spacing.md}; font-size: ${DS.typography.tiny}; text-align: right; font-family: ${DS.typography.fontFamilyMono};">
                     </div>
                 </div>
             </div>
         </div>
 
         <!-- Panel 2: Grid & Reference Properties -->
-        <div id="panel-grid" style="display: none; flex-direction: column; gap: 12px; font-family: monospace; font-size: 11px;">
+        <div id="panel-grid" style="display: none; flex-direction: column; gap: ${DS.spacing.md}; font-family: ${DS.typography.fontFamilyMono}; font-size: ${DS.typography.tiny};">
             <!-- Grid Snap Size -->
             <div style="display: flex; justify-content: space-between; align-items: center;">
-                <span>Grid Snap (px):</span>
-                <div style="display: flex; align-items: center; gap: 6px;">
-                    <input type="range" id="grid-snap" min="1" max="100" step="1" value="5" style="width: 100px; accent-color: #22c55e;">
-                    <input type="number" id="grid-snap-num" min="1" max="100" step="1" value="5" style="width: 65px; background: #151515; color: #fff; border: 1px solid #333; border-radius: 4px; padding: 3px 6px; font-size: 11px; text-align: right; font-family: monospace;">
+                <span style="color: ${DS.colors.textSecondary};">GRID SNAP (PX):</span>
+                <div style="display: flex; align-items: center; gap: ${DS.spacing.md};">
+                    <input type="range" id="grid-snap" min="1" max="100" step="1" value="5" style="width: 80px; accent-color: ${DS.colors.success};">
+                    <input type="number" id="grid-snap-num" min="1" max="100" step="1" value="5" style="width: 55px; background: ${DS.colors.surface}; color: ${DS.colors.textPrimary}; border: 1px solid ${DS.colors.border}; border-radius: ${DS.borders.radius.none}; padding: ${DS.spacing.sm} ${DS.spacing.md}; font-size: ${DS.typography.tiny}; text-align: right; font-family: ${DS.typography.fontFamilyMono};">
                 </div>
             </div>
 
             <!-- Grid Offset X -->
             <div style="display: flex; justify-content: space-between; align-items: center;">
-                <span>Grid Offset X:</span>
-                <div style="display: flex; align-items: center; gap: 6px;">
-                    <input type="range" id="grid-offset-x" min="-100" max="100" step="1" value="0" style="width: 100px; accent-color: #22c55e;">
-                    <input type="number" id="grid-offset-x-num" min="-100" max="100" step="1" value="0" style="width: 65px; background: #151515; color: #fff; border: 1px solid #333; border-radius: 4px; padding: 3px 6px; font-size: 11px; text-align: right; font-family: monospace;">
+                <span style="color: ${DS.colors.textSecondary};">GRID OFFSET X:</span>
+                <div style="display: flex; align-items: center; gap: ${DS.spacing.md};">
+                    <input type="range" id="grid-offset-x" min="-100" max="100" step="1" value="0" style="width: 80px; accent-color: ${DS.colors.success};">
+                    <input type="number" id="grid-offset-x-num" min="-100" max="100" step="1" value="0" style="width: 55px; background: ${DS.colors.surface}; color: ${DS.colors.textPrimary}; border: 1px solid ${DS.colors.border}; border-radius: ${DS.borders.radius.none}; padding: ${DS.spacing.sm} ${DS.spacing.md}; font-size: ${DS.typography.tiny}; text-align: right; font-family: ${DS.typography.fontFamilyMono};">
                 </div>
             </div>
 
             <!-- Grid Offset Y -->
             <div style="display: flex; justify-content: space-between; align-items: center;">
-                <span>Grid Offset Y:</span>
-                <div style="display: flex; align-items: center; gap: 6px;">
-                    <input type="range" id="grid-offset-y" min="-100" max="100" step="1" value="0" style="width: 100px; accent-color: #22c55e;">
-                    <input type="number" id="grid-offset-y-num" min="-100" max="100" step="1" value="0" style="width: 65px; background: #151515; color: #fff; border: 1px solid #333; border-radius: 4px; padding: 3px 6px; font-size: 11px; text-align: right; font-family: monospace;">
+                <span style="color: ${DS.colors.textSecondary};">GRID OFFSET Y:</span>
+                <div style="display: flex; align-items: center; gap: ${DS.spacing.md};">
+                    <input type="range" id="grid-offset-y" min="-100" max="100" step="1" value="0" style="width: 80px; accent-color: ${DS.colors.success};">
+                    <input type="number" id="grid-offset-y-num" min="-100" max="100" step="1" value="0" style="width: 55px; background: ${DS.colors.surface}; color: ${DS.colors.textPrimary}; border: 1px solid ${DS.colors.border}; border-radius: ${DS.borders.radius.none}; padding: ${DS.spacing.sm} ${DS.spacing.md}; font-size: ${DS.typography.tiny}; text-align: right; font-family: ${DS.typography.fontFamilyMono};">
                 </div>
             </div>
 
             <!-- Show Grid Checkbox -->
             <div style="display: flex; justify-content: space-between; align-items: center;">
-                <span>Show Visual Grid:</span>
-                <input type="checkbox" id="show-grid-checkbox" checked style="cursor: pointer; width: 16px; height: 16px; accent-color: #22c55e;">
+                <span style="color: ${DS.colors.textSecondary};">SHOW VISUAL GRID:</span>
+                <input type="checkbox" id="show-grid-checkbox" checked style="cursor: pointer; width: 14px; height: 14px; accent-color: ${DS.colors.success};">
             </div>
 
             <!-- Divider -->
-            <div style="border-top: 1px solid #222; margin: 5px 0;"></div>
+            <div style="border-top: 1px solid ${DS.colors.border}; margin: ${DS.spacing.sm} 0;"></div>
 
             <!-- Ref Opacity -->
             <div style="display: flex; justify-content: space-between; align-items: center;">
-                <span>Ref Opacity:</span>
-                <div style="display: flex; align-items: center; gap: 6px;">
-                    <input type="range" id="ref-opacity" min="0" max="1" step="0.05" value="1" style="width: 100px; accent-color: #22c55e;">
-                    <input type="number" id="ref-opacity-num" min="0" max="1" step="0.01" value="1.00" style="width: 65px; background: #151515; color: #fff; border: 1px solid #333; border-radius: 4px; padding: 3px 6px; font-size: 11px; text-align: right; font-family: monospace;">
+                <span style="color: ${DS.colors.textSecondary};">REF OPACITY:</span>
+                <div style="display: flex; align-items: center; gap: ${DS.spacing.md};">
+                    <input type="range" id="ref-opacity" min="0" max="1" step="0.05" value="1" style="width: 80px; accent-color: ${DS.colors.success};">
+                    <input type="number" id="ref-opacity-num" min="0" max="1" step="0.01" value="1.00" style="width: 55px; background: ${DS.colors.surface}; color: ${DS.colors.textPrimary}; border: 1px solid ${DS.colors.border}; border-radius: ${DS.borders.radius.none}; padding: ${DS.spacing.sm} ${DS.spacing.md}; font-size: ${DS.typography.tiny}; text-align: right; font-family: ${DS.typography.fontFamilyMono};">
                 </div>
             </div>
 
             <!-- Ref Scale -->
             <div style="display: flex; justify-content: space-between; align-items: center;">
-                <span>Ref Scale (%):</span>
-                <div style="display: flex; align-items: center; gap: 6px;">
-                    <input type="range" id="ref-scale" min="10" max="300" step="1" value="100" style="width: 100px; accent-color: #22c55e;">
-                    <input type="number" id="ref-scale-num" min="10" max="300" step="1" value="100" style="width: 65px; background: #151515; color: #fff; border: 1px solid #333; border-radius: 4px; padding: 3px 6px; font-size: 11px; text-align: right; font-family: monospace;">
+                <span style="color: ${DS.colors.textSecondary};">REF SCALE (%):</span>
+                <div style="display: flex; align-items: center; gap: ${DS.spacing.md};">
+                    <input type="range" id="ref-scale" min="10" max="300" step="1" value="100" style="width: 80px; accent-color: ${DS.colors.success};">
+                    <input type="number" id="ref-scale-num" min="10" max="300" step="1" value="100" style="width: 55px; background: ${DS.colors.surface}; color: ${DS.colors.textPrimary}; border: 1px solid ${DS.colors.border}; border-radius: ${DS.borders.radius.none}; padding: ${DS.spacing.sm} ${DS.spacing.md}; font-size: ${DS.typography.tiny}; text-align: right; font-family: ${DS.typography.fontFamilyMono};">
                 </div>
             </div>
 
             <!-- Ref Offset X -->
             <div style="display: flex; justify-content: space-between; align-items: center;">
-                <span>Ref Offset X (px):</span>
-                <div style="display: flex; align-items: center; gap: 6px;">
-                    <input type="range" id="ref-offset-x" min="-1000" max="1000" step="1" value="0" style="width: 100px; accent-color: #22c55e;">
-                    <input type="number" id="ref-offset-x-num" min="-2000" max="2000" step="1" value="0" style="width: 65px; background: #151515; color: #fff; border: 1px solid #333; border-radius: 4px; padding: 3px 6px; font-size: 11px; text-align: right; font-family: monospace;">
+                <span style="color: ${DS.colors.textSecondary};">REF OFFSET X (PX):</span>
+                <div style="display: flex; align-items: center; gap: ${DS.spacing.md};">
+                    <input type="range" id="ref-offset-x" min="-1000" max="1000" step="1" value="0" style="width: 80px; accent-color: ${DS.colors.success};">
+                    <input type="number" id="ref-offset-x-num" min="-2000" max="2000" step="1" value="0" style="width: 55px; background: ${DS.colors.surface}; color: ${DS.colors.textPrimary}; border: 1px solid ${DS.colors.border}; border-radius: ${DS.borders.radius.none}; padding: ${DS.spacing.sm} ${DS.spacing.md}; font-size: ${DS.typography.tiny}; text-align: right; font-family: ${DS.typography.fontFamilyMono};">
                 </div>
             </div>
 
             <!-- Ref Offset Y -->
             <div style="display: flex; justify-content: space-between; align-items: center;">
-                <span>Ref Offset Y (px):</span>
-                <div style="display: flex; align-items: center; gap: 6px;">
-                    <input type="range" id="ref-offset-y" min="-1000" max="1000" step="1" value="0" style="width: 100px; accent-color: #22c55e;">
-                    <input type="number" id="ref-offset-y-num" min="-2000" max="2000" step="1" value="0" style="width: 65px; background: #151515; color: #fff; border: 1px solid #333; border-radius: 4px; padding: 3px 6px; font-size: 11px; text-align: right; font-family: monospace;">
+                <span style="color: ${DS.colors.textSecondary};">REF OFFSET Y (PX):</span>
+                <div style="display: flex; align-items: center; gap: ${DS.spacing.md};">
+                    <input type="range" id="ref-offset-y" min="-1000" max="1000" step="1" value="0" style="width: 80px; accent-color: ${DS.colors.success};">
+                    <input type="number" id="ref-offset-y-num" min="-2000" max="2000" step="1" value="0" style="width: 55px; background: ${DS.colors.surface}; color: ${DS.colors.textPrimary}; border: 1px solid ${DS.colors.border}; border-radius: ${DS.borders.radius.none}; padding: ${DS.spacing.sm} ${DS.spacing.md}; font-size: ${DS.typography.tiny}; text-align: right; font-family: ${DS.typography.fontFamilyMono};">
                 </div>
             </div>
         </div>
 
-        <div style="display: flex; gap: 10px; margin-top: 20px;">
-            <button id="editor-save" style="flex: 1; padding: 10px; background: #22c55e; color: black; border: none; font-weight: bold; cursor: pointer; border-radius: 4px; font-family: sans-serif; font-size: 11px;">Save Local</button>
-            <button id="editor-export" style="flex: 1; padding: 10px; background: #0ea5e9; color: white; border: none; font-weight: bold; cursor: pointer; border-radius: 4px; font-family: sans-serif; font-size: 11px;">Export JSON</button>
+        <div style="display: flex; gap: ${DS.spacing.md}; margin-top: ${DS.spacing.xl};">
+            <button id="editor-save" style="flex: 1; padding: ${DS.spacing.md}; background: ${DS.colors.success}; color: black; border: none; font-weight: ${DS.typography.weightBold}; cursor: pointer; border-radius: ${DS.borders.radius.none}; font-family: ${DS.typography.fontFamilyMono}; font-size: ${DS.typography.tiny}; text-transform: uppercase;">Save Local</button>
+            <button id="editor-export" style="flex: 1; padding: ${DS.spacing.md}; background: ${DS.colors.info}; color: white; border: none; font-weight: ${DS.typography.weightBold}; cursor: pointer; border-radius: ${DS.borders.radius.none}; font-family: ${DS.typography.fontFamilyMono}; font-size: ${DS.typography.tiny}; text-transform: uppercase;">Export JSON</button>
         </div>
-        <div style="display: flex; gap: 10px; margin-top: 10px;">
-            <button id="editor-reset" style="flex: 1; padding: 10px; background: #f87171; color: black; border: none; font-weight: bold; cursor: pointer; border-radius: 4px; font-family: sans-serif; font-size: 11px;">Reset Default</button>
-            <button id="editor-close" style="flex: 1; padding: 10px; background: #555; color: white; border: none; cursor: pointer; border-radius: 4px; font-family: sans-serif; font-size: 11px;">Close</button>
+        <div style="display: flex; gap: ${DS.spacing.md}; margin-top: ${DS.spacing.md};">
+            <button id="editor-reset" style="flex: 1; padding: ${DS.spacing.md}; background: ${DS.colors.danger}; color: white; border: none; font-weight: ${DS.typography.weightBold}; cursor: pointer; border-radius: ${DS.borders.radius.none}; font-family: ${DS.typography.fontFamilyMono}; font-size: ${DS.typography.tiny}; text-transform: uppercase;">Reset Default</button>
+            <button id="editor-close" style="flex: 1; padding: ${DS.spacing.md}; background: ${DS.colors.surface}; color: white; border: 1px solid ${DS.colors.border}; cursor: pointer; border-radius: ${DS.borders.radius.none}; font-family: ${DS.typography.fontFamilyMono}; font-size: ${DS.typography.tiny}; text-transform: uppercase;">Close</button>
         </div>`;
+    editorBar.appendChild(contentWrapper);
     hudContainer.appendChild(editorBar);
+
+    const FRIENDLY_NAMES: Record<string, string> = {
+        'btn-match-status': 'Match Status',
+        'hud-timer-container': 'Round Timer',
+        'minimap-container': 'Minimap',
+        'minimap-label': 'Minimap Location',
+        'btn-settings': 'Settings Button',
+        'btn-mic': 'Microphone Button',
+        'btn-chat': 'Chat Button',
+        'joystick-boundary': 'Movement Stick',
+        'btn-sprint': 'Sprint Button',
+        'btn-fire-left': 'Fire (Left)',
+        'health-bar': 'Health Bar',
+        'health-plus-sq-wrap': 'Health Icon',
+        'weapon-selector': 'Weapon HUD Container',
+        'btn-walkie': 'Utility 1 (Walkie)',
+        'btn-helmet': 'Utility 2 (Helmet)',
+        'weapon-slots-wrap': 'Weapon Slots',
+        'btn-medkit': 'Medkit Button',
+        'medkit-arrow': 'Medkit Selector Arrow',
+        'btn-fire-right': 'Fire (Right)',
+        'btn-ads': 'Aim (ADS)',
+        'btn-reload': 'Reload Button',
+        'btn-jump': 'Jump Button',
+        'btn-crouch': 'Crouch Button',
+        'btn-dash': 'Dash Button',
+        'auto-label': 'Fire Mode Label',
+        'compass-placeholder': 'Compass Bar',
+        'center-crosshair': 'Crosshair'
+    };
 
     const circularIds = new Set([
         "btn-match-status", "joystick-boundary", "btn-sprint", "btn-fire-left", "btn-fire-right", 
@@ -228,27 +279,50 @@ export const initUIEditor = () => {
     let edStartLeft = 0, edStartTop = 0;
     
     editorBar.addEventListener('pointerdown', (e) => {
-        if ((e.target as HTMLElement).tagName === 'BUTTON' || (e.target as HTMLElement).tagName === 'INPUT') return;
+        const target = e.target as HTMLElement;
+        if (target.tagName === 'BUTTON' || target.tagName === 'INPUT' || target.closest('button') || target.closest('input')) return;
+        
         editorDrag = true;
+        editorBar.style.cursor = "grabbing";
+        if (dragHandle) dragHandle.style.background = DS.colors.success;
+        
+        const rect = editorBar.getBoundingClientRect();
         edStartX = e.clientX;
         edStartY = e.clientY;
-        const rect = editorBar.getBoundingClientRect();
         edStartLeft = rect.left;
         edStartTop = rect.top;
+        
         e.preventDefault();
         e.stopPropagation();
     });
-    
+
     window.addEventListener('pointermove', (e) => {
         if (!editorDrag) return;
+        
         const dx = e.clientX - edStartX;
         const dy = e.clientY - edStartY;
-        editorBar.style.left = `${edStartLeft + dx}px`;
-        editorBar.style.top = `${edStartTop + dy}px`;
+        
+        let newLeft = edStartLeft + dx;
+        let newTop = edStartTop + dy;
+        
+        // Clamp to viewport
+        const rect = editorBar.getBoundingClientRect();
+        const maxX = window.innerWidth - rect.width;
+        const maxY = window.innerHeight - rect.height;
+        
+        newLeft = Math.max(0, Math.min(newLeft, maxX));
+        newTop = Math.max(0, Math.min(newTop, maxY));
+        
+        editorBar.style.left = `${newLeft}px`;
+        editorBar.style.top = `${newTop}px`;
+        editorBar.style.right = "auto";
+        editorBar.style.bottom = "auto";
     });
-    
+
     window.addEventListener('pointerup', () => {
         editorDrag = false;
+        editorBar.style.cursor = "grab";
+        if (dragHandle) dragHandle.style.background = DS.utils.rgba(DS.colors.textSecondary, 0.3);
     });
 
     // Create Background Reference Image
@@ -321,10 +395,11 @@ export const initUIEditor = () => {
         "btn-reload",
         "btn-jump",
         "btn-dash",
-        "btn-crouch"
+        "btn-crouch",
+        "hud-chat-log"
     ];
 
-    const elementsToEdit = editableIds.map(id => document.getElementById(id)).filter(el => el !== null) as HTMLElement[];
+    let elementsToEdit = editableIds.map(id => document.getElementById(id)).filter(el => el !== null) as HTMLElement[];
 
     const closeEditorBtn = editorBar.querySelector("#editor-close") as HTMLButtonElement;
     const selectedLabel = editorBar.querySelector("#editor-selected") as HTMLElement;
@@ -621,7 +696,8 @@ export const initUIEditor = () => {
         e.stopPropagation();
 
         selectedElement = target;
-        selectedLabel.innerText = `Selected: ${target.id}`;
+        const friendly = FRIENDLY_NAMES[target.id] || target.id;
+        selectedLabel.innerText = `Selected: ${friendly}`;
         
         const state = elementStates.get(target);
         if (state) {
@@ -836,6 +912,9 @@ export const initUIEditor = () => {
             canvasContainer.style.display = "none";
         }
         
+        // Rebuild editable elements dynamically to register those created during gameplay
+        elementsToEdit = editableIds.map(id => document.getElementById(id)).filter(el => el !== null) as HTMLElement[];
+
         // Show/refresh grid and ref image according to saved inputs
         showVisualGrid = showGridCheckbox.checked;
         updateVisualGrid();

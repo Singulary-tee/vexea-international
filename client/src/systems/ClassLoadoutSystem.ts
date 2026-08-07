@@ -175,26 +175,50 @@ export class ClassLoadoutSystem {
     }
   }
 
+  private static skinDebounceTimer: any = null;
+
   /**
    * Persists equipped skin in LocalStorage and Firestore.
    */
   public static async equipSkin(itemId: string, skinId: string): Promise<void> {
+    // Validate skin ownership before equipping
+    if (skinId !== "STANDARD") {
+      const userData = (window as any).registeredUserData;
+      const unlockedItems = userData?.unlockedItems || [];
+      const unlockedSkins = userData?.unlockedSkins || [];
+      const localOwned = JSON.parse(localStorage.getItem("vex_owned_skins") || "[]");
+
+      const isOwned = unlockedItems.includes(skinId) || unlockedSkins.includes(skinId) || localOwned.includes(skinId);
+      if (!isOwned) {
+        console.warn(`[ClassLoadoutSystem] Cannot equip skin ${skinId}: not unlocked.`);
+        return;
+      }
+    }
+
     const saved = this.getAllEquippedSkins();
     saved[itemId] = skinId;
     localStorage.setItem("vex_armory_item_skins", JSON.stringify(saved));
 
-    // Save to Firestore if authenticated
-    try {
-      const auth = getAuth();
-      if (auth.currentUser) {
-        const db = getFirestore();
-        await updateDoc(doc(db, "Users", auth.currentUser.uid), {
-          "armory.itemSkins": saved
-        });
-      }
-    } catch (e) {
-      console.warn("[ClassLoadoutSystem] Failed to persist skin to Firestore:", e);
+    // Debounce the Firestore update
+    if (this.skinDebounceTimer) {
+      clearTimeout(this.skinDebounceTimer);
     }
+
+    this.skinDebounceTimer = setTimeout(async () => {
+      this.skinDebounceTimer = null;
+      try {
+        const auth = getAuth();
+        if (auth.currentUser) {
+          const db = getFirestore();
+          await updateDoc(doc(db, "Users", auth.currentUser.uid), {
+            "armory.itemSkins": saved
+          });
+          console.log("[ClassLoadoutSystem] Saved equipped item skins to Firestore.");
+        }
+      } catch (e) {
+        console.warn("[ClassLoadoutSystem] Debounced skin Firestore write failed:", e);
+      }
+    }, 2000); // 2 seconds debounce
   }
 
   /**

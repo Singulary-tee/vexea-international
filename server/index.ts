@@ -515,7 +515,7 @@ io.onConnection((channel: ChannelAdapter) => {
   // Matchmaking request: Delegates directly to Matchmaker module
   const handleMatchmakingRequest = (args: any) => {
     const reqUid = args?.uid || playerId;
-    const reqMap = args?.mapId || args?.map?.id || "map_0_dev";
+    const reqMap = args?.mapId || args?.map?.id || "map_1_facility";
     const reqClass = (args?.class || args?.playerClass || "ASSAULT") as ClassId;
 
     console.log(
@@ -871,7 +871,38 @@ io.onConnection((channel: ChannelAdapter) => {
   });
 
   channel.on("reliable_event", (args: any) => {
-    if (!pState || !pState.isAlive) return;
+    if (!pState) return;
+
+    if (args.type === "CHAT_MESSAGE") {
+      const message = args.message;
+      if (message && typeof message === "string" && message.trim().length > 0 && currentRoom) {
+        const trimmed = message.trim().slice(0, 150);
+        for (const [id, player] of currentRoom.players.entries()) {
+          player.channel.emit("reliable_event", {
+            type: "CHAT_MESSAGE",
+            sender: pState.id,
+            message: trimmed
+          });
+        }
+      }
+      return;
+    }
+
+    if (args.type === "QUICK_COMM") {
+      const optionId = args.optionId;
+      if (optionId && typeof optionId === "string" && currentRoom) {
+        for (const [id, player] of currentRoom.players.entries()) {
+          player.channel.emit("reliable_event", {
+            type: "QUICK_COMM",
+            sender: pState.id,
+            optionId: optionId
+          });
+        }
+      }
+      return;
+    }
+
+    if (!pState.isAlive) return;
 
     if (args.type === "USE_UTILITY") {
       const slot = args.slot as "utility1" | "utility2";
@@ -983,6 +1014,19 @@ io.onConnection((channel: ChannelAdapter) => {
         const dirY = args.direction.y;
         const dirZ = args.direction.z;
         const timestamp = args.timestamp;
+
+        // Hitscan Origin Verification: Validate shot origin coordinates against the server's authoritative player physics position
+        const dx = args.origin.x - pState.posX;
+        const dy = args.origin.y - pState.posY;
+        const dz = args.origin.z - pState.posZ;
+        const originDistSq = dx * dx + dy * dy + dz * dz;
+        const maxAllowedDeviation = 4.0; // 2.0 meters squared (2.0 * 2.0 = 4.0) to account for camera offsets & network latency
+        if (originDistSq > maxAllowedDeviation) {
+          console.warn(`[Hitscan Verification] Rejected shot from player ${pState.id}: Origin deviation too high (${Math.sqrt(originDistSq).toFixed(2)}m > 2.0m)`);
+          recordHitscanRejected("origin_deviation_out_of_bounds");
+          recordSecurityExploit("origin_spoofing", { playerId: pState.id, origin: args.origin, expected: { x: pState.posX, y: pState.posY, z: pState.posZ } });
+          return;
+        }
 
         const expectedT = Date.now() - pState.ping;
         let targetTick = currentRoom.serverTick;

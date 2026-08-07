@@ -19,7 +19,6 @@ vi.mock('@google/genai', () => ({
 
 describe('LLMCommander Tests', () => {
   it('should generate strategic commands via executeLLMStep', async () => {
-    // We need a real room or a good mock
     const room = {
       roomId: 'test-room',
       llmTokensUsedThisMatch: 0,
@@ -50,4 +49,40 @@ describe('LLMCommander Tests', () => {
      await commander.executeLLMStep();
      expect(room.offlineSystemFallbackAI).toHaveBeenCalled();
   });
+
+  it('should track and decrement hold_position order duration cycles', async () => {
+    const outstandingOrders = new Map<string, any>();
+    outstandingOrders.set('ALPHA', {
+      targetZone: 'HQ',
+      cyclesOutstanding: 0,
+      holdRemainingCycles: 2, // 2 cycles left
+    });
+
+    const room = {
+      roomId: 'test-room',
+      llmTokensUsedThisMatch: 0,
+      commanderAP: 0,
+      apiCallCount: 0,
+      matchStartTime: Date.now(),
+      outstandingOrders,
+      drones: [{ groupId: 'ALPHA', zone: 'HQ', state: 1 }],
+      players: new Map(),
+      failedOperations: [],
+      zoneSummary: { HQ: { dronesByGroup: { ALPHA: 1 } } },
+      broadcastReliableEvent: vi.fn(),
+      offlineSystemFallbackAI: vi.fn()
+    } as any;
+
+    const commander = new LLMCommander(room, 'fake-key');
+    await commander.executeLLMStep();
+
+    // After 1 step, remaining cycles should be decremented to 1
+    expect(outstandingOrders.get('ALPHA')?.holdRemainingCycles).toBe(1);
+
+    // Step 2
+    await commander.executeLLMStep();
+    // Reached 0 -> order resolved and deleted
+    expect(outstandingOrders.has('ALPHA')).toBe(false);
+  });
 });
+

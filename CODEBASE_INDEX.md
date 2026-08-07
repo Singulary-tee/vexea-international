@@ -28,11 +28,18 @@ This file is the authoritative index of all directories and source files within 
 *   **`flags/` (Server Feature Flags)**
     *   **`flag-service.ts`**: Resolves server-side feature flags via Doppler secrets with local fallbacks.
 *   **`ai/` (Strategic AI)**
+    *   **`DroneAvoidance.ts`**: Manages dynamic path avoidance and separation steering behaviors for autonomous drone swarms.
     *   **`DroneIntelligence.ts`**: Governs spatial awareness for individual drones. Computes sight lines (3D orientation quaternions to check forward vectors and cone of vision angles), performs static map and dynamic Rapier line-of-sight raycasts, and handles memory decay mechanics.
+    *   **`DroneMemory.ts`**: Tracks historical sighting positions, target last-seen timestamps, and spatial memory decay for drones.
+    *   **`DronePerception.ts`**: Evaluates line-of-sight, raycasting, and sensory awareness updates for AI agents.
     *   **`LLMCommander.ts`**: High-level strategic controller powered by Gemini 3.5 Flash. Formulates formatted prompt strings, parses structured tool call arrays (Spawn, Move, Split, Merge, Hold), manages strategic AP resource pools, and enforces the `MAX_LLM_TOKENS_PER_MATCH` (55,000 token) token budget ceiling.
+    *   **`LLMCommanderFeedback.ts`**: Processes post-command evaluation, reinforcement feedback, and action success telemetry for the LLM Commander.
+*   **`data/` (Server Data Services)**
+    *   **`economy-service.ts`**: Manages player currency balances, credit transactions, and store purchases on the server side.
 *   **`gates/` (Server Gates)**
     *   **`verification.gate.ts`**: Encapsulates server-authoritative purchase, reward, and match state verification checks via `ServerVerificationGate`.
 *   **`map/` (Spatial Structure)**
+    *   **`OutOfBoundsEnforcer.ts`**: Detects and enforces spatial map boundaries, pushing or damaging entities that venture outside valid playable zones.
     *   **`ZoneRegistry.ts`**: Maps geometric boundaries to specific Named Zones (e.g., Core, Warehouse, Bridge), handles player zone occupancy queries, and stores localized waypoint indices.
 *   **`physics/` (Server Simulation)**
     *   **`PhysicsWorldManager.ts`**: Direct integration with the `@dimforge/rapier3d-node` engine. Builds rigid bodies, defines player/drone collision geometry bounds, and runs stepped simulation updates.
@@ -197,7 +204,13 @@ This file is the authoritative index of all directories and source files within 
     *   **`map/`**
         *   **`LoadingOrchestrator.ts`**: Monitors asset load states and handles panoramic 6-directional prewarming.
         *   **`MapLoader.ts`**: Spawns structural walls and facility bounds.
+    *   **`settings/`**
+        *   **`state.ts`**: Manages reactive state stores for user settings, preferences, and audio/graphics configurations.
+        *   **`types.ts`**: TypeScript interface definitions and configuration types for the settings subsystem.
+        *   **`ui.ts`**: Renders the settings UI panel, sliders, toggles, and configuration menus.
     *   **`systems/`**
+        *   **`ChatHUDSystem.ts`**: Manages in-match text chat overlay, message formatting, input locking, and sanitization.
+        *   **`ClassLoadoutPersistence.ts`**: Handles caching and synchronization of player class loadout selections with persistent storage.
         *   **`ClassLoadoutSystem.ts`**: Centralized weapon configuration, custom procedural skin application, model centering, character attachment, and LocalStorage + Firebase persistence.
         *   **`CombatSystem.ts`**: Local visual hit detection, impact spark spawning, ammunition state tracking, and local weapon animations.
         *   **`CompassSystem.ts`**: Zero-allocation horizontal compass tape rendering cardinal directions, degree ticks, and active landmark indicators.
@@ -210,6 +223,7 @@ This file is the authoritative index of all directories and source files within 
         *   **`LLMObjectiveSystem.ts`**: Handles interaction with the rogue LLM Core objective terminal in zone_core (384, 384), proximity detection, hold keybind / mobile pop-up button, progress timer, and server event streaming.
         *   **`MinimapSystem.ts`**: Manages the 2D visual radar map tracking captured zone boundaries and detected targets.
         *   **`NetworkSyncSystem.ts`**: Unpacks global binary server payloads, interpolates remote entities, and tracks historic rewinds.
+        *   **`RadialCommSystem.ts`**: Controls the tactile radial quick-communication wheel and radio callout broadcasts during gameplay.
         *   **`ReconnectionSystem.ts`**: Manages reconnect routines.
         *   **`SimulationSystem.ts`**: Implements predictive movement loops.
         *   **`VisualsSystem.ts`**: Handles camera field-of-view zooms, visual sway patterns, and active recoil transitions.
@@ -311,9 +325,10 @@ Every file change in the VEXEA codebase must follow this strict two-step protoco
     *   `.github/workflows/deploy.yml`: Integrated `npm run test:coverage` and `codecov/codecov-action@v5` into the deployment pipeline. Deployment to Firebase Hosting is now gated by successful test execution and coverage reporting.
 *   **Verification:** Workflow YAML updated and verified for correct step sequencing.
 
-### Cycle 2026-08-06-05: Synchronize Dependency Lockfile
-*   **Target Files:** `package-lock.json`
-*   **Status:** Verified & Finalized
+### Cycle 2026-08-07-01: Establish Settings, Screen Headers, and Diagnostic Upgrade Plan
+*   **Target Files:** `SETTINGS_UPGRADE_PLAN.md`
+*   **Status:** Prepared for Review & User Approval
 *   **Modifications:**
-    *   `package-lock.json`: Refreshed the lockfile via `npm install` to synchronize with newly added `vitest` dependencies and ensure environment consistency.
-*   **Verification:** `lint_applet` and `compile_applet` passed successfully after synchronization.
+    *   `SETTINGS_UPGRADE_PLAN.md`: Formulated comprehensive architectural plan addressing all six audit points: elimination of redundant nested headers, replacement of generic dropdowns with visual SVG selectors and swatches, pruning of non-functional stubs (languages/TTS) with immediate concrete roadmap for colorblind matrix/shake dampener/flash modes, live HUD preview viewport and audio audition feedback, full restoration of regressed Asset Cache Table/Server Telemetry/Renderer GPU metrics, and mathematical 0px-radius 2-column layout adhering strictly to `ARCHITECTURE.md` and `client/design-system.ts`.
+*   **Verification:** Plan document authored and ready for user assessment.
+

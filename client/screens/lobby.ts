@@ -271,7 +271,7 @@ export function initLobby() {
       display: 'grid',
       gridTemplateColumns: 'repeat(4, 1fr)',
       gap: '8px',
-      pointerEvents: 'auto',
+      pointerEvents: 'none',
       boxSizing: 'border-box'
     });
 
@@ -300,6 +300,7 @@ export function initLobby() {
         borderRadius: '0px',
         boxSizing: 'border-box',
         cursor: 'pointer',
+        pointerEvents: 'auto',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
@@ -403,7 +404,7 @@ export function initLobby() {
       justifyContent: 'flex-start',
       gap: '16px',
       height: 'clamp(70px, 15vh, 120px)',
-      pointerEvents: 'auto',
+      pointerEvents: 'none',
       boxSizing: 'border-box',
       paddingLeft: '12px'
     });
@@ -513,7 +514,7 @@ export function initLobby() {
       display: 'flex',
       flexDirection: 'column',
       gap: '8px',
-      pointerEvents: 'auto',
+      pointerEvents: 'none',
       boxSizing: 'border-box'
     });
 
@@ -544,6 +545,7 @@ export function initLobby() {
       flexDirection: 'column',
       justifyContent: 'flex-end',
       cursor: 'pointer',
+      pointerEvents: 'auto',
       boxSizing: 'border-box',
       backgroundSize: 'cover',
       backgroundPosition: 'center',
@@ -606,6 +608,7 @@ export function initLobby() {
       flexDirection: 'column',
       justifyContent: 'flex-end',
       cursor: 'pointer',
+      pointerEvents: 'auto',
       boxSizing: 'border-box',
       backgroundSize: 'cover',
       backgroundPosition: 'center',
@@ -661,7 +664,7 @@ export function initLobby() {
       display: 'flex',
       flexDirection: 'column',
       gap: '8px',
-      pointerEvents: 'auto',
+      pointerEvents: 'none',
       boxSizing: 'border-box'
     });
 
@@ -680,6 +683,7 @@ export function initLobby() {
       textTransform: 'uppercase',
       borderRadius: '0px',
       cursor: 'pointer',
+      pointerEvents: 'auto',
       transition: 'all 0.15s ease-out',
       letterSpacing: '1px'
     });
@@ -718,6 +722,7 @@ export function initLobby() {
       textTransform: 'uppercase',
       borderRadius: '0px',
       cursor: 'pointer',
+      pointerEvents: 'auto',
       transition: 'all 0.15s ease-out',
       letterSpacing: '1px'
     });

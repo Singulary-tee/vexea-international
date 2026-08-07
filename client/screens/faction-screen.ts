@@ -63,7 +63,7 @@ export function renderFactionScreen(container: HTMLElement, registeredUserData: 
   const activeMap = getDefaultMap();
   const isFactionWarActive = clientFlagService.getBoolean(FeatureFlagKey.FACTION_WAR_ACTIVE, true);
 
-  // Header Title & Territory Control Arc
+  // Clean top territory bar with direct deployment status and territory arc SVG
   const headerCard = document.createElement('div');
   headerCard.className = 'mm-glass';
   Object.assign(headerCard.style, {
@@ -78,14 +78,11 @@ export function renderFactionScreen(container: HTMLElement, registeredUserData: 
   });
 
   headerCard.innerHTML = `
-    <div style="display:flex; flex-direction:column; gap:2px;">
-      <div style="font-family:${DS.typography.fontFamily}; font-size:13px; font-weight:bold; color:${DS.colors.text}; letter-spacing:1.5px; display:flex; align-items:center; gap:8px;">
-        STRATEGIC FACTION WAR
-        ${!isFactionWarActive ? `<span style="font-size:9px; background:rgba(255,68,0,0.15); border:1px solid ${DS.colors.accent}; color:${DS.colors.accent}; padding:1px 6px;">[FACTION WAR CEASEFIRE / LOCKED]</span>` : ''}
+    <div style="display:flex; align-items:center; gap:10px;">
+      <div style="font-family:${DS.typography.fontFamily}; font-size:10px; font-weight:bold; color:${DS.colors.accent}; letter-spacing:1px;">
+        SECTOR DEPLOYMENT: ${activeMap.displayName.toUpperCase()}
       </div>
-      <div style="font-family:${DS.typography.fontFamily}; font-size:8px; font-weight:bold; color:${DS.colors.accent}; letter-spacing:0.8px;">
-        ACTIVE DEPLOYMENT: ${activeMap.displayName.toUpperCase()}
-      </div>
+      ${!isFactionWarActive ? `<span style="font-size:9px; background:rgba(255,68,0,0.15); border:1px solid ${DS.colors.accent}; color:${DS.colors.accent}; padding:1px 6px;">[CEASEFIRE / LOCKED]</span>` : ''}
     </div>
     <div style="display:flex; align-items:center; gap:12px;">
       <div style="text-align:right; font-family:${DS.typography.fontFamily}; font-size:8px; font-weight:bold;">

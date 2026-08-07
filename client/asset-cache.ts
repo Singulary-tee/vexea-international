@@ -220,6 +220,14 @@ export async function populateBlobUrlMap(): Promise<void> {
         for (const url of oldUrls) {
           URL.revokeObjectURL(url);
         }
+        // Pre-decode all cached images into DOM Image elements to prevent pop-in during screen transitions
+        for (const [filename, url] of blobUrlMap.entries()) {
+          const lower = filename.toLowerCase();
+          if (lower.endsWith('.webp') || lower.endsWith('.png') || lower.endsWith('.jpg') || lower.endsWith('.jpeg')) {
+            const img = new Image();
+            img.src = url;
+          }
+        }
         isPopulatingBlobUrlMap = false;
         resolve();
       }
@@ -498,6 +506,17 @@ export function getAssetUrl(filename: string): string {
     return blobUrlMap.get(base)!;
   }
   return "/" + base;
+}
+
+export function warmImageDOMCache(filenames: string[]): void {
+  if (typeof window === 'undefined') return;
+  filenames.forEach((filename) => {
+    const url = getAssetUrl(filename);
+    if (url) {
+      const img = new Image();
+      img.src = url;
+    }
+  });
 }
 
 export async function ensureAssetsDownloaded(onComplete: () => void, mapId: string) {

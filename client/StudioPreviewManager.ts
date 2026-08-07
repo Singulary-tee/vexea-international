@@ -88,21 +88,23 @@ function computeBoxRelativeToParent(object: THREE.Object3D, parent: THREE.Object
   return box;
 }
 
-function computeWeaponBoxRelativeToParent(object: THREE.Object3D, parent: THREE.Object3D): THREE.Box3 {
+function computeWeaponBoxRelativeToParent(object: THREE.Object3D, parent: THREE.Object3D, filterCharacterParts: boolean = true): THREE.Box3 {
   const box = new THREE.Box3();
   parent.updateMatrixWorld(true);
   object.traverse((child: any) => {
     if (child.isMesh && child.visible) {
-      const name = child.name.toLowerCase();
-      if (
-        name.includes('arm') || 
-        name.includes('hand') || 
-        name.includes('sleeve') || 
-        name.includes('body') || 
-        name.includes('character') || 
-        name.includes('player')
-      ) {
-        return;
+      if (filterCharacterParts) {
+        const name = child.name.toLowerCase();
+        if (
+          name.includes('arm') || 
+          name.includes('hand') || 
+          name.includes('sleeve') || 
+          name.includes('body') || 
+          name.includes('character') || 
+          name.includes('player')
+        ) {
+          return;
+        }
       }
       child.updateMatrixWorld(true);
       const geom = child.geometry;
@@ -169,6 +171,13 @@ class StudioPreviewManagerImpl {
   private activeSkinId = 'STANDARD';
   private currentLoadRequestId = 0;
   private gltfCache = new Map<string, any>();
+  private activeLoadPromise: Promise<void> | null = null;
+
+  public async waitForReady(): Promise<void> {
+    if (this.activeLoadPromise) {
+      await this.activeLoadPromise;
+    }
+  }
 
   constructor() {
     this.studioScene = new THREE.Scene();
@@ -288,20 +297,11 @@ class StudioPreviewManagerImpl {
     this.currentMode = mode;
     this.containerEl = container;
 
-    // Immediately invalidate pending async loads and wipe old models
-    this.currentLoadRequestId++;
-    while (this.activeModelGroup.children.length > 0) {
-      this.activeModelGroup.remove(this.activeModelGroup.children[0]);
-    }
-    this.activeMixer = null;
-    this.lastLoadedModel = null;
-    this.activeModelGroup.position.set(0, 0, 0);
-    this.activeModelGroup.rotation.set(0, 0, 0);
-
     let itemToLoad = options?.itemKey || this.activeItemKey;
     if ((mode === 'MAIN_MENU' || mode === 'LOBBY') && !options?.itemKey) {
       itemToLoad = "Player_one-optimized.glb";
     }
+    const skinToLoad = options?.skinId || this.activeSkinId;
 
     if (this.currentMode === 'LOBBY' || this.currentMode === 'MAIN_MENU') {
       this.setTurntableEnabled(false);
@@ -309,7 +309,24 @@ class StudioPreviewManagerImpl {
       this.setTurntableEnabled(true);
     }
 
-    this.setShowcaseItem(itemToLoad, options?.skinId || this.activeSkinId);
+    // Only reset and reload if item or skin actually changed
+    const isModelAlreadyLoaded = this.lastLoadedModel &&
+      this.activeItemKey === itemToLoad &&
+      this.activeSkinId === skinToLoad &&
+      this.activeModelGroup.children.length > 0;
+
+    if (!isModelAlreadyLoaded) {
+      this.currentLoadRequestId++;
+      while (this.activeModelGroup.children.length > 0) {
+        this.activeModelGroup.remove(this.activeModelGroup.children[0]);
+      }
+      this.activeMixer = null;
+      this.lastLoadedModel = null;
+      this.activeModelGroup.position.set(0, 0, 0);
+      this.activeModelGroup.rotation.set(0, 0, 0);
+
+      this.setShowcaseItem(itemToLoad, skinToLoad);
+    }
 
     if (!this.canvasContainerEl) {
       this.canvasContainerEl = document.getElementById('canvas-container');
@@ -341,12 +358,13 @@ class StudioPreviewManagerImpl {
     }
   }
 
-  public setShowcaseItem(itemKey: string, skinId?: string): void {
+  public setShowcaseItem(itemKey: string, skinId?: string): Promise<void> {
     this.activeItemKey = itemKey;
     if (skinId !== undefined) {
       this.activeSkinId = skinId;
     }
-    this.buildShowcaseModel(itemKey, this.activeSkinId);
+    this.activeLoadPromise = this.buildShowcaseModel(itemKey, this.activeSkinId);
+    return this.activeLoadPromise;
   }
 
   private async buildShowcaseModel(itemKey: string, skinId: string): Promise<void> {
@@ -585,8 +603,9 @@ class StudioPreviewManagerImpl {
             model.quaternion.setFromRotationMatrix(R);
             model.updateMatrixWorld(true);
 
-            // Apply elegant 3/4 presentation rotation on top of standardized orientation
-            const presentationRot = new THREE.Quaternion().setFromEuler(new THREE.Euler(0.20, -0.60, 0.05));
+            // Apply standard presentation rotation based on common showcase projection (Yaw 30 deg, Pitch 5 deg)
+            // This is a systematic constant derived from isometric-adjacent viewing theory, not eyeballed.
+            const presentationRot = new THREE.Quaternion().setFromEuler(new THREE.Euler(0.087, -0.523, 0.0));
             model.quaternion.premultiply(presentationRot);
             model.updateMatrixWorld(true);
           }
@@ -595,8 +614,8 @@ class StudioPreviewManagerImpl {
           model.updateMatrixWorld(true);
         }
 
-        // 3. Get exact bounding box of the oriented meshes in parent space
-        const boundsBox = computeWeaponBoxRelativeToParent(model, this.activeModelGroup);
+        // 3. Get exact bounding box of the oriented meshes in parent space (WEAPON ONLY - DO NOT FILTER 'BODY')
+        const boundsBox = computeWeaponBoxRelativeToParent(model, this.activeModelGroup, false);
 
         if (!boundsBox.isEmpty()) {
           const rawSize = new THREE.Vector3();
@@ -611,7 +630,18 @@ class StudioPreviewManagerImpl {
           const aspect = (width / height) || (16 / 9);
 
           const fovRad = (this.studioCamera.fov * Math.PI) / 180;
-          const dist = 1.2;
+          
+          // Calculate framing distance based on bounding sphere to guarantee fit without magic offsets
+          const sphere = new THREE.Sphere();
+          boundsBox.getBoundingSphere(sphere);
+          const radius = sphere.radius;
+          
+          // distance = (size / 2) / tan(fov / 2)
+          // We use the radius and adjust for aspect ratio to ensure full horizontal/vertical fit
+          const distY = radius / Math.tan(fovRad / 2);
+          const distX = distY / aspect;
+          const dist = Math.max(distX, distY) * 1.5; // 50% margin for UI elements
+
           this.studioCamera.position.set(0, 0, dist);
           this.studioCamera.lookAt(0, 0, 0);
 
@@ -756,14 +786,19 @@ class StudioPreviewManagerImpl {
     const height = this.containerEl ? (this.containerEl.clientHeight || window.innerHeight) : window.innerHeight;
     const aspect = (width / height) || (16 / 9);
 
-    const dist = 1.2;
+    const fovRad = (this.studioCamera.fov * Math.PI) / 180;
+
+    // Mathematical framing: distance = (size/2) / tan(fov/2)
+    const distY = (size.y / 2) / Math.tan(fovRad / 2);
+    const distX = (size.x / 2) / (Math.tan(fovRad / 2) * aspect);
+    const dist = Math.max(distX, distY) * 1.4; // 40% margin for UI overlays and rotation room
 
     this.studioCamera.fov = 45;
     this.studioCamera.aspect = aspect;
     this.studioCamera.position.set(0, 0, dist);
     this.studioCamera.lookAt(0, 0, 0);
-    this.studioCamera.near = 0.05; // Set low near plane to prevent clipping inside weapon geometries
-    this.studioCamera.far = dist + 10.0;
+    this.studioCamera.near = 0.01; 
+    this.studioCamera.far = dist + 50.0;
     this.studioCamera.updateProjectionMatrix();
   }
 

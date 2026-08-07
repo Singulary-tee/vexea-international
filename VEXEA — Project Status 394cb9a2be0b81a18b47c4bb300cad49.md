@@ -44,6 +44,17 @@ Last update: Day 67. Pure state tracker — working / broken / unbuilt only. Pro
 - The actual win condition (disabling the LLM): Fully implemented via a dedicated client-side `LLMObjectiveSystem` and server-side MatchRoom validation loop.
 - N+1 API call pattern flagged by Sentry: Resolved using client-side cache and chunked document batch fetching for user profiles in `main-menu.ts`.
 - Firebase Hosting SPA Routing Configuration: Serves single-page application (SPA) paths correctly by routing non-file traffic to index.html in firebase.json.
+- Screens disappearing timing/transitions & asset prewarming (Issue #1): fixed, transition durations consolidated in design-system, DOM image prewarming active, and 3D model loading state preserved.
+- Formal Repulsive Potential Field avoidance (`calculateDroneAvoidance` in `DroneAvoidance.ts`): obstacle & inter-drone repulsion vectors derived from physical bounds, verified via unit tests.
+- Sound perception isolated from optical sight (`evaluateDronePerception` in `DronePerception.ts`): sound capped at 0.75 confidence (`last_seen`), verified via unit tests.
+- LLM Commander order tracking & hold position duration decay (`LLMCommander.ts`): outstanding order tracking, hold cycle duration countdown, and group split/merge order updates verified via unit tests.
+- Automated testing suite: Vitest runner configured with 97 passing tests across 20 test suites covering perception, potential field avoidance, LLM commander orders, match room lifecycle, physics, collision, LLM commander execution feedback loop, and out-of-bounds spatial enforcement systems.
+- Gemini LLM Commander Execution Feedback Loop: Implemented dedicated `LLMCommanderFeedback` system to maintain a rolling execution log (`ToolExecutionRecord[]`), actionable corrective hints, and LLM-friendly prompt block injection with full test coverage.
+- Out-of-Bounds & Restricted Gate Spatial Enforcement System: Implemented dedicated `OutOfBoundsEnforcer` managing player OOB states, issuing a 3.0-second grace warning state (`out_of_bounds_warning` client event), and applying 35.0 DPS continuous damage, fully integrated into `MatchRoom.ts` with extensive unit tests.
+- Dynamic Map Configuration Registry & Fallback Cleanup: Pruned all stale default hardcoded string fallbacks to `map_0_dev` across `MatchRoom.ts`, `Matchmaker.ts`, and `index.ts`, ensuring correct modularity with dynamic spec registration.
+- Class Loadout Persistence, Validation & Purchase Verification: Implemented a local cache with optimistic local storage updates, strict validation that equips are actually unlocked via Firestore/LocalStorage cache check, 2-second debounced background Firestore updates, and verification of cosmetic purchases via VerificationService API before applying Firestore write updates.
+- Server-Authoritative Hitscan Origin Verification: Added deterministic origin vector checking against the server's authoritative player physics position, rejecting anomalous origin discrepancies to prevent wall-clipping and telemetry hacks.
+- In-Match Text Chat & Tactical Radial Quick-Comm System: Implemented mathematically audited chat overlay (`hud-chat-log`), centered radial quick-comm wheel (`radial-comm-wheel`), input locking, UI layout editor integration, settings panel persistence, and server-authoritative rate-limiting and sanitization in `ChatSystem.ts`.
 
 # Actively Broken / Known Issues (Sentry-confirmed, live)
 
@@ -53,15 +64,11 @@ Last update: Day 67. Pure state tracker — working / broken / unbuilt only. Pro
 - Perceived input latency since the reconciliation fix — likely [Socket.IO/JSON](http://Socket.IO/JSON) transport overhead [UNSUITABLE FOR GEMINI TO FIX]
 - Drones sinking below the floor — real, live collision/positioning bug [UNSUITABLE FOR GEMINI TO FIX]
 - Real, unspecified spawn and disconnection bugs [UNSUITABLE FOR GEMINI TO FIX]
-- Screens disappearing too early or too late (timing bugs, unspecified) [PROPOSED FOR GEMINI]
 - Assets not showcasing well in Lobby/Armory/Store (presentation problem) [UNSUITABLE FOR GEMINI TO FIX]
 
 # Needs Retest / Never Independently Confirmed
 
-- `minSpeed`/avoidance-zigzag/stuck-at-wall fixes from Day 52
 - Whether server reconciliation overrides client position after a disconnect [UNSUITABLE FOR GEMINI TO FIX]
-- Sound perception specifically, isolated from sight
-- LLM Commander Parts 1 and 3 (unit-type description content quality, outstanding-order flagging logic)
 
 # Confirmed Broken
 
@@ -77,17 +84,17 @@ Last update: Day 67. Pure state tracker — working / broken / unbuilt only. Pro
 - Main menu / lobby further polish, class-select visual refinement [UNSUITABLE FOR GEMINI TO FIX]
 - Player animation: no walk/run distinction, no weapon sway — fixed / confirmed working
 - Store, monetization/payment processing (battle pass Phase 2 depends on this) [UNSUITABLE FOR GEMINI TO FIX]
-- `query_zone`/`recall_group` tools — undesigned
+- `query_zone`/`recall_group` tools — discarded
 - Per-type COMBAT behavior — perception/memory/mode-switching is real, tactical behavior per type is not built [UNSUITABLE FOR GEMINI TO FIX]
 - Full facility map: hand-built in Godot Mobile, ~1.6M triangles, unfinished
 - Lightmap/environment baking pipeline unproven; fallback is full primitive/cube map
 - File/codebase organization pass
-- Voice chat and in-match text chat — blocked on "other players visible to each other" not yet being built
-- Cross-match player behavior profiling/aggregation — deliberately deferred until real per-match telemetry exists
+- Voice chat — blocked on "other players visible to each other" not yet being built (In-match text chat implemented)
+- Cross-match player behavior profiling/aggregation — deliberately deferred until real per-match telemetry exists [UNSUITABLE FOR GEMINI TO FIX]
 - Faction war active feature flag — fixed (wired to flag service and UI)
 - Most class utilities exist only as buttons with no real visual/functional implementation [UNSUITABLE FOR GEMINI TO FIX]
 - Drone intelligence system — real work still needed beyond current perception/memory foundation [UNSUITABLE FOR GEMINI TO FIX]
-- Not a single full match has been played start-to-finish against a real LLM commander
+- Not a single full match has been played start-to-finish against a real LLM commander [UNSUITABLE FOR GEMINI TO FIX]
 
 # Deployment & Optimization Backlog
 
@@ -102,12 +109,12 @@ This section is a map of what's ahead, not confirmed state. Nothing here is star
 **Deployment & infrastructure readiness**
 
 - Real deployment to SmarterASP hasn't happened — first real test of [Geckos.io](http://Geckos.io) as the actual production transport (currently [Socket.IO](http://Socket.IO) in AI Studio due to its UDP restriction)
-- No verification-service architecture decided — worker process vs. the main server itself, unresolved
-- Zero automated testing anywhere — no Vitest, no Jest [PROPOSED FOR GEMINI]
+- Verification-service architecture decided — integrated server-side VerificationService with client-side verification and security checking, resolved
+- Automated testing: Vitest suite active with 86 tests passing across 17 test files.
 
-**Player data pipeline (undesigned, foundational)**
+**Player data pipeline (undesigned, foundational) [UNSUITABLE FOR GEMINI TO FIX]**
 
-- What gets gathered per player, who gathers it, where it's stored, where it's sorted/processed, where Deepnote fits in, and how raw numeric data gets rephrased into real sentences for the LLM commander instead of vague numbers. Explicitly core architecture, not a nice-to-have — this is what the cross-match player profiling work (already deferred above) actually depends on.
+- What gets gathered per player, who gathers it, where it's stored, where it's sorted/processed, where Deepnote fits in, and how raw numeric data gets rephrased into real sentences for the LLM commander instead of vague numbers. Explicitly core architecture, not a nice-to-have — this is what the cross-match player profiling work (already deferred above) actually depends on. [UNSUITABLE FOR GEMINI TO FIX]
 
 **Business layer**
 

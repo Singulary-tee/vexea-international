@@ -7,24 +7,21 @@ import { audioManager } from "../audio";
 import { StudioPreviewManager, AVAILABLE_SKINS } from "../StudioPreviewManager";
 import { clientFlagService } from "../flags/flag-service";
 import { FeatureFlagKey } from "../../shared/feature-flags";
+import { verifyPurchase } from "../../shared/verification/verifier";
 
 let activeCategoryFilter: 'ALL' | 'cosmetic' | 'blueprint' = 'ALL';
 
 export function renderStoreScreen(container: HTMLElement, registeredUserData: any): void {
   container.innerHTML = '';
 
-  const discountActive = clientFlagService.getBoolean(FeatureFlagKey.STORE_DISCOUNT_ACTIVE);
-  const creditMultiplier = clientFlagService.getNumber(FeatureFlagKey.STORE_CREDIT_MULTIPLIER);
-
-  // Apply multipliers and discounts client-side
   const processedOffers = offersDataList.map(offer => ({
     ...offer,
-    priceCredits: Math.floor(offer.priceCredits * (discountActive ? 0.8 : 1.0) * creditMultiplier)
+    priceCredits: offer.priceCredits
   }));
 
   const processedCatalog = catalogDataList.map(item => ({
     ...item,
-    priceCredits: Math.floor(item.priceCredits * (discountActive ? 0.9 : 1.0) * creditMultiplier)
+    priceCredits: item.priceCredits
   }));
 
   const wrap = document.createElement('div');
@@ -384,10 +381,34 @@ export function renderStoreScreen(container: HTMLElement, registeredUserData: an
 
 async function handleStorePurchase(price: number, itemId: string, itemTitle: string, userData: any, container: HTMLElement): Promise<void> {
   const currentCredits = userData?.credits !== undefined ? userData.credits : 1000;
-  if (currentCredits < price) {
-    alert(`INSUFFICIENT CREDITS. Required: ${price} CR | Current: ${currentCredits} CR`);
+  const currentLevel = userData?.battlePass || 1;
+  const unlockedItems = userData?.unlockedItems || [];
+  const auth = getAuth();
+
+  const verificationResult = verifyPurchase(
+    {
+      playerId: auth.currentUser?.uid || "guest",
+      itemId: itemId,
+      currentCredits,
+      currentLevel,
+      unlockedItems
+    },
+    {
+      id: itemId,
+      title: itemTitle,
+      category: "cosmetic",
+      priceCredits: price,
+      requiredLevel: 1,
+      description: itemTitle
+    }
+  );
+
+  if (!verificationResult.isApproved) {
+    alert(`PURCHASE REJECTED: ${verificationResult.error?.message || "Invalid transaction."}`);
     return;
   }
+
+  const newCredits = verificationResult.remainingCredits;
 
   // Save ownership in LocalStorage
   try {
@@ -400,10 +421,8 @@ async function handleStorePurchase(price: number, itemId: string, itemTitle: str
     console.warn("Local storage ownership write failed:", e);
   }
 
-  const auth = getAuth();
   if (auth.currentUser) {
     try {
-      const newCredits = currentCredits - price;
       const db = getFirestore();
       await updateDoc(doc(db, 'Users', auth.currentUser.uid), {
         credits: newCredits,

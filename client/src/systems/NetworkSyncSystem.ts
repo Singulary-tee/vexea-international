@@ -540,6 +540,18 @@ export class NetworkSyncSystem {
         match.hud.triggerWhiteoutFlash(msg.duration ?? 3.5, msg.intensity ?? 1.0);
       }
     }
+
+    if (msg.type === "CHAT_MESSAGE") {
+      if (match.chatHUD) {
+        match.chatHUD.addMessage(msg.sender || "SPECTATOR", msg.message);
+      }
+    }
+
+    if (msg.type === "QUICK_COMM") {
+      if (match.chatHUD) {
+        match.chatHUD.addQuickCommMessage(msg.sender || "OPERATIVE", msg.optionId);
+      }
+    }
   }
 
   private handleStateSync(json: any) {

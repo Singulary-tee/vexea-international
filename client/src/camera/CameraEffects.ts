@@ -170,16 +170,19 @@ export class CameraEffectsSystem {
     }
 
     // 7. Inject calculated offset values back to MatchController for global retrieval
+    // Dampen camera shake & bob according to user settings
+    const shakeMult = (window as any).vexeaSettings?.screenShakeMultiplier ?? 1.0;
+    
     // Offset camera height slightly with bobOffsetY and landingJolt, slide horizontally with bobOffsetX
-    camera.position.x += bobOffsetX;
-    camera.position.y += bobOffsetY - this.landingJolt;
+    camera.position.x += bobOffsetX * shakeMult;
+    camera.position.y += (bobOffsetY - this.landingJolt) * shakeMult;
     
     // Inject dynamic extra FOV stretch
-    camera.fov += this.fovStretch;
+    camera.fov += this.fovStretch * shakeMult;
     camera.updateProjectionMatrix();
 
     // 8. Re-apply rotation matrices with bank lean tilt & lateral head-bob roll added
-    const finalRoll = this.cameraRoll + bobOffsetRoll;
+    const finalRoll = (this.cameraRoll + bobOffsetRoll) * shakeMult;
     
     // Convert current camera rotation back to Euler, add roll tilt, apply back
     _tempEuler.setFromQuaternion(camera.quaternion, "YXZ");
