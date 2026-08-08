@@ -137,13 +137,16 @@ export class LLMCommander {
       }
     }
 
-    const statePayload = JSON.stringify(this.room.zoneSummary);
+    const compressedContext = this.room.commanderMemory
+      ? this.room.commanderMemory.buildCompressedPayload()
+      : `Current Zone Summary: ${JSON.stringify(this.room.zoneSummary)}`;
+    const statePayload = compressedContext;
     const outstandingPayload =
       pendingOrders.length > 0
         ? `\nOutstanding Orders: ${JSON.stringify(pendingOrders)}`
         : "";
     const feedbackBlock = this.feedback.formatFeedbackPromptBlock();
-    const payloadToLLM = `Dynamic payload: Current Zone Summary: ${statePayload}${outstandingPayload}\nCommander AP Pool: ${this.room.commanderAP}\n${feedbackBlock}Failed operations from previous cycle: ${JSON.stringify(this.room.failedOperations)}`;
+    const payloadToLLM = `Dynamic payload:\n${compressedContext}${outstandingPayload}\nCommander AP Pool: ${this.room.commanderAP}\n${feedbackBlock}Failed operations from previous cycle: ${JSON.stringify(this.room.failedOperations)}`;
     this.room.failedOperations.length = 0;
 
     const systemInstructions = `You are an automated state-machine orchestrator managing unit group allocations and zone routing. Respond strictly and exclusively with tool calls. Do not roleplay, invent narrative, adopt a persona, or output natural language. Clinical mechanical execution only.

@@ -1,5 +1,9 @@
 name: ConfigCat Scan
-on: [push]
+# TEMPORARILY DISABLED
+# on: [push]
+on:
+  workflow_dispatch:
+
 jobs:
   scan:
     runs-on: ubuntu-latest

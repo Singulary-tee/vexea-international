@@ -28,6 +28,7 @@ This file is the authoritative index of all directories and source files within 
 *   **`flags/` (Server Feature Flags)**
     *   **`flag-service.ts`**: Resolves server-side feature flags via Doppler secrets with local fallbacks.
 *   **`ai/` (Strategic AI)**
+    *   **`CommanderMemory.ts`**: Modular Zero-GC match-state context compression engine for the LLM Commander. Formulates tight (<250 token) situational awareness strings containing match clock, squad composition, drone asset ledger, casualty delta, utility log, objective state, and clean zone summaries.
     *   **`DroneAvoidance.ts`**: Manages dynamic path avoidance and separation steering behaviors for autonomous drone swarms.
     *   **`DroneIntelligence.ts`**: Governs spatial awareness for individual drones. Computes sight lines (3D orientation quaternions to check forward vectors and cone of vision angles), performs static map and dynamic Rapier line-of-sight raycasts, and handles memory decay mechanics.
     *   **`DroneMemory.ts`**: Tracks historical sighting positions, target last-seen timestamps, and spatial memory decay for drones.

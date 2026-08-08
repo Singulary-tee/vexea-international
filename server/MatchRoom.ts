@@ -1,4 +1,5 @@
 import { processDroneIntelligence } from "./ai/DroneIntelligence";
+import { CommanderMemory } from "./ai/CommanderMemory";
 import { GoogleGenAI, Type } from "@google/genai";
 import RAPIER from "@dimforge/rapier3d-compat";
 import { ACTIVE_GAMEMODE } from "../shared/gamemode-configs.js";
@@ -348,6 +349,7 @@ export class MatchRoom {
   public physicsManager!: PhysicsWorldManager;
 
   public llmCommander: LLMCommander | null = null;
+  public commanderMemory: CommanderMemory;
   public aiCommanderActive = false;
   public llmCommanderDisabled = false;
   public lastLLMToolCall: string | null = null;
@@ -408,6 +410,7 @@ export class MatchRoom {
     this.physicsManager.initPhysics();
     this.rapierWorld = this.physicsManager.rapierWorld;
     this.initEntities();
+    this.commanderMemory = new CommanderMemory(this);
     this.llmCommander = new LLMCommander(this, geminiKey);
     // Phase 1 complete. Simulation loops start in triggerStartMatch()
   }
@@ -659,6 +662,9 @@ export class MatchRoom {
   public despawnDrone(d: ServerDrone) {
     const oldState = d.state;
     d.state = DroneState.DEAD;
+    if (oldState !== DroneState.DEAD && this.commanderMemory) {
+      this.commanderMemory.onDroneDespawned(d);
+    }
     if (oldState !== DroneState.DEAD) {
       this.broadcastReliableEvent({
         type: "DRONE_DEATH",
@@ -3528,6 +3534,10 @@ export class MatchRoom {
 
     const uSlot = player.utilityState[slot];
     if (!uSlot || uSlot.charges <= 0) return;
+
+    if (this.commanderMemory) {
+      this.commanderMemory.onUtilityUsed(playerId, uSlot.id);
+    }
 
     // Deduct charge & set cooldown
     uSlot.charges -= 1;
