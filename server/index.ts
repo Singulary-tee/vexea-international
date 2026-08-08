@@ -4,7 +4,7 @@
  * Enforces Zero-GC, authoritative validation, and server-side LLM loop per room.
  */
 
-import { Sentry, recordHitscanRejected, recordSecurityExploit } from "./sentry";
+import { Sentry } from "./sentry";
 import { loadDopplerSecrets } from "./doppler";
 import dotenv from "dotenv";
 import express from "express";
@@ -17,12 +17,15 @@ import { initializeApp, cert, getApps } from "firebase-admin/app";
 import { getFirestore, FieldValue } from "firebase-admin/firestore";
 
 import { createTransport, ChannelAdapter } from "./transport/adapter";
+export type { ChannelAdapter };
 import { connectionRegistry } from "./connection-registry";
 import { MatchRoom, PlayerState } from "./MatchRoom";
 import { serverFlagService } from "./flags/flag-service";
 import { serverEconomyService } from "./data/economy-service";
 import { matchManager } from "./MatchManager";
 import { matchmaker } from "./Matchmaker";
+import { processHitscan } from "./combat/hitscan";
+import { registerDevCommands } from "./dev/dev-commands";
 import { CLASSES, ClassId } from "../shared/classes.js";
 import {
   ZONES,
@@ -30,16 +33,13 @@ import {
   DroneState,
   WEAPONS,
   DRONE_CONFIGS,
-  MAX_DRONES,
+  HISTORICAL_SAMPLES_MAX,
+  HISTORIC_BLOCK_SIZE,
 } from "../shared/constants";
 import {
   DETAILED_WEAPONS,
-  calculateDamageWithFalloff,
 } from "../shared/weapons";
 import { IS_DEV } from "../shared/gates/production.gate";
-
-export const HISTORICAL_SAMPLES_MAX = 120;
-export const HISTORIC_BLOCK_SIZE = 2 + MAX_DRONES * 4;
 
 export { IS_DEV }; // Master toggle to easily disable all development cheats/commands on the server for production.
 
@@ -580,221 +580,12 @@ io.onConnection((channel: ChannelAdapter) => {
     }
   });
 
-  channel.on("dev_spawn_bots", (args: any) => {
-    if (!IS_DEV || !currentRoom) return;
-    const count = typeof args.count === "number" ? args.count : 3;
-    currentRoom.spawnTestBots(count);
-  });
-
-  channel.on("dev_spawn_cube", (args: any) => {
-    if (!IS_DEV || !currentRoom || !pState) return;
-    currentRoom.devSpawnCube(pState.id, args);
-  });
-
-  channel.on("dev_clear_cube", () => {
-    if (!IS_DEV || !currentRoom) return;
-    currentRoom.devClearCube();
-  });
-
-  channel.on("dev_set_gravity_y", (args: any) => {
-    if (!IS_DEV || !currentRoom) return;
-    if (args && typeof args.gravityY === "number") {
-      currentRoom.setDevPhysicsGravityY(args.gravityY);
-    }
-  });
-
-  channel.on("dev_set_speed_multiplier", (args: any) => {
-    if (!IS_DEV || !currentRoom) return;
-    if (args && typeof args.speedMultiplier === "number") {
-      currentRoom.setDevPhysicsSpeedMultiplier(args.speedMultiplier);
-    }
-  });
-
-  channel.on("dev_set_paused", (args: any) => {
-    if (!IS_DEV || !currentRoom) return;
-    if (args && typeof args.paused === "boolean") {
-      currentRoom.setDevPhysicsPaused(args.paused);
-    }
-  });
-
-  channel.on("dev_step_once", () => {
-    if (!IS_DEV || !currentRoom) return;
-    currentRoom.setDevPhysicsStepOnce();
-  });
-
-  channel.on("dev_spawn_drone", (args: any) => {
-    if (!IS_DEV || !currentRoom) return;
-    const type = typeof args.type === "number" ? args.type : Number(args.type);
-    const pos = (args.x !== undefined && args.y !== undefined && args.z !== undefined) ? 
-      { x: Number(args.x), y: Number(args.y), z: Number(args.z) } : undefined;
-    currentRoom.registerDeveloperSpawner(type, pos);
-  });
-
-  channel.on("dev_clear_drones", () => {
-    if (!IS_DEV || !currentRoom) return;
-    for (let i = 0; i < currentRoom.drones.length; i++) {
-      currentRoom.drones[i].state = DroneState.DEAD;
-    }
-  });
-
-  channel.on("dev_spawn_test_entity", (args: any) => {
-    if (!IS_DEV || !currentRoom) return;
-    currentRoom.spawnTestEntity(args.x, args.y, args.z);
-  });
-
-  channel.on("dev_spawn_frozen_drone", (args: any) => {
-    if (!IS_DEV || !currentRoom) return;
-    const success = currentRoom.registerDeveloperSpawner(args.type, { x: args.x, y: args.y, z: args.z });
-    if (success) {
-      const spawnedDrone = currentRoom.drones.find(x => x.id === currentRoom.nextDroneId - 1);
-      if (spawnedDrone) {
-        (spawnedDrone as any).isFrozen = true;
-      }
-    }
-  });
-
-  channel.on("dev_clear_frozen", () => {
-    if (!IS_DEV || !currentRoom) return;
-    for (let i = 0; i < currentRoom.drones.length; i++) {
-      if ((currentRoom.drones[i] as any).isFrozen) {
-        currentRoom.despawnDrone(currentRoom.drones[i]);
-      }
-    }
-  });
-
-  channel.on("dev_clear_test_entities", () => {
-    if (!IS_DEV || !currentRoom) return;
-    currentRoom.clearTestEntities();
-  });
-
-  channel.on("dev_test_entity_mode", (args: any) => {
-    if (!IS_DEV || !currentRoom) return;
-    currentRoom.setTestEntityMode(args.mode);
-  });
-
-  channel.on("dev_test_entity_target", (args: any) => {
-    if (!IS_DEV || !currentRoom) return;
-    currentRoom.setTestEntityTarget(args.x, args.y, args.z);
-  });
-
-  channel.on("dev_test_entity_sight", () => {
-    if (!IS_DEV || !currentRoom) return;
-    currentRoom.triggerTestEntitySight();
-  });
-
-  channel.on("dev_test_entity_sound", () => {
-    if (!IS_DEV || !currentRoom) return;
-    currentRoom.triggerTestEntitySound();
-  });
-
-  channel.on("dev_test_entity_collision_filter", (args: any) => {
-    if (!IS_DEV || !currentRoom) return;
-    currentRoom.setTestEntityCollisionFilter(args.group, args.mask);
-  });
-
-
-  channel.on("dev_toggle_llm", (args: any) => {
-    if (!IS_DEV || !currentRoom) return;
-    currentRoom.llmCommanderDisabled = !!args?.disabled;
-    console.log(`[VEXEA SERVER] LLM Commander disabled toggle processed: ${currentRoom.llmCommanderDisabled}`);
-  });
-
-  channel.on("dev_interview_llm", async (args: any) => {
-    if (!IS_DEV) return;
-    const question = args?.question;
-    if (!question || typeof question !== "string" || !question.trim()) return;
-
-    if (currentRoom && currentRoom.llmCommander) {
-      const answer = await currentRoom.llmCommander.interviewLLM(question.trim());
-      channel.emit("dev_llm_interview_response", {
-        question: question.trim(),
-        answer,
-        timestamp: Date.now(),
-      });
-    } else {
-      channel.emit("dev_llm_interview_response", {
-        question: question.trim(),
-        answer: "ERROR: MatchRoom or LLM Commander unavailable.",
-        timestamp: Date.now(),
-      });
-    }
-  });
-
-  channel.on("refill_credits", async (args: any) => {
-    if (!IS_DEV) return;
-    const reqUid = args?.uid || playerId;
-    try {
-      await updateDoc(doc(db, "Users", reqUid), {
-        credits: 1000,
-        energy: 1000
-      });
-      console.log(`[VEXEA SERVER] Processed Dev Credits Refill for ${reqUid}`);
-    } catch (err) {
-      console.error("[VEXEA SERVER] Dev Credits Refill failed:", err);
-    }
-  });
-
-  channel.on("dev_set_class", (args: any) => {
-    if (!IS_DEV || !currentRoom || !pState) return;
-    if (args.playerClass) {
-      const classId = (args.playerClass as string).toUpperCase() as ClassId;
-      if (CLASSES[classId]) {
-        currentRoom.applyPlayerClassLoadout(pState.id, classId);
-      }
-    }
-  });
-
-  channel.on("dev_set_position", (args: any) => {
-    if (!IS_DEV || !pState) return;
-    console.log(`[SERVER DEV EVENT] Received dev_set_position:`, args, "pState exists:", !!pState);
-    if (args.position) {
-      pState.posX = args.position.x;
-      pState.posY = args.position.y;
-      pState.posZ = args.position.z;
-      if (pState.body) {
-        pState.body.setNextKinematicTranslation({
-          x: pState.posX,
-          y: pState.posY,
-          z: pState.posZ
-        });
-      }
-      console.log(`[DEV DEBUG] Force positioned player ${pState.id} to:`, args.position);
-    }
-  });
-
-  channel.on("dev_toggle_god_mode", (args: any) => {
-    if (!IS_DEV || !pState) return;
-    pState.godMode = !!args?.godMode;
-    console.log(`[SERVER DEV EVENT] Player ${pState.id} God Mode toggled:`, pState.godMode);
-  });
-
-  channel.on("dev_toggle_infinite_ammo", (args: any) => {
-    if (!IS_DEV || !pState) return;
-    pState.infiniteAmmo = !!args?.infiniteAmmo;
-    console.log(`[SERVER DEV EVENT] Player ${pState.id} Infinite Ammo toggled:`, pState.infiniteAmmo);
-  });
-
-  channel.on("dev_set_hp", (args: any) => {
-    if (!IS_DEV || !pState) return;
-    if (typeof args?.hp === "number") {
-      pState.hp = args.hp;
-      pState.channel.emit("reliable_event", {
-        type: "PLAYER_HIT",
-        hp: pState.hp,
-        rawDamage: 0,
-      });
-      console.log(`[SERVER DEV EVENT] Player ${pState.id} HP set to:`, pState.hp);
-    }
-  });
-
-  channel.on("dev_nuke_drones", () => {
-    if (!IS_DEV || !currentRoom) return;
-    console.log(`[SERVER DEV EVENT] Nuking all active drones on map`);
-    for (let i = 0; i < currentRoom.drones.length; i++) {
-      currentRoom.drones[i].hp = 0;
-      currentRoom.drones[i].state = DroneState.DEAD;
-    }
-  });
+  registerDevCommands(
+    channel,
+    db,
+    () => currentRoom,
+    () => pState
+  );
 
   channel.on("ping", () => {
     channel.emit("pong", {});
@@ -975,265 +766,7 @@ io.onConnection((channel: ChannelAdapter) => {
           secondary: pState.weaponState.secondary,
         });
 
-        const dirX = args.direction.x;
-        const dirY = args.direction.y;
-        const dirZ = args.direction.z;
-        const timestamp = args.timestamp;
-
-        // Hitscan Origin Verification: Validate shot origin coordinates against the server's authoritative player physics position
-        const dx = args.origin.x - pState.posX;
-        const dy = args.origin.y - pState.posY;
-        const dz = args.origin.z - pState.posZ;
-        const originDistSq = dx * dx + dy * dy + dz * dz;
-        const maxAllowedDeviation = 4.0; // 2.0 meters squared (2.0 * 2.0 = 4.0) to account for camera offsets & network latency
-        if (originDistSq > maxAllowedDeviation) {
-          console.warn(`[Hitscan Verification] Rejected shot from player ${pState.id}: Origin deviation too high (${Math.sqrt(originDistSq).toFixed(2)}m > 2.0m)`);
-          recordHitscanRejected("origin_deviation_out_of_bounds");
-          recordSecurityExploit("origin_spoofing", { playerId: pState.id, origin: args.origin, expected: { x: pState.posX, y: pState.posY, z: pState.posZ } });
-          return;
-        }
-
-        const expectedT = Date.now() - pState.ping;
-        let targetTick = currentRoom.serverTick;
-        if (Math.abs(timestamp - expectedT) <= 50) {
-          const rewindMs = Math.min(200, Date.now() - timestamp);
-          targetTick = currentRoom.serverTick - Math.floor(rewindMs / 16.66);
-        } else {
-          recordHitscanRejected("lag_compensation_out_of_bounds");
-        }
-
-        let distSqMin = 99999;
-        let bestHitDrone: any = null;
-
-        for (let i = 0; i < HISTORICAL_SAMPLES_MAX; i++) {
-          const baseIdx = i * HISTORIC_BLOCK_SIZE;
-          const recTick = currentRoom.historicalAABBHistory[baseIdx];
-          if (recTick > 0 && Math.abs(recTick - targetTick) <= 1) {
-            const numDrones = currentRoom.historicalAABBHistory[baseIdx + 1];
-            for (let dIdx = 0; dIdx < numDrones; dIdx++) {
-              const offset = baseIdx + 2 + dIdx * 4;
-              const dId = currentRoom.historicalAABBHistory[offset];
-              const cx = currentRoom.historicalAABBHistory[offset + 1];
-              const cy = currentRoom.historicalAABBHistory[offset + 2];
-              const cz = currentRoom.historicalAABBHistory[offset + 3];
-
-              const tox = cx - args.origin.x;
-              const toy = cy - args.origin.y;
-              const toz = cz - args.origin.z;
-
-              const t = tox * dirX + toy * dirY + toz * dirZ;
-              if (t > 0) {
-                const px = args.origin.x + dirX * t;
-                const py = args.origin.y + dirY * t;
-                const pz = args.origin.z + dirZ * t;
-
-                const hitDrone = currentRoom.drones.find((d) => d.id === dId);
-                if (!hitDrone || hitDrone.state === DroneState.DEAD) continue;
-
-                // EXCLUSION RULES: Exclude the player/shooter themselves, and enforce player-vs-drone hits only.
-                if (hitDrone.id.toString() === pState.id) {
-                  continue;
-                }
-
-                const config = DRONE_CONFIGS[hitDrone.type];
-                let w = 1.0;
-                let h = 1.0;
-                let l = 1.0;
-                if (config && config.collider) {
-                  if (config.collider.type === 'cuboid' && config.collider.halfExtents) {
-                    w = config.collider.halfExtents[0] * 2;
-                    h = config.collider.halfExtents[1] * 2;
-                    l = config.collider.halfExtents[2] * 2;
-                  } else if (config.collider.type === 'capsule' && config.collider.radius !== undefined && config.collider.halfHeight !== undefined) {
-                    w = config.collider.radius * 2;
-                    h = (config.collider.halfHeight * 2) + (config.collider.radius * 2);
-                    l = config.collider.radius * 2;
-                  } else if (config.collider.radius !== undefined) {
-                    w = config.collider.radius * 2;
-                    h = config.collider.radius * 2;
-                    l = config.collider.radius * 2;
-                  }
-                }
-
-                if (
-                  Math.abs(px - cx) <= w / 2 &&
-                  Math.abs(py - cy) <= h / 2 &&
-                  Math.abs(pz - cz) <= l / 2
-                ) {
-                  if (t < distSqMin) {
-                    distSqMin = t;
-                    bestHitDrone = hitDrone;
-                  }
-                }
-              }
-            }
-            break;
-          }
-        }
-
-        if (bestHitDrone) {
-          if (
-            currentRoom.collisionMap &&
-            currentRoom.collisionMap.rayIntersectsAny(
-              args.origin,
-              { x: dirX, y: dirY, z: dirZ },
-              distSqMin,
-            )
-          ) {
-            bestHitDrone = null;
-          }
-        }
-
-        if (bestHitDrone) {
-          const weaponPerf = isPrimary
-            ? DETAILED_WEAPONS.rifle
-            : DETAILED_WEAPONS.pistol;
-          const distance = distSqMin; // t represents the raw coordinate distance offset along the hit ray
-          const rawDamage = calculateDamageWithFalloff(
-            weaponPerf.damage,
-            distance,
-            weaponPerf.falloff,
-          );
-          const appliedDamage = Math.round(rawDamage * 10) / 10; // clamp to 1 decimal point to avoid floating precision bugs
-
-          bestHitDrone.hp -= appliedDamage;
-          pState.stats.damageDealt += appliedDamage;
-          bestHitDrone.damageLog.push({ playerId: pState.id, timestamp: now });
-
-          if (bestHitDrone.hp <= 0) {
-            currentRoom.despawnDrone(bestHitDrone);
-            pState.stats.droneEliminations++;
-            pState.stats.scoreIndividual += 100;
-            pState.score += 100;
-
-            const assistThreshold = now - 5000;
-            const assistants = new Set<string>();
-            for (const rec of bestHitDrone.damageLog) {
-              if (
-                rec.playerId !== pState.id &&
-                rec.timestamp > assistThreshold
-              ) {
-                assistants.add(rec.playerId);
-              }
-            }
-            for (const aId of assistants) {
-              const aPlayer = currentRoom.players.get(aId);
-              if (aPlayer) {
-                aPlayer.stats.assists++;
-                aPlayer.stats.scoreIndividual += 50;
-                aPlayer.score += 50;
-              }
-            }
-            bestHitDrone.damageLog = [];
-
-            if (
-              bestHitDrone.path &&
-              bestHitDrone.path.length > 0 &&
-              bestHitDrone.pathIndex < bestHitDrone.path.length
-            ) {
-              currentRoom.failedOperations.push(
-                JSON.stringify({
-                  attempted: "active_operation",
-                  reason: "unit_destroyed",
-                  droneType: bestHitDrone.type,
-                }),
-              );
-            }
-
-            const impactX = args.origin.x + dirX * distSqMin;
-            const impactY = args.origin.y + dirY * distSqMin;
-            const impactZ = args.origin.z + dirZ * distSqMin;
-
-            pState.channel.emit("reliable_event", {
-              type: "HIT_CONFIRMED",
-              droneId: bestHitDrone.id,
-              droneHp: 0,
-              originX: args.origin.x,
-              originY: args.origin.y,
-              originZ: args.origin.z,
-              impactX,
-              impactY,
-              impactZ,
-            });
-            currentRoom.broadcastReliableEvent({
-              type: "DRONE_DEATH",
-              droneId: bestHitDrone.id,
-              zone: bestHitDrone.zone,
-            });
-          } else {
-            const impactX = args.origin.x + dirX * distSqMin;
-            const impactY = args.origin.y + dirY * distSqMin;
-            const impactZ = args.origin.z + dirZ * distSqMin;
-
-            pState.channel.emit("reliable_event", {
-              type: "HIT_CONFIRMED",
-              droneId: bestHitDrone.id,
-              droneHp: bestHitDrone.hp,
-              originX: args.origin.x,
-              originY: args.origin.y,
-              originZ: args.origin.z,
-              impactX,
-              impactY,
-              impactZ,
-            });
-            currentRoom.broadcastReliableEvent({
-              type: "DRONE_HIT",
-              droneId: bestHitDrone.id,
-              zone: bestHitDrone.zone,
-            });
-          }
-        } else {
-          let impactX: number;
-          let impactY: number;
-          let impactZ: number;
-
-          if (currentRoom.rapierWorld) {
-            const ray = new RAPIER.Ray(
-              { x: args.origin.x, y: args.origin.y, z: args.origin.z },
-              { x: dirX, y: dirY, z: dirZ },
-            );
-            const hit = currentRoom.rapierWorld.castRay(
-              ray,
-              80,
-              false,
-              RAPIER.QueryFilterFlags.EXCLUDE_DYNAMIC,
-            );
-            if (hit) {
-              impactX = args.origin.x + args.direction.x * hit.timeOfImpact;
-              impactY = args.origin.y + args.direction.y * hit.timeOfImpact;
-              impactZ = args.origin.z + args.direction.z * hit.timeOfImpact;
-            } else {
-              impactX = args.origin.x + args.direction.x * 80;
-              impactY = args.origin.y + args.direction.y * 80;
-              impactZ = args.origin.z + args.direction.z * 80;
-            }
-          } else {
-            impactX = args.origin.x + args.direction.x * 80;
-            impactY = args.origin.y + args.direction.y * 80;
-            impactZ = args.origin.z + args.direction.z * 80;
-          }
-
-          if (
-            typeof impactX === "number" &&
-            !isNaN(impactX) &&
-            typeof impactY === "number" &&
-            !isNaN(impactY) &&
-            typeof impactZ === "number" &&
-            !isNaN(impactZ)
-          ) {
-            pState.channel.emit("reliable_event", {
-              type: "HIT_ENVIRONMENT",
-              originX: args.origin.x,
-              originY: args.origin.y,
-              originZ: args.origin.z,
-              impactX,
-              impactY,
-              impactZ,
-            });
-          }
-        }
-      } else {
-        recordHitscanRejected("rate_limit_exceeded");
+        processHitscan(pState, currentRoom, channel, args);
       }
     }
   });

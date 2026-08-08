@@ -79,6 +79,8 @@ export enum DroneType {
 }
 
 // Numerical limits and Network constraints
+export const MAX_DRONES = 50;
+export const MAX_CAMERAS = 20;
 export const CAMERA_MAX_HP = 50;
 export const PLAYER_MAX_HP = 100;
 export const PLAYER_RESPAWN_DELAY_DEFAULT = 5.0;
@@ -86,6 +88,8 @@ export const RECOIL_ANGLE_KICK = 0.05;
 export const WEAPON_COOLDOWN = 0.12;
 export const DRONE_RENDER_INTERPOLATION_DELAY_MS = 100;
 export const MAX_REWIND_VALIDATION_TOLERANCE_MS = 200;
+export const HISTORICAL_SAMPLES_MAX = 120;
+export const HISTORIC_BLOCK_SIZE = 2 + MAX_DRONES * 4;
 
 export interface DroneConfig {
   type: DroneType;
@@ -526,8 +530,6 @@ export const DRONE_CONFIGS: Record<DroneType, DroneConfig> = {
 export const HEADER_SIZE = 8; // Tick(4), DroneCount(2), CameraCount(2)
 export const DRONE_STRUCT_SIZE = 32;
 export const CAMERA_STRUCT_SIZE = 4;
-export const MAX_DRONES = 50;
-export const MAX_CAMERAS = 20;
 export const TOTAL_STATE_BUFFER_SIZE = HEADER_SIZE + DRONE_STRUCT_SIZE * MAX_DRONES + CAMERA_STRUCT_SIZE * MAX_CAMERAS;
 
 // Player Physics & Dimensions

@@ -1,0 +1,260 @@
+import { ChannelAdapter } from "../transport/adapter";
+import { MatchRoom, PlayerState } from "../MatchRoom";
+import { IS_DEV } from "../../shared/gates/production.gate";
+import { DroneState } from "../../shared/constants";
+import { CLASSES, ClassId } from "../../shared/classes";
+import { FieldValue } from "firebase-admin/firestore";
+
+export function registerDevCommands(
+  channel: ChannelAdapter,
+  db: any,
+  getRoom: () => MatchRoom | null,
+  getPlayer: () => PlayerState | null
+): void {
+  if (!IS_DEV) return;
+
+  channel.on("dev_spawn_bots", (args: any) => {
+    const currentRoom = getRoom();
+    if (!currentRoom) return;
+    const count = typeof args.count === "number" ? args.count : 3;
+    currentRoom.spawnTestBots(count);
+  });
+
+  channel.on("dev_spawn_cube", (args: any) => {
+    const currentRoom = getRoom();
+    const pState = getPlayer();
+    if (!currentRoom || !pState) return;
+    currentRoom.devSpawnCube(pState.id, args);
+  });
+
+  channel.on("dev_clear_cube", () => {
+    const currentRoom = getRoom();
+    if (!currentRoom) return;
+    currentRoom.devClearCube();
+  });
+
+  channel.on("dev_set_gravity_y", (args: any) => {
+    const currentRoom = getRoom();
+    if (!currentRoom) return;
+    if (args && typeof args.gravityY === "number") {
+      currentRoom.setDevPhysicsGravityY(args.gravityY);
+    }
+  });
+
+  channel.on("dev_set_speed_multiplier", (args: any) => {
+    const currentRoom = getRoom();
+    if (!currentRoom) return;
+    if (args && typeof args.speedMultiplier === "number") {
+      currentRoom.setDevPhysicsSpeedMultiplier(args.speedMultiplier);
+    }
+  });
+
+  channel.on("dev_set_paused", (args: any) => {
+    const currentRoom = getRoom();
+    if (!currentRoom) return;
+    if (args && typeof args.paused === "boolean") {
+      currentRoom.setDevPhysicsPaused(args.paused);
+    }
+  });
+
+  channel.on("dev_step_once", () => {
+    const currentRoom = getRoom();
+    if (!currentRoom) return;
+    currentRoom.setDevPhysicsStepOnce();
+  });
+
+  channel.on("dev_spawn_drone", (args: any) => {
+    const currentRoom = getRoom();
+    if (!currentRoom) return;
+    const type = typeof args.type === "number" ? args.type : Number(args.type);
+    const pos = (args.x !== undefined && args.y !== undefined && args.z !== undefined) ? 
+      { x: Number(args.x), y: Number(args.y), z: Number(args.z) } : undefined;
+    currentRoom.registerDeveloperSpawner(type, pos);
+  });
+
+  channel.on("dev_clear_drones", () => {
+    const currentRoom = getRoom();
+    if (!currentRoom) return;
+    for (let i = 0; i < currentRoom.drones.length; i++) {
+      currentRoom.drones[i].state = DroneState.DEAD;
+    }
+  });
+
+  channel.on("dev_spawn_test_entity", (args: any) => {
+    const currentRoom = getRoom();
+    if (!currentRoom) return;
+    currentRoom.spawnTestEntity(args.x, args.y, args.z);
+  });
+
+  channel.on("dev_spawn_frozen_drone", (args: any) => {
+    const currentRoom = getRoom();
+    if (!currentRoom) return;
+    const success = currentRoom.registerDeveloperSpawner(args.type, { x: args.x, y: args.y, z: args.z });
+    if (success) {
+      const spawnedDrone = currentRoom.drones.find(x => x.id === currentRoom.nextDroneId - 1);
+      if (spawnedDrone) {
+        (spawnedDrone as any).isFrozen = true;
+      }
+    }
+  });
+
+  channel.on("dev_clear_frozen", () => {
+    const currentRoom = getRoom();
+    if (!currentRoom) return;
+    for (let i = 0; i < currentRoom.drones.length; i++) {
+      if ((currentRoom.drones[i] as any).isFrozen) {
+        currentRoom.despawnDrone(currentRoom.drones[i]);
+      }
+    }
+  });
+
+  channel.on("dev_clear_test_entities", () => {
+    const currentRoom = getRoom();
+    if (!currentRoom) return;
+    currentRoom.clearTestEntities();
+  });
+
+  channel.on("dev_test_entity_mode", (args: any) => {
+    const currentRoom = getRoom();
+    if (!currentRoom) return;
+    currentRoom.setTestEntityMode(args.mode);
+  });
+
+  channel.on("dev_test_entity_target", (args: any) => {
+    const currentRoom = getRoom();
+    if (!currentRoom) return;
+    currentRoom.setTestEntityTarget(args.x, args.y, args.z);
+  });
+
+  channel.on("dev_test_entity_sight", () => {
+    const currentRoom = getRoom();
+    if (!currentRoom) return;
+    currentRoom.triggerTestEntitySight();
+  });
+
+  channel.on("dev_test_entity_sound", () => {
+    const currentRoom = getRoom();
+    if (!currentRoom) return;
+    currentRoom.triggerTestEntitySound();
+  });
+
+  channel.on("dev_test_entity_collision_filter", (args: any) => {
+    const currentRoom = getRoom();
+    if (!currentRoom) return;
+    currentRoom.setTestEntityCollisionFilter(args.group, args.mask);
+  });
+
+  channel.on("dev_toggle_llm", (args: any) => {
+    const currentRoom = getRoom();
+    if (!currentRoom) return;
+    currentRoom.llmCommanderDisabled = !!args?.disabled;
+    console.log(`[VEXEA SERVER] LLM Commander disabled toggle processed: ${currentRoom.llmCommanderDisabled}`);
+  });
+
+  channel.on("dev_interview_llm", async (args: any) => {
+    const currentRoom = getRoom();
+    const question = args?.question;
+    if (!question || typeof question !== "string" || !question.trim()) return;
+
+    if (currentRoom && currentRoom.llmCommander) {
+      const answer = await currentRoom.llmCommander.interviewLLM(question.trim());
+      channel.emit("dev_llm_interview_response", {
+        question: question.trim(),
+        answer,
+        timestamp: Date.now(),
+      });
+    } else {
+      channel.emit("dev_llm_interview_response", {
+        question: question.trim(),
+        answer: "ERROR: MatchRoom or LLM Commander unavailable.",
+        timestamp: Date.now(),
+      });
+    }
+  });
+
+  channel.on("refill_credits", async (args: any) => {
+    const pState = getPlayer();
+    const reqUid = args?.uid || pState?.id;
+    if (!reqUid) return;
+    try {
+      await db.collection("Users").doc(reqUid).update({
+        credits: 1000,
+        energy: 1000
+      });
+      console.log(`[VEXEA SERVER] Processed Dev Credits Refill for ${reqUid}`);
+      if (pState && pState.id === reqUid) {
+        // Credits are not stored in PlayerState stats in this version
+      }
+    } catch (err) {
+      console.error("[VEXEA SERVER] Dev Credits Refill failed:", err);
+    }
+  });
+
+  channel.on("dev_set_class", (args: any) => {
+    const currentRoom = getRoom();
+    const pState = getPlayer();
+    if (!currentRoom || !pState) return;
+    if (args.playerClass) {
+      const classId = (args.playerClass as string).toUpperCase() as ClassId;
+      if (CLASSES[classId]) {
+        currentRoom.applyPlayerClassLoadout(pState.id, classId);
+      }
+    }
+  });
+
+  channel.on("dev_set_position", (args: any) => {
+    const pState = getPlayer();
+    if (!pState) return;
+    if (args.position) {
+      pState.posX = args.position.x;
+      pState.posY = args.position.y;
+      pState.posZ = args.position.z;
+      if (pState.body) {
+        pState.body.setNextKinematicTranslation({
+          x: pState.posX,
+          y: pState.posY,
+          z: pState.posZ
+        });
+      }
+      console.log(`[DEV DEBUG] Force positioned player ${pState.id} to:`, args.position);
+    }
+  });
+
+  channel.on("dev_toggle_god_mode", (args: any) => {
+    const pState = getPlayer();
+    if (!pState) return;
+    pState.godMode = !!args?.godMode;
+    console.log(`[SERVER DEV EVENT] Player ${pState.id} God Mode toggled:`, pState.godMode);
+  });
+
+  channel.on("dev_toggle_infinite_ammo", (args: any) => {
+    const pState = getPlayer();
+    if (!pState) return;
+    pState.infiniteAmmo = !!args?.infiniteAmmo;
+    console.log(`[SERVER DEV EVENT] Player ${pState.id} Infinite Ammo toggled:`, pState.infiniteAmmo);
+  });
+
+  channel.on("dev_set_hp", (args: any) => {
+    const pState = getPlayer();
+    if (!pState) return;
+    if (typeof args?.hp === "number") {
+      pState.hp = args.hp;
+      pState.channel.emit("reliable_event", {
+        type: "PLAYER_HIT",
+        hp: pState.hp,
+        rawDamage: 0,
+      });
+      console.log(`[SERVER DEV EVENT] Player ${pState.id} HP set to:`, pState.hp);
+    }
+  });
+
+  channel.on("dev_nuke_drones", () => {
+    const currentRoom = getRoom();
+    if (!currentRoom) return;
+    console.log(`[SERVER DEV EVENT] Nuking all active drones on map`);
+    for (let i = 0; i < currentRoom.drones.length; i++) {
+      currentRoom.drones[i].hp = 0;
+      currentRoom.drones[i].state = DroneState.DEAD;
+    }
+  });
+}
