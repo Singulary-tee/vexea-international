@@ -406,8 +406,7 @@ StudioPreviewManager.onModelLoaded = (model: THREE.Group, glbName: string) => {
   }
   const isCharacter = glbName.toLowerCase().includes('player') || 
                       glbName.toLowerCase().includes('character') || 
-                      glbName.toLowerCase().includes('humanoid') ||
-                      glbName.toLowerCase().includes('bpre');
+                      glbName.toLowerCase().includes('humanoid');
   
   if (!isCharacter) {
     // Dev placement panel is strictly for character model preview, not armory weapons

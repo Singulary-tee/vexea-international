@@ -183,6 +183,9 @@ export async function initDroneModels(scene: THREE.Scene): Promise<void> {
       if (urlName === ASSET_STRUCTURE["robodog-optimized.glb"].fileName) {
         (window as any).rawRobotDogGLTF = gltf;
       }
+      if (urlName === ASSET_STRUCTURE["ugv-optimized.glb"].fileName) {
+        (window as any).rawWheeledGLTF = gltf;
+      }
       return nodes;
     } catch(e) {
       console.warn("Failed to load drone model:", urlName, e);
@@ -367,6 +370,34 @@ export async function initDroneModels(scene: THREE.Scene): Promise<void> {
   fixedWingGroup.scale.set(scaleFactorFW, scaleFactorFW, scaleFactorFW);
   
   (window as any).fixedWingModel = fixedWingGroup;
+
+  // Standalone Wheeled model (UGV)
+  const wheeledGroup = new THREE.Group();
+  wheeledGroup.name = "WheeledStandalone";
+  
+  const wOffsetGroup = new THREE.Group();
+  const wOffset = DRONE_CONFIGS[DroneType.WHEELED].orientationOffset || [0, 0, 0];
+  wOffsetGroup.rotation.set(wOffset[0], wOffset[1], wOffset[2]);
+  wheeledGroup.add(wOffsetGroup);
+
+  const wGltf = (window as any).rawWheeledGLTF;
+  if (wGltf && wGltf.scene) {
+      const clone = SkeletonUtils.clone(wGltf.scene);
+      clone.name = "WheeledGLTFScene";
+      wOffsetGroup.add(clone);
+  }
+  
+  let scaleFactorW = 1.0;
+  let bodyW = wheeledParts.find(p => p.isMesh && (p.name === 'body' || p.name.toLowerCase().includes('body') || p.name.toLowerCase().includes('chassis'))) || wheeledParts.find(p=>p.isMesh);
+  if (bodyW) {
+      bodyW.geom!.computeBoundingBox();
+      const sphere = new THREE.Sphere();
+      if (bodyW.geom!.boundingBox) bodyW.geom!.boundingBox.getBoundingSphere(sphere);
+      scaleFactorW = DRONE_CONFIGS[DroneType.WHEELED].visualRadius / (sphere.radius || 1.0);
+  }
+  wheeledGroup.scale.set(scaleFactorW, scaleFactorW, scaleFactorW);
+  
+  (window as any).wheeledDroneModel = wheeledGroup;
 
   // Standalone Humanoid model biped joints or skeletal setup
   const humanoidGroup = new THREE.Group();

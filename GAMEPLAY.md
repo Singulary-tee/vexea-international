@@ -51,14 +51,14 @@ Each preset has:
 - Primary: Rifle
 - Secondary: Pistol
 - Utility 1: Radio — intercepts fragments of the LLM's last tool call. Surfaces as a distorted audio cue and brief text bleed on screen. Active on use. Passive when equipped — the radio icon appears in HUD only for this preset.
-- Utility 2: Signal Disruptor — on activation, removes the player from all camera and drone LOS reporting for a short duration. The player's zone degrades to UNKNOWN in the LLM zone summary payload for the duration. Limited charges. Cooldown between uses.
+- Utility 2: Signal Jammer — on activation, disables static cameras in a 15m radius for 10s AND removes the player from all camera and drone LOS reporting. The player's zone degrades to UNKNOWN in the LLM zone summary for the duration.
 
 ### 3.4 Demolitions
 **Role:** Zone control and infrastructure destruction.
 - Primary: Rifle
 - Secondary: Pistol
-- Utility 1: EMP — disables static cameras in a radius temporarily. Affected cameras stop reporting to the LLM zone summary. Duration TBD via playtesting.
-- Utility 2: C4 — placeable explosive charge. Detonates on command. High damage, area of effect. Destructible environment interaction — post-MVP feature, C4 placement points will interact with destructible geometry when added.
+- Utility 1: C4 — placeable explosive charge. Detonates on command. High damage, area of effect.
+- Utility 2: Proximity Mine — deployable explosive triggered by enemy drone proximity. 100 damage, 4m blast radius.
 
 ---
 
@@ -202,7 +202,7 @@ Fixed Wing is hard-capped at 1 deployment per match regardless of AP availabilit
 
 Fixed cameras mounted throughout the environment. Each camera covers a detection radius. If a camera has LOS on a player, that zone's playerPresence is set to 'confirmed' in the zone summary.
 
-Players can shoot cameras. Destroyed cameras leave their coverage radius permanently dark until a Recon Drone covers the area. Camera destruction is a core strategic action — Demolitions EMP temporarily disables cameras in radius without destroying them.
+Players can shoot cameras. Destroyed cameras leave their coverage radius permanently dark until a Recon Drone covers the area. Camera destruction is a core strategic action — Recon Signal Jammer temporarily disables cameras in radius without destroying them.
 
 Camera health: TBD via playtesting. Should survive a few rifle shots — destroying one should be a deliberate decision, not accidental.
 

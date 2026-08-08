@@ -89,7 +89,7 @@ export class DroneSystem {
   private tempGunPivot = new THREE.Vector3();
   private tempPropellerPivot = new THREE.Vector3();
 
-  public riflemanModel: THREE.Group | null = null;
+  public playerModel: THREE.Group | null = null;
 
   constructor(match: MatchController) {
     this.match = match;
@@ -524,11 +524,11 @@ export class DroneSystem {
       let mixer = match.remotePlayerMixers.get(id);
 
       if (!group) {
-        if ((window as any).riflemanModel) {
-          group = SkeletonUtils.clone((window as any).riflemanModel) as THREE.Group;
+        if ((window as any).playerModel) {
+          group = SkeletonUtils.clone((window as any).playerModel) as THREE.Group;
           
           // Rebind cloned skinned mesh elements to cloned bone instances
-          fixSkinnedMeshBones(group, (window as any).riflemanModel);
+          fixSkinnedMeshBones(group, (window as any).playerModel);
 
           group.name = "RemotePlayer";
           match.scene.add(group);
@@ -537,8 +537,9 @@ export class DroneSystem {
           mixer = new THREE.AnimationMixer(group);
           match.remotePlayerMixers.set(id, mixer);
           
-          if ((window as any).riflemanModel.animations && (window as any).riflemanModel.animations.length > 0) {
-            mixer.clipAction((window as any).riflemanModel.animations[0]).play();
+          if ((window as any).playerModel.animations && (window as any).playerModel.animations.length > 0) {
+             const idleClip = (window as any).playerModel.animations.find((a: any) => a.name.toLowerCase().includes("idle")) || (window as any).playerModel.animations[0];
+             mixer.clipAction(idleClip).play();
           }
         } else {
           const geom = new THREE.CapsuleGeometry(0.4, 1.2, 4, 8);
@@ -559,5 +560,18 @@ export class DroneSystem {
         mixer.update(dt);
       }
     });
+
+    // Cleanup stale remote players
+    for (const [id, group] of match.remotePlayersMeshes.entries()) {
+      if (!match.remotePlayersTargetData.has(id)) {
+        match.scene.remove(group);
+        match.remotePlayersMeshes.delete(id);
+        const mixer = match.remotePlayerMixers.get(id);
+        if (mixer) {
+          mixer.stopAllAction();
+          match.remotePlayerMixers.delete(id);
+        }
+      }
+    }
   }
 }

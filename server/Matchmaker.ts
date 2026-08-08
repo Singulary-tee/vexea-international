@@ -165,6 +165,11 @@ export class Matchmaker {
 
     // Register players in target room & send loading instruction
     group.forEach((p) => {
+      const prevRoom = (p.channel as any).currentRoom;
+      if (prevRoom && prevRoom !== targetRoom) {
+        prevRoom.removePlayer(p.reqUid || p.id);
+      }
+
       (p.channel as any).currentRoom = targetRoom;
       targetRoom.registerPlayer(p.reqUid || p.id, p.channel, null, p.classId);
 

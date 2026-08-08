@@ -230,7 +230,7 @@ export let gridHelper: THREE.GridHelper;
 export let canvasContainer: HTMLDivElement | null = null;
 
 // GLTF loaded models cache
-export let riflemanModel: THREE.Group | null = null;
+export let playerModel: THREE.Group | null = null;
 export let animatedDroneModel: THREE.Group | null = null;
 export let wheeledDroneModel: THREE.Group | null = null;
 
@@ -593,9 +593,10 @@ function initializeLocalMatchScene(requestedMap: string) {
 
   const gltfLoader = createConfiguredGLTFLoader(undefined, renderer || (window as any).renderer);
   gltfLoader.load(getAssetUrl("Player_one-optimized.glb"), (gltf) => {
-    riflemanModel = gltf.scene;
-    (riflemanModel as any).animations = gltf.animations;
-    riflemanModel.traverse((child) => {
+    playerModel = gltf.scene;
+    (playerModel as any).animations = gltf.animations;
+    (window as any).playerModel = playerModel;
+    playerModel.traverse((child) => {
       if ((child as any).isMesh) {
         child.castShadow = true;
         child.receiveShadow = true;

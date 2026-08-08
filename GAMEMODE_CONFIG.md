@@ -292,8 +292,8 @@ All values in seconds. Modified at runtime by `utilityCooldownMultiplier` from a
 | Med Kit | 45 | 1 |
 | Revive Tool | 60 | 1 |
 | Radio | 15 | unlimited |
-| Signal Disruptor | 90 | 1 |
-| EMP | 60 | 1 |
+| Signal Jammer | 90 | 1 |
+| Proximity Mine | 120 | 1 |
 | C4 | 120 | 1 |
 
 Charges reset on respawn if `utilityResetsOnRespawn: true` in active mode config.

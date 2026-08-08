@@ -99,7 +99,7 @@ This file is the authoritative index of all directories and source files within 
     *   *Purpose:* Static transport router configuration.
     *   *Key Functions/Exports:* `TRANSPORT_MODE` constant (hardcoded to `'socketio'`).
 *   **`utilities.ts`**
-    *   *Purpose:* Field utility definitions (`UTILITIES`: Grenade, Flashbang, Med Kit, Revive Tool, Radio, Signal Disruptor, EMP, C4), cooldown constants, charge limits, and utility state creation helpers (`createInitialUtilityState`).
+    *   *Purpose:* Field utility definitions (`UTILITIES`: Grenade, Flashbang, Med Kit, Revive Tool, Radio, Signal Jammer, Proximity Mine, C4), cooldown constants, charge limits, and utility state creation helpers (`createInitialUtilityState`).
 *   **`weapons.ts`**
     *   *Purpose:* Stores performance matrices, damage variables, and recoil metrics.
     *   *Key Functions/Exports:* `WeaponPerformance` and `DamageFalloff` definitions, `DETAILED_WEAPONS` dictionary (containing Rifle and Pistol metrics), and `calculateDamageWithFalloff(baseDamage, distance, falloff)` (determines actual hit intensity).

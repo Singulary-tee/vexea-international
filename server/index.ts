@@ -60,48 +60,7 @@ console.log = function (...args: any[]) {
   } catch (e) {}
 };
 
-// Initialize Firebase Admin SDK
-let serviceAccount: any = null;
-try {
-  const envSecret =
-    process.env["FIREBASE_SERVICE_ACCOUNT"];
-  if (envSecret) {
-    serviceAccount = JSON.parse(envSecret);
-  }
-} catch (e) {
-  console.warn(
-    "VEXEA Server Notice: Could not parse service account from environment:",
-    e,
-  );
-}
-
-if (serviceAccount) {
-  try {
-    if (getApps().length === 0) {
-      initializeApp({
-        credential: cert(serviceAccount),
-      });
-      console.log(
-        "VEXEA Authoritative Database Server: Firebase initialized with administrative credentials.",
-      );
-    }
-  } catch (err: any) {
-    console.error(
-      "VEXEA Authoritative Database Server: Admin initialization failed, falling back:",
-      err,
-    );
-    if (getApps().length === 0) initializeApp();
-  }
-} else {
-  try {
-    if (getApps().length === 0) {
-      initializeApp();
-      console.log(
-        "VEXEA Authoritative Database Server: Firebase initialized with default environment profile.",
-      );
-    }
-  } catch (err) {}
-}
+// Firebase Admin SDK will be initialized inside serveApp() after Doppler secrets are loaded
 
 let _dbInstance: any = null;
 function getDbInstance() {
@@ -514,6 +473,7 @@ io.onConnection((channel: ChannelAdapter) => {
     process.env.GEMINI_API_KEY,
   );
   currentRoom.triggerStartMatch();
+  (channel as any).currentRoom = currentRoom;
   let pState = currentRoom.registerPlayer(playerId, channel, null);
 
   // Store MatchInProgress initially so it counts as pending
@@ -537,7 +497,7 @@ io.onConnection((channel: ChannelAdapter) => {
       const devMatchId = args?.matchId || `M_DEV_${Math.floor(Math.random() * 1000000)}`;
       console.log(`[VEXEA SERVER] Dev Quick Start match initialization: ${devMatchId} on map ${reqMap}`);
       const targetRoom = matchManager.getOrCreateRoom(devMatchId, process.env.GEMINI_API_KEY, reqMap);
-      if (currentRoom) {
+      if (currentRoom && currentRoom !== targetRoom) {
         currentRoom.removePlayer(pState.id);
       }
       currentRoom = targetRoom;
@@ -546,7 +506,7 @@ io.onConnection((channel: ChannelAdapter) => {
       return;
     }
 
-    // Unregister from current lobby room if active
+    // Unregister from current room (usually lobby) before joining matchmaking pool
     if (currentRoom) {
       currentRoom.removePlayer(pState.id);
     }
@@ -1298,8 +1258,8 @@ io.onConnection((channel: ChannelAdapter) => {
     matchmaker.removePlayerFromPool(playerId);
     if (pState) {
       const pid = pState.id;
-      const room = currentRoom;
-      console.log(`Disconnection registered: ${pid}. Waiting 20s for reconnection...`);
+      const room = (channel as any).currentRoom || currentRoom;
+      console.log(`Disconnection registered: ${pid}. Waiting 10s for reconnection...`);
       
       setTimeout(() => {
         // If the player still has the same room and isn't connected
@@ -1308,7 +1268,7 @@ io.onConnection((channel: ChannelAdapter) => {
            console.log(`[MATCH] Reconnection timeout expired for player ${pid}. Removing.`);
            room.removePlayer(pid);
         }
-      }, 20000);
+      }, 10000);
     }
     const idx = globalChannels.indexOf(channel);
     if (idx !== -1) globalChannels.splice(idx, 1);
@@ -1318,6 +1278,52 @@ io.onConnection((channel: ChannelAdapter) => {
 const serveApp = async () => {
   // Load production secrets from Doppler if DOPPLER_TOKEN is provided
   await loadDopplerSecrets();
+
+  // Initialize Firebase Admin SDK after Doppler secrets are loaded
+  let serviceAccount: any = null;
+  const envSecret = process.env["FIREBASE_SERVICE_ACCOUNT"];
+  console.log(`[FIREBASE DIAGNOSTIC] FIREBASE_SERVICE_ACCOUNT env is ${envSecret ? "PRESENT (length: " + envSecret.length + ")" : "MISSING"}`);
+
+  try {
+    if (envSecret) {
+      serviceAccount = JSON.parse(envSecret);
+      console.log(`[FIREBASE DIAGNOSTIC] Successfully parsed service account JSON. Project ID: "${serviceAccount?.project_id}", Client Email: "${serviceAccount?.client_email}"`);
+    }
+  } catch (e: any) {
+    console.error(
+      "VEXEA Server Notice: Could not parse service account from environment:",
+      e.message || e,
+    );
+  }
+
+  if (serviceAccount) {
+    try {
+      if (getApps().length === 0) {
+        initializeApp({
+          credential: cert(serviceAccount),
+        });
+        console.log(
+          `VEXEA Authoritative Database Server: Firebase initialized with administrative credentials for project "${serviceAccount?.project_id || "unknown"}".`,
+        );
+      }
+    } catch (err: any) {
+      console.error(
+        "VEXEA Authoritative Database Server: Admin initialization failed, falling back:",
+        err,
+      );
+      if (getApps().length === 0) initializeApp();
+    }
+  } else {
+    try {
+      if (getApps().length === 0) {
+        initializeApp();
+        console.log(
+          "VEXEA Authoritative Database Server: Firebase initialized with default environment profile.",
+        );
+      }
+    } catch (err) {}
+  }
+
   await serverFlagService.initialize();
 
   // Setup Rapier globally once before room allocation

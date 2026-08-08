@@ -45,12 +45,17 @@ export class ZoneRegistry {
     if (specJson && Array.isArray(specJson.zones)) {
       for (const zoneSpec of specJson.zones) {
         if (zoneSpec && zoneSpec.id && zoneSpec.bounds) {
+          const b = zoneSpec.bounds;
+          const minX = b.minX !== undefined ? b.minX : (b.xMin !== undefined ? b.xMin : 0);
+          const maxX = b.maxX !== undefined ? b.maxX : (b.xMax !== undefined ? b.xMax : 0);
+          const minZ = b.minZ !== undefined ? b.minZ : (b.zMin !== undefined ? b.zMin : 0);
+          const maxZ = b.maxZ !== undefined ? b.maxZ : (b.zMax !== undefined ? b.zMax : 0);
           this.zoneBoundsMap.set(zoneSpec.id, {
             id: zoneSpec.id,
-            minX: zoneSpec.bounds.minX,
-            maxX: zoneSpec.bounds.maxX,
-            minZ: zoneSpec.bounds.minZ,
-            maxZ: zoneSpec.bounds.maxZ,
+            minX,
+            maxX,
+            minZ,
+            maxZ,
           });
         }
       }

@@ -401,7 +401,7 @@ class StudioPreviewManagerImpl {
     }
 
     // Force character preview models to Player_one-optimized.glb
-    if (glbName.toLowerCase().includes("player") || glbName.toLowerCase().includes("character") || glbName.toLowerCase().includes("bpre")) {
+    if (glbName.toLowerCase().includes("player") || glbName.toLowerCase().includes("character")) {
       glbName = "Player_one-optimized.glb";
     }
 

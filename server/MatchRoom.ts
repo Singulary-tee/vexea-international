@@ -1,3 +1,11 @@
+/**
+ * ARCHITECTURAL WARNING:
+ * This match room is a monolith that defies the rules of architecture.md.
+ * The lobby will be removed.
+ * If incoming changes require deep structural modifications, this file will be restructured
+ * and hacked into separate parts to maintain manageability.
+ */
+
 import { processDroneIntelligence } from "./ai/DroneIntelligence";
 import { CommanderMemory } from "./ai/CommanderMemory";
 import { GoogleGenAI, Type } from "@google/genai";

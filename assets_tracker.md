@@ -15,13 +15,7 @@ The following assets have been completely cleaned out of the direct workspace fi
 | :--- | :--- | :--- | :--- |
 | `StreetLightPoles.glb` | Model | Root Directory | `Asset` Release Package |
 | `StreetLightPoles.bin` | Model | Root Directory | `Asset` Release Package |
-| `quadcopter_camera.glb` | Model | Root Directory | `Asset` Release Package |
-| `quadcopter_rifle.glb` | Model | Root Directory | `Asset` Release Package |
-| `quadcopter_bomb.glb` | Model | Root Directory | `Asset` Release Package |
-| `wheeled_drone.glb` | Model | Root Directory | `Asset` Release Package |
-| `fixed_wing_drone.glb` | Model | Root Directory | `Asset` Release Package |
 | `grenade.glb` | Model | Root Directory (Grenade Prop) | `Asset` Release Package |
-| `bpre_rifleman.glb` | Model | Root Directory | `Asset` Release Package |
 | `concrete_block_low_poly.glb` | Model | Root Directory | `Asset` Release Package |
 | `concrete_fence_low-poly.glb` | Model | Root Directory | `Asset` Release Package |
 | `double-arm_BaseColor.jpg` | Texture | Root Directory | `Asset` Release Package |

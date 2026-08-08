@@ -1,31 +1,6 @@
 {
   "assets": [
     {
-      "name": "quadcopter_camera.glb",
-      "category": "Model",
-      "source": "Release"
-    },
-    {
-      "name": "quadcopter_rifle.glb",
-      "category": "Model",
-      "source": "Release"
-    },
-    {
-      "name": "quadcopter_bomb.glb",
-      "category": "Model",
-      "source": "Release"
-    },
-    {
-      "name": "wheeled_drone.glb",
-      "category": "Model",
-      "source": "Release"
-    },
-    {
-      "name": "fixed_wing_drone.glb",
-      "category": "Model",
-      "source": "Release"
-    },
-    {
       "name": "StreetLightPoles.glb",
       "category": "Model",
       "source": "Release"
@@ -37,11 +12,6 @@
     },
     {
       "name": "grenade.glb",
-      "category": "Model",
-      "source": "Release"
-    },
-    {
-      "name": "bpre_rifleman.glb",
       "category": "Model",
       "source": "Release"
     },
