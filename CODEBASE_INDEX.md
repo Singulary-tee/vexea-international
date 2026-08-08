@@ -44,6 +44,8 @@ This file is the authoritative index of all directories and source files within 
     *   **`ZoneRegistry.ts`**: Maps geometric boundaries to specific Named Zones (e.g., Core, Warehouse, Bridge), handles player zone occupancy queries, and stores localized waypoint indices.
 *   **`physics/` (Server Simulation)**
     *   **`PhysicsWorldManager.ts`**: Direct integration with the `@dimforge/rapier3d-node` engine. Builds rigid bodies, defines player/drone collision geometry bounds, and runs stepped simulation updates.
+*   **`player-data/` (Match & Player Telemetry)**
+    *   **`MatchEventCollector.ts`**: Collects match end telemetry data (`archiveMatchEvent`) and writes fire-and-forget archive documents (`MatchArchiveDoc`) to the `"MatchArchives"` Firestore collection with win/loss TTL retention dates.
 *   **`test-scenarios/` (Headless Diagnostic Scripts)**
     *   **`memory-decay-verification.ts`**: Confirms confidence decay scaling under dt variations.
     *   **`movement-test.ts`**: Verifies pathing trajectories across multiple nodes.

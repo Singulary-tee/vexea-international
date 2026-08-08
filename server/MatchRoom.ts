@@ -81,6 +81,7 @@ import {
   globalServerLogs,
 } from "./index";
 import { Sentry, recordServerTickDuration, recordServerActiveDrones, recordServerConnectedPlayers, recordSecurityExploit } from "./sentry";
+import { archiveMatchEvent } from "./player-data/MatchEventCollector";
 
 export const MAX_PROJECTILES = 200;
 
@@ -3055,6 +3056,8 @@ export class MatchRoom {
     for (let i = 0; i < MAX_PROJECTILES; i++) {
       this.projActive[i] = 0;
     }
+
+    archiveMatchEvent(this, result);
 
     const allStats: Record<string, any> = {};
     for (const [id, p] of this.players.entries()) {
