@@ -82,6 +82,7 @@ import {
 } from "./index";
 import { Sentry, recordServerTickDuration, recordServerActiveDrones, recordServerConnectedPlayers, recordSecurityExploit } from "./sentry";
 import { archiveMatchEvent } from "./player-data/MatchEventCollector";
+import { PlayerProfileStore } from "./player-data/PlayerProfileStore";
 
 export const MAX_PROJECTILES = 200;
 
@@ -3063,6 +3064,12 @@ export class MatchRoom {
     for (const [id, p] of this.players.entries()) {
       allStats[id] = p.stats;
       this.processMatchEndTransaction(id, p.stats, result, p.adMultiplier || 1);
+
+      if (!p.isBot) {
+        PlayerProfileStore.update(id, p.stats, p.classId || "ASSAULT", result, this.roomId).catch((err) => {
+          console.error(`[MatchRoom] Failed to update profile for ${id}:`, err);
+        });
+      }
     }
 
     this.broadcastReliableEvent({

@@ -15,6 +15,8 @@ import { ServerDrone } from "../MatchRoom";
 import { Sentry, recordServerLLMLatency } from "../sentry";
 import { serverFlagService } from "../flags/flag-service";
 import { FeatureFlagKey } from "../../shared/feature-flags";
+import { PlayerProfileStore, PlayerGameProfile } from "../player-data/PlayerProfileStore";
+import { BriefingRenderer } from "../player-data/BriefingRenderer";
 
 const MAX_DRONES = 40; // Hardcoded from MatchRoom
 const MAX_LLM_TOKENS_PER_MATCH = 55000; // Deliberate per-match token budget safety ceiling to protect against free-tier volatility
@@ -82,6 +84,22 @@ export class LLMCommander {
       return;
     }
     const _llmStartTime = Date.now();
+
+    let initialBriefingBlock = "";
+    if (this.room.apiCallCount === 0) {
+      const humanPlayers = Array.from(this.room.players.values())
+        .filter((p) => !p.isBot)
+        .map((p) => ({ id: p.id, isBot: false }));
+
+      const profilesMap = new Map<string, PlayerGameProfile | null>();
+      for (const p of humanPlayers) {
+        const prof = await PlayerProfileStore.getProfile(p.id);
+        profilesMap.set(p.id, prof);
+      }
+
+      initialBriefingBlock = `\n${BriefingRenderer.renderMatchBriefing(humanPlayers, profilesMap)}\n`;
+    }
+
     this.room.apiCallCount++;
 
     const apRegenFlag = await serverFlagService.getNumber(
@@ -146,7 +164,7 @@ export class LLMCommander {
         ? `\nOutstanding Orders: ${JSON.stringify(pendingOrders)}`
         : "";
     const feedbackBlock = this.feedback.formatFeedbackPromptBlock();
-    const payloadToLLM = `Dynamic payload:\n${compressedContext}${outstandingPayload}\nCommander AP Pool: ${this.room.commanderAP}\n${feedbackBlock}Failed operations from previous cycle: ${JSON.stringify(this.room.failedOperations)}`;
+    const payloadToLLM = `Dynamic payload:\n${compressedContext}${outstandingPayload}\nCommander AP Pool: ${this.room.commanderAP}\n${feedbackBlock}${initialBriefingBlock}Failed operations from previous cycle: ${JSON.stringify(this.room.failedOperations)}`;
     this.room.failedOperations.length = 0;
 
     const systemInstructions = `You are an automated state-machine orchestrator managing unit group allocations and zone routing. Respond strictly and exclusively with tool calls. Do not roleplay, invent narrative, adopt a persona, or output natural language. Clinical mechanical execution only.

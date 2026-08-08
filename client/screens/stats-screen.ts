@@ -1,7 +1,7 @@
 import { DS } from "../design-system";
 import challengesDataList from "../data/challenges.json";
 import { getAuth } from "firebase/auth";
-import { getFirestore, doc, updateDoc, increment, arrayUnion } from "firebase/firestore";
+import { getFirestore, doc, getDoc, updateDoc, increment, arrayUnion } from "firebase/firestore";
 import { audioManager } from "../audio";
 import { IS_DEV } from "../../shared/gates/production.gate";
 import { GAMEMODES } from "../../shared/gamemode-configs";
@@ -475,6 +475,11 @@ function renderIntelView(container: HTMLElement, userData: any): void {
       </div>
     </div>
 
+    <!-- Extended Profile Telemetry (Class Breakdown & Recent Matches) -->
+    <div id="intel-v1-details" style="display:flex; flex-direction:column; gap:8px;">
+      <div style="font-family:${DS.typography.fontFamily}; font-size:8px; color:${DS.colors.textMuted};">LOADING PROFILE TELEMETRY...</div>
+    </div>
+
     <!-- Tactical Commander Briefing -->
     <div style="background:rgba(0,0,0,0.25); border:1px solid rgba(255,255,255,0.04); padding:8px; border-radius:0px;">
       <div style="font-family:${DS.typography.fontFamily}; font-size:8px; font-weight:bold; color:${DS.colors.textMuted}; letter-spacing:1px; margin-bottom:4px;">COMMANDER TACTICAL ASSESSMENT</div>
@@ -485,6 +490,65 @@ function renderIntelView(container: HTMLElement, userData: any): void {
       </div>
     </div>
   `;
+
+  const auth = getAuth();
+  if (auth.currentUser) {
+    const uid = auth.currentUser.uid;
+    const db = getFirestore();
+    getDoc(doc(db, "Users", uid, "gameProfile", "v1")).then((snap) => {
+      const detailsContainer = card.querySelector('#intel-v1-details');
+      if (!detailsContainer) return;
+
+      if (snap.exists()) {
+        const gameProfile = snap.data();
+        const classBreakdown = gameProfile.classBreakdown || {};
+        const recentMatches = gameProfile.recentMatches || [];
+        const preferredRole = gameProfile.preferredRole || "ASSAULT";
+
+        const classItems = Object.entries(classBreakdown)
+          .map(([cls, count]) => `<span style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.06); padding:2px 6px; font-size:8px; font-family:${DS.typography.fontFamily}; color:${cls === preferredRole ? DS.colors.accent : DS.colors.text}; font-weight:bold;">${cls}: ${count}</span>`)
+          .join(' ');
+
+        const matchItems = recentMatches.map((m: any) => {
+          const resColor = m.result === 'win' ? '#00FF88' : DS.colors.accent;
+          return `
+            <div style="display:flex; justify-content:space-between; align-items:center; background:rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.03); padding:4px 6px; font-family:${DS.typography.fontFamily}; font-size:8px;">
+              <span style="color:${resColor}; font-weight:bold;">${(m.result || 'WIN').toUpperCase()}</span>
+              <span style="color:${DS.colors.textMuted};">${m.classId || 'ASSAULT'}</span>
+              <span style="color:${DS.colors.text};">K: ${m.kills || 0} / D: ${m.deaths || 0}</span>
+            </div>
+          `;
+        }).join('');
+
+        detailsContainer.innerHTML = `
+          <!-- Preferred Role & Class Breakdown -->
+          <div style="background:rgba(0,0,0,0.25); border:1px solid rgba(255,255,255,0.04); padding:8px; border-radius:0px;">
+            <div style="font-family:${DS.typography.fontFamily}; font-size:8px; font-weight:bold; color:${DS.colors.textMuted}; letter-spacing:1px; margin-bottom:4px;">CLASS DISTRIBUTION (PREFERRED: <b style="color:${DS.colors.accent}">${preferredRole}</b>)</div>
+            <div style="display:flex; flex-wrap:wrap; gap:4px;">${classItems || '<span style="font-size:8px; color:' + DS.colors.textMuted + ';">NO CLASS DATA LOGGED</span>'}</div>
+          </div>
+
+          <!-- Recent Engagements -->
+          <div style="background:rgba(0,0,0,0.25); border:1px solid rgba(255,255,255,0.04); padding:8px; border-radius:0px;">
+            <div style="font-family:${DS.typography.fontFamily}; font-size:8px; font-weight:bold; color:${DS.colors.textMuted}; letter-spacing:1px; margin-bottom:4px;">RECENT MATCH TELEMETRY (LAST 5)</div>
+            <div style="display:flex; flex-direction:column; gap:3px;">
+              ${matchItems || '<div style="font-family:' + DS.typography.fontFamily + '; font-size:8px; color:' + DS.colors.textMuted + ';">NO RECENT MATCHES LOGGED</div>'}
+            </div>
+          </div>
+        `;
+      } else {
+        detailsContainer.innerHTML = `
+          <div style="background:rgba(0,0,0,0.25); border:1px solid rgba(255,255,255,0.04); padding:8px;">
+            <div style="font-family:${DS.typography.fontFamily}; font-size:8px; color:${DS.colors.textMuted};">PROFILE TELEMETRY: INSUFFICIENT MATCH HISTORY (< 3 MATCHES LOGGED).</div>
+          </div>
+        `;
+      }
+    }).catch(() => {
+      const detailsContainer = card.querySelector('#intel-v1-details');
+      if (detailsContainer) {
+        detailsContainer.innerHTML = `<div style="font-family:${DS.typography.fontFamily}; font-size:8px; color:${DS.colors.textMuted};">PROFILE TELEMETRY: OFFLINE</div>`;
+      }
+    });
+  }
 
   if (IS_DEV) {
     const devBlock = document.createElement('div');

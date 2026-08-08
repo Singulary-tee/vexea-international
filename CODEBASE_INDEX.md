@@ -45,7 +45,9 @@ This file is the authoritative index of all directories and source files within 
 *   **`physics/` (Server Simulation)**
     *   **`PhysicsWorldManager.ts`**: Direct integration with the `@dimforge/rapier3d-node` engine. Builds rigid bodies, defines player/drone collision geometry bounds, and runs stepped simulation updates.
 *   **`player-data/` (Match & Player Telemetry)**
+    *   **`BriefingRenderer.ts`**: Pure renderer converting player game profiles (`PlayerGameProfile`) into max 3-sentence tactical intelligence briefings for the LLM Commander.
     *   **`MatchEventCollector.ts`**: Collects match end telemetry data (`archiveMatchEvent`) and writes fire-and-forget archive documents (`MatchArchiveDoc`) to the `"MatchArchives"` Firestore collection with win/loss TTL retention dates.
+    *   **`PlayerProfileStore.ts`**: Builds and updates aggregate per-player behavioral profiles (`PlayerGameProfile`) at `Users/{uid}/gameProfile/v1` from match telemetry results, tracking running averages, class selection breakdowns, preferred role, and recent match histories.
 *   **`test-scenarios/` (Headless Diagnostic Scripts)**
     *   **`memory-decay-verification.ts`**: Confirms confidence decay scaling under dt variations.
     *   **`movement-test.ts`**: Verifies pathing trajectories across multiple nodes.

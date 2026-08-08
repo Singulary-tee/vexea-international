@@ -204,6 +204,16 @@ export function doc(database: any, collectionName: string, docId?: string) {
   return db.doc(collectionName);
 }
 
+export async function getDoc(docRef: any) {
+  const snap = await docRef.get();
+  return {
+    exists: () => snap.exists,
+    data: () => snap.data(),
+    ref: snap.ref,
+    id: snap.id,
+  };
+}
+
 export function collection(database: any, collectionName: string) {
   return db.collection(collectionName);
 }
