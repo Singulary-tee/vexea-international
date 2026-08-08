@@ -3066,7 +3066,7 @@ export class MatchRoom {
       this.processMatchEndTransaction(id, p.stats, result, p.adMultiplier || 1);
 
       if (!p.isBot) {
-        PlayerProfileStore.update(id, p.stats, p.classId || "ASSAULT", result, this.roomId).catch((err) => {
+        PlayerProfileStore.update(id, p.stats, p.classId || "ASSAULT", result, this.roomId, p.isBot || false).catch((err) => {
           console.error(`[MatchRoom] Failed to update profile for ${id}:`, err);
         });
       }

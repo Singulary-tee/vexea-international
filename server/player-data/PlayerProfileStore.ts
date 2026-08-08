@@ -28,8 +28,7 @@ export class PlayerProfileStore {
   public static async getProfile(uid: string): Promise<PlayerGameProfile | null> {
     if (!uid || uid.startsWith("bot_")) return null;
     try {
-      const profileRef = doc(db, "Users", uid);
-      const subDocRef = profileRef.collection("gameProfile").doc("v1");
+      const subDocRef = doc(db, "Users", uid, "gameProfile", "v1");
       const snap = await getDoc(subDocRef);
       if (snap.exists()) {
         return snap.data() as PlayerGameProfile;
@@ -49,13 +48,13 @@ export class PlayerProfileStore {
     stats: any,
     classId: string,
     result: "win" | "loss",
-    matchId: string
+    matchId: string,
+    isBot: boolean
   ): Promise<void> {
-    if (!uid || uid.startsWith("bot_")) return;
+    if (!uid || isBot) return;
 
     try {
-      const profileRef = doc(db, "Users", uid);
-      const subDocRef = profileRef.collection("gameProfile").doc("v1");
+      const subDocRef = doc(db, "Users", uid, "gameProfile", "v1");
       const snap = await getDoc(subDocRef);
 
       const normalizedClass = (classId || "ASSAULT").toUpperCase();
@@ -101,7 +100,7 @@ export class PlayerProfileStore {
           timestamp: Date.now(),
         };
 
-        const recentMatches = [newMatchEntry, ...(existing.recentMatches || [])].slice(0, 5);
+        const recentMatches = [newMatchEntry, ...(existing.recentMatches || [])].slice(0, 10);
 
         profile = {
           totalMatches,
