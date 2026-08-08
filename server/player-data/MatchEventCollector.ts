@@ -3,6 +3,8 @@ import type { MatchRoom } from "../MatchRoom";
 
 export interface PlayerMatchArchiveStats {
   id: string;
+  isBot: boolean;
+  classId?: string;
   stats: {
     damageDealt: number;
     damageReceived: number;
@@ -19,18 +21,21 @@ export interface PlayerMatchArchiveStats {
 }
 
 export interface MatchArchiveDoc {
+  matchId: string;
   roomId: string;
   mapId: string;
-  matchStartTime: number;
-  matchEndTime: number;
+  startedAt: Date;
+  endedAt: Date;
   durationSeconds: number;
   result: "win" | "loss";
-  apiCallCount: number;
-  llmTokensUsedThisMatch: number;
-  commanderAPRemaining: number;
-  fixedWingDeploymentsThisMatch: number;
+  playerCount: number;
   players: PlayerMatchArchiveStats[];
-  createdAt: string;
+  commanderStats: {
+    apiCalls: number;
+    tokensUsed: number;
+    finalAP: number;
+    fixedWingDeployments: number;
+  };
   expireAt: Date;
 }
 
@@ -39,34 +44,36 @@ export interface MatchArchiveDoc {
  * document to the "MatchArchives" Firestore collection.
  */
 export function archiveMatchEvent(room: MatchRoom, result: "win" | "loss"): void {
-  const matchEndTime = Date.now();
-  const matchStartTime = room.matchStartTime || matchEndTime;
-  const durationSeconds = Math.max(0, Math.round((matchEndTime - matchStartTime) / 1000));
+  const endedAt = new Date();
+  const startedAt = new Date(room.matchStartTime || endedAt.getTime());
+  const durationSeconds = Math.max(0, Math.round((endedAt.getTime() - startedAt.getTime()) / 1000));
   const expireDays = result === "win" ? 90 : 7;
   const expireAt = new Date(Date.now() + expireDays * 24 * 60 * 60 * 1000);
 
-  const playersStats: PlayerMatchArchiveStats[] = [];
-  for (const [id, p] of room.players.entries()) {
-    playersStats.push({
-      id,
-      stats: { ...p.stats },
-      adMultiplier: p.adMultiplier || 1,
-    });
-  }
+  const players: PlayerMatchArchiveStats[] = Array.from(room.players.values()).map((p) => ({
+    id: p.id,
+    isBot: !!p.isBot,
+    classId: p.classId || "assault",
+    stats: { ...p.stats },
+    adMultiplier: p.adMultiplier || 1,
+  }));
 
   const archiveDoc: MatchArchiveDoc = {
+    matchId: room.roomId,
     roomId: room.roomId,
     mapId: room.mapId,
-    matchStartTime,
-    matchEndTime,
+    startedAt,
+    endedAt,
     durationSeconds,
     result,
-    apiCallCount: room.apiCallCount || 0,
-    llmTokensUsedThisMatch: room.llmTokensUsedThisMatch || 0,
-    commanderAPRemaining: room.commanderAP ?? 0,
-    fixedWingDeploymentsThisMatch: room.fixedWingDeploymentsThisMatch || 0,
-    players: playersStats,
-    createdAt: new Date().toISOString(),
+    playerCount: players.length,
+    players,
+    commanderStats: {
+      apiCalls: room.apiCallCount || 0,
+      tokensUsed: room.llmTokensUsedThisMatch || 0,
+      finalAP: room.commanderAP ?? 0,
+      fixedWingDeployments: room.fixedWingDeploymentsThisMatch || 0,
+    },
     expireAt,
   };
 
