@@ -1,4 +1,3 @@
-import { GoogleGenAI, Type } from "@google/genai";
 import { MatchRoom, astarPath } from "../MatchRoom";
 import { LLMCommanderFeedback } from "./LLMCommanderFeedback";
 import {
@@ -17,28 +16,116 @@ import { serverFlagService } from "../flags/flag-service";
 import { FeatureFlagKey } from "../../shared/feature-flags";
 import { PlayerProfileStore, PlayerGameProfile } from "../player-data/PlayerProfileStore";
 import { BriefingRenderer } from "../player-data/BriefingRenderer";
+import { CommanderAdapter, CommanderTool } from "./adapters/CommanderAdapter";
+import { AdapterFactory } from "./adapters/AdapterFactory";
 
 const MAX_DRONES = 40; // Hardcoded from MatchRoom
 const MAX_LLM_TOKENS_PER_MATCH = 55000; // Deliberate per-match token budget safety ceiling to protect against free-tier volatility
 
-const FLASH_MODELS = ["gemini-3.6-flash", "gemini-3.5-flash", "gemini-3.1-flash"];
-
-function isRateLimitedError(err: any): boolean {
-  const code = err?.status || err?.statusCode || err?.error?.code;
-  const msg = String(err?.error?.message || err?.message || err).toLowerCase();
-  return (
-    code === 429 ||
-    code === 503 ||
-    msg.includes("429") ||
-    msg.includes("503") ||
-    msg.includes("quota") ||
-    msg.includes("resource_exhausted") ||
-    msg.includes("rate limit") ||
-    msg.includes("throttled") ||
-    msg.includes("too many requests") ||
-    msg.includes("freetier")
-  );
-}
+const COMMANDER_TOOLS: CommanderTool[] = [
+  {
+    name: "move_group",
+    description: "Defines group zone movement order.",
+    parameters: {
+      type: "object",
+      properties: {
+        group_id: { type: "string" },
+        target_zone: {
+          type: "string",
+          enum: Object.values(ZONES),
+        },
+        priority: {
+          type: "string",
+          enum: ["low", "normal", "high"],
+        },
+      },
+      required: ["group_id", "target_zone", "priority"],
+    },
+  },
+  {
+    name: "merge_groups",
+    description: "Unifies two active control groups.",
+    parameters: {
+      type: "object",
+      properties: {
+        source_group_id: { type: "string" },
+        target_group_id: { type: "string" },
+      },
+      required: ["source_group_id", "target_group_id"],
+    },
+  },
+  {
+    name: "split_group",
+    description: "Subdivides a group to create supplementary wings.",
+    parameters: {
+      type: "object",
+      properties: {
+        source_group_id: { type: "string" },
+        unit_count: { type: "integer" },
+      },
+      required: ["source_group_id", "unit_count"],
+    },
+  },
+  {
+    name: "spawn_units",
+    description: "Requests local swarm unit deployment.",
+    parameters: {
+      type: "object",
+      properties: {
+        zone_id: {
+          type: "string",
+          enum: Object.values(ZONES),
+        },
+        unit_type: {
+          type: "string",
+          enum: [
+            "recon_drone",
+            "rotary_shooter",
+            "bomber_drone",
+            "fixed_wing",
+            "wheeled_drone",
+            "robot_dog",
+            "humanoid",
+          ],
+        },
+        count: { type: "integer" },
+        behavior_profile: {
+          type: "string",
+          enum: ["assault", "patrol", "recon"],
+        },
+      },
+      required: [
+        "zone_id",
+        "unit_type",
+        "count",
+        "behavior_profile",
+      ],
+    },
+  },
+  {
+    name: "hold_position",
+    description: "Enforces defensive lock stance.",
+    parameters: {
+      type: "object",
+      properties: {
+        group_id: { type: "string" },
+        duration_seconds: { type: "integer" },
+      },
+      required: ["group_id", "duration_seconds"],
+    },
+  },
+  {
+    name: "sustain",
+    description: "Pass execution for this cycle.",
+    parameters: {
+      type: "object",
+      properties: {
+        reason: { type: "string" },
+      },
+      required: ["reason"],
+    },
+  },
+];
 
 export interface ExecutionHistoryRecord {
   timestamp: number;
@@ -48,27 +135,48 @@ export interface ExecutionHistoryRecord {
 }
 
 export class LLMCommander {
-  public geminiClient: GoogleGenAI | null = null;
-  public geminiThrottleCooldownUntil = 0;
+  public adapter: CommanderAdapter | null = null;
+  public llmThrottleCooldownUntil = 0;
   public recentExecutionHistory: ExecutionHistoryRecord[] = [];
   public feedback: LLMCommanderFeedback = new LLMCommanderFeedback();
-  
-  constructor(public room: MatchRoom, geminiKey?: string) {
-    this.initLLMCommander(geminiKey);
+
+  // Backward compatibility getters/setters
+  public get geminiClient(): any {
+    return this.adapter;
+  }
+  public set geminiClient(val: any) {
+    this.adapter = val;
+  }
+  public get geminiThrottleCooldownUntil(): number {
+    return this.llmThrottleCooldownUntil;
+  }
+  public set geminiThrottleCooldownUntil(val: number) {
+    this.llmThrottleCooldownUntil = val;
   }
 
-  public initLLMCommander(geminiKey?: string) {
-    const key = geminiKey || process.env.GEMINI_API_KEY;
-    if (!key) return;
-    this.geminiClient = new GoogleGenAI({
-      apiKey: key,
-      httpOptions: { headers: { "User-Agent": "aistudio-build" } },
-    });
+  constructor(public room: MatchRoom, apiKey?: string) {
+    this.initAdapter(apiKey);
+  }
+
+  public async initAdapter(apiKey?: string) {
+    const family = await serverFlagService.getString(
+      FeatureFlagKey.LLM_COMMANDER_FAMILY,
+      { roomId: this.room.roomId },
+      "gemini"
+    );
+    this.adapter = AdapterFactory.getAdapter(family, apiKey);
     this.room.aiCommanderActive = true;
   }
 
+  public initLLMCommander(apiKey?: string) {
+    this.initAdapter(apiKey);
+  }
+
   public async executeLLMStep() {
-    if (!this.geminiClient) return;
+    if (!this.adapter) {
+      await this.initAdapter();
+    }
+    if (!this.adapter) return;
 
     const tokenCeiling = await serverFlagService.getNumber(
       FeatureFlagKey.LLM_TOKEN_CEILING,
@@ -187,208 +295,19 @@ Topological graph adjacency (Zones):
 - zone_tunnels connected to: zone_warehouse, zone_core
 - zone_core connected to: zone_plant, zone_tunnels`;
 
-    const primaryModel = await serverFlagService.getString(
-      FeatureFlagKey.LLM_PRIMARY_MODEL,
-      { roomId: this.room.roomId },
-      "gemini-3.5-flash"
-    );
-    const fallbackList = await serverFlagService.getObject<string[]>(
-      FeatureFlagKey.LLM_FALLBACK_MODELS,
-      { roomId: this.room.roomId },
-      ["gemini-3.6-flash", "gemini-3.1-flash"]
-    );
-    const candidateModels = [primaryModel, ...(Array.isArray(fallbackList) ? fallbackList : [])];
-    const uniqueModels = Array.from(new Set(candidateModels));
-
-    let response: any = null;
-    let lastError: any = null;
-    let usedModel = "";
-
     try {
-      for (const modelName of uniqueModels) {
-        try {
-          const modelCallFn = async () => {
-            return await this.geminiClient!.models.generateContent({
-              model: modelName,
-              contents: payloadToLLM,
-              config: {
-                systemInstruction: systemInstructions,
-                tools: [
-                  {
-                    functionDeclarations: [
-                      {
-                        name: "move_group",
-                        description: "Defines group zone movement order.",
-                        parameters: {
-                          type: Type.OBJECT,
-                          properties: {
-                            group_id: { type: Type.STRING },
-                            target_zone: {
-                              type: Type.STRING,
-                              enum: Object.values(ZONES),
-                            },
-                            priority: {
-                              type: Type.STRING,
-                              enum: ["low", "normal", "high"],
-                            },
-                          },
-                          required: ["group_id", "target_zone", "priority"],
-                        },
-                      },
-                      {
-                        name: "merge_groups",
-                        description: "Unifies two active control groups.",
-                        parameters: {
-                          type: Type.OBJECT,
-                          properties: {
-                            source_group_id: { type: Type.STRING },
-                            target_group_id: { type: Type.STRING },
-                          },
-                          required: ["source_group_id", "target_group_id"],
-                        },
-                      },
-                      {
-                        name: "split_group",
-                        description:
-                          "Subdivides a group to create supplementary wings.",
-                        parameters: {
-                          type: Type.OBJECT,
-                          properties: {
-                            source_group_id: { type: Type.STRING },
-                            unit_count: { type: Type.INTEGER },
-                          },
-                          required: ["source_group_id", "unit_count"],
-                        },
-                      },
-                      {
-                        name: "spawn_units",
-                        description: "Requests local swarm unit deployment.",
-                        parameters: {
-                          type: Type.OBJECT,
-                          properties: {
-                            zone_id: {
-                              type: Type.STRING,
-                              enum: Object.values(ZONES),
-                            },
-                            unit_type: {
-                              type: Type.STRING,
-                              enum: [
-                                "recon_drone",
-                                "rotary_shooter",
-                                "bomber_drone",
-                                "fixed_wing",
-                                "wheeled_drone",
-                                "robot_dog",
-                                "humanoid",
-                              ],
-                            },
-                            count: { type: Type.INTEGER },
-                            behavior_profile: {
-                              type: Type.STRING,
-                              enum: ["assault", "patrol", "recon"],
-                            },
-                          },
-                          required: [
-                            "zone_id",
-                            "unit_type",
-                            "count",
-                            "behavior_profile",
-                          ],
-                        },
-                      },
-                      {
-                        name: "hold_position",
-                        description: "Enforces defensive lock stance.",
-                        parameters: {
-                          type: Type.OBJECT,
-                          properties: {
-                            group_id: { type: Type.STRING },
-                            duration_seconds: { type: Type.INTEGER },
-                          },
-                          required: ["group_id", "duration_seconds"],
-                        },
-                      },
-                      {
-                        name: "sustain",
-                        description: "Pass execution for this cycle.",
-                        parameters: {
-                          type: Type.OBJECT,
-                          properties: {
-                            reason: { type: Type.STRING },
-                          },
-                          required: ["reason"],
-                        },
-                      },
-                    ],
-                  },
-                ],
-              },
-            });
-          };
+      const { calls, usage, modelUsed } = await this.adapter.execute(
+        payloadToLLM,
+        systemInstructions,
+        COMMANDER_TOOLS,
+        { roomId: this.room.roomId }
+      );
 
-          const tracingEnabled = await serverFlagService.getBoolean(
-            FeatureFlagKey.SENTRY_LLM_TRACING,
-            { roomId: this.room.roomId },
-            true
-          );
-
-          if (tracingEnabled && typeof (Sentry as any).startSpan === "function") {
-            response = await (Sentry as any).startSpan(
-              {
-                name: "gen_ai.chat_completions",
-                op: "gen_ai.chat_completions",
-                attributes: {
-                  "gen_ai.system": "google_genai",
-                  "gen_ai.request.model": modelName,
-                  "gen_ai.conversation.id": this.room.roomId,
-                },
-              },
-              async (span: any) => {
-                const res = await modelCallFn();
-                if (span && res?.usageMetadata) {
-                  span.setAttribute("gen_ai.usage.prompt_tokens", res.usageMetadata.promptTokenCount || 0);
-                  span.setAttribute("gen_ai.usage.completion_tokens", res.usageMetadata.candidatesTokenCount || 0);
-                  span.setAttribute("gen_ai.usage.total_tokens", res.usageMetadata.totalTokenCount || 0);
-                  span.setAttribute("gen_ai.response.model", modelName);
-                }
-                return res;
-              }
-            );
-          } else {
-            response = await modelCallFn();
-          }
-
-          usedModel = modelName;
-          lastError = null;
-          break;
-        } catch (err: any) {
-          lastError = err;
-          if (isRateLimitedError(err)) {
-            console.warn(`[LLMCommander] Model '${modelName}' rate limited. Attempting fallback model...`);
-            Sentry.addBreadcrumb({
-              category: "ai.fallback",
-              message: `Rate limit encountered on ${modelName}`,
-              level: "warning",
-            });
-            continue;
-          }
-          break;
-        }
-      }
-
-      if (!response && lastError) {
-        throw lastError;
-      }
-
-      const promptTokens = response?.usageMetadata?.promptTokenCount || 0;
-      const candidateTokens = response?.usageMetadata?.candidatesTokenCount || 0;
-      const callTokens = response?.usageMetadata?.totalTokenCount ?? (promptTokens + candidateTokens);
-
+      const callTokens = usage.totalTokens;
       if (callTokens > 0) {
         this.room.llmTokensUsedThisMatch += callTokens;
       }
 
-      const calls = response.functionCalls;
       if (calls && calls.length > 0) {
         this.room.lastLLMToolCall = JSON.stringify(calls);
       }
@@ -402,7 +321,7 @@ Topological graph adjacency (Zones):
         this.recentExecutionHistory.shift();
       }
       const llmLatency = Date.now() - _llmStartTime;
-      await recordServerLLMLatency(llmLatency, usedModel);
+      await recordServerLLMLatency(llmLatency, modelUsed);
 
       this.room.broadcastReliableEvent.bind(this.room)({
         type: "dev_llm_feed",
@@ -412,7 +331,8 @@ Topological graph adjacency (Zones):
         count: this.room.apiCallCount,
         tokensUsed: this.room.llmTokensUsedThisMatch,
         failedOps: [...this.room.failedOperations],
-        modelUsed: usedModel,
+        modelUsed: modelUsed,
+        familyUsed: this.adapter.family,
       });
 
       if (calls && calls.length > 0) {
@@ -727,6 +647,7 @@ Topological graph adjacency (Zones):
         count: this.room.apiCallCount,
         tokensUsed: this.room.llmTokensUsedThisMatch,
         failedOps: [...this.room.failedOperations],
+        familyUsed: this.adapter?.family || "unknown",
       });
 
       if (
@@ -742,7 +663,7 @@ Topological graph adjacency (Zones):
           errMsg.includes("daily") ||
           errMsg.includes("per day");
         const coolingPeriodMs = isDailyExhaustion ? 60000 : 35000;
-        this.geminiThrottleCooldownUntil = Date.now() + coolingPeriodMs;
+        this.llmThrottleCooldownUntil = Date.now() + coolingPeriodMs;
         this.room.offlineSystemFallbackAI.bind(this.room)();
       } else {
         this.room.failedOperations.push(`Processor fail: ${errMsg}`);
@@ -751,15 +672,14 @@ Topological graph adjacency (Zones):
   }
 
   public async interviewLLM(question: string): Promise<string> {
-    const key = process.env.GEMINI_API_KEY;
-    if (!this.geminiClient && key) {
-      this.initLLMCommander(key);
+    if (!this.adapter) {
+      await this.initAdapter();
     }
-    if (!this.geminiClient) {
-      return "ERROR: Gemini API client not initialized. GEMINI_API_KEY environment variable missing or empty.";
+    if (!this.adapter) {
+      return "ERROR: Commander adapter not initialized.";
     }
-    if (Date.now() < this.geminiThrottleCooldownUntil) {
-      return "THROTTLED: Gemini API cooling down after prior rate limits. Retry shortly.";
+    if (Date.now() < this.llmThrottleCooldownUntil) {
+      return "THROTTLED: LLM API cooling down after prior rate limits. Retry shortly.";
     }
 
     const systemInstruction = `You are an automated state-machine log parser and execution analyzer for a group routing and unit allocation system. You are not roleplaying. There is no narrative. Provide clinical, mechanical, objective, and dry explanations for unit group routing, state changes, zone allocations, and resource counts. Answer the inquiry directly using the provided spatial state and recent execution history. Never adopt any persona, roleplay, or larp.`;
@@ -769,38 +689,19 @@ Topological graph adjacency (Zones):
 
     const prompt = `CURRENT STATE:\n${statePayload}\n\nRECENT EXECUTION HISTORY:\n${historyPayload}\n\nINQUIRY:\n${question}`;
 
-    let responseText = "";
-    let lastError: any = null;
-
-    for (const modelName of FLASH_MODELS) {
-      try {
-        const response = await this.geminiClient.models.generateContent({
-          model: modelName,
-          contents: prompt,
-          config: {
-            systemInstruction,
-          },
-        });
-        responseText = response.text || "No analytical output generated by LLM Commander.";
-        lastError = null;
-        break;
-      } catch (err: any) {
-        lastError = err;
-        if (isRateLimitedError(err)) {
-          console.warn(`[LLMCommander Interview] Model '${modelName}' rate limited. Attempting fallback Flash model...`);
-          continue;
-        }
-        break;
-      }
-    }
-
-    if (!responseText && lastError) {
-      const rawErrMsg = lastError?.error?.message || lastError?.message || String(lastError);
+    try {
+      const { calls, usage, modelUsed } = await this.adapter.execute(
+        prompt,
+        systemInstruction,
+        [],
+        { roomId: this.room.roomId }
+      );
+      return `Analysis from ${this.adapter.family} (${modelUsed}): ${JSON.stringify(calls)}`;
+    } catch (err: any) {
+      const rawErrMsg = err?.error?.message || err?.message || String(err);
       const errMsg =
         typeof rawErrMsg === "object" ? JSON.stringify(rawErrMsg) : rawErrMsg;
       return `ERROR processing inquiry: ${errMsg}`;
     }
-
-    return responseText;
   }
 }

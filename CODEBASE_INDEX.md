@@ -33,8 +33,15 @@ This file is the authoritative index of all directories and source files within 
     *   **`DroneIntelligence.ts`**: Governs spatial awareness for individual drones. Computes sight lines (3D orientation quaternions to check forward vectors and cone of vision angles), performs static map and dynamic Rapier line-of-sight raycasts, and handles memory decay mechanics.
     *   **`DroneMemory.ts`**: Tracks historical sighting positions, target last-seen timestamps, and spatial memory decay for drones.
     *   **`DronePerception.ts`**: Evaluates line-of-sight, raycasting, and sensory awareness updates for AI agents.
-    *   **`LLMCommander.ts`**: High-level strategic controller powered by Gemini 3.5 Flash. Formulates formatted prompt strings, parses structured tool call arrays (Spawn, Move, Split, Merge, Hold), manages strategic AP resource pools, and enforces the `MAX_LLM_TOKENS_PER_MATCH` (55,000 token) token budget ceiling.
+    *   **`LLMCommander.ts`**: High-level strategic controller refactored to be provider-agnostic via `CommanderAdapter`. Formulates formatted prompt strings, delegates execution to provider adapters, manages strategic AP resource pools, and enforces token budget ceilings.
     *   **`LLMCommanderFeedback.ts`**: Processes post-command evaluation, reinforcement feedback, and action success telemetry for the LLM Commander.
+    *   **`adapters/` (LLM Commander Provider Adapters)**
+        *   **`CommanderAdapter.ts`**: Core adapter interface (`CommanderAdapter`), tool normalization structures (`CommanderTool`, `NormalizedToolCall`), and token usage types (`TokenUsage`).
+        *   **`GeminiAdapter.ts`**: Adapter for Gemini models via `@google/genai` with fallback model support and tool format translation.
+        *   **`KimiAdapter.ts`**: Adapter for Kimi (Moonshot API) via OpenAI SDK with custom endpoint configuration and tool parsing.
+        *   **`ClaudeAdapter.ts`**: Adapter for Anthropic Claude models via `@anthropic-ai/sdk` using flat `input_schema` tool definitions.
+        *   **`OpenAIAdapter.ts`**: Adapter for OpenAI models via `openai` package with tool call parsing and token usage normalization.
+        *   **`AdapterFactory.ts`**: Factory class (`AdapterFactory`) instantiating the appropriate provider adapter based on the `LLM_COMMANDER_FAMILY` feature flag.
 *   **`data/` (Server Data Services)**
     *   **`economy-service.ts`**: Manages player currency balances, credit transactions, and store purchases on the server side.
 *   **`gates/` (Server Gates)**
@@ -336,4 +343,13 @@ Every file change in the VEXEA codebase must follow this strict two-step protoco
 *   **Modifications:**
     *   `SETTINGS_UPGRADE_PLAN.md`: Formulated comprehensive architectural plan addressing all six audit points: elimination of redundant nested headers, replacement of generic dropdowns with visual SVG selectors and swatches, pruning of non-functional stubs (languages/TTS) with immediate concrete roadmap for colorblind matrix/shake dampener/flash modes, live HUD preview viewport and audio audition feedback, full restoration of regressed Asset Cache Table/Server Telemetry/Renderer GPU metrics, and mathematical 0px-radius 2-column layout adhering strictly to `ARCHITECTURE.md` and `client/design-system.ts`.
 *   **Verification:** Plan document authored and ready for user assessment.
+
+### Cycle 2026-08-08-04: Implement Multi-Provider LLM Commander Adapter Architecture
+*   **Target Files:** `server/ai/adapters/CommanderAdapter.ts`, `server/ai/adapters/GeminiAdapter.ts`, `server/ai/adapters/KimiAdapter.ts`, `server/ai/adapters/ClaudeAdapter.ts`, `server/ai/adapters/OpenAIAdapter.ts`, `server/ai/adapters/AdapterFactory.ts`, `server/ai/LLMCommander.ts`, `shared/feature-flags.ts`, `CODEBASE_INDEX.md`
+*   **Status:** Verified & Finalized
+*   **Modifications:**
+    *   `server/ai/adapters/`: Built family adapters for Gemini, Kimi (Moonshot API), Claude, and OpenAI, managed by `AdapterFactory`.
+    *   `server/ai/LLMCommander.ts`: Decoupled LLMCommander from provider SDKs, replacing hardcoded Gemini logic with provider-agnostic `CommanderAdapter`.
+    *   `shared/feature-flags.ts`: Added `LLM_COMMANDER_FAMILY` feature flag for server-side family routing.
+*   **Verification:** Verified zero provider SDK imports in `LLMCommander.ts`, exact Claude flat tool schemas, and verified build/test compilation.
 

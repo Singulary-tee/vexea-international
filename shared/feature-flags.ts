@@ -18,6 +18,7 @@ export enum FeatureFlagKey {
   SENTRY_REPLAY_ENABLED = 'sentry_replay_enabled',
 
   // LLM AI Commander Flags (Server Authoritative)
+  LLM_COMMANDER_FAMILY = 'LLM_COMMANDER_FAMILY',
   LLM_PRIMARY_MODEL = 'llm_primary_model',
   LLM_FALLBACK_MODELS = 'llm_fallback_models',
   LLM_TOKEN_CEILING = 'llm_token_ceiling',
@@ -59,6 +60,7 @@ export interface FeatureFlagSchema {
   [FeatureFlagKey.SENTRY_SERVER_METRICS_ENABLED]: boolean;
   [FeatureFlagKey.SENTRY_REPLAY_ENABLED]: boolean;
 
+  [FeatureFlagKey.LLM_COMMANDER_FAMILY]: string;
   [FeatureFlagKey.LLM_PRIMARY_MODEL]: string;
   [FeatureFlagKey.LLM_FALLBACK_MODELS]: string[];
   [FeatureFlagKey.LLM_TOKEN_CEILING]: number;
@@ -94,6 +96,7 @@ export const DEFAULT_FEATURE_FLAGS: FeatureFlagSchema = {
   [FeatureFlagKey.SENTRY_SERVER_METRICS_ENABLED]: true,
   [FeatureFlagKey.SENTRY_REPLAY_ENABLED]: false,
 
+  [FeatureFlagKey.LLM_COMMANDER_FAMILY]: 'gemini',
   [FeatureFlagKey.LLM_PRIMARY_MODEL]: 'gemini-3.5-flash',
   [FeatureFlagKey.LLM_FALLBACK_MODELS]: ['gemini-3.6-flash', 'gemini-3.1-flash'],
   [FeatureFlagKey.LLM_TOKEN_CEILING]: 55000,
@@ -152,6 +155,7 @@ export function getFeatureFlagScope(key: FeatureFlagKey): FeatureFlagScope {
     case FeatureFlagKey.SENTRY_NODE_PROFILING:
     case FeatureFlagKey.SENTRY_LLM_TRACING:
     case FeatureFlagKey.SENTRY_SERVER_METRICS_ENABLED:
+    case FeatureFlagKey.LLM_COMMANDER_FAMILY:
     case FeatureFlagKey.LLM_PRIMARY_MODEL:
     case FeatureFlagKey.LLM_FALLBACK_MODELS:
     case FeatureFlagKey.LLM_TOKEN_CEILING:
