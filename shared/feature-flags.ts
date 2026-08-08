@@ -1,123 +1,60 @@
 /**
  * Shared Feature Flag Definitions and Types
- * Strict OpenFeature schema and separation boundaries between Server and Client.
+ * Contains ONLY feature flags required by both client and server domains.
  */
 
-export enum FeatureFlagKey {
-  // Sentry Observability & Telemetry Flags
-  SENTRY_CLIENT_ENABLED = 'sentry_client_enabled',
-  SENTRY_SERVER_ENABLED = 'sentry_server_enabled',
-  SENTRY_CLIENT_TRACES_RATE = 'sentry_client_traces_rate',
-  SENTRY_SERVER_TRACES_RATE = 'sentry_server_traces_rate',
-  SENTRY_BROWSER_PROFILING = 'sentry_browser_profiling',
-  SENTRY_NODE_PROFILING = 'sentry_node_profiling',
-  SENTRY_FEEDBACK_ENABLED = 'sentry_feedback_enabled',
-  SENTRY_LLM_TRACING = 'sentry_llm_tracing',
-  SENTRY_CLIENT_METRICS_ENABLED = 'sentry_client_metrics_enabled',
-  SENTRY_SERVER_METRICS_ENABLED = 'sentry_server_metrics_enabled',
-  SENTRY_REPLAY_ENABLED = 'sentry_replay_enabled',
-
-  // LLM AI Commander Flags (Server Authoritative)
-  LLM_COMMANDER_FAMILY = 'LLM_COMMANDER_FAMILY',
-  LLM_PRIMARY_MODEL = 'llm_primary_model',
-  LLM_FALLBACK_MODELS = 'llm_fallback_models',
-  LLM_TOKEN_CEILING = 'llm_token_ceiling',
-  LLM_CYCLE_INTERVAL_SEC = 'llm_cycle_interval_sec',
-  LLM_AP_REGEN_RATE = 'llm_ap_regen_rate',
-
+export enum SharedFeatureFlagKey {
   // Store & Economy Flags
   STORE_DYNAMIC_OFFERS = 'store_dynamic_offers',
 
   // Faction Warfare & Territory Flags
   FACTION_WAR_ACTIVE = 'faction_war_active',
 
-  // Battle Pass Flags (Shared)
+  // Battle Pass Flags
   BP_SEASON_ID = 'bp_season_id',
   BP_TIER_COUNT = 'bp_tier_count',
   BP_XP_PER_TIER = 'bp_xp_per_tier',
 
   // Match Difficulty & Gameplay Tuning Flags
   MATCH_DIFFICULTY_PRESET = 'match_difficulty_preset',
-  TELEMETRY_WEBGPU_ERRORS = 'telemetry_webgpu_errors',
-  TELEMETRY_PHYSICS_WORKER_LATENCY = 'telemetry_physics_worker_latency',
-  SECURITY_EXPLOIT_LOGGING = 'security_exploit_logging',
   TELEMETRY_DESYNC_THRESHOLD = 'telemetry_desync_threshold',
   FLAGS_USED_ENABLED = 'flags_used_enabled',
 }
 
+/**
+  * FeatureFlagKey alias for shared flags and backward compatibility.
+  */
+export const FeatureFlagKey = {
+  ...SharedFeatureFlagKey,
+  SENTRY_CLIENT_ENABLED: 'sentry_client_enabled',
+  SENTRY_SERVER_ENABLED: 'sentry_server_enabled',
+} as const;
+
 export type FeatureFlagValue = boolean | string | number | Record<string, unknown> | unknown[];
 
-export interface FeatureFlagSchema {
-  [FeatureFlagKey.SENTRY_CLIENT_ENABLED]: boolean;
-  [FeatureFlagKey.SENTRY_SERVER_ENABLED]: boolean;
-  [FeatureFlagKey.SENTRY_CLIENT_TRACES_RATE]: number;
-  [FeatureFlagKey.SENTRY_SERVER_TRACES_RATE]: number;
-  [FeatureFlagKey.SENTRY_BROWSER_PROFILING]: boolean;
-  [FeatureFlagKey.SENTRY_NODE_PROFILING]: boolean;
-  [FeatureFlagKey.SENTRY_FEEDBACK_ENABLED]: boolean;
-  [FeatureFlagKey.SENTRY_LLM_TRACING]: boolean;
-  [FeatureFlagKey.SENTRY_CLIENT_METRICS_ENABLED]: boolean;
-  [FeatureFlagKey.SENTRY_SERVER_METRICS_ENABLED]: boolean;
-  [FeatureFlagKey.SENTRY_REPLAY_ENABLED]: boolean;
-
-  [FeatureFlagKey.LLM_COMMANDER_FAMILY]: string;
-  [FeatureFlagKey.LLM_PRIMARY_MODEL]: string;
-  [FeatureFlagKey.LLM_FALLBACK_MODELS]: string[];
-  [FeatureFlagKey.LLM_TOKEN_CEILING]: number;
-  [FeatureFlagKey.LLM_CYCLE_INTERVAL_SEC]: number;
-  [FeatureFlagKey.LLM_AP_REGEN_RATE]: number;
-
-  [FeatureFlagKey.STORE_DYNAMIC_OFFERS]: boolean;
-
-  [FeatureFlagKey.FACTION_WAR_ACTIVE]: boolean;
-
-  [FeatureFlagKey.BP_SEASON_ID]: string;
-  [FeatureFlagKey.BP_TIER_COUNT]: number;
-  [FeatureFlagKey.BP_XP_PER_TIER]: number;
-
-  [FeatureFlagKey.MATCH_DIFFICULTY_PRESET]: 'EASY' | 'STANDARD' | 'HARD' | 'NIGHTMARE';
-  [FeatureFlagKey.TELEMETRY_WEBGPU_ERRORS]: boolean;
-  [FeatureFlagKey.TELEMETRY_PHYSICS_WORKER_LATENCY]: boolean;
-  [FeatureFlagKey.SECURITY_EXPLOIT_LOGGING]: boolean;
-  [FeatureFlagKey.TELEMETRY_DESYNC_THRESHOLD]: number;
-  [FeatureFlagKey.FLAGS_USED_ENABLED]: boolean;
+export interface SharedFeatureFlagSchema {
+  [SharedFeatureFlagKey.STORE_DYNAMIC_OFFERS]: boolean;
+  [SharedFeatureFlagKey.FACTION_WAR_ACTIVE]: boolean;
+  [SharedFeatureFlagKey.BP_SEASON_ID]: string;
+  [SharedFeatureFlagKey.BP_TIER_COUNT]: number;
+  [SharedFeatureFlagKey.BP_XP_PER_TIER]: number;
+  [SharedFeatureFlagKey.MATCH_DIFFICULTY_PRESET]: 'EASY' | 'STANDARD' | 'HARD' | 'NIGHTMARE';
+  [SharedFeatureFlagKey.TELEMETRY_DESYNC_THRESHOLD]: number;
+  [SharedFeatureFlagKey.FLAGS_USED_ENABLED]: boolean;
 }
 
-export const DEFAULT_FEATURE_FLAGS: FeatureFlagSchema = {
-  [FeatureFlagKey.SENTRY_CLIENT_ENABLED]: true,
-  [FeatureFlagKey.SENTRY_SERVER_ENABLED]: true,
-  [FeatureFlagKey.SENTRY_CLIENT_TRACES_RATE]: 1.0,
-  [FeatureFlagKey.SENTRY_SERVER_TRACES_RATE]: 1.0,
-  [FeatureFlagKey.SENTRY_BROWSER_PROFILING]: true,
-  [FeatureFlagKey.SENTRY_NODE_PROFILING]: true,
-  [FeatureFlagKey.SENTRY_FEEDBACK_ENABLED]: true,
-  [FeatureFlagKey.SENTRY_LLM_TRACING]: true,
-  [FeatureFlagKey.SENTRY_CLIENT_METRICS_ENABLED]: true,
-  [FeatureFlagKey.SENTRY_SERVER_METRICS_ENABLED]: true,
-  [FeatureFlagKey.SENTRY_REPLAY_ENABLED]: false,
-
-  [FeatureFlagKey.LLM_COMMANDER_FAMILY]: 'gemini',
-  [FeatureFlagKey.LLM_PRIMARY_MODEL]: 'gemini-3.5-flash',
-  [FeatureFlagKey.LLM_FALLBACK_MODELS]: ['gemini-3.6-flash', 'gemini-3.1-flash'],
-  [FeatureFlagKey.LLM_TOKEN_CEILING]: 55000,
-  [FeatureFlagKey.LLM_CYCLE_INTERVAL_SEC]: 8,
-  [FeatureFlagKey.LLM_AP_REGEN_RATE]: 10,
-
-  [FeatureFlagKey.STORE_DYNAMIC_OFFERS]: true,
-
-  [FeatureFlagKey.FACTION_WAR_ACTIVE]: true,
-
-  [FeatureFlagKey.BP_SEASON_ID]: 'SEASON_01',
-  [FeatureFlagKey.BP_TIER_COUNT]: 50,
-  [FeatureFlagKey.BP_XP_PER_TIER]: 10,
-
-  [FeatureFlagKey.MATCH_DIFFICULTY_PRESET]: 'STANDARD',
-  [FeatureFlagKey.TELEMETRY_WEBGPU_ERRORS]: true,
-  [FeatureFlagKey.TELEMETRY_PHYSICS_WORKER_LATENCY]: true,
-  [FeatureFlagKey.SECURITY_EXPLOIT_LOGGING]: true,
-  [FeatureFlagKey.TELEMETRY_DESYNC_THRESHOLD]: 0.5,
-  [FeatureFlagKey.FLAGS_USED_ENABLED]: false,
+export const DEFAULT_SHARED_FEATURE_FLAGS: SharedFeatureFlagSchema = {
+  [SharedFeatureFlagKey.STORE_DYNAMIC_OFFERS]: true,
+  [SharedFeatureFlagKey.FACTION_WAR_ACTIVE]: true,
+  [SharedFeatureFlagKey.BP_SEASON_ID]: 'SEASON_01',
+  [SharedFeatureFlagKey.BP_TIER_COUNT]: 50,
+  [SharedFeatureFlagKey.BP_XP_PER_TIER]: 10,
+  [SharedFeatureFlagKey.MATCH_DIFFICULTY_PRESET]: 'STANDARD',
+  [SharedFeatureFlagKey.TELEMETRY_DESYNC_THRESHOLD]: 0.5,
+  [SharedFeatureFlagKey.FLAGS_USED_ENABLED]: false,
 };
+
+export const DEFAULT_FEATURE_FLAGS = DEFAULT_SHARED_FEATURE_FLAGS;
 
 export interface FlagEvaluationContext {
   userId?: string;
@@ -138,42 +75,46 @@ export enum FeatureFlagScope {
  * Determines the architectural scope of a feature flag.
  * Used by FlagServices to select the correct ConfigCat SDK Key.
  */
-export function getFeatureFlagScope(key: FeatureFlagKey): FeatureFlagScope {
-  switch (key) {
-    case FeatureFlagKey.SENTRY_CLIENT_ENABLED:
-    case FeatureFlagKey.SENTRY_CLIENT_TRACES_RATE:
-    case FeatureFlagKey.SENTRY_BROWSER_PROFILING:
-    case FeatureFlagKey.SENTRY_FEEDBACK_ENABLED:
-    case FeatureFlagKey.SENTRY_CLIENT_METRICS_ENABLED:
-    case FeatureFlagKey.SENTRY_REPLAY_ENABLED:
-    case FeatureFlagKey.TELEMETRY_WEBGPU_ERRORS:
-    case FeatureFlagKey.TELEMETRY_PHYSICS_WORKER_LATENCY:
-      return FeatureFlagScope.CLIENT;
+export function getFeatureFlagScope(key: string): FeatureFlagScope {
+  const clientKeys: string[] = [
+    'sentry_client_enabled',
+    'sentry_client_traces_rate',
+    'sentry_browser_profiling',
+    'sentry_feedback_enabled',
+    'sentry_client_metrics_enabled',
+    'sentry_replay_enabled',
+    'telemetry_webgpu_errors',
+    'telemetry_physics_worker_latency',
+  ];
 
-    case FeatureFlagKey.SENTRY_SERVER_ENABLED:
-    case FeatureFlagKey.SENTRY_SERVER_TRACES_RATE:
-    case FeatureFlagKey.SENTRY_NODE_PROFILING:
-    case FeatureFlagKey.SENTRY_LLM_TRACING:
-    case FeatureFlagKey.SENTRY_SERVER_METRICS_ENABLED:
-    case FeatureFlagKey.LLM_COMMANDER_FAMILY:
-    case FeatureFlagKey.LLM_PRIMARY_MODEL:
-    case FeatureFlagKey.LLM_FALLBACK_MODELS:
-    case FeatureFlagKey.LLM_TOKEN_CEILING:
-    case FeatureFlagKey.LLM_CYCLE_INTERVAL_SEC:
-    case FeatureFlagKey.LLM_AP_REGEN_RATE:
-    case FeatureFlagKey.SECURITY_EXPLOIT_LOGGING:
-      return FeatureFlagScope.SERVER;
+  const serverKeys: string[] = [
+    'sentry_server_enabled',
+    'sentry_server_traces_rate',
+    'sentry_node_profiling',
+    'sentry_llm_tracing',
+    'sentry_server_metrics_enabled',
+    'LLM_COMMANDER_FAMILY',
+    'llm_primary_model',
+    'llm_fallback_models',
+    'llm_token_ceiling',
+    'llm_cycle_interval_sec',
+    'llm_ap_regen_rate',
+    'kimi_primary_model',
+    'kimi_fallback_models',
+    'claude_primary_model',
+    'claude_fallback_models',
+    'openai_primary_model',
+    'openai_fallback_models',
+    'llm_max_output_tokens_per_cycle',
+    'llm_max_tool_calls_per_cycle',
+    'security_exploit_logging',
+  ];
 
-    case FeatureFlagKey.STORE_DYNAMIC_OFFERS:
-    case FeatureFlagKey.FACTION_WAR_ACTIVE:
-    case FeatureFlagKey.BP_SEASON_ID:
-    case FeatureFlagKey.BP_TIER_COUNT:
-    case FeatureFlagKey.BP_XP_PER_TIER:
-    case FeatureFlagKey.MATCH_DIFFICULTY_PRESET:
-    case FeatureFlagKey.TELEMETRY_DESYNC_THRESHOLD:
-      return FeatureFlagScope.SHARED;
-
-    default:
-      return FeatureFlagScope.SHARED;
+  if (clientKeys.includes(key)) {
+    return FeatureFlagScope.CLIENT;
   }
+  if (serverKeys.includes(key)) {
+    return FeatureFlagScope.SERVER;
+  }
+  return FeatureFlagScope.SHARED;
 }

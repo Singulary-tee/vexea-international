@@ -13,14 +13,13 @@ import { ACTIVE_GAMEMODE } from "../../shared/gamemode-configs.js";
 import { ServerDrone } from "../MatchRoom";
 import { Sentry, recordServerLLMLatency } from "../sentry";
 import { serverFlagService } from "../flags/flag-service";
-import { FeatureFlagKey } from "../../shared/feature-flags";
+import { ServerFeatureFlagKey } from "../flags/server-flags";
 import { PlayerProfileStore, PlayerGameProfile } from "../player-data/PlayerProfileStore";
 import { BriefingRenderer } from "../player-data/BriefingRenderer";
 import { CommanderAdapter, CommanderTool } from "./adapters/CommanderAdapter";
 import { AdapterFactory } from "./adapters/AdapterFactory";
 
 const MAX_DRONES = 40; // Hardcoded from MatchRoom
-const MAX_LLM_TOKENS_PER_MATCH = 55000; // Deliberate per-match token budget safety ceiling to protect against free-tier volatility
 
 const COMMANDER_TOOLS: CommanderTool[] = [
   {
@@ -160,7 +159,7 @@ export class LLMCommander {
 
   public async initAdapter(apiKey?: string) {
     const family = await serverFlagService.getString(
-      FeatureFlagKey.LLM_COMMANDER_FAMILY,
+      ServerFeatureFlagKey.LLM_COMMANDER_FAMILY,
       { roomId: this.room.roomId },
       "gemini"
     );
@@ -179,9 +178,9 @@ export class LLMCommander {
     if (!this.adapter) return;
 
     const tokenCeiling = await serverFlagService.getNumber(
-      FeatureFlagKey.LLM_TOKEN_CEILING,
+      ServerFeatureFlagKey.LLM_TOKEN_CEILING,
       { roomId: this.room.roomId },
-      MAX_LLM_TOKENS_PER_MATCH
+      55000
     );
 
     if (this.room.llmTokensUsedThisMatch >= tokenCeiling) {
@@ -195,9 +194,11 @@ export class LLMCommander {
 
     let initialBriefingBlock = "";
     if (this.room.apiCallCount === 0) {
-      const humanPlayers = Array.from(this.room.players.values())
-        .filter((p) => !p.isBot)
-        .map((p) => ({ id: p.id, isBot: false }));
+      const humanPlayers = this.room.players
+        ? Array.from(this.room.players.values())
+            .filter((p) => !p.isBot)
+            .map((p) => ({ id: p.id, isBot: false }))
+        : [];
 
       const profilesMap = new Map<string, PlayerGameProfile | null>();
       for (const p of humanPlayers) {
@@ -211,7 +212,7 @@ export class LLMCommander {
     this.room.apiCallCount++;
 
     const apRegenFlag = await serverFlagService.getNumber(
-      FeatureFlagKey.LLM_AP_REGEN_RATE,
+      ServerFeatureFlagKey.LLM_AP_REGEN_RATE,
       { roomId: this.room.roomId },
       ACTIVE_GAMEMODE.llmApRegenPerCycle
     );
@@ -296,12 +297,22 @@ Topological graph adjacency (Zones):
 - zone_core connected to: zone_plant, zone_tunnels`;
 
     try {
-      const { calls, usage, modelUsed } = await this.adapter.execute(
+      let { calls, usage, modelUsed } = await this.adapter.execute(
         payloadToLLM,
         systemInstructions,
         COMMANDER_TOOLS,
         { roomId: this.room.roomId }
       );
+
+      const maxToolCalls = await serverFlagService.getNumber(
+        ServerFeatureFlagKey.LLM_MAX_TOOL_CALLS_PER_CYCLE,
+        { roomId: this.room.roomId },
+        6
+      );
+      if (calls && calls.length > maxToolCalls) {
+        this.room.failedOperations.push(`Tool call limit exceeded: ${calls.length} > ${maxToolCalls}`);
+        calls = calls.slice(0, maxToolCalls);
+      }
 
       const callTokens = usage.totalTokens;
       if (callTokens > 0) {

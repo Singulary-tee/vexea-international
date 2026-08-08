@@ -5,7 +5,8 @@ import { DS } from "../design-system";
 import { IS_DEV } from "../../shared/gates/production.gate";
 import { isClientSentryInitialized, getSentryDSN, sendUserFeedback } from "../sentry";
 import { clientFlagService } from "../flags/flag-service";
-import { FeatureFlagKey } from "../../shared/feature-flags";
+import { ClientFeatureFlagKey } from "../flags/client-flags";
+import { SharedFeatureFlagKey } from "../../shared/feature-flags";
 import { getDevMap, getDefaultMap, getMapById, MAP_REGISTRY } from "../../shared/maps/map-registry";
 import { hasCachedBlob, getCachedOrFetchUrl, ensureAssetsDownloaded, getAssetUrl } from "../asset-cache";
 import { EXTENDED_SOUNDS, EXTENDED_TEXTURES } from "./splash";
@@ -1996,7 +1997,7 @@ function renderRightPanel() {
              const message = txt?.value || '';
 
              // Respect Sentry Feedback feature flag
-             const feedbackEnabled = clientFlagService.getBoolean(FeatureFlagKey.SENTRY_FEEDBACK_ENABLED, true);
+             const feedbackEnabled = clientFlagService.getBoolean(ClientFeatureFlagKey.SENTRY_FEEDBACK_ENABLED, true);
              if (feedbackEnabled && isClientSentryInitialized) {
                  const sent = await sendUserFeedback({
                      message,
@@ -2133,10 +2134,10 @@ function showArchitecturalAnalysis() {
   const dopplerToken = (import.meta as any).env?.VITE_DOPPLER_TOKEN ? "PRESENT" : "MISSING";
   const hasClientKey = clientFlagService.hasClientKey() ? "ACTIVE" : "USING DEFAULTS";
   const hasSharedKey = clientFlagService.hasSharedKey() ? "ACTIVE" : "USING DEFAULTS";
-  const sentryFlag = clientFlagService.getBoolean(FeatureFlagKey.SENTRY_CLIENT_ENABLED, true) ? "ENABLED" : "DISABLED";
+  const sentryFlag = clientFlagService.getBoolean(ClientFeatureFlagKey.SENTRY_CLIENT_ENABLED, true) ? "ENABLED" : "DISABLED";
   const sentryStatus = isClientSentryInitialized ? "INITIALIZED" : "NOT INITIALIZED";
   const sentryDsn = getSentryDSN() ? "PRESENT" : "MISSING";
-  const flagsUsedEnabled = clientFlagService.getBoolean(FeatureFlagKey.FLAGS_USED_ENABLED, false) ? "TRUE" : "FALSE";
+  const flagsUsedEnabled = clientFlagService.getBoolean(SharedFeatureFlagKey.FLAGS_USED_ENABLED, false) ? "TRUE" : "FALSE";
 
   const modal = document.createElement('div');
   modal.id = 'architectural-analysis-modal';

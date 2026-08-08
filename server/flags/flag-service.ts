@@ -1,12 +1,18 @@
 import { OpenFeature, Client, EvaluationContext } from '@openfeature/server-sdk';
 import { ConfigCatProvider } from '@openfeature/config-cat-provider';
 import {
-  FeatureFlagKey,
-  DEFAULT_FEATURE_FLAGS,
+  ServerFeatureFlagKey,
+  DEFAULT_SERVER_FEATURE_FLAGS,
+} from './server-flags';
+import {
+  SharedFeatureFlagKey,
+  DEFAULT_SHARED_FEATURE_FLAGS,
   FlagEvaluationContext,
   getFeatureFlagScope,
   FeatureFlagScope,
 } from '../../shared/feature-flags';
+
+export type AnyServerFlagKey = ServerFeatureFlagKey | SharedFeatureFlagKey;
 
 export class ServerFlagService {
   private static instance: ServerFlagService;
@@ -44,48 +50,58 @@ export class ServerFlagService {
     this.isInitialized = true;
   }
 
-  private getClient(key: FeatureFlagKey): Client {
+  private getClient(key: string): Client {
     const scope = getFeatureFlagScope(key);
     return scope === FeatureFlagScope.SERVER ? this.serverClient : this.sharedClient;
   }
 
+  private getDefaultValue(key: AnyServerFlagKey): unknown {
+    if ((key as any) in DEFAULT_SERVER_FEATURE_FLAGS) {
+      return (DEFAULT_SERVER_FEATURE_FLAGS as any)[key];
+    }
+    if ((key as any) in DEFAULT_SHARED_FEATURE_FLAGS) {
+      return (DEFAULT_SHARED_FEATURE_FLAGS as any)[key];
+    }
+    return undefined;
+  }
+
   public async getBoolean(
-    key: FeatureFlagKey,
+    key: AnyServerFlagKey,
     context?: FlagEvaluationContext,
     fallback?: boolean
   ): Promise<boolean> {
-    const defaultVal = fallback !== undefined ? fallback : (DEFAULT_FEATURE_FLAGS[key] as boolean);
+    const defaultVal = fallback !== undefined ? fallback : (this.getDefaultValue(key) as boolean ?? false);
     return await this.getClient(key).getBooleanValue(key, defaultVal, context as EvaluationContext);
   }
 
   public async getString(
-    key: FeatureFlagKey,
+    key: AnyServerFlagKey,
     context?: FlagEvaluationContext,
     fallback?: string
   ): Promise<string> {
-    const defaultVal = fallback !== undefined ? fallback : (DEFAULT_FEATURE_FLAGS[key] as string);
+    const defaultVal = fallback !== undefined ? fallback : (this.getDefaultValue(key) as string ?? '');
     return await this.getClient(key).getStringValue(key, defaultVal, context as EvaluationContext);
   }
 
   public async getNumber(
-    key: FeatureFlagKey,
+    key: AnyServerFlagKey,
     context?: FlagEvaluationContext,
     fallback?: number
   ): Promise<number> {
-    const defaultVal = fallback !== undefined ? fallback : (DEFAULT_FEATURE_FLAGS[key] as number);
+    const defaultVal = fallback !== undefined ? fallback : (this.getDefaultValue(key) as number ?? 0);
     return await this.getClient(key).getNumberValue(key, defaultVal, context as EvaluationContext);
   }
 
   public async getObject<T>(
-    key: FeatureFlagKey,
+    key: AnyServerFlagKey,
     context?: FlagEvaluationContext,
     fallback?: T
   ): Promise<T> {
-    const defaultVal = fallback !== undefined ? fallback : (DEFAULT_FEATURE_FLAGS[key] as unknown as T);
+    const defaultVal = fallback !== undefined ? fallback : (this.getDefaultValue(key) as unknown as T);
     return await this.getClient(key).getObjectValue<any>(key, defaultVal, context as EvaluationContext) as T;
   }
 
-  public setFlag(key: FeatureFlagKey, value: unknown): void {
+  public setFlag(key: AnyServerFlagKey, value: unknown): void {
     console.warn('[FlagService] setFlag called on ConfigCat Provider. Runtime overrides are not supported yet.');
   }
 }

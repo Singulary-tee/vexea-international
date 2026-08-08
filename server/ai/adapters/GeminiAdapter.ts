@@ -7,7 +7,7 @@ import {
   TokenUsage,
 } from "./CommanderAdapter";
 import { serverFlagService } from "../../flags/flag-service";
-import { FeatureFlagKey } from "../../../shared/feature-flags";
+import { ServerFeatureFlagKey } from "../../flags/server-flags";
 import { Sentry } from "../../sentry";
 
 function isRateLimitedError(err: any): boolean {
@@ -67,18 +67,24 @@ export class GeminiAdapter implements CommanderAdapter {
 
     const roomId = options?.roomId;
     const primaryModel = options?.primaryModel || await serverFlagService.getString(
-      FeatureFlagKey.LLM_PRIMARY_MODEL,
+      ServerFeatureFlagKey.LLM_PRIMARY_MODEL,
       { roomId },
       "gemini-3.5-flash"
     );
     const fallbackList = options?.fallbackModels || await serverFlagService.getObject<string[]>(
-      FeatureFlagKey.LLM_FALLBACK_MODELS,
+      ServerFeatureFlagKey.LLM_FALLBACK_MODELS,
       { roomId },
       ["gemini-3.6-flash", "gemini-3.1-flash"]
     );
 
     const candidateModels = [primaryModel, ...(Array.isArray(fallbackList) ? fallbackList : [])];
     const uniqueModels = Array.from(new Set(candidateModels));
+
+    const maxOutputTokens = await serverFlagService.getNumber(
+      ServerFeatureFlagKey.LLM_MAX_OUTPUT_TOKENS_PER_CYCLE,
+      { roomId },
+      800
+    );
 
     // Convert tools to Gemini functionDeclarations format
     const functionDeclarations = tools.map((t) => ({
@@ -104,12 +110,13 @@ export class GeminiAdapter implements CommanderAdapter {
             config: {
               systemInstruction: systemInstructions,
               tools: functionDeclarations.length > 0 ? [{ functionDeclarations }] : undefined,
+              maxOutputTokens,
             },
           });
         };
 
         const tracingEnabled = await serverFlagService.getBoolean(
-          FeatureFlagKey.SENTRY_LLM_TRACING,
+          ServerFeatureFlagKey.SENTRY_LLM_TRACING,
           { roomId },
           true
         );

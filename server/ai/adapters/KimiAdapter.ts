@@ -6,6 +6,8 @@ import {
   NormalizedToolCall,
   TokenUsage,
 } from "./CommanderAdapter";
+import { serverFlagService } from "../../flags/flag-service";
+import { ServerFeatureFlagKey } from "../../flags/server-flags";
 
 function isRateLimitedError(err: any): boolean {
   const code = err?.status || err?.statusCode || err?.error?.code;
@@ -61,7 +63,25 @@ export class KimiAdapter implements CommanderAdapter {
       throw new Error("Kimi API key not configured");
     }
 
-    const candidateModels = ["kimi-k2.6", "kimi-k2.5"];
+    const roomId = options?.roomId;
+    const primaryModel = options?.primaryModel || await serverFlagService.getString(
+      ServerFeatureFlagKey.KIMI_PRIMARY_MODEL,
+      { roomId },
+      'kimi-k2.6'
+    );
+    const fallbackList = options?.fallbackModels || await serverFlagService.getObject<string[]>(
+      ServerFeatureFlagKey.KIMI_FALLBACK_MODELS,
+      { roomId },
+      ['kimi-k2.5']
+    );
+    const candidateModels = [primaryModel, ...(Array.isArray(fallbackList) ? fallbackList : [])];
+    const uniqueModels = Array.from(new Set(candidateModels));
+
+    const maxOutputTokens = await serverFlagService.getNumber(
+      ServerFeatureFlagKey.LLM_MAX_OUTPUT_TOKENS_PER_CYCLE,
+      { roomId },
+      800
+    );
 
     const formattedTools = tools.map((t) => ({
       type: "function" as const,
@@ -76,7 +96,7 @@ export class KimiAdapter implements CommanderAdapter {
     let lastError: any = null;
     let usedModel = "";
 
-    for (const modelName of candidateModels) {
+    for (const modelName of uniqueModels) {
       try {
         response = await this.client.chat.completions.create({
           model: modelName,
@@ -85,6 +105,7 @@ export class KimiAdapter implements CommanderAdapter {
             { role: "user", content: payload },
           ],
           tools: formattedTools.length > 0 ? formattedTools : undefined,
+          max_completion_tokens: maxOutputTokens,
         });
 
         usedModel = modelName;

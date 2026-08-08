@@ -1,5 +1,6 @@
 import * as Sentry from "@sentry/browser";
-import { FeatureFlagKey } from "../shared/feature-flags";
+import { ClientFeatureFlagKey } from "./flags/client-flags";
+import { SharedFeatureFlagKey } from "../shared/feature-flags";
 import { clientFlagService } from "./flags/flag-service";
 
 import { getClientDopplerSecret } from "./doppler";
@@ -15,7 +16,7 @@ export function getSentryDSN(): string | undefined {
 }
 
 export function initClientSentry(customDsn?: string): void {
-  const isEnabled = clientFlagService.getBoolean(FeatureFlagKey.SENTRY_CLIENT_ENABLED, true);
+  const isEnabled = clientFlagService.getBoolean(ClientFeatureFlagKey.SENTRY_CLIENT_ENABLED, true);
   if (!isEnabled) {
     console.log("[Sentry Client] Disabled via feature flag.");
     return;
@@ -35,9 +36,9 @@ export function initClientSentry(customDsn?: string): void {
     return;
   }
 
-  const tracesSampleRate = clientFlagService.getNumber(FeatureFlagKey.SENTRY_CLIENT_TRACES_RATE, 1.0);
-  const enableProfiling = clientFlagService.getBoolean(FeatureFlagKey.SENTRY_BROWSER_PROFILING, true);
-  const enableReplay = clientFlagService.getBoolean(FeatureFlagKey.SENTRY_REPLAY_ENABLED, false);
+  const tracesSampleRate = clientFlagService.getNumber(ClientFeatureFlagKey.SENTRY_CLIENT_TRACES_RATE, 1.0);
+  const enableProfiling = clientFlagService.getBoolean(ClientFeatureFlagKey.SENTRY_BROWSER_PROFILING, true);
+  const enableReplay = clientFlagService.getBoolean(ClientFeatureFlagKey.SENTRY_REPLAY_ENABLED, false);
 
   const integrations: any[] = [
     Sentry.captureConsoleIntegration({
@@ -99,7 +100,7 @@ export async function sendUserFeedback(params: {
   rating?: number;
   screen?: string;
 }): Promise<boolean> {
-  const feedbackEnabled = clientFlagService.getBoolean(FeatureFlagKey.SENTRY_FEEDBACK_ENABLED, true);
+  const feedbackEnabled = clientFlagService.getBoolean(ClientFeatureFlagKey.SENTRY_FEEDBACK_ENABLED, true);
   if (!feedbackEnabled || !isClientSentryInitialized) {
     return false;
   }
@@ -123,7 +124,7 @@ export async function sendUserFeedback(params: {
  * Client-Side Performance & Telemetry Metric Helpers
  */
 export function recordClientFrameTime(frameTimeMs: number): void {
-  const enabled = clientFlagService.getBoolean(FeatureFlagKey.SENTRY_CLIENT_METRICS_ENABLED, true);
+  const enabled = clientFlagService.getBoolean(ClientFeatureFlagKey.SENTRY_CLIENT_METRICS_ENABLED, true);
   if (!enabled || !isClientSentryInitialized) return;
   try {
     Sentry.metrics.distribution("client.frame_time_ms", frameTimeMs);
@@ -131,7 +132,7 @@ export function recordClientFrameTime(frameTimeMs: number): void {
 }
 
 export function recordClientDrawCalls(drawCalls: number): void {
-  const enabled = clientFlagService.getBoolean(FeatureFlagKey.SENTRY_CLIENT_METRICS_ENABLED, true);
+  const enabled = clientFlagService.getBoolean(ClientFeatureFlagKey.SENTRY_CLIENT_METRICS_ENABLED, true);
   if (!enabled || !isClientSentryInitialized) return;
   try {
     Sentry.metrics.gauge("client.draw_calls", drawCalls);
@@ -139,7 +140,7 @@ export function recordClientDrawCalls(drawCalls: number): void {
 }
 
 export function recordClientNetworkRTT(rttMs: number): void {
-  const enabled = clientFlagService.getBoolean(FeatureFlagKey.SENTRY_CLIENT_METRICS_ENABLED, true);
+  const enabled = clientFlagService.getBoolean(ClientFeatureFlagKey.SENTRY_CLIENT_METRICS_ENABLED, true);
   if (!enabled || !isClientSentryInitialized) return;
   try {
     Sentry.metrics.distribution("client.network_rtt_ms", rttMs);
@@ -147,7 +148,7 @@ export function recordClientNetworkRTT(rttMs: number): void {
 }
 
 export function recordDesyncSnap(divergenceDistance: number): void {
-  const threshold = clientFlagService.getNumber(FeatureFlagKey.TELEMETRY_DESYNC_THRESHOLD, 0.5);
+  const threshold = clientFlagService.getNumber(SharedFeatureFlagKey.TELEMETRY_DESYNC_THRESHOLD, 0.5);
   if (divergenceDistance < threshold) return;
 
   Sentry.addBreadcrumb({
@@ -157,14 +158,14 @@ export function recordDesyncSnap(divergenceDistance: number): void {
     data: { divergenceDistance },
   });
 
-  const enabled = clientFlagService.getBoolean(FeatureFlagKey.SENTRY_CLIENT_METRICS_ENABLED, true);
+  const enabled = clientFlagService.getBoolean(ClientFeatureFlagKey.SENTRY_CLIENT_METRICS_ENABLED, true);
   if (enabled) {
     Sentry.metrics.count("client.dead_reckoning_snaps", 1);
   }
 }
 
 export function recordWebGPUError(error: unknown, context?: Record<string, unknown>): void {
-  const enabled = clientFlagService.getBoolean(FeatureFlagKey.TELEMETRY_WEBGPU_ERRORS, true);
+  const enabled = clientFlagService.getBoolean(ClientFeatureFlagKey.TELEMETRY_WEBGPU_ERRORS, true);
   if (!enabled) return;
 
   Sentry.captureException(error, {

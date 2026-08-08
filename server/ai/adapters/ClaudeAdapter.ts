@@ -6,6 +6,8 @@ import {
   NormalizedToolCall,
   TokenUsage,
 } from "./CommanderAdapter";
+import { serverFlagService } from "../../flags/flag-service";
+import { ServerFeatureFlagKey } from "../../flags/server-flags";
 
 function isRateLimitedError(err: any): boolean {
   const code = err?.status || err?.statusCode || err?.error?.code;
@@ -59,11 +61,25 @@ export class ClaudeAdapter implements CommanderAdapter {
       throw new Error("Anthropic API key not configured");
     }
 
-    const candidateModels = [
-      "claude-opus-4",
-      "claude-sonnet-4",
-      "claude-haiku-4",
-    ];
+    const roomId = options?.roomId;
+    const primaryModel = options?.primaryModel || await serverFlagService.getString(
+      ServerFeatureFlagKey.CLAUDE_PRIMARY_MODEL,
+      { roomId },
+      'claude-sonnet-4-6'
+    );
+    const fallbackList = options?.fallbackModels || await serverFlagService.getObject<string[]>(
+      ServerFeatureFlagKey.CLAUDE_FALLBACK_MODELS,
+      { roomId },
+      ['claude-opus-4-8', 'claude-haiku-4-5-20251001']
+    );
+    const candidateModels = [primaryModel, ...(Array.isArray(fallbackList) ? fallbackList : [])];
+    const uniqueModels = Array.from(new Set(candidateModels));
+
+    const maxOutputTokens = await serverFlagService.getNumber(
+      ServerFeatureFlagKey.LLM_MAX_OUTPUT_TOKENS_PER_CYCLE,
+      { roomId },
+      800
+    );
 
     // Flat tool translation format (input_schema, NO type: "function", NO parameters field)
     const formattedTools = tools.map((t) => ({
@@ -80,11 +96,11 @@ export class ClaudeAdapter implements CommanderAdapter {
     let lastError: any = null;
     let usedModel = "";
 
-    for (const modelName of candidateModels) {
+    for (const modelName of uniqueModels) {
       try {
         response = await this.client.messages.create({
           model: modelName,
-          max_tokens: 1024,
+          max_tokens: maxOutputTokens,
           system: systemInstructions,
           messages: [{ role: "user", content: payload }],
           tools: formattedTools.length > 0 ? formattedTools : undefined,

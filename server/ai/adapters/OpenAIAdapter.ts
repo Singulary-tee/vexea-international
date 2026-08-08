@@ -6,6 +6,8 @@ import {
   NormalizedToolCall,
   TokenUsage,
 } from "./CommanderAdapter";
+import { serverFlagService } from "../../flags/flag-service";
+import { ServerFeatureFlagKey } from "../../flags/server-flags";
 
 function isRateLimitedError(err: any): boolean {
   const code = err?.status || err?.statusCode || err?.error?.code;
@@ -59,7 +61,25 @@ export class OpenAIAdapter implements CommanderAdapter {
       throw new Error("OpenAI API key not configured");
     }
 
-    const candidateModels = ["gpt-5", "gpt-4.5"];
+    const roomId = options?.roomId;
+    const primaryModel = options?.primaryModel || await serverFlagService.getString(
+      ServerFeatureFlagKey.OPENAI_PRIMARY_MODEL,
+      { roomId },
+      'gpt-5.6-sol'
+    );
+    const fallbackList = options?.fallbackModels || await serverFlagService.getObject<string[]>(
+      ServerFeatureFlagKey.OPENAI_FALLBACK_MODELS,
+      { roomId },
+      ['gpt-5.6-terra']
+    );
+    const candidateModels = [primaryModel, ...(Array.isArray(fallbackList) ? fallbackList : [])];
+    const uniqueModels = Array.from(new Set(candidateModels));
+
+    const maxOutputTokens = await serverFlagService.getNumber(
+      ServerFeatureFlagKey.LLM_MAX_OUTPUT_TOKENS_PER_CYCLE,
+      { roomId },
+      800
+    );
 
     const formattedTools = tools.map((t) => ({
       type: "function" as const,
@@ -74,7 +94,7 @@ export class OpenAIAdapter implements CommanderAdapter {
     let lastError: any = null;
     let usedModel = "";
 
-    for (const modelName of candidateModels) {
+    for (const modelName of uniqueModels) {
       try {
         response = await this.client.chat.completions.create({
           model: modelName,
@@ -83,6 +103,7 @@ export class OpenAIAdapter implements CommanderAdapter {
             { role: "user", content: payload },
           ],
           tools: formattedTools.length > 0 ? formattedTools : undefined,
+          max_completion_tokens: maxOutputTokens,
         });
 
         usedModel = modelName;
