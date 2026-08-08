@@ -26,7 +26,8 @@ This file is the authoritative index of all directories and source files within 
     *   *Purpose:* Server-side Sentry initialization, error tracking, and metrics recording (latency, active units, player counts, security exploits).
     *   *Key Functions/Exports:* `initSentry()`, `recordServerTickDuration(ms)`, `recordServerActiveDrones(count)`, `recordServerConnectedPlayers(count)`, `recordLLMLatency(ms, model)`, `recordHitscanRejected(reason)`, `recordSecurityExploit(exploitType, extra)`.
 *   **`flags/` (Server Feature Flags)**
-    *   **`flag-service.ts`**: Resolves server-side feature flags via Doppler secrets with local fallbacks.
+    *   **`server-flags.ts`**: Defines server-only feature flag keys (`ServerFeatureFlagKey`), schema (`ServerFeatureFlagSchema`), and default values (`DEFAULT_SERVER_FEATURE_FLAGS`) for Sentry server telemetry, LLM Commander family/model parameters, and security logging.
+    *   **`flag-service.ts`**: Resolves server-side feature flags via ConfigCat / OpenFeature server SDK with local fallbacks. Restricted to server and shared flag keys.
 *   **`ai/` (Strategic AI)**
     *   **`CommanderMemory.ts`**: Modular Zero-GC match-state context compression engine for the LLM Commander. Formulates tight (<250 token) situational awareness strings containing match clock, squad composition, drone asset ledger, casualty delta, utility log, objective state, and clean zone summaries.
     *   **`DroneAvoidance.ts`**: Manages dynamic path avoidance and separation steering behaviors for autonomous drone swarms.
@@ -83,7 +84,7 @@ This file is the authoritative index of all directories and source files within 
     *   *Purpose:* Absolute single source of truth for game variables, network sizes, and entity shapes.
     *   *Key Functions/Exports:* `ZONES` registry, `WAYPOINTS` center-points, `TOPOLOGY` adjacency graph, `ZONE_BOUNDS` half-sizes, `DroneState` enum, `DroneType` enum, limits (`PLAYER_MAX_HP`, `CAMERA_MAX_HP`), and the `DRONE_CONFIGS` dictionary containing comprehensive visual, physical, and behavioral parameters per drone type.
 *   **`feature-flags.ts`**
-    *   *Purpose:* Shared feature flag definitions, types, and default schemas for Sentry, LLM, Store, Faction, and Match configurations.
+    *   *Purpose:* Shared feature flag definitions (`SharedFeatureFlagKey`), `SharedFeatureFlagSchema`, `DEFAULT_SHARED_FEATURE_FLAGS`, `FeatureFlagScope` enum, and `getFeatureFlagScope(key)` helper. Contains strictly flags required by both client and server domains (store dynamic offers, faction war, battle pass parameters, difficulty presets, desync threshold, flags used enabled).
 *   **`battle-pass.ts`**
     *   *Purpose:* Shared contracts for the Battle Pass system, including tier structures, reward types (Credits/Cosmetic), and seasonal generation logic (Phase 1).
 *   **`gamemode-configs.ts`**
@@ -166,7 +167,8 @@ This file is the authoritative index of all directories and source files within 
     *   *Purpose:* Client-side Sentry initialization, error tracking, and performance metrics (frame time, draw calls, network RTT).
     *   *Key Functions/Exports:* `initClientSentry()`, `recordClientFrameTime(ms)`, `recordClientDrawCalls(count)`, `recordClientNetworkRTT(ms)`, `recordDeadReckoningSnap()`.
 *   **`flags/` (Client Feature Flags)**
-    *   **`flag-service.ts`**: Manages client-side feature flags, supporting runtime overrides and server-supplied gate states.
+    *   **`client-flags.ts`**: Defines client-only feature flag keys (`ClientFeatureFlagKey`), schema (`ClientFeatureFlagSchema`), and default values (`DEFAULT_CLIENT_FEATURE_FLAGS`) for client Sentry telemetry, browser profiling, feedback widget, WebGPU error telemetry, and physics worker latency.
+    *   **`flag-service.ts`**: Manages client-side feature flags via ConfigCat / OpenFeature Web SDK with local fallbacks. Restricted to client and shared flag keys.
 *   **`settings.ts`**
     *   *Purpose:* Volume levels, mouse sensitivity configurations, and dynamic resolution scaling toggles.
 *   **`social.ts`**
@@ -291,6 +293,8 @@ This file is the authoritative index of all directories and source files within 
     *   **`deploy.yml`**: Master pipeline handling testing, coverage reporting via Codecov, and Firebase deployment.
 *   **`.gitignore` & `.gitattributes`**
     *   *Purpose:* Version control patterns and attribute configurations.
+*   **`scripts/` (Build & Maintenance Utility Scripts)**
+    *   **`sync-configcat.ts`**: Synchronizes feature flag keys and metadata with ConfigCat REST API.
 *   **`parse_glbs.cjs` & `tick_success_box.sh`**
     *   *Purpose:* CLI node script for inspecting GLB node trees and automated shell verification helper.
 *   **Architectural Specifications & Project Documents:**
@@ -352,4 +356,16 @@ Every file change in the VEXEA codebase must follow this strict two-step protoco
     *   `server/ai/LLMCommander.ts`: Decoupled LLMCommander from provider SDKs, replacing hardcoded Gemini logic with provider-agnostic `CommanderAdapter`.
     *   `shared/feature-flags.ts`: Added `LLM_COMMANDER_FAMILY` feature flag for server-side family routing.
 *   **Verification:** Verified zero provider SDK imports in `LLMCommander.ts`, exact Claude flat tool schemas, and verified build/test compilation.
+
+### Cycle 2026-08-08-05: Strict Feature Flag Scope Boundary Separation & FEATURE_FLAGS.md Audit
+*   **Target Files:** `server/flags/server-flags.ts`, `client/flags/client-flags.ts`, `shared/feature-flags.ts`, `server/flags/flag-service.ts`, `client/flags/flag-service.ts`, `FEATURE_FLAGS.md`, `.github/workflows/configcat-scan.yml`, `CODEBASE_INDEX.md`
+*   **Status:** Verified & Finalized
+*   **Modifications:**
+    *   `server/flags/server-flags.ts`: Created server-only feature flag definitions (`ServerFeatureFlagKey`, `ServerFeatureFlagSchema`, `DEFAULT_SERVER_FEATURE_FLAGS`).
+    *   `client/flags/client-flags.ts`: Created client-only feature flag definitions (`ClientFeatureFlagKey`, `ClientFeatureFlagSchema`, `DEFAULT_CLIENT_FEATURE_FLAGS`).
+    *   `shared/feature-flags.ts`: Refactored to contain strictly shared feature flags required by both client and server domains (`SharedFeatureFlagKey`, `SharedFeatureFlagSchema`, `DEFAULT_SHARED_FEATURE_FLAGS`, `getFeatureFlagScope`).
+    *   `server/flags/flag-service.ts` & `client/flags/flag-service.ts`: Updated to consume scoped flags cleanly with strict domain boundaries.
+    *   `FEATURE_FLAGS.md`: Created master registry cataloging all feature flags, scopes, types, defaults, and operational purposes.
+    *   `.github/workflows/configcat-scan.yml`: Re-disabled `push` trigger to keep scan workflow on `workflow_dispatch` manual trigger.
+*   **Verification:** Full `compile_applet` build succeeded with zero errors.
 
