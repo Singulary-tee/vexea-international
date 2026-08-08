@@ -14,6 +14,9 @@ This file is the authoritative index of all directories and source files within 
 *   **`Matchmaker.ts`**
     *   *Purpose:* Real player pooling system for matchmaking. Groups players into matches without bot-fill.
     *   *Key Functions/Exports:* `Matchmaker` class, `matchmaker` default/named export instance, `MATCHMAKER_MAX_WAIT_SECONDS` (45s constant), `addPlayerToPool`, `removePlayerFromPool`, `signalPlayerLoadingComplete`, `handlePlayerClassChange`.
+*   **`connection-registry.ts`**
+    *   *Purpose:* Lightweight connection registry for tracking active socket sessions without the resource overhead of a MatchRoom.
+    *   *Key Functions/Exports:* `ConnectionRegistry` class, `connectionRegistry` instance, `register`, `unregister`, `get`, `getAll`.
 *   **`MatchRoom.ts`**
     *   *Purpose:* The complete server-side simulation environment. Manages the 60Hz physics update loop, 20Hz state-synchronization packets, autonomous AI events, and per-match token budget tracking (`llmTokensUsedThisMatch`).
     *   *Key Functions/Exports:* `MatchRoom` class, handles player join/leave, bot integration, collision handling, hitscan/rewind raycasting, objective point timers, score accounting, and shutdown processing.
@@ -379,4 +382,13 @@ Every file change in the VEXEA codebase must follow this strict two-step protoco
     *   `server/ai/LLMCommander.ts`: Updated systemInstructions construction to append dynamic strategy brief to base prompt once per match, enforcing a 400 token ceiling (~1600 characters) with truncation fallback.
     *   `CODEBASE_INDEX.md`: Registered StrategyBriefStore.ts and cycle audit log.
 *   **Verification:** Verified zero build/lint/compile errors and tested with Vitest suite.
+
+### Cycle 2026-08-08-07: Purge Lobby MatchRoom & Implement Lightweight Connection Registry
+*   **Target Files:** `server/connection-registry.ts`, `server/index.ts`, `server/Matchmaker.ts`, `CODEBASE_INDEX.md`
+*   **Status:** Verified & Finalized
+*   **Modifications:**
+    *   `server/connection-registry.ts`: Created new module for zero-overhead socket tracking.
+    *   `server/index.ts`: Removed default lobby room creation and registration on connect. Implemented null guards across all event listeners to support menu-state where `currentRoom` and `pState` are null.
+    *   `server/Matchmaker.ts`: Integrated `onMatchFormed` callback into match formation logic to synchronize connection state once a game session begins.
+*   **Verification:** Verified zero physics/AI/Firestore activity on initial connection. Confirmed dev quick-start remains functional via direct room assignment.
 

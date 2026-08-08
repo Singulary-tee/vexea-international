@@ -171,7 +171,13 @@ export class Matchmaker {
       }
 
       (p.channel as any).currentRoom = targetRoom;
-      targetRoom.registerPlayer(p.reqUid || p.id, p.channel, null, p.classId);
+      const newPState = targetRoom.registerPlayer(p.reqUid || p.id, p.channel, null, p.classId);
+
+      // Notify connection handler that match has formed
+      const onMatchFormed = (p.channel as any).onMatchFormed;
+      if (onMatchFormed && typeof onMatchFormed === "function") {
+        onMatchFormed(targetRoom, newPState);
+      }
 
       p.channel.emit("reliable_event", {
         type: "MATCH_FOUND",

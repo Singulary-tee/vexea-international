@@ -378,6 +378,15 @@ export class MapLoader {
         this.mergedMeshes.push(clone as any as THREE.Mesh); // Track to dispose
         this.scene.add(clone);
         this.sceneAddCallCount++;
+      } else if (prop.placeholder || !prop.meshFile) {
+        // Create a simple red sphere as a placeholder for cameras
+        const geom = new THREE.SphereGeometry(0.2, 8, 8);
+        const mat = new THREE.MeshStandardMaterial({ color: 0xff0000, emissive: 0xff0000, emissiveIntensity: 0.5 });
+        const mesh = new THREE.Mesh(geom, mat);
+        mesh.position.set(prop.position.x, prop.position.y, prop.position.z);
+        this.scene.add(mesh);
+        this.mergedMeshes.push(mesh);
+        this.sceneAddCallCount++;
       }
     }
   }

@@ -17,6 +17,8 @@ import { initializeApp, cert, getApps } from "firebase-admin/app";
 import { getFirestore, FieldValue } from "firebase-admin/firestore";
 
 import { createTransport, ChannelAdapter } from "./transport/adapter";
+import { connectionRegistry } from "./connection-registry";
+import { MatchRoom, PlayerState } from "./MatchRoom";
 import { serverFlagService } from "./flags/flag-service";
 import { serverEconomyService } from "./data/economy-service";
 import { matchManager } from "./MatchManager";
@@ -467,20 +469,10 @@ io.onConnection((channel: ChannelAdapter) => {
     }
   });
 
-  // Default connection starts in the dedicated lobby pool room
-  let currentRoom = matchManager.getOrCreateRoom(
-    "lobby",
-    process.env.GEMINI_API_KEY,
-  );
-  currentRoom.triggerStartMatch();
-  (channel as any).currentRoom = currentRoom;
-  let pState = currentRoom.registerPlayer(playerId, channel, null);
-
-  // Store MatchInProgress initially so it counts as pending
-  setDoc(doc(db, "MatchInProgress", playerId), {
-    playerId,
-    startTime: Date.now(),
-  }).catch((e) => {});
+  // Register connection only. No MatchRoom. No physics. No AI.
+  let currentRoom: MatchRoom | null = null;
+  let pState: PlayerState | null = null;
+  connectionRegistry.register(playerId, channel);
 
   // Matchmaking request: Delegates directly to Matchmaker module
   const handleMatchmakingRequest = (args: any) => {
@@ -506,10 +498,12 @@ io.onConnection((channel: ChannelAdapter) => {
       return;
     }
 
-    // Unregister from current room (usually lobby) before joining matchmaking pool
-    if (currentRoom) {
-      currentRoom.removePlayer(pState.id);
-    }
+    // No lobby room to leave. Enter matchmaking pool directly.
+    // Store callback on channel so matchmaker can notify us when match forms.
+    (channel as any).onMatchFormed = (room: MatchRoom, state: PlayerState) => {
+      currentRoom = room;
+      pState = state;
+    };
 
     matchmaker.addPlayerToPool(playerId, reqUid, channel, reqMap, reqClass);
   };
@@ -532,9 +526,10 @@ io.onConnection((channel: ChannelAdapter) => {
     if (newClassId && CLASSES[newClassId]) {
       if (args?.matchId) {
         matchmaker.handlePlayerClassChange(args.matchId, playerId, newClassId);
-      } else if (currentRoom && currentRoom.roomId !== "lobby") {
+      } else if (currentRoom) {
         currentRoom.applyPlayerClassLoadout(playerId, newClassId);
       }
+      // If no currentRoom and no matchId, class selection is client-side only (menu)
     }
   });
 
@@ -543,22 +538,27 @@ io.onConnection((channel: ChannelAdapter) => {
   });
 
   channel.on("latency_report", (data: any) => {
-    if (pState && typeof data?.latency === "number") {
-      pState.ping = data.latency;
+    if (typeof data?.latency === "number") {
+      if (pState) {
+        pState.ping = data.latency;
+      }
+      // Also store on channel for pre-match latency tracking
+      (channel as any).ping = data.latency;
     }
   });
 
   channel.on("player_ready", () => {
-    const activeRoom = (channel as any).currentRoom || currentRoom;
-    if (activeRoom && activeRoom.roomId !== "lobby") {
-      if (pState) {
-        activeRoom.setPlayerReady(pState.id);
-      }
+    const activeRoom = currentRoom;
+    if (activeRoom && pState) {
+      activeRoom.setPlayerReady(pState.id);
     }
   });
 
   channel.on("rewarded_ad", () => {
-    if (pState) pState.adMultiplier = 2;
+    if (pState) {
+      pState.adMultiplier = 2;
+    }
+    // If no pState (not in match), ad reward is queued or ignored
   });
 
   channel.onRaw((message: any) => {
@@ -581,49 +581,49 @@ io.onConnection((channel: ChannelAdapter) => {
   });
 
   channel.on("dev_spawn_bots", (args: any) => {
-    if (!IS_DEV) return;
+    if (!IS_DEV || !currentRoom) return;
     const count = typeof args.count === "number" ? args.count : 3;
     currentRoom.spawnTestBots(count);
   });
 
   channel.on("dev_spawn_cube", (args: any) => {
-    if (!IS_DEV) return;
+    if (!IS_DEV || !currentRoom || !pState) return;
     currentRoom.devSpawnCube(pState.id, args);
   });
 
   channel.on("dev_clear_cube", () => {
-    if (!IS_DEV) return;
+    if (!IS_DEV || !currentRoom) return;
     currentRoom.devClearCube();
   });
 
   channel.on("dev_set_gravity_y", (args: any) => {
-    if (!IS_DEV) return;
+    if (!IS_DEV || !currentRoom) return;
     if (args && typeof args.gravityY === "number") {
       currentRoom.setDevPhysicsGravityY(args.gravityY);
     }
   });
 
   channel.on("dev_set_speed_multiplier", (args: any) => {
-    if (!IS_DEV) return;
+    if (!IS_DEV || !currentRoom) return;
     if (args && typeof args.speedMultiplier === "number") {
       currentRoom.setDevPhysicsSpeedMultiplier(args.speedMultiplier);
     }
   });
 
   channel.on("dev_set_paused", (args: any) => {
-    if (!IS_DEV) return;
+    if (!IS_DEV || !currentRoom) return;
     if (args && typeof args.paused === "boolean") {
       currentRoom.setDevPhysicsPaused(args.paused);
     }
   });
 
   channel.on("dev_step_once", () => {
-    if (!IS_DEV) return;
+    if (!IS_DEV || !currentRoom) return;
     currentRoom.setDevPhysicsStepOnce();
   });
 
   channel.on("dev_spawn_drone", (args: any) => {
-    if (!IS_DEV) return;
+    if (!IS_DEV || !currentRoom) return;
     const type = typeof args.type === "number" ? args.type : Number(args.type);
     const pos = (args.x !== undefined && args.y !== undefined && args.z !== undefined) ? 
       { x: Number(args.x), y: Number(args.y), z: Number(args.z) } : undefined;
@@ -631,19 +631,19 @@ io.onConnection((channel: ChannelAdapter) => {
   });
 
   channel.on("dev_clear_drones", () => {
-    if (!IS_DEV) return;
+    if (!IS_DEV || !currentRoom) return;
     for (let i = 0; i < currentRoom.drones.length; i++) {
       currentRoom.drones[i].state = DroneState.DEAD;
     }
   });
 
   channel.on("dev_spawn_test_entity", (args: any) => {
-    if (!IS_DEV) return;
+    if (!IS_DEV || !currentRoom) return;
     currentRoom.spawnTestEntity(args.x, args.y, args.z);
   });
 
   channel.on("dev_spawn_frozen_drone", (args: any) => {
-    if (!IS_DEV) return;
+    if (!IS_DEV || !currentRoom) return;
     const success = currentRoom.registerDeveloperSpawner(args.type, { x: args.x, y: args.y, z: args.z });
     if (success) {
       const spawnedDrone = currentRoom.drones.find(x => x.id === currentRoom.nextDroneId - 1);
@@ -654,7 +654,7 @@ io.onConnection((channel: ChannelAdapter) => {
   });
 
   channel.on("dev_clear_frozen", () => {
-    if (!IS_DEV) return;
+    if (!IS_DEV || !currentRoom) return;
     for (let i = 0; i < currentRoom.drones.length; i++) {
       if ((currentRoom.drones[i] as any).isFrozen) {
         currentRoom.despawnDrone(currentRoom.drones[i]);
@@ -663,38 +663,38 @@ io.onConnection((channel: ChannelAdapter) => {
   });
 
   channel.on("dev_clear_test_entities", () => {
-    if (!IS_DEV) return;
+    if (!IS_DEV || !currentRoom) return;
     currentRoom.clearTestEntities();
   });
 
   channel.on("dev_test_entity_mode", (args: any) => {
-    if (!IS_DEV) return;
+    if (!IS_DEV || !currentRoom) return;
     currentRoom.setTestEntityMode(args.mode);
   });
 
   channel.on("dev_test_entity_target", (args: any) => {
-    if (!IS_DEV) return;
+    if (!IS_DEV || !currentRoom) return;
     currentRoom.setTestEntityTarget(args.x, args.y, args.z);
   });
 
   channel.on("dev_test_entity_sight", () => {
-    if (!IS_DEV) return;
+    if (!IS_DEV || !currentRoom) return;
     currentRoom.triggerTestEntitySight();
   });
 
   channel.on("dev_test_entity_sound", () => {
-    if (!IS_DEV) return;
+    if (!IS_DEV || !currentRoom) return;
     currentRoom.triggerTestEntitySound();
   });
 
   channel.on("dev_test_entity_collision_filter", (args: any) => {
-    if (!IS_DEV) return;
+    if (!IS_DEV || !currentRoom) return;
     currentRoom.setTestEntityCollisionFilter(args.group, args.mask);
   });
 
 
   channel.on("dev_toggle_llm", (args: any) => {
-    if (!IS_DEV) return;
+    if (!IS_DEV || !currentRoom) return;
     currentRoom.llmCommanderDisabled = !!args?.disabled;
     console.log(`[VEXEA SERVER] LLM Commander disabled toggle processed: ${currentRoom.llmCommanderDisabled}`);
   });
@@ -735,8 +735,8 @@ io.onConnection((channel: ChannelAdapter) => {
   });
 
   channel.on("dev_set_class", (args: any) => {
-    if (!IS_DEV) return;
-    if (args.playerClass && pState) {
+    if (!IS_DEV || !currentRoom || !pState) return;
+    if (args.playerClass) {
       const classId = (args.playerClass as string).toUpperCase() as ClassId;
       if (CLASSES[classId]) {
         currentRoom.applyPlayerClassLoadout(pState.id, classId);
@@ -745,9 +745,9 @@ io.onConnection((channel: ChannelAdapter) => {
   });
 
   channel.on("dev_set_position", (args: any) => {
-    if (!IS_DEV) return;
+    if (!IS_DEV || !pState) return;
     console.log(`[SERVER DEV EVENT] Received dev_set_position:`, args, "pState exists:", !!pState);
-    if (args.position && pState) {
+    if (args.position) {
       pState.posX = args.position.x;
       pState.posY = args.position.y;
       pState.posZ = args.position.z;
@@ -763,24 +763,20 @@ io.onConnection((channel: ChannelAdapter) => {
   });
 
   channel.on("dev_toggle_god_mode", (args: any) => {
-    if (!IS_DEV) return;
-    if (pState) {
-      pState.godMode = !!args?.godMode;
-      console.log(`[SERVER DEV EVENT] Player ${pState.id} God Mode toggled:`, pState.godMode);
-    }
+    if (!IS_DEV || !pState) return;
+    pState.godMode = !!args?.godMode;
+    console.log(`[SERVER DEV EVENT] Player ${pState.id} God Mode toggled:`, pState.godMode);
   });
 
   channel.on("dev_toggle_infinite_ammo", (args: any) => {
-    if (!IS_DEV) return;
-    if (pState) {
-      pState.infiniteAmmo = !!args?.infiniteAmmo;
-      console.log(`[SERVER DEV EVENT] Player ${pState.id} Infinite Ammo toggled:`, pState.infiniteAmmo);
-    }
+    if (!IS_DEV || !pState) return;
+    pState.infiniteAmmo = !!args?.infiniteAmmo;
+    console.log(`[SERVER DEV EVENT] Player ${pState.id} Infinite Ammo toggled:`, pState.infiniteAmmo);
   });
 
   channel.on("dev_set_hp", (args: any) => {
-    if (!IS_DEV) return;
-    if (pState && typeof args?.hp === "number") {
+    if (!IS_DEV || !pState) return;
+    if (typeof args?.hp === "number") {
       pState.hp = args.hp;
       pState.channel.emit("reliable_event", {
         type: "PLAYER_HIT",
@@ -792,13 +788,11 @@ io.onConnection((channel: ChannelAdapter) => {
   });
 
   channel.on("dev_nuke_drones", () => {
-    if (!IS_DEV) return;
-    if (currentRoom) {
-      console.log(`[SERVER DEV EVENT] Nuking all active drones on map`);
-      for (let i = 0; i < currentRoom.drones.length; i++) {
-        currentRoom.drones[i].hp = 0;
-        currentRoom.drones[i].state = DroneState.DEAD;
-      }
+    if (!IS_DEV || !currentRoom) return;
+    console.log(`[SERVER DEV EVENT] Nuking all active drones on map`);
+    for (let i = 0; i < currentRoom.drones.length; i++) {
+      currentRoom.drones[i].hp = 0;
+      currentRoom.drones[i].state = DroneState.DEAD;
     }
   });
 
@@ -807,37 +801,36 @@ io.onConnection((channel: ChannelAdapter) => {
   });
 
   channel.on("latency_report", (args: any) => {
-    if (pState && typeof args?.latency === "number") {
-      pState.ping = args.latency;
+    if (typeof args?.latency === "number") {
+      if (pState) {
+        pState.ping = args.latency;
+      }
+      (channel as any).ping = args.latency;
     }
   });
 
   channel.on("dev_force_match_end", (args: any) => {
-    if (!IS_DEV) return;
-    if (currentRoom) {
-      const result = args?.result === "win" ? "win" : "loss";
-      console.log(`[SERVER DEV EVENT] Forcing match end with result:`, result);
-      (currentRoom as any).handleMatchEnd(result);
-    }
+    if (!IS_DEV || !currentRoom) return;
+    const result = args?.result === "win" ? "win" : "loss";
+    console.log(`[SERVER DEV EVENT] Forcing match end with result:`, result);
+    (currentRoom as any).handleMatchEnd(result);
   });
 
   channel.on("debug_get_state", () => {
-    if (!IS_DEV) return;
-    if (currentRoom) {
-      const state = {
-        players: Array.from(currentRoom.players.values()).map(p => ({
-          id: p.id,
-          pos: { x: p.posX, y: p.posY, z: p.posZ }
-        })),
-        drones: currentRoom.drones.filter((d: any) => d.state !== DroneState.DEAD).map((d: any) => ({
-          id: d.id,
-          type: d.type,
-          pos: { x: d.posX, y: d.posY, z: d.posZ }
-        })),
-        buildings: currentRoom.collisionMap?.boxes || []
-      };
-      channel.emit("debug_state_response", state);
-    }
+    if (!IS_DEV || !currentRoom) return;
+    const state = {
+      players: Array.from(currentRoom.players.values()).map(p => ({
+        id: p.id,
+        pos: { x: p.posX, y: p.posY, z: p.posZ }
+      })),
+      drones: currentRoom.drones.filter((d: any) => d.state !== DroneState.DEAD).map((d: any) => ({
+        id: d.id,
+        type: d.type,
+        pos: { x: d.posX, y: d.posY, z: d.posZ }
+      })),
+      buildings: currentRoom.collisionMap?.boxes || []
+    };
+    channel.emit("debug_state_response", state);
   });
 
   channel.on("reliable_event", (args: any) => {
@@ -934,6 +927,8 @@ io.onConnection((channel: ChannelAdapter) => {
       const isPrimary = slot === "primary";
       const weaponStats = isPrimary ? WEAPONS.rifle : WEAPONS.pistol;
       const wState = pState.weaponState[slot];
+
+      if (!currentRoom) return;
 
       if (wState.currentMag <= 0) {
         if (!wState.isReloading && wState.reserve > 0) {
@@ -1245,7 +1240,7 @@ io.onConnection((channel: ChannelAdapter) => {
 
   channel.on("PLAYER_QUIT", () => {
     matchmaker.removePlayerFromPool(playerId);
-    if (pState) {
+    if (pState && currentRoom) {
       console.log(`Player quit mission manually: ${pState.id}`);
       currentRoom.removePlayer(pState.id);
     }
@@ -1256,17 +1251,17 @@ io.onConnection((channel: ChannelAdapter) => {
 
   channel.onDisconnect(() => {
     matchmaker.removePlayerFromPool(playerId);
-    if (pState) {
+    connectionRegistry.unregister(playerId);
+    if (pState && currentRoom) {
       const pid = pState.id;
-      const room = (channel as any).currentRoom || currentRoom;
       console.log(`Disconnection registered: ${pid}. Waiting 10s for reconnection...`);
       
       setTimeout(() => {
         // If the player still has the same room and isn't connected
-        const p = room.players.get(pid);
+        const p = currentRoom!.players.get(pid);
         if (p && !p.channel.connected) {
            console.log(`[MATCH] Reconnection timeout expired for player ${pid}. Removing.`);
-           room.removePlayer(pid);
+           currentRoom!.removePlayer(pid);
         }
       }, 10000);
     }
