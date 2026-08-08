@@ -14,6 +14,7 @@ import { ReconnectionSystem } from "./src/systems/ReconnectionSystem";
 import { CameraEffectsSystem } from "./src/camera/CameraEffects";
 import { CompassSystem } from "./src/systems/CompassSystem";
 import { LLMObjectiveSystem } from "./src/systems/LLMObjectiveSystem";
+import { ChatHUDSystem } from "./src/systems/ChatHUDSystem";
 
 
 export interface NetworkDroneState {
@@ -126,6 +127,7 @@ export class MatchController {
   public drones: DroneSystem | null = null;
   public diagnosis: DiagnosisSystem | null = null;
   public hud: HUDSystem | null = null;
+  public chatHUD: ChatHUDSystem | null = null;
   public compass: CompassSystem | null = null;
   public visuals: VisualsSystem | null = null;
   public reconnection: ReconnectionSystem | null = null;
@@ -230,6 +232,8 @@ export class MatchController {
     this.drones.init();
     this.hud = new HUDSystem(this);
     this.hud.init();
+    this.chatHUD = new ChatHUDSystem(this);
+    this.chatHUD.init();
     this.compass = new CompassSystem(this);
     this.compass.init();
     this.visuals = new VisualsSystem(this);
@@ -343,6 +347,11 @@ export class MatchController {
 
     if (this.hud) {
         this.hud = null;
+    }
+
+    if (this.chatHUD) {
+        this.chatHUD.dispose();
+        this.chatHUD = null;
     }
 
     if (this.compass) {

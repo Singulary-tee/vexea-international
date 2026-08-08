@@ -141,6 +141,7 @@ export class LLMCommander {
   public feedback: LLMCommanderFeedback = new LLMCommanderFeedback();
   public loadedStrategyBrief: string | null = null;
   public isStrategyBriefLoaded = false;
+  public lastCycleSummary: string = "NO_RECENT_LLM_TRANSMISSIONS";
 
   // Backward compatibility getters/setters
   public get geminiClient(): any {
@@ -346,7 +347,9 @@ Topological graph adjacency (Zones):
       }
 
       if (calls && calls.length > 0) {
-        this.room.lastLLMToolCall = JSON.stringify(calls);
+        const callSummary = calls.map((c: any) => `${c.name}(${JSON.stringify(c.args || {})})`).join("; ");
+        this.lastCycleSummary = callSummary;
+        this.room.lastLLMToolCall = callSummary;
       }
       this.recentExecutionHistory.push({
         timestamp: Date.now(),

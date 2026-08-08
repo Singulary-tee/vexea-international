@@ -28,7 +28,7 @@ export class PlayerProfileStore {
   public static async getProfile(uid: string): Promise<PlayerGameProfile | null> {
     if (!uid || uid.startsWith("bot_")) return null;
     try {
-      const subDocRef = doc(db, "Users", uid, "gameProfile", "v1");
+      const subDocRef = doc(db, `Users/${uid}/gameProfile/v1`);
       const snap = await getDoc(subDocRef);
       if (snap.exists()) {
         return snap.data() as PlayerGameProfile;
@@ -54,7 +54,7 @@ export class PlayerProfileStore {
     if (!uid || isBot) return;
 
     try {
-      const subDocRef = doc(db, "Users", uid, "gameProfile", "v1");
+      const subDocRef = doc(db, `Users/${uid}/gameProfile/v1`);
       const snap = await getDoc(subDocRef);
 
       const normalizedClass = (classId || "ASSAULT").toUpperCase();

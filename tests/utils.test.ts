@@ -127,13 +127,13 @@ describe('VEXEA Core Systems Unit Tests', () => {
     it('should correctly initialize RECON class utility items', () => {
       const state = createInitialUtilityState('RECON');
       expect(state.utility1.id).toBe('Radio');
-      expect(state.utility2.id).toBe('Signal Disruptor');
+      expect(state.utility2.id).toBe('Signal Jammer');
     });
 
     it('should correctly initialize DEMOLITIONS class utility items', () => {
       const state = createInitialUtilityState('DEMOLITIONS');
-      expect(state.utility1.id).toBe('EMP');
-      expect(state.utility2.id).toBe('C4');
+      expect(state.utility1.id).toBe('C4');
+      expect(state.utility2.id).toBe('Proximity Mine');
     });
 
     it('should scale utility cooldowns with multiplier', () => {

@@ -40,9 +40,15 @@ export class CommanderMemory {
 
   public onUtilityUsed(playerId: string, utilityId: string) {
     const elapsedSec = Math.max(0, Math.floor((Date.now() - (this.room.matchStartTime || Date.now())) / 1000));
+    let displayId = utilityId;
+    if (utilityId === "Radio") {
+      displayId = "Radio intercepted";
+    } else if (utilityId === "Signal Jammer") {
+      displayId = "Signal Jammer activated";
+    }
     const rec: UtilityUsageRecord = {
       playerId,
-      utilityId,
+      utilityId: displayId,
       timestamp: Date.now(),
       elapsedSec,
     };

@@ -43,6 +43,7 @@ import { CLASSES, ClassId } from "../shared/classes.js";
 import {
   createInitialUtilityState,
   PlayerUtilityState,
+  UTILITIES,
   GRENADE_DAMAGE,
   GRENADE_RADIUS,
   GRENADE_FUSE_TIME,
@@ -53,9 +54,11 @@ import {
   REVIVE_HEALTH_RESTORED,
   REVIVE_TARGET_RADIUS,
   RADIO_MAX_CHARGES,
-  SIGNAL_DISRUPTOR_DURATION,
-  EMP_RADIUS,
-  EMP_DURATION,
+  SIGNAL_JAMMER_DURATION,
+  SIGNAL_JAMMER_RADIUS,
+  PROXIMITY_MINE_DAMAGE,
+  PROXIMITY_MINE_RADIUS,
+  PROXIMITY_MINE_TRIGGER_RADIUS,
   C4_DAMAGE,
   C4_RADIUS,
 } from "../shared/utilities";
@@ -356,6 +359,7 @@ export class MatchRoom {
   public llmCommanderDisabled = false;
   public lastLLMToolCall: string | null = null;
   public activeC4Map: Map<string, { x: number; y: number; z: number }> = new Map();
+  public proximityMines: { id: string; ownerId: string; x: number; y: number; z: number; triggered: boolean }[] = [];
 
   // Sockets pre-allocated pack write buffers
   private preallocatedBuffer = new ArrayBuffer(TOTAL_STATE_BUFFER_SIZE);
@@ -2733,6 +2737,54 @@ export class MatchRoom {
       }
     }
 
+    // Proximity Mines tick check
+    if (this.proximityMines.length > 0) {
+      let writeIdx = 0;
+      for (let m = 0; m < this.proximityMines.length; m++) {
+        const mine = this.proximityMines[m];
+        if (mine.triggered) continue;
+
+        let triggered = false;
+        for (let i = 0; i < this.drones.length; i++) {
+          const d = this.drones[i];
+          if (d.state === DroneState.DEAD) continue;
+
+          const dx = d.posX - mine.x;
+          const dy = d.posY - mine.y;
+          const dz = d.posZ - mine.z;
+          const dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
+          if (dist <= PROXIMITY_MINE_TRIGGER_RADIUS) {
+            triggered = true;
+            break;
+          }
+        }
+
+        if (triggered) {
+          mine.triggered = true;
+          this.applyExplosionDamage(
+            mine,
+            PROXIMITY_MINE_RADIUS,
+            PROXIMITY_MINE_DAMAGE,
+            mine.ownerId,
+            "player"
+          );
+          this.broadcastReliableEvent({
+            type: "UTILITY_EFFECT",
+            utilityId: UTILITIES["Proximity Mine"].id,
+            action: "detonate",
+            playerId: mine.ownerId,
+            origin: mine,
+            radius: PROXIMITY_MINE_RADIUS,
+            damage: PROXIMITY_MINE_DAMAGE,
+          });
+        } else {
+          this.proximityMines[writeIdx] = mine;
+          writeIdx++;
+        }
+      }
+      this.proximityMines.length = writeIdx;
+    }
+
     // Reset firedThisTick for all players at the end of the tick
     for (const p of this.players.values()) {
       p.firedThisTick = false;
@@ -3671,33 +3723,20 @@ export class MatchRoom {
         }
         break;
       }
-      case "Radio": {
+      case UTILITIES["Radio"].id: {
         uSlot.charges = RADIO_MAX_CHARGES;
-        const interceptedCall = this.lastLLMToolCall || "NO_RECENT_LLM_TRANSMISSIONS";
-        player.channel.emit("reliable_event", {
-          type: "RADIO_INTERCEPT",
-          data: interceptedCall,
-          timestamp: Date.now(),
-        });
+        const summary = this.llmCommander?.lastCycleSummary || "NO TRANSMISSION DETECTED";
+        player.channel.emit("radio_intercept", { summary });
         this.broadcastReliableEvent({
           type: "UTILITY_EFFECT",
-          utilityId: "Radio",
+          utilityId: UTILITIES["Radio"].id,
           playerId: player.id,
         });
         break;
       }
-      case "Signal Disruptor": {
-        player.signalDisruptorUntil = Date.now() + SIGNAL_DISRUPTOR_DURATION * 1000;
-        this.broadcastReliableEvent({
-          type: "UTILITY_EFFECT",
-          utilityId: "Signal Disruptor",
-          playerId: player.id,
-          duration: SIGNAL_DISRUPTOR_DURATION,
-        });
-        break;
-      }
-      case "EMP": {
+      case UTILITIES["Signal Jammer"].id: {
         const nowMs = Date.now();
+        player.signalDisruptorUntil = nowMs + SIGNAL_JAMMER_DURATION * 1000;
         let disabledCount = 0;
         for (let c = 0; c < this.cameras.length; c++) {
           const cam = this.cameras[c];
@@ -3706,19 +3745,43 @@ export class MatchRoom {
           const dy = cam.posY - throwOrigin.y;
           const dz = cam.posZ - throwOrigin.z;
           const dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
-          if (dist <= EMP_RADIUS) {
-            cam.disabledUntil = nowMs + EMP_DURATION * 1000;
+          if (dist <= SIGNAL_JAMMER_RADIUS) {
+            cam.disabledUntil = nowMs + SIGNAL_JAMMER_DURATION * 1000;
             disabledCount++;
           }
         }
         this.broadcastReliableEvent({
           type: "UTILITY_EFFECT",
-          utilityId: "EMP",
+          utilityId: UTILITIES["Signal Jammer"].id,
           playerId: player.id,
           origin: throwOrigin,
-          radius: EMP_RADIUS,
-          duration: EMP_DURATION,
+          radius: SIGNAL_JAMMER_RADIUS,
+          duration: SIGNAL_JAMMER_DURATION,
           disabledCameras: disabledCount,
+        });
+        break;
+      }
+      case UTILITIES["Proximity Mine"].id: {
+        const mineId = `mine_${player.id}_${Date.now()}`;
+        const placePos = {
+          x: throwOrigin.x,
+          y: throwOrigin.y,
+          z: throwOrigin.z,
+        };
+        this.proximityMines.push({
+          id: mineId,
+          ownerId: player.id,
+          x: placePos.x,
+          y: placePos.y,
+          z: placePos.z,
+          triggered: false,
+        });
+        this.broadcastReliableEvent({
+          type: "UTILITY_EFFECT",
+          utilityId: UTILITIES["Proximity Mine"].id,
+          action: "place",
+          playerId: player.id,
+          origin: placePos,
         });
         break;
       }
