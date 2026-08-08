@@ -36,6 +36,8 @@ This file is the authoritative index of all directories and source files within 
     *   **`DronePerception.ts`**: Evaluates line-of-sight, raycasting, and sensory awareness updates for AI agents.
     *   **`LLMCommander.ts`**: High-level strategic controller refactored to be provider-agnostic via `CommanderAdapter`. Formulates formatted prompt strings, delegates execution to provider adapters, manages strategic AP resource pools, and enforces token budget ceilings.
     *   **`LLMCommanderFeedback.ts`**: Processes post-command evaluation, reinforcement feedback, and action success telemetry for the LLM Commander.
+    *   **`strategy/` (LLM Strategy Brief Store)**
+        *   **`StrategyBriefStore.ts`**: Persistence module (`StrategyBriefStore`, `StrategyBriefDoc`) managing map-scoped dynamic strategic briefs stored at `StrategyBriefs/{mapId}` in Firestore with default skeleton provisioning and token cap enforcement.
     *   **`adapters/` (LLM Commander Provider Adapters)**
         *   **`CommanderAdapter.ts`**: Core adapter interface (`CommanderAdapter`), tool normalization structures (`CommanderTool`, `NormalizedToolCall`), and token usage types (`TokenUsage`).
         *   **`GeminiAdapter.ts`**: Adapter for Gemini models via `@google/genai` with fallback model support and tool format translation.
@@ -368,4 +370,13 @@ Every file change in the VEXEA codebase must follow this strict two-step protoco
     *   `FEATURE_FLAGS.md`: Created master registry cataloging all feature flags, scopes, types, defaults, and operational purposes.
     *   `.github/workflows/configcat-scan.yml`: Re-disabled `push` trigger to keep scan workflow on `workflow_dispatch` manual trigger.
 *   **Verification:** Full `compile_applet` build succeeded with zero errors.
+
+### Cycle 2026-08-08-06: Implement Strategy Brief Skeleton Infrastructure (Batch 5)
+*   **Target Files:** `server/ai/strategy/StrategyBriefStore.ts`, `server/ai/LLMCommander.ts`, `CODEBASE_INDEX.md`
+*   **Status:** Verified & Finalized
+*   **Modifications:**
+    *   `server/ai/strategy/StrategyBriefStore.ts`: Extracted strategy brief store reading/writing map-scoped strategy briefs at `StrategyBriefs/{mapId}` in Firestore with default skeleton generator for `map_1_facility`.
+    *   `server/ai/LLMCommander.ts`: Updated systemInstructions construction to append dynamic strategy brief to base prompt once per match, enforcing a 400 token ceiling (~1600 characters) with truncation fallback.
+    *   `CODEBASE_INDEX.md`: Registered StrategyBriefStore.ts and cycle audit log.
+*   **Verification:** Verified zero build/lint/compile errors and tested with Vitest suite.
 

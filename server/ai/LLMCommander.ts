@@ -18,6 +18,7 @@ import { PlayerProfileStore, PlayerGameProfile } from "../player-data/PlayerProf
 import { BriefingRenderer } from "../player-data/BriefingRenderer";
 import { CommanderAdapter, CommanderTool } from "./adapters/CommanderAdapter";
 import { AdapterFactory } from "./adapters/AdapterFactory";
+import { StrategyBriefStore } from "./strategy/StrategyBriefStore";
 
 const MAX_DRONES = 40; // Hardcoded from MatchRoom
 
@@ -138,6 +139,8 @@ export class LLMCommander {
   public llmThrottleCooldownUntil = 0;
   public recentExecutionHistory: ExecutionHistoryRecord[] = [];
   public feedback: LLMCommanderFeedback = new LLMCommanderFeedback();
+  public loadedStrategyBrief: string | null = null;
+  public isStrategyBriefLoaded = false;
 
   // Backward compatibility getters/setters
   public get geminiClient(): any {
@@ -276,7 +279,26 @@ export class LLMCommander {
     const payloadToLLM = `Dynamic payload:\n${compressedContext}${outstandingPayload}\nCommander AP Pool: ${this.room.commanderAP}\n${feedbackBlock}${initialBriefingBlock}Failed operations from previous cycle: ${JSON.stringify(this.room.failedOperations)}`;
     this.room.failedOperations.length = 0;
 
-    const systemInstructions = `You are an automated state-machine orchestrator managing unit group allocations and zone routing. Respond strictly and exclusively with tool calls. Do not roleplay, invent narrative, adopt a persona, or output natural language. Clinical mechanical execution only.
+    if (!this.isStrategyBriefLoaded) {
+      const mapId = this.room?.mapId;
+      if (mapId) {
+        const briefDoc = await StrategyBriefStore.getBrief(mapId);
+        let briefText = briefDoc ? briefDoc.content : "";
+        if (briefText) {
+          const maxChars = 1600; // ~400 tokens
+          if (briefText.length > maxChars) {
+            console.warn(
+              `[LLMCommander] Strategy brief for ${mapId} exceeds token cap (~400 tokens). Truncating.`
+            );
+            briefText = briefText.slice(0, maxChars) + "\n[TRUNCATED]";
+          }
+        }
+        this.loadedStrategyBrief = briefText;
+      }
+      this.isStrategyBriefLoaded = true;
+    }
+
+    const baseInstructions = `You are an automated state-machine orchestrator managing unit group allocations and zone routing. Respond strictly and exclusively with tool calls. Do not roleplay, invent narrative, adopt a persona, or output natural language. Clinical mechanical execution only.
 
 Unit types:
 - Recon Drone (recon_drone): HP 20, Speed Highest, Air. Non-combat intelligence unit that maintains confirmed player presence in its zone summary.
@@ -295,6 +317,10 @@ Topological graph adjacency (Zones):
 - zone_plant connected to: zone_warehouse, zone_bridge, zone_core
 - zone_tunnels connected to: zone_warehouse, zone_core
 - zone_core connected to: zone_plant, zone_tunnels`;
+
+    const systemInstructions = this.loadedStrategyBrief
+      ? `${baseInstructions}\n\n${this.loadedStrategyBrief}`
+      : baseInstructions;
 
     try {
       let { calls, usage, modelUsed } = await this.adapter.execute(

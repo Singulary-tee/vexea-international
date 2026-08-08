@@ -1,5 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { LLMCommander } from '../server/ai/LLMCommander';
+import { StrategyBriefStore } from '../server/ai/strategy/StrategyBriefStore';
 
 vi.mock('@google/genai', () => ({
   GoogleGenAI: class {
@@ -83,6 +84,41 @@ describe('LLMCommander Tests', () => {
     await commander.executeLLMStep();
     // Reached 0 -> order resolved and deleted
     expect(outstandingOrders.has('ALPHA')).toBe(false);
+  });
+
+  it('should generate valid default brief format for map_1_facility', async () => {
+    const brief = await StrategyBriefStore.ensureDefaultBrief('map_1_facility');
+    expect(brief.mapId).toBe('map_1_facility');
+    expect(brief.content).toContain('[STRATEGY BRIEF — Facility]');
+    expect(brief.content).toContain('AP ECONOMY:');
+    expect(brief.content).toContain('ZONE PRIORITY:');
+    expect(brief.content).toContain('UNIT COMPOSITION:');
+    expect(brief.content).toContain('COUNTER-UTILITY:');
+    expect(brief.content).toContain('ENDGAME:');
+    expect(brief.content).toContain('No validated heuristics yet.');
+  });
+
+  it('should load strategy brief once per match in LLMCommander', async () => {
+    const room = {
+      roomId: 'test-room-brief',
+      mapId: 'map_1_facility',
+      llmTokensUsedThisMatch: 0,
+      commanderAP: 0,
+      apiCallCount: 0,
+      matchStartTime: Date.now(),
+      outstandingOrders: new Map(),
+      zoneSummary: {},
+      failedOperations: [],
+      broadcastReliableEvent: vi.fn(),
+      offlineSystemFallbackAI: vi.fn(),
+      drones: []
+    } as any;
+
+    const commander = new LLMCommander(room, 'fake-key');
+    expect(commander.isStrategyBriefLoaded).toBe(false);
+    await commander.executeLLMStep();
+    expect(commander.isStrategyBriefLoaded).toBe(true);
+    expect(commander.loadedStrategyBrief).toBeDefined();
   });
 });
 
