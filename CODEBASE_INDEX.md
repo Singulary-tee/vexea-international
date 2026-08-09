@@ -36,6 +36,18 @@ This file is the authoritative index of all directories and source files within 
     *   **`server-flags.ts`**: Defines server-only feature flag keys (`ServerFeatureFlagKey`), schema (`ServerFeatureFlagSchema`), and default values (`DEFAULT_SERVER_FEATURE_FLAGS`) for Sentry server telemetry, LLM Commander family/model parameters, and security logging.
     *   **`flag-service.ts`**: Resolves server-side feature flags via ConfigCat / OpenFeature server SDK with local fallbacks. Restricted to server and shared flag keys.
 *   **`ai/` (Strategic AI)**
+    *   **`behavior/` (Extensible Drone Behavior System)**
+        *   **`types.ts`**: Interface definitions (`BehaviorContext`, `BehaviorOutput`) for zero-GC modular drone behavior functions.
+        *   **`BaseAirBehavior.ts`**: Helper steering functions (`computeAirSteering`, `stabilizeHoverY`, `applyAirPhysics`) for aerial drone flight calculations.
+        *   **`BaseGroundBehavior.ts`**: Helper steering functions (`computeGroundSteering`, `applyGroundPhysics`, `checkGrounded`) for ground drone surface movement and gravity physics.
+        *   **`DroneBehaviorController.ts`**: Modular drone behavior execution controller (`processDroneBehaviors`, `initBehaviorOutputs`). Dispatches registered behaviors, applies inter-drone repulsion and static obstacle avoidance, enforces speed limits and physics movement, and manages firing & KCC translation updates.
+        *   **`index.ts`**: Central behavior registry map (`BEHAVIORS`) mapping `DroneType` to dedicated behavior functions.
+        *   **`behaviors/` (Per-Type Behavior Implementations)**
+            *   **`RotaryShooterBehavior.ts`**: Specialized behavior for rotary shooter drones (`rotaryShooterBehavior`). Implements combat positioning, explicit retreat away-steering without vector inversion, hold-and-fire hovering, and path waypoint patrol logic.
+            *   **`BomberBehavior.ts`**: Specialized behavior for bomber drones (`bomberBehavior`). Implements 3-state machine (`SEEKING` -> `LOCKED` -> `COMMITTED`), target tracking, detonation at `detonationTriggerRadius`, and area explosion damage.
+            *   **`ReconBehavior.ts`**: Specialized behavior for unarmed recon drones (`reconBehavior`). Implements retreat on close contact, dynamic perpendicular orbit hovering with sinusoidal oscillation, high-altitude waypoint patrol, and zero weapon firing (`shouldFire` is always false).
+            *   **`FixedWingBehavior.ts`**: Specialized behavior for fixed-wing strafing drones (`fixedWingBehavior`). Implements 4-phase strafe state machine (`APPROACH` -> `RUN` -> `EXIT` -> `REPOSITION`) using `DroneConfig` strafe distance thresholds.
+            *   **`HumanoidBehavior.ts`**: Specialized behavior for elite tactical humanoid units (`humanoidBehavior`, `findBestCoverPosition`, `isTargetPinned`). Implements 6-state tactical state machine (`HUNT`, `TAKE_COVER`, `IN_COVER`, `FLANK`, `SUPPRESS`, `INVESTIGATE`), cover evaluation & raycast scoring, target pinning detection, and zero-direct-charge combat positioning.
     *   **`CommanderMemory.ts`**: Modular Zero-GC match-state context compression engine for the LLM Commander. Formulates tight (<250 token) situational awareness strings containing match clock, squad composition, drone asset ledger, casualty delta, utility log, objective state, and clean zone summaries.
     *   **`DroneAvoidance.ts`**: Manages dynamic path avoidance and separation steering behaviors for autonomous drone swarms.
     *   **`DroneIntelligence.ts`**: Governs spatial awareness for individual drones. Computes sight lines (3D orientation quaternions to check forward vectors and cone of vision angles), performs static map and dynamic Rapier line-of-sight raycasts, and handles memory decay mechanics.
@@ -402,4 +414,22 @@ Every file change in the VEXEA codebase must follow this strict two-step protoco
     *   `server/index.ts`: Removed default lobby room creation and registration on connect. Implemented null guards across all event listeners to support menu-state where `currentRoom` and `pState` are null.
     *   `server/Matchmaker.ts`: Integrated `onMatchFormed` callback into match formation logic to synchronize connection state once a game session begins.
 *   **Verification:** Verified zero physics/AI/Firestore activity on initial connection. Confirmed dev quick-start remains functional via direct room assignment.
+
+### Cycle 2026-08-09-01: Config Extension — Add Strafing Parameters & ServerDrone Field
+*   **Target Files:** `shared/constants.ts`, `server/MatchRoom.ts`, `CODEBASE_INDEX.md`
+*   **Status:** Verified & Finalized
+*   **Modifications:**
+    *   `shared/constants.ts`: Added optional `strafeApproachDistance`, `strafeRunStartDistance`, `strafeExitDistance`, and `strafeRepositionDistance` to `DroneConfig` interface and set specified default values (`150`, `100`, `50`, `200`) on `DRONE_CONFIGS[DroneType.FIXED_WING]`.
+    *   `server/MatchRoom.ts`: Added `fixedWingPhase?: 'APPROACH' | 'RUN' | 'EXIT' | 'REPOSITION'` to `ServerDrone` interface and initialized `fixedWingPhase: 'APPROACH'` on preallocated drone structures in `initEntities`.
+*   **Verification:** Verified compilation and data structures.
+
+### Cycle 2026-08-09-02: Implement HumanoidBehavior Elite Tactical Unit State Machine
+*   **Target Files:** `server/ai/behavior/behaviors/HumanoidBehavior.ts`, `server/MatchRoom.ts`, `server/ai/behavior/index.ts`, `CODEBASE_INDEX.md`
+*   **Status:** Verified & Finalized
+*   **Modifications:**
+    *   `server/ai/behavior/behaviors/HumanoidBehavior.ts`: Created elite tactical humanoid unit behavior function (`humanoidBehavior`), cover candidate position generator & scorer (`findBestCoverPosition`), and target pinning checker (`isTargetPinned`). Implements 6-state tactical state machine (`HUNT`, `TAKE_COVER`, `IN_COVER`, `FLANK`, `SUPPRESS`, `INVESTIGATE`).
+    *   `server/MatchRoom.ts`: Added `humanoidPhase`, `cachedCoverPos`, `coverCacheTick`, `targetLastPos`, `targetLastMoveTick`, `suppressToggle`, `investigateHoldTick`, `flankStartTick` to `ServerDrone` interface and initialized them in `initEntities`.
+    *   `server/ai/behavior/index.ts`: Registered `humanoidBehavior` under `DroneType.HUMANOID` in `BEHAVIORS` registry.
+*   **Verification:** Verified compilation and behavior registration.
+
 

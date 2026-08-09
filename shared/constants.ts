@@ -150,6 +150,10 @@ export interface DroneConfig {
   fovHalfAngle?: number;
   decelerationRadius?: number;
   decayRate?: number;
+  strafeApproachDistance?: number;
+  strafeRunStartDistance?: number;
+  strafeExitDistance?: number;
+  strafeRepositionDistance?: number;
 }
 
 export interface DroneIntelConfig {
@@ -365,7 +369,11 @@ export const DRONE_CONFIGS: Record<DroneType, DroneConfig> = {
     maxTurnRate: 1.5,
     pitchAngle: 0.35,
     engagementRange: 40.0,
-    decayRate: 1.0 / 15.0
+    decayRate: 1.0 / 15.0,
+    strafeApproachDistance: 150,
+    strafeRunStartDistance: 100,
+    strafeExitDistance: 50,
+    strafeRepositionDistance: 200
   },
   [DroneType.WHEELED]: {
     type: DroneType.WHEELED,
