@@ -257,4 +257,30 @@ export function registerDevCommands(
       currentRoom.drones[i].state = DroneState.DEAD;
     }
   });
+
+  channel.on("dev_force_match_end", (args: any) => {
+    const currentRoom = getRoom();
+    if (!currentRoom) return;
+    const result = args?.result === "win" ? "win" : "loss";
+    console.log(`[SERVER DEV EVENT] Forcing match end with result:`, result);
+    (currentRoom as any).handleMatchEnd(result);
+  });
+
+  channel.on("debug_get_state", () => {
+    const currentRoom = getRoom();
+    if (!currentRoom) return;
+    const state = {
+      players: Array.from(currentRoom.players.values()).map(p => ({
+        id: p.id,
+        pos: { x: p.posX, y: p.posY, z: p.posZ }
+      })),
+      drones: currentRoom.drones.filter((d: any) => d.state !== DroneState.DEAD).map((d: any) => ({
+        id: d.id,
+        type: d.type,
+        pos: { x: d.posX, y: d.posY, z: d.posZ }
+      })),
+      buildings: currentRoom.collisionMap?.boxes || []
+    };
+    channel.emit("debug_state_response", state);
+  });
 }

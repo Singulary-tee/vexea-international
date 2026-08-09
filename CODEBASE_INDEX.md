@@ -28,6 +28,10 @@ This file is the authoritative index of all directories and source files within 
 *   **`sentry.ts`**
     *   *Purpose:* Server-side Sentry initialization, error tracking, and metrics recording (latency, active units, player counts, security exploits).
     *   *Key Functions/Exports:* `initSentry()`, `recordServerTickDuration(ms)`, `recordServerActiveDrones(count)`, `recordServerConnectedPlayers(count)`, `recordLLMLatency(ms, model)`, `recordHitscanRejected(reason)`, `recordSecurityExploit(exploitType, extra)`.
+*   **`combat/` (Server Combat System)**
+    *   **`hitscan.ts`**: Standalone hitscan processing module (`processHitscan`). Handles origin verification, historical AABB rewind lag compensation, drone raycasting, damage calculation with falloff, assist tracking, and event broadcasting.
+*   **`dev/` (Server Developer Tools)**
+    *   **`dev-commands.ts`**: Developer command registration module (`registerDevCommands`). Registers dev handlers for cheats, bot/drone spawning, physics tuning, credit refills, god mode, infinite ammo, and debug state reporting.
 *   **`flags/` (Server Feature Flags)**
     *   **`server-flags.ts`**: Defines server-only feature flag keys (`ServerFeatureFlagKey`), schema (`ServerFeatureFlagSchema`), and default values (`DEFAULT_SERVER_FEATURE_FLAGS`) for Sentry server telemetry, LLM Commander family/model parameters, and security logging.
     *   **`flag-service.ts`**: Resolves server-side feature flags via ConfigCat / OpenFeature server SDK with local fallbacks. Restricted to server and shared flag keys.
@@ -69,6 +73,13 @@ This file is the authoritative index of all directories and source files within 
     *   **`run_avoidance_test.ts`**: Verifies dynamic pathing adjustment when friendly drone clusters collide.
 *   **`transport/` (Server Connectivity)**
     *   **`adapter.ts`**: Defines the unified `ChannelAdapter` and `ServerTransport` interface layer. Implements the `SocketIOServerAdapter`/`SocketIOChannelAdapter` (the active transport, utilizing JSON events and number-array binary emulations) and `GeckosAdapter`/`GeckosChannelAdapter` (inactive/experimental).
+    *   **`handlers/` (Transport Message Handlers)**
+        *   **`matchmaking-handlers.ts`**: Handles matchmaking lifecycle events (`request_matchmaking`, `cancel_matchmaking`, `loading_complete`, `player_ready`, `PLAYER_QUIT`).
+        *   **`gameplay-handlers.ts`**: Handles in-match gameplay events (`FIRE`, `RELOAD`, `CANCEL_RELOAD`, `USE_UTILITY`, `OBJECTIVE_HOLD`, `TOGGLE_FIRE_MODE`, raw movement updates).
+        *   **`social-handlers.ts`**: Handles social and messaging events (`CHAT_MESSAGE`, `QUICK_COMM`).
+        *   **`connection-handlers.ts`**: Handles connection quality and player session management (`ping`, `latency_report`, `rewarded_ad`, `select_class`).
+*   **`routes/` (Server API Endpoints)**
+    *   **`api-routes.ts`**: Configures all server REST endpoints (`/api/health`, `/api/debug-sentry`, `/api/log`, `/api/logs`, `/api/doppler-client-secrets`, `/api/proxy-asset`, `/api/debug`, `/api/test-compile`, `/api/economy/store`, `/api/economy/factions`).
 *   **`validation/` (Validation Service Wrapper)**
     *   **`validation-service.ts`**: Backwards-compatibility alias re-exporting `VerificationService`.
 *   **`verification/` (Server & Worker Verification)**
