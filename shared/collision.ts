@@ -10,9 +10,17 @@ export interface AABB {
 
 export class CollisionSystem {
   public boxes: AABB[] = [];
+  private grid: Map<number, number[]> = new Map();
+  private readonly CELL_SIZE = 50;
+
+  private getGridKey(cx: number, cz: number): number {
+    return (cx + 100000) * 200000 + (cz + 100000);
+  }
 
   public loadFromSpec(specJson: any) {
     this.boxes = [];
+    this.grid.clear();
+
     if (specJson && Array.isArray(specJson.buildings)) {
       for (let i = 0; i < specJson.buildings.length; i++) {
         const b = specJson.buildings[i];
@@ -29,26 +37,83 @@ export class CollisionSystem {
           const halfY = (b.size.y || 10) / 2;
           const halfZ = sizeZ / 2;
 
-          this.boxes.push({
+          const box: AABB = {
             xMin: b.position.x - halfX,
             xMax: b.position.x + halfX,
             yMin: b.position.y,
             yMax: b.position.y + (b.size.y || 10),
             zMin: b.position.z - halfZ,
             zMax: b.position.z + halfZ,
-          });
+          };
+
+          const boxIndex = this.boxes.length;
+          this.boxes.push(box);
+
+          const minCx = Math.floor(box.xMin / this.CELL_SIZE);
+          const maxCx = Math.floor(box.xMax / this.CELL_SIZE);
+          const minCz = Math.floor(box.zMin / this.CELL_SIZE);
+          const maxCz = Math.floor(box.zMax / this.CELL_SIZE);
+
+          for (let cx = minCx; cx <= maxCx; cx++) {
+            for (let cz = minCz; cz <= maxCz; cz++) {
+              const key = this.getGridKey(cx, cz);
+              let cell = this.grid.get(key);
+              if (!cell) {
+                cell = [];
+                this.grid.set(key, cell);
+              }
+              cell.push(boxIndex);
+            }
+          }
         }
       }
     }
   }
 
-  // Hitscan raycast vs AABB logic (Drones/Players/Walls)
+  // Hitscan raycast vs AABB logic (Drones/Players/Walls) using Spatial Hash Grid
   public rayIntersectsAny(origin: {x: number, y: number, z: number}, dir: {x: number, y: number, z: number}, maxDistance: number): boolean {
-    for (let i = 0; i < this.boxes.length; i++) {
-      if (this.rayIntersectsAABB(origin, dir, this.boxes[i], maxDistance)) {
-        return true;
+    if (this.boxes.length === 0) return false;
+
+    let cx = Math.floor(origin.x / this.CELL_SIZE);
+    let cz = Math.floor(origin.z / this.CELL_SIZE);
+
+    const stepX = dir.x > 0 ? 1 : (dir.x < 0 ? -1 : 0);
+    const stepZ = dir.z > 0 ? 1 : (dir.z < 0 ? -1 : 0);
+
+    const tDeltaX = dir.x !== 0 ? Math.abs(this.CELL_SIZE / dir.x) : Infinity;
+    const tDeltaZ = dir.z !== 0 ? Math.abs(this.CELL_SIZE / dir.z) : Infinity;
+
+    let tMaxX = dir.x > 0 ? ((cx + 1) * this.CELL_SIZE - origin.x) / dir.x : (dir.x < 0 ? (cx * this.CELL_SIZE - origin.x) / dir.x : Infinity);
+    let tMaxZ = dir.z > 0 ? ((cz + 1) * this.CELL_SIZE - origin.z) / dir.z : (dir.z < 0 ? (cz * this.CELL_SIZE - origin.z) / dir.z : Infinity);
+
+    let t = 0;
+
+    while (t <= maxDistance) {
+      const key = this.getGridKey(cx, cz);
+      const cell = this.grid.get(key);
+
+      if (cell) {
+        for (let i = 0; i < cell.length; i++) {
+          const boxIndex = cell[i];
+          if (this.rayIntersectsAABB(origin, dir, this.boxes[boxIndex], maxDistance)) {
+            return true;
+          }
+        }
+      }
+
+      if (tMaxX < tMaxZ) {
+        t = tMaxX;
+        if (t > maxDistance) break;
+        cx += stepX;
+        tMaxX += tDeltaX;
+      } else {
+        t = tMaxZ;
+        if (t > maxDistance) break;
+        cz += stepZ;
+        tMaxZ += tDeltaZ;
       }
     }
+
     return false;
   }
 

@@ -82,22 +82,6 @@ export function evaluateDronePerception(
     if (collisionMap && collisionMap.rayIntersectsAny(sensorPos, rDir, dist)) {
       hasLOS = false;
     }
-
-    if (hasLOS && rapierWorld && RAPIER_MOD) {
-      const rapierRay = new RAPIER_MOD.Ray(sensorPos, rDir);
-      const hit = rapierWorld.castRay(
-        rapierRay,
-        dist,
-        true,
-        RAPIER_MOD.QueryFilterFlags.EXCLUDE_DYNAMIC,
-        undefined,
-        drone.collider || undefined,
-        player.body || undefined
-      );
-      if (hit && hit.timeOfImpact < dist - 0.1) {
-        hasLOS = false;
-      }
-    }
   }
 
   const detected = inDistance && inFOV && hasLOS;

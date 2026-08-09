@@ -6,7 +6,8 @@
  * and hacked into separate parts to maintain manageability.
  */
 
-import { processDroneIntelligence } from "./ai/DroneIntelligence";
+import { processDroneIntelligence, MemoryRecord } from "./ai/DroneIntelligence";
+import { calculateDroneAvoidance } from "./ai/DroneAvoidance";
 import { CommanderMemory } from "./ai/CommanderMemory";
 import { GoogleGenAI, Type } from "@google/genai";
 import RAPIER from "@dimforge/rapier3d-compat";
@@ -194,7 +195,7 @@ export interface ServerDrone {
   currentVelocityZ: number;
   currentHeadingX: number;
   currentHeadingZ: number;
-  memoryRecords: any[];
+  memoryRecords: Map<string, MemoryRecord>;
   combatTarget?: any | null;
   bomberState?: "SEEKING" | "LOCKED" | "COMMITTED";
   bomberLockTime?: number;
@@ -480,7 +481,7 @@ export class MatchRoom {
         currentVelocityZ: 0,
         currentHeadingX: 1,
         currentHeadingZ: 0,
-        memoryRecords: [],
+        memoryRecords: new Map(),
         combatTarget: null,
         // memory: memorySlots, removed for custom memory
         behavior: "patrol",
@@ -1671,7 +1672,7 @@ export class MatchRoom {
         targetY: d.targetY,
         targetZ: d.targetZ,
         mode: d.mode,
-        memory: d.memoryRecords ? d.memoryRecords.filter(m => m.confidence > 0).map(m => ({ id: m.entityId, x: m.lastSensedPosition.x, y: m.lastSensedPosition.y, z: m.lastSensedPosition.z, conf: m.confidence })) : []
+        memory: d.memoryRecords ? Array.from(d.memoryRecords.values()).filter(m => m.confidence > 0).map(m => ({ id: m.entityId, x: m.lastSensedPosition.x, y: m.lastSensedPosition.y, z: m.lastSensedPosition.z, conf: m.confidence })) : []
       }));
 
       let cubeSyncData = null;
@@ -2475,6 +2476,15 @@ export class MatchRoom {
          }
          baseSteerX = d.avoidanceState.transitionX;
          baseSteerZ = d.avoidanceState.transitionZ;
+      }
+
+      const interDrone = calculateDroneAvoidance(d, this.drones);
+      baseSteerX = baseSteerX * 0.5 + interDrone.avoidX * 0.5;
+      baseSteerZ = baseSteerZ * 0.5 + interDrone.avoidZ * 0.5;
+      const interMag = Math.sqrt(baseSteerX * baseSteerX + baseSteerZ * baseSteerZ);
+      if (interMag > 0.001) {
+        baseSteerX /= interMag;
+        baseSteerZ /= interMag;
       }
 
       if (isAir) {
@@ -3387,14 +3397,17 @@ export class MatchRoom {
       if (d.type === DroneType.TEST_ENTITY && d.state !== DroneState.DEAD && d.memoryRecords) {
         for (const player of this.players.values()) {
            if (player.isAlive) {
-              let rec = d.memoryRecords.find(r => r.entityId === player.id);
+              let rec = d.memoryRecords.get(player.id);
               if (!rec) {
                  rec = { entityId: player.id, lastSensedPosition: { x: 0, y: 0, z: 0 }, timeLastSensed: 0, confidence: 0 };
-                 d.memoryRecords.push(rec);
+                 d.memoryRecords.set(player.id, rec);
               }
-              rec.lastSensedPosition = { x: player.posX, y: player.posY, z: player.posZ };
+              rec.lastSensedPosition.x = player.posX;
+              rec.lastSensedPosition.y = player.posY;
+              rec.lastSensedPosition.z = player.posZ;
               rec.timeLastSensed = Date.now() / 1000;
               rec.confidence = 1.0;
+              rec.touchedThisTick = true;
               break;
            }
         }
@@ -3408,14 +3421,17 @@ export class MatchRoom {
       if (d.type === DroneType.TEST_ENTITY && d.state !== DroneState.DEAD && d.memoryRecords) {
         for (const player of this.players.values()) {
            if (player.isAlive) {
-              let rec = d.memoryRecords.find(r => r.entityId === player.id);
+              let rec = d.memoryRecords.get(player.id);
               if (!rec) {
                  rec = { entityId: player.id, lastSensedPosition: { x: 0, y: 0, z: 0 }, timeLastSensed: 0, confidence: 0 };
-                 d.memoryRecords.push(rec);
+                 d.memoryRecords.set(player.id, rec);
               }
-              rec.lastSensedPosition = { x: player.posX, y: player.posY, z: player.posZ };
+              rec.lastSensedPosition.x = player.posX;
+              rec.lastSensedPosition.y = player.posY;
+              rec.lastSensedPosition.z = player.posZ;
               rec.timeLastSensed = Date.now() / 1000;
               rec.confidence = 1.0;
+              rec.touchedThisTick = true;
               break;
            }
         }

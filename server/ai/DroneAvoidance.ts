@@ -21,8 +21,14 @@ export function calculateDroneAvoidance(
 
   const droneConfig = DRONE_CONFIGS[currentDrone.type as DroneType];
   const radius = droneConfig?.visualRadius ?? 1.1;
+  const maxAccelPerTick = droneConfig?.maxAccelPerTick ?? 0.4;
+  const speed = droneConfig?.speed ?? 10.0;
+
   const sensingCutoffDistance = radius * 4.0; // Cutoff boundary d0 based on physical radius
-  const kRepulsion = 12.0;                    // Field stiffness coefficient
+  // kRepulsion: scales the drone's acceleration budget into repulsive field stiffness
+  const kRepulsion = maxAccelPerTick * 30.0;
+  // maxAvoidanceForce: caps repulsion at twice max speed for numerical stability
+  const maxAvoidanceForce = speed * 2.0;
 
   // 1. Inter-Drone Repulsion Potential Field
   for (let i = 0; i < allDrones.length; i++) {
@@ -37,7 +43,9 @@ export function calculateDroneAvoidance(
     if (distSq <= 0.0001) continue;
 
     const dist = Math.sqrt(distSq);
-    const minDistance = radius * 2.0; // Minimal buffer distance
+    const otherConfig = DRONE_CONFIGS[other.type as DroneType];
+    const otherRadius = otherConfig?.visualRadius ?? 1.1;
+    const minDistance = radius + otherRadius; // Minimal buffer distance based on physical radii of both drones
 
     if (dist < sensingCutoffDistance) {
       const effectiveDist = Math.max(0.01, dist - minDistance);
@@ -66,7 +74,6 @@ export function calculateDroneAvoidance(
 
   // Normalize/clamp output force to prevent numerical instability
   const forceLen = Math.sqrt(totalForceX * totalForceX + totalForceZ * totalForceZ);
-  const maxAvoidanceForce = 15.0; // Physical upper bound force
   if (forceLen > maxAvoidanceForce) {
     totalForceX = (totalForceX / forceLen) * maxAvoidanceForce;
     totalForceZ = (totalForceZ / forceLen) * maxAvoidanceForce;

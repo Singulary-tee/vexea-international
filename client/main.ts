@@ -915,6 +915,7 @@ const setup3DStage = async () => {
   (window as any).triggerFlash = triggerFlash;
   (window as any).triggerExplosion = triggerExplosion;
   (window as any).spawnTracer = spawnTracer;
+  startAnimateLoop();
 };
 
 // Merges area corridors elements dynamically
@@ -946,6 +947,7 @@ const handleWindowResize = () => {
 };
 
 let lastTime = performance.now();
+let lastRenderTime = performance.now();
 let targetFpsRef = 0;
 let diagnosticFrameCount = 0;
 const diagTempMatrix = new THREE.Matrix4();
@@ -955,6 +957,39 @@ const diagTempQuaternion = new THREE.Quaternion();
 const diagTempEuler = new THREE.Euler();
 
 let animationFrameId = 0;
+
+// Visibility API & Loop Control
+let isAppVisible = !document.hidden;
+
+export function startAnimateLoop() {
+  if (animationFrameId) {
+    cancelAnimationFrame(animationFrameId);
+    animationFrameId = 0;
+  }
+  if (!document.hidden) {
+    lastTime = performance.now();
+    lastRenderTime = performance.now();
+    animationFrameId = requestAnimationFrame(animateFrame);
+  }
+}
+
+document.addEventListener("visibilitychange", () => {
+  isAppVisible = !document.hidden;
+  if (!document.hidden) {
+    document.querySelectorAll("video").forEach((v) => {
+      try { v.play().catch(() => {}); } catch (e) {}
+    });
+    startAnimateLoop();
+  } else {
+    document.querySelectorAll("video").forEach((v) => {
+      try { v.pause(); } catch (e) {}
+    });
+    if (animationFrameId) {
+      cancelAnimationFrame(animationFrameId);
+      animationFrameId = 0;
+    }
+  }
+});
 
 // Dynamic laser lines
 let laserLineSegments: THREE.LineSegments | null = null;
@@ -1001,10 +1036,28 @@ const syncVisualProjectiles = (data: any) => {
 // updateVFX now fully handled inside client/visuals.ts
 
 const animateFrame = async () => {
+  if (document.hidden) {
+    animationFrameId = 0;
+    return;
+  }
+
+  const now = performance.now();
+  const s = (window as any).vexeaSettings || getSettings();
+  const fpsCap = (s && typeof s.fpsCap === "number") ? s.fpsCap : (IS_MOBILE ? 30 : 60);
+  const targetInterval = fpsCap > 0 ? (1000 / fpsCap) : 0;
+
+  if (targetInterval > 0) {
+    const elapsed = now - lastRenderTime;
+    if (elapsed < targetInterval - 1.5) {
+      animationFrameId = requestAnimationFrame(animateFrame);
+      return;
+    }
+  }
+  lastRenderTime = now;
+
   const match = getMatch();
   if (!match || (window as any).gameState !== "ACTIVE_MATCH") {
     animationFrameId = requestAnimationFrame(animateFrame);
-    const now = performance.now();
     const dt = Math.min(Math.max((now - lastTime) / 1000, 0.001), 0.1);
     lastTime = now;
 
@@ -1017,23 +1070,16 @@ const animateFrame = async () => {
     dynamicResolutionSystem.update(now);
     return;
   }
+
   (window as any).devSubsystems = (window as any).devSubsystems || { physics:0, droneInterp:0, vfx:0, minimap:0, weapons:0 };
   const t0 = performance.now();
   diagnosticFrameCount++;
-  const s = (window as any).vexeaSettings;
-  if (s && s.fpsCap === 30) {
-    setTimeout(() => {
-      animationFrameId = requestAnimationFrame(animateFrame);
-    }, 33);
-  } else {
-    animationFrameId = requestAnimationFrame(animateFrame);
-  }
+
+  animationFrameId = requestAnimationFrame(animateFrame);
 
   if ((window as any).isEditMode) return;
 
   if ((window as any).gameState === "ACTIVE_MATCH") {
-    const now = performance.now();
-    // Prevent large dt jumps (e.g. from tab out or long loading times)
     const dt = Math.min(Math.max((now - lastTime) / 1000, 0.001), 0.1);
     lastTime = now;
 
