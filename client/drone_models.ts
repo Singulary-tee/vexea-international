@@ -310,19 +310,25 @@ export async function initDroneModels(scene: THREE.Scene): Promise<void> {
        mesh: batchMesh, 
        instanceGroup,
        scaleFactor,
-       nodesInfo: useNodes.map(n => ({
-         name: n.name,
-         isMesh: n.isMesh,
-         parentName: n.parentName,
-         localMatrix: n.localMatrix.clone(),
-         baseLocalMatrix: n.localMatrix.clone(),
-         meshIndex: n.meshIndex,
-         pivot: n.pivot ? n.pivot.clone() : new THREE.Vector3(),
-         modelPivot: (n as any).modelPivot ? (n as any).modelPivot.clone() : (n.pivot ? n.pivot.clone() : new THREE.Vector3()),
-         localPivot: (n as any).localPivot ? (n as any).localPivot.clone() : new THREE.Vector3(),
-         baseInvWorldMatrix: (n as any).baseInvWorldMatrix ? (n as any).baseInvWorldMatrix.clone() : new THREE.Matrix4(),
-         baseWorldMatrix: (n as any).baseWorldMatrix ? (n as any).baseWorldMatrix.clone() : new THREE.Matrix4()
-       }))
+       nodesInfo: useNodes.map(n => {
+         const parentNameLower = n.parentName ? n.parentName.toLowerCase() : '';
+         const isPropMesh = !!n.isMesh && (parentNameLower.includes('prop') && parentNameLower !== 'prop');
+         return {
+           name: n.name,
+           isMesh: n.isMesh,
+           parentName: n.parentName,
+           parentNameLower,
+           isPropMesh,
+           localMatrix: n.localMatrix.clone(),
+           baseLocalMatrix: n.localMatrix.clone(),
+           meshIndex: n.meshIndex,
+           pivot: n.pivot ? n.pivot.clone() : new THREE.Vector3(),
+           modelPivot: (n as any).modelPivot ? (n as any).modelPivot.clone() : (n.pivot ? n.pivot.clone() : new THREE.Vector3()),
+           localPivot: (n as any).localPivot ? (n as any).localPivot.clone() : new THREE.Vector3(),
+           baseInvWorldMatrix: (n as any).baseInvWorldMatrix ? (n as any).baseInvWorldMatrix.clone() : new THREE.Matrix4(),
+           baseWorldMatrix: (n as any).baseWorldMatrix ? (n as any).baseWorldMatrix.clone() : new THREE.Matrix4()
+         };
+       })
      };
   };
 
@@ -416,12 +422,14 @@ export async function initDroneModels(scene: THREE.Scene): Promise<void> {
   }
   
   let scaleFactorH = 1.0;
+  const humanoidConfig = DRONE_CONFIGS[DroneType.HUMANOID];
+  const targetRadiusH = humanoidConfig.visualScaleTarget ?? humanoidConfig.visualRadius;
   let bodyH = humanoidParts.find(p => p.isMesh && (p.name === 'body' || p.name.toLowerCase().includes('body'))) || humanoidParts.find(p=>p.isMesh);
   if (bodyH) {
       bodyH.geom!.computeBoundingBox();
       const sphere = new THREE.Sphere();
       if (bodyH.geom!.boundingBox) bodyH.geom!.boundingBox.getBoundingSphere(sphere);
-      scaleFactorH = 2.5 / (sphere.radius || 1.0);
+      scaleFactorH = targetRadiusH / (sphere.radius || 1.0);
   }
   humanoidGroup.scale.set(scaleFactorH, scaleFactorH, scaleFactorH);
   

@@ -107,12 +107,12 @@ export function renderStoreScreen(container: HTMLElement, registeredUserData: an
   featuredCard.appendChild(glowBar);
 
   featuredCard.innerHTML += `
-    <div style="display:flex; flex-direction:column; gap:4px; min-height:0;">
+    <div style="display:flex; flex-direction:column; gap:0.5vh; min-height:0;">
       <div style="display:flex; justify-content:space-between; align-items:center;">
-        <span style="font-family:${DS.typography.fontFamily}; font-size:8px; color:${DS.colors.accent}; font-weight:bold; letter-spacing:1.5px;">FEATURED DEAL</span>
-        <span style="font-family:${DS.typography.fontFamily}; font-size:8px; color:#00FF88; font-weight:bold; letter-spacing:0.8px; background:rgba(0,255,136,0.06); padding:1px 5px; border:1px solid rgba(0,255,136,0.15);">30% OFF</span>
+        <span style="font-family:${DS.typography.fontFamily}; font-size:clamp(8px, 1vh, 11px); color:${DS.colors.accent}; font-weight:bold; letter-spacing:0.1vw;">FEATURED DEAL</span>
+        <span style="font-family:${DS.typography.fontFamily}; font-size:clamp(8px, 1vh, 10px); color:#00FF88; font-weight:bold; letter-spacing:0.05vw; background:rgba(0,255,136,0.06); padding:0.2vh 0.5vw; border:1px solid rgba(0,255,136,0.15);">30% OFF</span>
       </div>
-      <div style="font-family:${DS.typography.fontFamily}; font-size:clamp(13px, 2vh, 16px); font-weight:bold; color:${DS.colors.text}; letter-spacing:1px; line-height:1.1; margin-top:2px;">
+      <div style="font-family:${DS.typography.fontFamily}; font-size:clamp(13px, 2vh, 16px); font-weight:bold; color:${DS.colors.text}; letter-spacing:0.1vw; line-height:1.1; margin-top:0.2vh;">
         ${featuredOffer.title.toUpperCase()}
       </div>
       <div style="font-family:${DS.typography.fontFamily}; font-size:9.5px; color:${DS.colors.textMuted}; line-height:1.3;">
@@ -121,12 +121,12 @@ export function renderStoreScreen(container: HTMLElement, registeredUserData: an
     </div>
 
     <!-- Inside Specifications Bulletins -->
-    <div style="display:flex; flex-direction:column; gap:4px; background:rgba(255,255,255,0.01); border:1px solid rgba(255,255,255,0.03); padding:6px 8px; border-radius:2px;">
-      <div style="font-family:${DS.typography.fontFamily}; font-size:7.5px; color:${DS.colors.textMuted}; font-weight:bold; letter-spacing:0.8px;">INCLUDED SPECS:</div>
-      <div style="font-family:${DS.typography.fontFamily}; font-size:9px; color:${DS.colors.text}; font-weight:bold; display:flex; align-items:center; gap:4px;">
+    <div style="display:flex; flex-direction:column; gap:0.5vh; background:rgba(255,255,255,0.01); border:1px solid rgba(255,255,255,0.03); padding:0.8vh 1vw; border-radius:0px;">
+      <div style="font-family:${DS.typography.fontFamily}; font-size:7.5px; color:${DS.colors.textMuted}; font-weight:bold; letter-spacing:0.05vw;">INCLUDED SPECS:</div>
+      <div style="font-family:${DS.typography.fontFamily}; font-size:clamp(8px, 1.1vh, 12px); color:${DS.colors.text}; font-weight:bold; display:flex; align-items:center; gap:0.5vw;">
         <span style="color:${DS.colors.accent};">•</span> VX-88 TEST COATING ASSEMBLY
       </div>
-      <div style="font-family:${DS.typography.fontFamily}; font-size:9px; color:${DS.colors.text}; font-weight:bold; display:flex; align-items:center; gap:4px;">
+      <div style="font-family:${DS.typography.fontFamily}; font-size:clamp(8px, 1.1vh, 12px); color:${DS.colors.text}; font-weight:bold; display:flex; align-items:center; gap:0.5vw;">
         <span style="color:${DS.colors.accent};">•</span> PRE-TUNED INTEGRATION MATRIX
       </div>
     </div>
@@ -279,31 +279,31 @@ export function renderStoreScreen(container: HTMLElement, registeredUserData: an
     Object.assign(card.style, {
       background: 'rgba(255, 255, 255, 0.01)',
       border: '1px solid rgba(255, 255, 255, 0.05)',
-      padding: '6px 8px',
+      padding: '0.8vh 1vw',
       display: 'flex',
       flexDirection: 'column',
       justifyContent: 'space-between',
-      borderRadius: '4px',
-      gap: '2px'
+      borderRadius: '0px',
+      gap: '0.3vh'
     });
 
     card.innerHTML = `
-      <div style="display:flex; flex-direction:column; gap:2px;">
+      <div style="display:flex; flex-direction:column; gap:0.3vh;">
         <div style="display:flex; justify-content:space-between; align-items:center;">
-          <span style="font-family:${DS.typography.fontFamily}; font-size:8px; color:${DS.colors.accent}; font-weight:bold; letter-spacing:1px; text-transform:uppercase;">${item.category}</span>
-          <span style="font-family:${DS.typography.fontFamily}; font-size:7px; color:${DS.colors.textMuted}; font-weight:bold;">REQ LVL ${item.requiredLevel}</span>
+          <span style="font-family:${DS.typography.fontFamily}; font-size:clamp(8px, 1vh, 10px); color:${DS.colors.accent}; font-weight:bold; letter-spacing:0.08vw; text-transform:uppercase;">${item.category}</span>
+          <span style="font-family:${DS.typography.fontFamily}; font-size:clamp(7px, 0.9vh, 9px); color:${DS.colors.textMuted}; font-weight:bold;">REQ LVL ${item.requiredLevel}</span>
         </div>
-        <div style="font-family:${DS.typography.fontFamily}; font-size:11px; font-weight:bold; color:${DS.colors.text}; letter-spacing:0.5px; margin-top:2px; line-height:1.1;">
+        <div style="font-family:${DS.typography.fontFamily}; font-size:clamp(10px, 1.2vh, 13px); font-weight:bold; color:${DS.colors.text}; letter-spacing:0.04vw; margin-top:0.2vh; line-height:1.1;">
           ${item.title.toUpperCase()}
         </div>
-        <div style="font-family:${DS.typography.fontFamily}; font-size:8px; color:${DS.colors.textMuted}; line-height:1.2; margin-top:2px; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;">
+        <div style="font-family:${DS.typography.fontFamily}; font-size:clamp(8px, 1vh, 10px); color:${DS.colors.textMuted}; line-height:1.2; margin-top:0.2vh; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;">
           ${item.description}
         </div>
       </div>
     `;
 
     const btnRow = document.createElement('div');
-    Object.assign(btnRow.style, { display: 'flex', gap: '6px', marginTop: '4px' });
+    Object.assign(btnRow.style, { display: 'flex', gap: '0.8vw', marginTop: '0.5vh' });
 
     const previewBtn = document.createElement('button');
     previewBtn.textContent = 'INSPECT';
@@ -482,18 +482,18 @@ function open3DSkinPreviewModal(title: string, skin: any, itemKey?: string): voi
     flexDirection: 'column',
     position: 'relative',
     padding: 'clamp(8px, 1.5vw, 12px)',
-    gap: '6px',
-    borderRadius: '4px',
+    gap: '0.8vh',
+    borderRadius: '0px',
     boxSizing: 'border-box',
     overflow: 'hidden'
   });
 
   modal.innerHTML = `
     <div style="display:flex; justify-content:space-between; align-items:center; height:clamp(36px, 8vh, 44px); flex-shrink:0;">
-      <div style="font-family:${DS.typography.fontFamily}; font-size:clamp(11px, 2.5vw, 15px); font-weight:bold; color:${DS.colors.text}; letter-spacing:1.5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; flex:1; margin-right:8px;">
+      <div style="font-family:${DS.typography.fontFamily}; font-size:clamp(11px, 2.5vw, 15px); font-weight:bold; color:${DS.colors.text}; letter-spacing:1.5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; flex:1; margin-right:1vw;">
         3D INSPECTOR — ${title}
       </div>
-      <button id="close-3d-modal" style="background:none; border:1px solid ${DS.colors.accent}; color:${DS.colors.accent}; font-family:${DS.typography.fontFamily}; font-size:clamp(11px, 2.5vw, 13px); font-weight:bold; cursor:pointer; min-width:44px; height:36px; padding:0 12px; display:inline-flex; align-items:center; justify-content:center; flex-shrink:0; border-radius:2px;">CLOSE [X]</button>
+      <button id="close-3d-modal" style="background:none; border:1px solid ${DS.colors.accent}; color:${DS.colors.accent}; font-family:${DS.typography.fontFamily}; font-size:clamp(11px, 2.5vw, 13px); font-weight:bold; cursor:pointer; min-width:5vw; height:4vh; padding:0 1.2vw; display:inline-flex; align-items:center; justify-content:center; flex-shrink:0; border-radius:0px;">CLOSE [X]</button>
     </div>
   `;
 
@@ -505,7 +505,7 @@ function open3DSkinPreviewModal(title: string, skin: any, itemKey?: string): voi
     background: '#020204',
     border: '1px solid rgba(255,255,255,0.06)',
     position: 'relative',
-    borderRadius: '2px',
+    borderRadius: '0px',
     overflow: 'hidden',
     touchAction: 'none'
   });

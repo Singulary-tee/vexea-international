@@ -51,7 +51,7 @@ export class ServerEconomyService {
       {
         id: 'offer_neural_link_mk2',
         title: 'Neural Link Mk. II Blueprint',
-        description: 'Advanced tactical telemetry interface reducing AI command latency by 15%.',
+        description: 'Advanced telemetry interface reducing AI command latency by 15%.',
         priceCredits: Math.round(2400 * mult),
         originalPriceCredits: 3000,
         discountPercentage: discountActive ? 30 : 20,
@@ -73,7 +73,7 @@ export class ServerEconomyService {
         itemType: 'booster_7d',
       },
       {
-        id: 'offer_tactical_pack',
+        id: 'offer_vanguard_pack',
         title: 'Apex Vanguard Operative Bundle',
         description: 'Includes 3 legendary skins, custom audio pack, and exclusive faction insignia.',
         priceCredits: Math.round(4500 * mult),
@@ -110,7 +110,7 @@ export class ServerEconomyService {
       },
       {
         id: 'sector_gamma',
-        name: 'Sector Gamma - Neon Habitation Core',
+        name: 'Sector Gamma - Central Habitation Core',
         controller: 'nexus',
         controlPercentage: Math.min(100, Math.round(48 * m)),
         activeBattles: 2,

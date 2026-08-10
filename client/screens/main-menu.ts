@@ -1054,7 +1054,7 @@ export function initMainMenu() {
 
   const OFFERS = [
     { image: 'promo_rifle_1.webp', promo: 'TEST COATING: 100 CR' },
-    { image: 'promo_pistol_1.webp', promo: 'VIPER TACTICAL: 150 CR' },
+    { image: 'promo_pistol_1.webp', promo: 'VIPER OPERATIONAL: 150 CR' },
     { image: 'promo_shotgun_1.webp', promo: 'BREACHER SPECIAL: 200 CR' }
   ];
   let currentOfferIdx = 0;

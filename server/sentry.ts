@@ -109,6 +109,18 @@ export async function recordSecurityExploit(exploitType: string, details: Record
   }
 }
 
+export function recordDroneColliderInit(droneType: number, colliderInfo: Record<string, unknown>): void {
+  if (!isSentryInitialized) return;
+  try {
+    Sentry.addBreadcrumb({
+      category: "physics",
+      message: `Initialized drone collider for type ${droneType}`,
+      level: "info",
+      data: colliderInfo,
+    });
+  } catch (e) {}
+}
+
 export { Sentry };
 
 

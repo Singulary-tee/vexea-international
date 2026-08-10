@@ -52,12 +52,17 @@ export function initBehaviorOutputs(maxDrones: number = 50) {
   }
 }
 
+const reusableCtx: BehaviorContext = {
+  room: null as any,
+  dt: 0,
+  nowMs: 0,
+};
+
 export function processDroneBehaviors(drones: any[], room: any, dt: number = 0.0166, nowMs: number) {
-  const ctx: BehaviorContext = {
-    room,
-    dt,
-    nowMs,
-  };
+  reusableCtx.room = room;
+  reusableCtx.dt = dt;
+  reusableCtx.nowMs = nowMs;
+  const ctx = reusableCtx;
 
   const sin45 = 0.70710678;
   const cos45 = 0.70710678;

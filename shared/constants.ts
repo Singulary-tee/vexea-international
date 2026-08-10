@@ -104,6 +104,7 @@ export interface DroneConfig {
   collider: { type: 'cuboid' | 'capsule' | 'ball', halfExtents?: [number, number, number], halfHeight?: number, radius?: number, offset?: [number, number, number] };
   muzzleOffset?: [number, number, number]; // [x,y,z] relative to drone center
   visualRadius: number; // Target radius for visual scaling
+  visualScaleTarget?: number; // Configured target scale derived from geometry
   maxAccelPerTick?: number;
   orientationOffset?: [number, number, number]; // [x,y,z] rotation offsets in radians to align forward axis
   animations: string[]; // Available animation loops (e.g. ['spin', 'sway'] or ['wheels', 'turret'] or ['hold'])
@@ -489,7 +490,8 @@ export const DRONE_CONFIGS: Record<DroneType, DroneConfig> = {
     isAirUnit: false,
     groupSizeMin: 1,
     groupSizeMax: 1,
-    visualRadius: 1.0,
+    visualRadius: 0.72,
+    visualScaleTarget: 0.72, // Derived from capsule geometry halfHeight: 0.25 + radius: 0.47 = 0.72
     orientationOffset: [0, 0, 0],
     collider: { type: 'capsule', halfHeight: 0.25, radius: 0.47 },
     muzzleOffset: [0.2, 0.8, 0.5],
@@ -602,10 +604,11 @@ export interface HitEvent {
 
 export function getDroneMuzzleWorldPosition(
   d: { posX: number; posY: number; posZ: number; rotX: number; rotY: number; rotZ: number; rotW: number; type: DroneType },
-  targetPos?: { x: number; y: number; z: number }
+  targetPos?: { x: number; y: number; z: number },
+  customOffset?: [number, number, number]
 ) {
   const conf = DRONE_CONFIGS[d.type] || DRONE_CONFIGS[DroneType.TEST_ENTITY];
-  const offset = conf.muzzleOffset || [0, 0.5, 0];
+  const offset = customOffset || conf.muzzleOffset || [0, 0.5, 0];
   
   let rx = offset[0];
   let ry = offset[1];
@@ -652,9 +655,40 @@ export function getDroneMuzzleWorldPosition(
     const num11 = qw * num2;
     const num12 = qw * num3;
 
-    const localTargetX = (1.0 - (num5 + num6)) * dx + (num7 - num12) * dy + (num8 + num11) * dz;
-    const localTargetY = (num7 + num12) * dx + (1.0 - (num4 + num6)) * dy + (num9 - num10) * dz;
-    const localTargetZ = (num8 - num11) * dx + (num9 + num10) * dy + (1.0 - (num4 + num5)) * dz;
+    let localTargetX = (1.0 - (num5 + num6)) * dx + (num7 - num12) * dy + (num8 + num11) * dz;
+    let localTargetY = (num7 + num12) * dx + (1.0 - (num4 + num6)) * dy + (num9 - num10) * dz;
+    let localTargetZ = (num8 - num11) * dx + (num9 + num10) * dy + (1.0 - (num4 + num5)) * dz;
+
+    // Apply inverse of orientationOffset so localTarget is in mesh local frame
+    if (conf.orientationOffset) {
+      const [ox, oy, oz] = conf.orientationOffset;
+      if (ox !== 0 || oy !== 0 || oz !== 0) {
+        if (oz !== 0) {
+          const cosZ = Math.cos(-oz);
+          const sinZ = Math.sin(-oz);
+          const lx1 = localTargetX * cosZ - localTargetY * sinZ;
+          const ly1 = localTargetX * sinZ + localTargetY * cosZ;
+          localTargetX = lx1;
+          localTargetY = ly1;
+        }
+        if (oy !== 0) {
+          const cosY = Math.cos(-oy);
+          const sinY = Math.sin(-oy);
+          const lx2 = localTargetZ * sinY + localTargetX * cosY;
+          const lz2 = localTargetZ * cosY - localTargetX * sinY;
+          localTargetX = lx2;
+          localTargetZ = lz2;
+        }
+        if (ox !== 0) {
+          const cosX = Math.cos(-ox);
+          const sinX = Math.sin(-ox);
+          const ly3 = localTargetY * cosX - localTargetZ * sinX;
+          const lz3 = localTargetY * sinX + localTargetZ * cosX;
+          localTargetY = ly3;
+          localTargetZ = lz3;
+        }
+      }
+    }
 
     // 2. Vector from Gun Pivot to local target
     const vx = localTargetX - pg_x;
@@ -693,6 +727,37 @@ export function getDroneMuzzleWorldPosition(
     rz = rTurretZ + pt_z;
   }
 
+  // Rotate local-space point by config.orientationOffset
+  if (conf.orientationOffset) {
+    const [ox, oy, oz] = conf.orientationOffset;
+    if (ox !== 0 || oy !== 0 || oz !== 0) {
+      if (ox !== 0) {
+        const cosX = Math.cos(ox);
+        const sinX = Math.sin(ox);
+        const ry1 = ry * cosX - rz * sinX;
+        const rz1 = ry * sinX + rz * cosX;
+        ry = ry1;
+        rz = rz1;
+      }
+      if (oy !== 0) {
+        const cosY = Math.cos(oy);
+        const sinY = Math.sin(oy);
+        const rx2 = rz * sinY + rx * cosY;
+        const rz2 = rz * cosY - rx * sinY;
+        rx = rx2;
+        rz = rz2;
+      }
+      if (oz !== 0) {
+        const cosZ = Math.cos(oz);
+        const sinZ = Math.sin(oz);
+        const rx3 = rx * cosZ - ry * sinZ;
+        const ry3 = rx * sinZ + ry * cosZ;
+        rx = rx3;
+        ry = ry3;
+      }
+    }
+  }
+
   const qx = d.rotX;
   const qy = d.rotY;
   const qz = d.rotZ;
@@ -720,4 +785,16 @@ export function getDroneMuzzleWorldPosition(
     y: d.posY + ry_final,
     z: d.posZ + rz_final
   };
+}
+
+export function getDroneLightWorldPositions(
+  d: { posX: number; posY: number; posZ: number; rotX: number; rotY: number; rotZ: number; rotW: number; type: DroneType }
+): { x: number; y: number; z: number }[] {
+  const conf = DRONE_CONFIGS[d.type] || DRONE_CONFIGS[DroneType.TEST_ENTITY];
+  if (!conf.lightPoints || conf.lightPoints.length === 0) return [];
+  const result: { x: number; y: number; z: number }[] = [];
+  for (let i = 0; i < conf.lightPoints.length; i++) {
+    result.push(getDroneMuzzleWorldPosition(d, undefined, conf.lightPoints[i]));
+  }
+  return result;
 }

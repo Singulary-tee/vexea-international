@@ -93,7 +93,7 @@ import {
   globalChannels,
   globalServerLogs,
 } from "./index";
-import { Sentry, recordServerTickDuration, recordServerActiveDrones, recordServerConnectedPlayers, recordSecurityExploit } from "./sentry";
+import { Sentry, recordServerTickDuration, recordServerActiveDrones, recordServerConnectedPlayers, recordSecurityExploit, recordDroneColliderInit } from "./sentry";
 import { archiveMatchEvent } from "./player-data/MatchEventCollector";
 import { PlayerProfileStore } from "./player-data/PlayerProfileStore";
 
@@ -301,22 +301,6 @@ export const astarPath = (start: ZoneName, end: ZoneName): ZoneName[] => {
 
 import { LLMCommander } from "./ai/LLMCommander";
 import { PhysicsWorldManager } from "./physics/PhysicsWorldManager";
-export function getDroneColliderRadius(type: DroneType): number {
-  switch (type) {
-    case DroneType.ROTARY_SHOOTER:
-    case DroneType.BOMBER:
-    case DroneType.RECON:
-      return 1.0;
-    case DroneType.FIXED_WING:
-    case DroneType.WHEELED:
-    case DroneType.ROBOT_DOG:
-      return 1.5;
-    case DroneType.HUMANOID:
-      return 2.5;
-    default:
-      return 1.5;
-  }
-}
 
 export class MatchRoom {
   public roomId: string;
@@ -677,6 +661,19 @@ export class MatchRoom {
         d.collider.setTranslationWrtParent({ x: config.collider.offset[0], y: config.collider.offset[1], z: config.collider.offset[2] });
       }
       
+      if (d.type === DroneType.ROBOT_DOG) {
+        recordDroneColliderInit(d.type, {
+          id: d.id,
+          posX: d.posX,
+          posY: d.posY,
+          posZ: d.posZ,
+          colliderType: config.collider.type,
+          halfExtents: config.collider.halfExtents,
+          rad: d.rad,
+          hasCollider: !!d.collider,
+        });
+      }
+
       const offset = 0.1;
       d.kcc = this.rapierWorld.createCharacterController(offset);
       d.kcc.setUp({ x: 0, y: 1, z: 0 });

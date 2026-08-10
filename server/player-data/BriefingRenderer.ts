@@ -2,7 +2,7 @@ import { PlayerGameProfile } from "./PlayerProfileStore";
 
 export class BriefingRenderer {
   /**
-   * Renders a tactical briefing for a single player (capped at max 3 sentences).
+   * Renders an operational briefing for a single player (capped at max 3 sentences).
    * Handles totalMatches < 3 gracefully with unclassified threat status.
    */
   public static renderPlayerBriefing(
@@ -42,7 +42,7 @@ export class BriefingRenderer {
   }
 
   /**
-   * Renders a combined tactical intelligence briefing for all human players in a match.
+   * Renders a combined operational intelligence briefing for all human players in a match.
    */
   public static renderMatchBriefing(
     players: Array<{ id: string; isBot?: boolean; displayName?: string }>,

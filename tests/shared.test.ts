@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { PLAYER_MAX_HP, DRONE_CONFIGS, ZONES, getDroneMuzzleWorldPosition, DroneType } from '../shared/constants';
+import { PLAYER_MAX_HP, DRONE_CONFIGS, ZONES, getDroneMuzzleWorldPosition, getDroneLightWorldPositions, DroneType } from '../shared/constants';
 import { CLASSES } from '../shared/classes';
 import { GAMEMODES, ACTIVE_GAMEMODE } from '../shared/gamemode-configs';
 import { ASSET_STRUCTURE } from '../shared/asset-structure';
@@ -41,6 +41,29 @@ describe('Shared Data Consistency Tests', () => {
     const target = { x: 0, y: 0, z: 10 };
     const pos = getDroneMuzzleWorldPosition(drone, target);
     expect(pos).toBeDefined();
+    expect(typeof pos.x).toBe('number');
+    expect(typeof pos.y).toBe('number');
+    expect(typeof pos.z).toBe('number');
+  });
+
+  it('should apply orientationOffset to drone muzzle and light points correctly', () => {
+    const dog = {
+      posX: 0, posY: 0, posZ: 0,
+      rotX: 0, rotY: 0, rotZ: 0, rotW: 1,
+      type: DroneType.ROBOT_DOG
+    };
+    const muzzlePos = getDroneMuzzleWorldPosition(dog);
+    expect(muzzlePos).toBeDefined();
+    
+    const lightPositions = getDroneLightWorldPositions(dog);
+    expect(lightPositions.length).toBe(2);
+    expect(lightPositions[0]).toBeDefined();
+    expect(lightPositions[1]).toBeDefined();
+  });
+
+  it('should have visualScaleTarget defined for Humanoid in DRONE_CONFIGS', () => {
+    const humanoidConfig = DRONE_CONFIGS[DroneType.HUMANOID];
+    expect(humanoidConfig.visualScaleTarget).toBeCloseTo(0.72);
   });
   it('should calculate damage falloff correctly', () => {
     const falloff = { maxDamageRange: 10, minDamageRange: 20, minDamage: 5 };

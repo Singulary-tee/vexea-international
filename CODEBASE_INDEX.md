@@ -432,4 +432,26 @@ Every file change in the VEXEA codebase must follow this strict two-step protoco
     *   `server/ai/behavior/index.ts`: Registered `humanoidBehavior` under `DroneType.HUMANOID` in `BEHAVIORS` registry.
 *   **Verification:** Verified compilation and behavior registration.
 
+### Cycle 2026-08-09-03: ChatHUD Optimization & Desktop-Only Utility Shortcuts
+*   **Target Files:** `client/src/systems/ChatHUDSystem.ts`, `client/src/systems/HUDSystem.ts`, `client/hud_template.ts`, `CODEBASE_INDEX.md`
+*   **Status:** Verified & Finalized
+*   **Modifications:**
+    *   `client/src/systems/ChatHUDSystem.ts`: Removed the initial system greeting message, added dynamic opacity transitions, and implemented a 5-second inactivity fade-out timer.
+    *   `client/src/systems/HUDSystem.ts`: Imported `IS_MOBILE` platform detection to completely hide keyboard shortcut badges on mobile, and formatted them to render as clean, static keys on desktop.
+    *   `client/hud_template.ts`: Standardized the HTML rendering template of utility shortcut badges as clean, static squared letters ('G' and 'F') without brackets or count numbers.
+    *   `CODEBASE_INDEX.md`: Updated cycle audit log.
+*   **Verification:** Full linter (`npm run lint`) and compilation (`npm run build`) succeeded.
+
+### Cycle 2026-08-10-01: Fix Drone Muzzle/Light Points, Wheeled Turret, Scale Config, Dead Code, and Sentry Breadcrumbs
+*   **Target Files:** `shared/constants.ts`, `client/src/systems/DroneProcedural.ts`, `client/drone_models.ts`, `server/MatchRoom.ts`, `server/sentry.ts`, `tests/shared.test.ts`, `CODEBASE_INDEX.md`
+*   **Status:** Verified & Finalized
+*   **Modifications:**
+    *   `shared/constants.ts`: Updated `getDroneMuzzleWorldPosition` to rotate local offsets by `conf.orientationOffset` before applying body orientation quaternion; added orientationOffset inverse transform in Wheeled IK target space block; exported `getDroneLightWorldPositions`; added `visualScaleTarget: 0.72` and updated `visualRadius: 0.72` for Humanoid drone.
+    *   `client/src/systems/DroneProcedural.ts`: Removed `speed > 0.1` gate on turret yaw tracking; added turret pitch tracking using `state.turretPitch` with `config.turretGunAngle` clamping; strictly zero-GC.
+    *   `client/drone_models.ts`: Updated Humanoid scale factor calculation to derive from `visualScaleTarget ?? visualRadius` in `DRONE_CONFIGS[DroneType.HUMANOID]` instead of magic number `2.5`.
+    *   `server/MatchRoom.ts`: Purged dead function `getDroneColliderRadius`; added `recordDroneColliderInit` breadcrumb call inside `initDronePhysics` for Robot Dog.
+    *   `server/sentry.ts`: Exported `recordDroneColliderInit` for recording physics breadcrumbs.
+    *   `tests/shared.test.ts`: Added unit tests for `getDroneMuzzleWorldPosition` orientationOffset, `getDroneLightWorldPositions`, Wheeled turret kinematic muzzle calculation, and Humanoid `visualScaleTarget` config.
+*   **Verification:** Verified zero lint/type errors (`lint_applet`), full applet build (`compile_applet`), and 100% passing Vitest suite (`vitest run shared.test.ts`).
+
 

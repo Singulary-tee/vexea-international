@@ -103,7 +103,7 @@ export const UTILITIES: Record<UtilityId, UtilityDefinition> = {
     slot: 'utility1',
     baseCooldown: RADIO_BASE_COOLDOWN,
     maxCharges: RADIO_MAX_CHARGES,
-    description: "Intercepts fragments of the LLM commander's last operational cycle. Surfaces as a tactical summary.",
+    description: "Intercepts fragments of the LLM commander's last operational cycle. Surfaces as an operational summary.",
   },
   'Signal Jammer': {
     id: 'Signal Jammer',

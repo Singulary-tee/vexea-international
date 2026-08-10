@@ -1,6 +1,7 @@
 import { MatchController } from "../../MatchController";
 import { ACTIVE_GAMEMODE } from "../../../shared/gamemode-configs";
 import { PlayerUtilityState } from "../../../shared/utilities";
+import { IS_MOBILE } from "../../gates/platform.gate";
 
 export class HUDSystem {
   private match: MatchController;
@@ -135,8 +136,13 @@ export class HUDSystem {
     const u1Badge = document.getElementById("util-1-badge");
     const u1Cooldown = document.getElementById("util-1-cooldown");
     if (u1Badge && state.utility1) {
-      u1Badge.innerText = `[G] ${state.utility1.charges}`;
-      u1Badge.style.opacity = state.utility1.charges > 0 ? "1" : "0.4";
+      if (IS_MOBILE) {
+        u1Badge.style.display = "none";
+      } else {
+        u1Badge.style.display = "flex";
+        u1Badge.innerText = "G";
+        u1Badge.style.opacity = state.utility1.charges > 0 ? "1" : "0.4";
+      }
     }
     if (u1Cooldown && state.utility1) {
       if (state.utility1.cooldownRemaining > 0 && state.utility1.charges === 0) {
@@ -151,8 +157,13 @@ export class HUDSystem {
     const u2Badge = document.getElementById("util-2-badge");
     const u2Cooldown = document.getElementById("util-2-cooldown");
     if (u2Badge && state.utility2) {
-      u2Badge.innerText = `[F] ${state.utility2.charges}`;
-      u2Badge.style.opacity = state.utility2.charges > 0 ? "1" : "0.4";
+      if (IS_MOBILE) {
+        u2Badge.style.display = "none";
+      } else {
+        u2Badge.style.display = "flex";
+        u2Badge.innerText = "F";
+        u2Badge.style.opacity = state.utility2.charges > 0 ? "1" : "0.4";
+      }
     }
     if (u2Cooldown && state.utility2) {
       if (state.utility2.cooldownRemaining > 0 && state.utility2.charges === 0) {

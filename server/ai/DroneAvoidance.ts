@@ -6,6 +6,8 @@ export interface AvoidanceVector {
   avoidZ: number;
 }
 
+const reusableAvoidanceVector: AvoidanceVector = { avoidX: 0, avoidZ: 0 };
+
 /**
  * Calculates obstacle and inter-drone repulsion vectors using formal Repulsive Potential Fields.
  * Math: F_repulsion = k_rep * (1/d - 1/d0) * (1/d^2) * normal_vector
@@ -79,8 +81,7 @@ export function calculateDroneAvoidance(
     totalForceZ = (totalForceZ / forceLen) * maxAvoidanceForce;
   }
 
-  return {
-    avoidX: totalForceX,
-    avoidZ: totalForceZ
-  };
+  reusableAvoidanceVector.avoidX = totalForceX;
+  reusableAvoidanceVector.avoidZ = totalForceZ;
+  return reusableAvoidanceVector;
 }

@@ -996,7 +996,7 @@ function renderAudioTab(container: HTMLElement, s: VexeaSettingsData) {
     sampleBtnsWrap.style.gap = '8px';
 
     const testSamples = [
-        { label: 'AUDITION TACTICAL HIT CONFIRM', sound: 'hit_confirmed' },
+        { label: 'AUDITION HIT CONFIRM', sound: 'hit_confirmed' },
         { label: 'AUDITION WEAPON FIRE (M4 RIFLE)', sound: 'rifle_fire' },
         { label: 'AUDITION INTERFACE CONFIRM BEEP', sound: 'click' },
         { label: 'AUDITION THEME SOUNDTRACK STINGER', sound: 'vexea_theme' }

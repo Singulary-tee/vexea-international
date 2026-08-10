@@ -27,7 +27,7 @@ function createTerritoryArcSVG(vibePct: number, slopPct: number): string {
   return `
     <svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" style="display:block; margin:0 auto;">
       <!-- Vibe Arc -->
-      <circle cx="${center}" cy="${center}" r="${r}" fill="none" stroke="#00F0FF" stroke-width="5"
+      <circle cx="${center}" cy="${center}" r="${r}" fill="none" stroke="${DS.colors.factions.vibe.primary}" stroke-width="5"
               stroke-dasharray="${vibeLength} ${circumference}" transform="rotate(-90 ${center} ${center})"/>
       <!-- Slop Arc -->
       <circle cx="${center}" cy="${center}" r="${r}" fill="none" stroke="${DS.colors.accent}" stroke-width="5"
@@ -53,7 +53,7 @@ export function renderFactionScreen(container: HTMLElement, registeredUserData: 
     flexDirection: 'column',
     width: '100%',
     height: '100%',
-    gap: '8px',
+    gap: '1vh',
     boxSizing: 'border-box',
     overflow: 'hidden'
   });
@@ -69,7 +69,7 @@ export function renderFactionScreen(container: HTMLElement, registeredUserData: 
   Object.assign(headerCard.style, {
     background: 'rgba(255, 255, 255, 0.02)',
     border: DS.glass.border,
-    padding: '6px 12px',
+    padding: '0.8vh 1.2vw',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -78,16 +78,16 @@ export function renderFactionScreen(container: HTMLElement, registeredUserData: 
   });
 
   headerCard.innerHTML = `
-    <div style="display:flex; align-items:center; gap:10px;">
-      <div style="font-family:${DS.typography.fontFamily}; font-size:10px; font-weight:bold; color:${DS.colors.accent}; letter-spacing:1px;">
+    <div style="display:flex; align-items:center; gap:1vw;">
+      <div style="font-family:${DS.typography.fontFamily}; font-size:clamp(10px, 1.2vh, 14px); font-weight:bold; color:${DS.colors.accent}; letter-spacing:0.1vw;">
         SECTOR DEPLOYMENT: ${activeMap.displayName.toUpperCase()}
       </div>
-      ${!isFactionWarActive ? `<span style="font-size:9px; background:rgba(255,68,0,0.15); border:1px solid ${DS.colors.accent}; color:${DS.colors.accent}; padding:1px 6px;">[CEASEFIRE / LOCKED]</span>` : ''}
+      ${!isFactionWarActive ? `<span style="font-size:clamp(8px, 1.1vh, 12px); background:rgba(255,68,0,0.15); border:1px solid ${DS.colors.accent}; color:${DS.colors.accent}; padding:0.2vh 0.6vw;">[CEASEFIRE / LOCKED]</span>` : ''}
     </div>
-    <div style="display:flex; align-items:center; gap:12px;">
-      <div style="text-align:right; font-family:${DS.typography.fontFamily}; font-size:8px; font-weight:bold;">
-        <div style="color:#00F0FF; letter-spacing:0.8px;">VIBE CO. 50%</div>
-        <div style="color:${DS.colors.accent}; margin-top:2px; letter-spacing:0.8px;">SLOP INC. 50%</div>
+    <div style="display:flex; align-items:center; gap:1.2vw;">
+      <div style="text-align:right; font-family:${DS.typography.fontFamily}; font-size:clamp(8px, 1vh, 11px); font-weight:bold;">
+        <div style="color:${DS.colors.factions.vibe.primary}; letter-spacing:0.08vw;">VIBE CO. 50%</div>
+        <div style="color:${DS.colors.accent}; margin-top:0.2vh; letter-spacing:0.08vw;">SLOP INC. 50%</div>
       </div>
       ${createTerritoryArcSVG(50, 50)}
     </div>
@@ -99,7 +99,7 @@ export function renderFactionScreen(container: HTMLElement, registeredUserData: 
   Object.assign(splitGrid.style, {
     display: 'grid',
     gridTemplateColumns: '1fr 1fr',
-    gap: '8px',
+    gap: '1vh',
     flex: '1',
     minHeight: '0'
   });
@@ -109,9 +109,9 @@ export function renderFactionScreen(container: HTMLElement, registeredUserData: 
   const vibeCard = document.createElement('div');
   vibeCard.className = 'mm-glass';
   Object.assign(vibeCard.style, {
-    background: vibeSelected ? 'rgba(0, 240, 255, 0.03)' : 'rgba(255, 255, 255, 0.01)',
-    border: vibeSelected ? '1px solid #00F0FF' : '1px solid rgba(255, 255, 255, 0.06)',
-    padding: '10px 12px',
+    background: vibeSelected ? DS.utils.rgba(DS.colors.factions.vibe.primary, 0.03) : 'rgba(255, 255, 255, 0.01)',
+    border: vibeSelected ? `1px solid ${DS.colors.factions.vibe.primary}` : '1px solid rgba(255, 255, 255, 0.06)',
+    padding: '1.2vh 1.2vw',
     display: 'flex',
     flexDirection: 'column',
     justifyContent: 'space-between',
@@ -121,26 +121,26 @@ export function renderFactionScreen(container: HTMLElement, registeredUserData: 
   });
 
   vibeCard.innerHTML = `
-    <div style="display:flex; flex-direction:column; gap:6px; min-height:0;">
+    <div style="display:flex; flex-direction:column; gap:0.8vh; min-height:0;">
       <div style="display:flex; justify-content:space-between; align-items:center;">
-        <div style="display:flex; align-items:center; gap:8px;">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#00F0FF" stroke-width="2">
+        <div style="display:flex; align-items:center; gap:1vw;">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="${DS.colors.factions.vibe.primary}" stroke-width="2">
             <polygon points="12,2 22,8.5 22,15.5 12,22 2,15.5 2,8.5"/>
-            <circle cx="12" cy="12" r="3" fill="#00F0FF"/>
+            <circle cx="12" cy="12" r="3" fill="${DS.colors.factions.vibe.primary}"/>
           </svg>
-          <div style="font-family:${DS.typography.fontFamily}; font-size:15px; font-weight:bold; color:#00F0FF; letter-spacing:1.5px;">
+          <div style="font-family:${DS.typography.fontFamily}; font-size:clamp(12px, 1.8vh, 16px); font-weight:bold; color:${DS.colors.factions.vibe.primary}; letter-spacing:0.1vw;">
             VIBE CO.
           </div>
         </div>
-        ${vibeSelected ? `<div style="background:rgba(0,240,255,0.15); border:1px solid #00F0FF; color:#00F0FF; padding:1px 6px; font-family:${DS.typography.fontFamily}; font-size:7px; font-weight:bold; letter-spacing:0.8px; border-radius:0px;">ACTIVE AFFILIATION</div>` : ''}
+        ${vibeSelected ? `<div style="background:${DS.utils.rgba(DS.colors.factions.vibe.primary, 0.15)}; border:1px solid ${DS.colors.factions.vibe.primary}; color:${DS.colors.factions.vibe.primary}; padding:0.2vh 0.5vw; font-family:${DS.typography.fontFamily}; font-size:clamp(8px, 0.9vh, 10px); font-weight:bold; letter-spacing:0.08vw; border-radius:0px;">ACTIVE AFFILIATION</div>` : ''}
       </div>
-      <div style="font-family:${DS.typography.fontFamily}; font-size:9.5px; color:${DS.colors.textMuted}; letter-spacing:0.5px; line-height:1.3;">
+      <div style="font-family:${DS.typography.fontFamily}; font-size:clamp(9px, 1.1vh, 11px); color:${DS.colors.textMuted}; letter-spacing:0.05vw; line-height:1.3;">
         Minimalist tech syndicate specializing in clean stealth operations, drone camera override, and rapid reconnaissance.
       </div>
 
-      <div style="background:rgba(0,240,255,0.02); border:1px solid rgba(0,240,255,0.08); padding:8px; display:flex; flex-direction:column; gap:4px; border-radius:0px;">
-        <div style="font-family:${DS.typography.fontFamily}; font-size:7.5px; color:#00F0FF; font-weight:bold; letter-spacing:0.8px; margin-bottom:1px;">SYNDICATE DOCTRINE</div>
-        <div style="font-family:${DS.typography.fontFamily}; font-size:9px; color:${DS.colors.text}; line-height:1.3;">
+      <div style="background:${DS.utils.rgba(DS.colors.factions.vibe.primary, 0.02)}; border:1px solid ${DS.utils.rgba(DS.colors.factions.vibe.primary, 0.08)}; padding:1vh; display:flex; flex-direction:column; gap:0.5vh; border-radius:0px;">
+        <div style="font-family:${DS.typography.fontFamily}; font-size:clamp(8px, 0.9vh, 10px); color:${DS.colors.factions.vibe.primary}; font-weight:bold; letter-spacing:0.08vw; margin-bottom:0.2vh;">SYNDICATE DOCTRINE</div>
+        <div style="font-family:${DS.typography.fontFamily}; font-size:clamp(9px, 1.1vh, 11px); color:${DS.colors.text}; line-height:1.3;">
           Focuses on high-mobility drone maneuvering, strategic line-of-sight control, and precise asset extraction.
         </div>
       </div>
@@ -152,24 +152,24 @@ export function renderFactionScreen(container: HTMLElement, registeredUserData: 
     vibeEnlistBtn.textContent = 'FACTION WARFARES LOCKED';
     vibeEnlistBtn.disabled = true;
     Object.assign(vibeEnlistBtn.style, {
-      width: '100%', padding: '8px', background: 'rgba(255, 255, 255, 0.05)',
+      width: '100%', padding: '1vh', background: 'rgba(255, 255, 255, 0.05)',
       border: '1px solid rgba(255, 255, 255, 0.1)', color: DS.colors.textMuted,
-      fontFamily: DS.typography.fontFamily, fontSize: '10px', fontWeight: 'bold',
-      letterSpacing: '1px', cursor: 'not-allowed', borderRadius: '0px', flexShrink: '0'
+      fontFamily: DS.typography.fontFamily, fontSize: 'clamp(9px, 1.2vh, 12px)', fontWeight: 'bold',
+      letterSpacing: '0.08vw', cursor: 'not-allowed', borderRadius: '0px', flexShrink: '0'
     });
   } else {
     vibeEnlistBtn.textContent = vibeSelected ? 'CURRENT AFFILIATION' : 'ENLIST IN VIBE CO.';
     vibeEnlistBtn.disabled = vibeSelected || !auth.currentUser;
     Object.assign(vibeEnlistBtn.style, {
       width: '100%',
-      padding: '8px',
-      background: vibeSelected ? 'transparent' : '#00F0FF',
-      border: vibeSelected ? '1px solid rgba(0,240,255,0.3)' : 'none',
-      color: vibeSelected ? '#00F0FF' : '#000000',
+      padding: '1vh',
+      background: vibeSelected ? 'transparent' : DS.colors.factions.vibe.primary,
+      border: vibeSelected ? `1px solid ${DS.utils.rgba(DS.colors.factions.vibe.primary, 0.3)}` : 'none',
+      color: vibeSelected ? DS.colors.factions.vibe.primary : '#000000',
       fontFamily: DS.typography.fontFamily,
-      fontSize: '10px',
+      fontSize: 'clamp(9px, 1.2vh, 12px)',
       fontWeight: 'bold',
-      letterSpacing: '1px',
+      letterSpacing: '0.08vw',
       cursor: (vibeSelected || !auth.currentUser) ? 'default' : 'pointer',
       borderRadius: '0px',
       flexShrink: '0',
@@ -198,7 +198,7 @@ export function renderFactionScreen(container: HTMLElement, registeredUserData: 
   Object.assign(slopCard.style, {
     background: slopSelected ? DS.utils.rgba(DS.colors.accent, 0.03) : 'rgba(255, 255, 255, 0.01)',
     border: slopSelected ? `1px solid ${DS.colors.accent}` : '1px solid rgba(255, 255, 255, 0.06)',
-    padding: '10px 12px',
+    padding: '1.2vh 1.2vw',
     display: 'flex',
     flexDirection: 'column',
     justifyContent: 'space-between',
@@ -208,25 +208,25 @@ export function renderFactionScreen(container: HTMLElement, registeredUserData: 
   });
 
   slopCard.innerHTML = `
-    <div style="display:flex; flex-direction:column; gap:6px; min-height:0;">
+    <div style="display:flex; flex-direction:column; gap:0.8vh; min-height:0;">
       <div style="display:flex; justify-content:space-between; align-items:center;">
-        <div style="display:flex; align-items:center; gap:8px;">
+        <div style="display:flex; align-items:center; gap:1vw;">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="${DS.colors.accent}" stroke-width="2">
             <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
           </svg>
-          <div style="font-family:${DS.typography.fontFamily}; font-size:15px; font-weight:bold; color:${DS.colors.accent}; letter-spacing:1.5px;">
+          <div style="font-family:${DS.typography.fontFamily}; font-size:clamp(12px, 1.8vh, 16px); font-weight:bold; color:${DS.colors.accent}; letter-spacing:0.1vw;">
             SLOP INC.
           </div>
         </div>
-        ${slopSelected ? `<div style="background:${DS.utils.rgba(DS.colors.accent, 0.15)}; border:1px solid ${DS.colors.accent}; color:${DS.colors.accent}; padding:1px 6px; font-family:${DS.typography.fontFamily}; font-size:7px; font-weight:bold; letter-spacing:0.8px; border-radius:0px;">ACTIVE AFFILIATION</div>` : ''}
+        ${slopSelected ? `<div style="background:${DS.utils.rgba(DS.colors.accent, 0.15)}; border:1px solid ${DS.colors.accent}; color:${DS.colors.accent}; padding:0.2vh 0.5vw; font-family:${DS.typography.fontFamily}; font-size:clamp(8px, 0.9vh, 10px); font-weight:bold; letter-spacing:0.08vw; border-radius:0px;">ACTIVE AFFILIATION</div>` : ''}
       </div>
-      <div style="font-family:${DS.typography.fontFamily}; font-size:9.5px; color:${DS.colors.textMuted}; letter-spacing:0.5px; line-height:1.3;">
+      <div style="font-family:${DS.typography.fontFamily}; font-size:clamp(9px, 1.1vh, 11px); color:${DS.colors.textMuted}; letter-spacing:0.05vw; line-height:1.3;">
         Industrial defense group focused on ballistic drone chassis, reinforced shielding, and point defense.
       </div>
 
-      <div style="background:${DS.utils.rgba(DS.colors.accent, 0.02)}; border:1px solid ${DS.utils.rgba(DS.colors.accent, 0.08)}; padding:8px; display:flex; flex-direction:column; gap:4px; border-radius:0px;">
-        <div style="font-family:${DS.typography.fontFamily}; font-size:7.5px; color:${DS.colors.accent}; font-weight:bold; letter-spacing:0.8px; margin-bottom:1px;">DEFENSE DOCTRINE</div>
-        <div style="font-family:${DS.typography.fontFamily}; font-size:9px; color:${DS.colors.text}; line-height:1.3;">
+      <div style="background:${DS.utils.rgba(DS.colors.accent, 0.02)}; border:1px solid ${DS.utils.rgba(DS.colors.accent, 0.08)}; padding:1vh; display:flex; flex-direction:column; gap:0.5vh; border-radius:0px;">
+        <div style="font-family:${DS.typography.fontFamily}; font-size:clamp(8px, 0.9vh, 10px); color:${DS.colors.accent}; font-weight:bold; letter-spacing:0.08vw; margin-bottom:0.2vh;">DEFENSE DOCTRINE</div>
+        <div style="font-family:${DS.typography.fontFamily}; font-size:clamp(9px, 1.1vh, 11px); color:${DS.colors.text}; line-height:1.3;">
           Prioritizes heavy structural durability, defensive choke point control, and sustained suppressive engagement.
         </div>
       </div>
@@ -238,24 +238,24 @@ export function renderFactionScreen(container: HTMLElement, registeredUserData: 
     slopEnlistBtn.textContent = 'FACTION WARFARES LOCKED';
     slopEnlistBtn.disabled = true;
     Object.assign(slopEnlistBtn.style, {
-      width: '100%', padding: '8px', background: 'rgba(255, 255, 255, 0.05)',
+      width: '100%', padding: '1vh', background: 'rgba(255, 255, 255, 0.05)',
       border: '1px solid rgba(255, 255, 255, 0.1)', color: DS.colors.textMuted,
-      fontFamily: DS.typography.fontFamily, fontSize: '10px', fontWeight: 'bold',
-      letterSpacing: '1px', cursor: 'not-allowed', borderRadius: '0px', flexShrink: '0'
+      fontFamily: DS.typography.fontFamily, fontSize: 'clamp(9px, 1.2vh, 12px)', fontWeight: 'bold',
+      letterSpacing: '0.08vw', cursor: 'not-allowed', borderRadius: '0px', flexShrink: '0'
     });
   } else {
     slopEnlistBtn.textContent = slopSelected ? 'CURRENT AFFILIATION' : 'ENLIST IN SLOP INC.';
     slopEnlistBtn.disabled = slopSelected || !auth.currentUser;
     Object.assign(slopEnlistBtn.style, {
       width: '100%',
-      padding: '8px',
+      padding: '1vh',
       background: slopSelected ? 'transparent' : DS.colors.accent,
       border: slopSelected ? `1px solid ${DS.utils.rgba(DS.colors.accent, 0.3)}` : 'none',
       color: slopSelected ? DS.colors.accent : '#000000',
       fontFamily: DS.typography.fontFamily,
-      fontSize: '10px',
+      fontSize: 'clamp(9px, 1.2vh, 12px)',
       fontWeight: 'bold',
-      letterSpacing: '1px',
+      letterSpacing: '0.08vw',
       cursor: (slopSelected || !auth.currentUser) ? 'default' : 'pointer',
       borderRadius: '0px',
       flexShrink: '0',

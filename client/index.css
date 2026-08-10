@@ -47,7 +47,7 @@ html, body, * {
     scrollbar-width: none !important; /* Firefox */
 }
 
-/* VEXEA Tactical Skeleton Loader Styling */
+/* VEXEA Skeleton Loader Styling */
 @keyframes vexea-skeleton-sweep {
   0% {
     background-position: -200% 0;

@@ -11,6 +11,7 @@ export class ChatHUDSystem {
   private chatBtn: HTMLButtonElement | null = null;
 
   private isInputActive = false;
+  private fadeTimeout: any = null;
   private boundOnKeyDown: ((e: KeyboardEvent) => void) | null = null;
   private boundOnToggleChat: ((e: Event) => void) | null = null;
   private boundOnSendChat: ((e: Event) => void) | null = null;
@@ -24,7 +25,24 @@ export class ChatHUDSystem {
     this.createDOM();
     this.applySettings();
     this.setupListeners();
-    this.addSystemMessage("CHAT ESTABLISHED. ESC OR ENTER TO CLOSE INPUT.");
+    this.showChatTemporarily();
+  }
+
+  private showChatTemporarily() {
+    if (!this.logEl) return;
+    if (this.fadeTimeout) {
+      clearTimeout(this.fadeTimeout);
+      this.fadeTimeout = null;
+    }
+    this.logEl.style.opacity = "1";
+    this.logEl.style.pointerEvents = "auto";
+    if (this.isInputActive) return;
+    this.fadeTimeout = setTimeout(() => {
+      if (this.logEl && !this.isInputActive) {
+        this.logEl.style.opacity = "0";
+        this.logEl.style.pointerEvents = "none";
+      }
+    }, 5000) as any;
   }
 
   private createDOM() {
@@ -52,7 +70,9 @@ export class ChatHUDSystem {
         fontFamily: "monospace",
         fontSize: "11px",
         zIndex: "90",
-        userSelect: "text"
+        userSelect: "text",
+        opacity: "1",
+        transition: "opacity 0.5s ease-out"
       });
       document.getElementById("hud-container")?.appendChild(log);
     }
@@ -198,6 +218,7 @@ export class ChatHUDSystem {
     if (document.exitPointerLock) {
       document.exitPointerLock();
     }
+    this.showChatTemporarily();
   }
 
   public deactivateInput() {
@@ -215,6 +236,7 @@ export class ChatHUDSystem {
     if (inputSys && (inputSys as any).inputManager) {
       (inputSys as any).inputManager.setInputLocked(false);
     }
+    this.showChatTemporarily();
   }
 
   private sendChatMessage() {
@@ -265,6 +287,7 @@ export class ChatHUDSystem {
     while (this.logEl.children.length > 50) {
       this.logEl.removeChild(this.logEl.firstChild!);
     }
+    this.showChatTemporarily();
   }
 
   public addQuickCommMessage(sender: string, optionId: string) {
@@ -310,6 +333,7 @@ export class ChatHUDSystem {
     while (this.logEl.children.length > 50) {
       this.logEl.removeChild(this.logEl.firstChild!);
     }
+    this.showChatTemporarily();
   }
 
   public addSystemMessage(message: string) {
@@ -335,6 +359,7 @@ export class ChatHUDSystem {
     this.logEl.appendChild(row);
 
     this.logEl.scrollTop = this.logEl.scrollHeight;
+    this.showChatTemporarily();
   }
 
   public dispose() {

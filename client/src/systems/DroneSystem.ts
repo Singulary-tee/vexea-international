@@ -397,8 +397,7 @@ export class DroneSystem {
 
                              const isQuad = typeId === DroneType.ROTARY_SHOOTER || typeId === DroneType.BOMBER || typeId === DroneType.RECON;
                              if (isQuad && (info as any).baseInvWorldMatrix) {
-                                 const parentNameLower = info.parentName?.toLowerCase() || '';
-                                 const isPropMesh = !!info.isMesh && (parentNameLower.includes('prop') && parentNameLower !== 'prop');
+                                 const isPropMesh = (info as any).isPropMesh ?? (!!info.isMesh && (((info as any).parentNameLower ?? info.parentName?.toLowerCase() ?? '').includes('prop') && ((info as any).parentNameLower ?? info.parentName?.toLowerCase() ?? '') !== 'prop'));
                                  if (isPropMesh) {
                                      let offset_x = 0.5;
                                      let offset_z = 0.5;

@@ -108,18 +108,18 @@ export const initUIEditor = () => {
 
             <!-- Position Controls -->
             <div style="display: flex; justify-content: space-between; align-items: center;">
-                <span style="color: ${DS.colors.textSecondary};">LEFT (PX):</span>
+                <span style="color: ${DS.colors.textSecondary};">LEFT (VW):</span>
                 <div style="display: flex; align-items: center; gap: ${DS.spacing.md};">
-                    <input type="range" id="editor-left" min="0" max="1920" step="1" value="0" disabled style="width: 80px; accent-color: ${DS.colors.success}; opacity: 0.5;">
-                    <input type="number" id="editor-left-num" min="-500" max="3840" step="1" value="0" disabled style="width: 55px; background: ${DS.colors.surface}; color: ${DS.colors.textPrimary}; border: 1px solid ${DS.colors.border}; border-radius: ${DS.borders.radius.none}; padding: ${DS.spacing.sm} ${DS.spacing.md}; font-size: ${DS.typography.tiny}; text-align: right; font-family: ${DS.typography.fontFamilyMono};">
+                    <input type="range" id="editor-left" min="0" max="100" step="0.1" value="0" disabled style="width: 80px; accent-color: ${DS.colors.success}; opacity: 0.5;">
+                    <input type="number" id="editor-left-num" min="-50" max="150" step="0.1" value="0" disabled style="width: 55px; background: ${DS.colors.surface}; color: ${DS.colors.textPrimary}; border: 1px solid ${DS.colors.border}; border-radius: ${DS.borders.radius.none}; padding: ${DS.spacing.sm} ${DS.spacing.md}; font-size: ${DS.typography.tiny}; text-align: right; font-family: ${DS.typography.fontFamilyMono};">
                 </div>
             </div>
 
             <div style="display: flex; justify-content: space-between; align-items: center;">
-                <span style="color: ${DS.colors.textSecondary};">TOP (PX):</span>
+                <span style="color: ${DS.colors.textSecondary};">TOP (VH):</span>
                 <div style="display: flex; align-items: center; gap: ${DS.spacing.md};">
-                    <input type="range" id="editor-top" min="0" max="1080" step="1" value="0" disabled style="width: 80px; accent-color: ${DS.colors.success}; opacity: 0.5;">
-                    <input type="number" id="editor-top-num" min="-500" max="2160" step="1" value="0" disabled style="width: 55px; background: ${DS.colors.surface}; color: ${DS.colors.textPrimary}; border: 1px solid ${DS.colors.border}; border-radius: ${DS.borders.radius.none}; padding: ${DS.spacing.sm} ${DS.spacing.md}; font-size: ${DS.typography.tiny}; text-align: right; font-family: ${DS.typography.fontFamilyMono};">
+                    <input type="range" id="editor-top" min="0" max="100" step="0.1" value="0" disabled style="width: 80px; accent-color: ${DS.colors.success}; opacity: 0.5;">
+                    <input type="number" id="editor-top-num" min="-50" max="150" step="0.1" value="0" disabled style="width: 55px; background: ${DS.colors.surface}; color: ${DS.colors.textPrimary}; border: 1px solid ${DS.colors.border}; border-radius: ${DS.borders.radius.none}; padding: ${DS.spacing.sm} ${DS.spacing.md}; font-size: ${DS.typography.tiny}; text-align: right; font-family: ${DS.typography.fontFamilyMono};">
                 </div>
             </div>
 
@@ -135,17 +135,17 @@ export const initUIEditor = () => {
 
             <div id="editor-dim-wrap" style="display: flex; flex-direction: column; gap: ${DS.spacing.md}; width: 100%;">
                 <div style="display: flex; justify-content: space-between; align-items: center;">
-                    <span style="color: ${DS.colors.textSecondary};">WIDTH (PX):</span>
+                    <span style="color: ${DS.colors.textSecondary};">WIDTH (VW):</span>
                     <div style="display: flex; align-items: center; gap: ${DS.spacing.md};">
-                        <input type="range" id="editor-width" min="10" max="1200" step="1" value="100" disabled style="width: 80px; accent-color: ${DS.colors.success}; opacity: 0.5;">
-                        <input type="number" id="editor-width-num" min="10" max="2000" step="1" value="100" disabled style="width: 55px; background: ${DS.colors.surface}; color: ${DS.colors.textPrimary}; border: 1px solid ${DS.colors.border}; border-radius: ${DS.borders.radius.none}; padding: ${DS.spacing.sm} ${DS.spacing.md}; font-size: ${DS.typography.tiny}; text-align: right; font-family: ${DS.typography.fontFamilyMono};">
+                        <input type="range" id="editor-width" min="0.1" max="100" step="0.1" value="10" disabled style="width: 80px; accent-color: ${DS.colors.success}; opacity: 0.5;">
+                        <input type="number" id="editor-width-num" min="0.1" max="100" step="0.1" value="10" disabled style="width: 55px; background: ${DS.colors.surface}; color: ${DS.colors.textPrimary}; border: 1px solid ${DS.colors.border}; border-radius: ${DS.borders.radius.none}; padding: ${DS.spacing.sm} ${DS.spacing.md}; font-size: ${DS.typography.tiny}; text-align: right; font-family: ${DS.typography.fontFamilyMono};">
                     </div>
                 </div>
                 <div style="display: flex; justify-content: space-between; align-items: center;">
-                    <span style="color: ${DS.colors.textSecondary};">HEIGHT (PX):</span>
+                    <span style="color: ${DS.colors.textSecondary};">HEIGHT (VH):</span>
                     <div style="display: flex; align-items: center; gap: ${DS.spacing.md};">
-                        <input type="range" id="editor-height" min="10" max="1200" step="1" value="100" disabled style="width: 80px; accent-color: ${DS.colors.success}; opacity: 0.5;">
-                        <input type="number" id="editor-height-num" min="10" max="2000" step="1" value="100" disabled style="width: 55px; background: ${DS.colors.surface}; color: ${DS.colors.textPrimary}; border: 1px solid ${DS.colors.border}; border-radius: ${DS.borders.radius.none}; padding: ${DS.spacing.sm} ${DS.spacing.md}; font-size: ${DS.typography.tiny}; text-align: right; font-family: ${DS.typography.fontFamilyMono};">
+                        <input type="range" id="editor-height" min="0.1" max="100" step="0.1" value="10" disabled style="width: 80px; accent-color: ${DS.colors.success}; opacity: 0.5;">
+                        <input type="number" id="editor-height-num" min="0.1" max="100" step="0.1" value="10" disabled style="width: 55px; background: ${DS.colors.surface}; color: ${DS.colors.textPrimary}; border: 1px solid ${DS.colors.border}; border-radius: ${DS.borders.radius.none}; padding: ${DS.spacing.sm} ${DS.spacing.md}; font-size: ${DS.typography.tiny}; text-align: right; font-family: ${DS.typography.fontFamilyMono};">
                     </div>
                 </div>
             </div>
@@ -499,53 +499,53 @@ export const initUIEditor = () => {
         // User's default preferred layout
         const defaultLayout = {
   "squad-container": {
-    "left": "12.3611px",
-    "top": "8.06111px",
+    "left": "0.54vw",
+    "top": "0.75vh",
     "scale": 1.2
   },
   "hud-timer-container": {
-    "left": "356px",
-    "top": "28px",
+    "left": "15.57vw",
+    "top": "2.59vh",
     "scale": 1,
-    "width": "131.2px",
-    "height": "20.4px"
+    "width": "5.74vw",
+    "height": "1.89vh"
   },
   "minimap-container": {
-    "left": "706px",
-    "top": "20px",
+    "left": "30.87vw",
+    "top": "1.85vh",
     "scale": 1,
-    "width": "101px",
-    "height": "87px"
+    "width": "4.42vw",
+    "height": "8.06vh"
   },
   "minimap-label": {
-    "left": "708px",
-    "top": "110px",
+    "left": "30.95vw",
+    "top": "10.19vh",
     "scale": 1
   },
   "btn-settings": {
-    "left": "671px",
-    "top": "13px",
+    "left": "29.34vw",
+    "top": "1.20vh",
     "scale": 1,
-    "width": "34px",
-    "height": "34px"
+    "width": "1.49vw",
+    "height": "3.15vh"
   },
   "btn-mic": {
-    "left": "671px",
-    "top": "74px",
+    "left": "29.34vw",
+    "top": "6.85vh",
     "scale": 1,
-    "width": "34px",
-    "height": "34px"
+    "width": "1.49vw",
+    "height": "3.15vh"
   },
   "btn-chat": {
-    "left": "671px",
-    "top": "43px",
+    "left": "29.34vw",
+    "top": "3.98vh",
     "scale": 1,
-    "width": "34px",
-    "height": "34px"
+    "width": "1.49vw",
+    "height": "3.15vh"
   },
   "joystick-boundary": {
-    "left": "96px",
-    "top": "234px",
+    "left": "4.20vw",
+    "top": "21.67vh",
     "scale": 0.6
   },
   "btn-sprint": {
@@ -554,91 +554,91 @@ export const initUIEditor = () => {
     "scale": 1
   },
   "btn-fire-left": {
-    "left": "34px",
-    "top": "160px",
+    "left": "1.49vw",
+    "top": "14.81vh",
     "scale": 1.2
   },
   "weapon-slots-wrap": {
-    "left": "378px",
-    "top": "304px",
+    "left": "16.53vw",
+    "top": "28.15vh",
     "scale": 1,
-    "width": "176.5px",
-    "height": "28px"
+    "width": "7.72vw",
+    "height": "2.59vh"
   },
   "btn-walkie": {
-    "left": "296px",
-    "top": "282px",
+    "left": "12.94vw",
+    "top": "26.11vh",
     "scale": 1.22
   },
   "btn-helmet": {
-    "left": "344px",
-    "top": "306px",
+    "left": "15.04vw",
+    "top": "28.33vh",
     "scale": 0.58,
-    "width": "64px",
-    "height": "64px"
+    "width": "2.80vw",
+    "height": "5.93vh"
   },
   "btn-medkit": {
-    "left": "578px",
-    "top": "314px",
+    "left": "25.27vw",
+    "top": "29.07vh",
     "scale": 0.6
   },
   "medkit-arrow": {
-    "left": "585px",
-    "top": "300px",
+    "left": "25.58vw",
+    "top": "27.78vh",
     "scale": 1,
-    "width": "24px",
-    "height": "24px"
+    "width": "1.05vw",
+    "height": "2.22vh"
   },
   "compass-placeholder": {
-    "left": "340px",
-    "top": "12px",
+    "left": "14.87vw",
+    "top": "1.11vh",
     "scale": 1,
-    "width": "164.83334350585938px",
-    "height": "35.7px"
+    "width": "7.21vw",
+    "height": "3.31vh"
   },
   "auto-label": {
-    "left": "402px",
-    "top": "288px",
+    "left": "17.58vw",
+    "top": "26.67vh",
     "scale": 1,
-    "width": "60.6px"
+    "width": "2.65vw"
   },
   "health-bar": {
-    "left": "334px",
-    "top": "352px",
+    "left": "14.60vw",
+    "top": "32.59vh",
     "scale": 0.8,
-    "width": "230px",
-    "height": "10px"
+    "width": "10.06vw",
+    "height": "0.93vh"
   },
   "health-plus-sq-wrap": {
-    "left": "304px",
-    "top": "338px",
+    "left": "13.29vw",
+    "top": "31.30vh",
     "scale": 2.9,
-    "width": "30.5px",
-    "height": "35.5px"
+    "width": "1.33vw",
+    "height": "3.29vh"
   },
   "btn-fire-right": {
-    "left": "704px",
-    "top": "232px",
+    "left": "30.78vw",
+    "top": "21.48vh",
     "scale": 0.6
   },
   "btn-ads": {
-    "left": "744px",
-    "top": "186px",
+    "left": "32.53vw",
+    "top": "17.22vh",
     "scale": 0.62
   },
   "btn-reload": {
-    "left": "660px",
-    "top": "274px",
+    "left": "28.86vw",
+    "top": "25.37vh",
     "scale": 0.95
   },
   "btn-jump": {
-    "left": "674px",
-    "top": "326px",
+    "left": "29.47vw",
+    "top": "30.19vh",
     "scale": 0.6
   },
   "btn-crouch": {
-    "left": "720px",
-    "top": "316px",
+    "left": "31.48vw",
+    "top": "29.26vh",
     "scale": 0.85
   }
 };
@@ -677,9 +677,20 @@ export const initUIEditor = () => {
                         }
                         el.style.setProperty('transform', 'none', 'important');
                     }
+
+                    const parsePosPx = (val: string | number | undefined, isWidthHeight: boolean, isVertical: boolean): number => {
+                        if (val === undefined) return 0;
+                        if (typeof val === 'number') return val;
+                        const num = parseFloat(val) || 0;
+                        if (val.endsWith('vw')) return (num / 100) * window.innerWidth;
+                        if (val.endsWith('vh')) return (num / 100) * window.innerHeight;
+                        if (val.endsWith('%')) return (num / 100) * (isVertical ? window.innerHeight : window.innerWidth);
+                        return num;
+                    };
+
                     elementStates.set(el, { 
-                        leftPx: parseFloat(saved.left) || 0, 
-                        topPx: parseFloat(saved.top) || 0, 
+                        leftPx: parsePosPx(saved.left, false, false), 
+                        topPx: parsePosPx(saved.top, false, true), 
                         scale: saved.scale || 1,
                         widthPx: w,
                         heightPx: h
@@ -688,6 +699,30 @@ export const initUIEditor = () => {
             });
         } catch (err) {}
     }
+
+    const isOverlappingAny = (el: HTMLElement, x: number, y: number, w: number, h: number): boolean => {
+        const rect1 = { left: x, top: y, right: x + w, bottom: y + h };
+        for (const other of elementsToEdit) {
+            if (other === el || other.style.display === 'none') continue;
+            const otherState = elementStates.get(other);
+            if (!otherState) continue;
+            const otherW = otherState.widthPx || other.getBoundingClientRect().width;
+            const otherH = otherState.heightPx || other.getBoundingClientRect().height;
+            const rect2 = {
+                left: otherState.leftPx,
+                top: otherState.topPx,
+                right: otherState.leftPx + otherW,
+                bottom: otherState.topPx + otherH
+            };
+            
+            // Check if they overlap
+            if (rect1.left < rect2.right && rect1.right > rect2.left &&
+                rect1.top < rect2.bottom && rect1.bottom > rect2.top) {
+                return true;
+            }
+        }
+        return false;
+    };
 
     const onPointerDown = (e: PointerEvent) => {
         if (!isEditing) return;
@@ -706,15 +741,13 @@ export const initUIEditor = () => {
             topSlider.disabled = false;
             topNum.disabled = false;
 
-            leftSlider.max = window.innerWidth.toString();
-            leftNum.max = window.innerWidth.toString();
-            topSlider.max = window.innerHeight.toString();
-            topNum.max = window.innerHeight.toString();
+            const leftVw = (state.leftPx / window.innerWidth) * 100;
+            const topVh = (state.topPx / window.innerHeight) * 100;
 
-            leftSlider.value = state.leftPx.toString();
-            leftNum.value = Math.round(state.leftPx).toString();
-            topSlider.value = state.topPx.toString();
-            topNum.value = Math.round(state.topPx).toString();
+            leftSlider.value = leftVw.toString();
+            leftNum.value = leftVw.toFixed(2);
+            topSlider.value = topVh.toString();
+            topNum.value = topVh.toFixed(2);
 
             if (circularIds.has(target.id)) {
                 if (sizeWrap) sizeWrap.style.display = "flex";
@@ -738,10 +771,13 @@ export const initUIEditor = () => {
                 heightSlider.disabled = false;
                 heightNum.disabled = false;
 
-                widthSlider.value = state.widthPx ? state.widthPx.toString() : "100";
-                widthNum.value = state.widthPx ? Math.round(state.widthPx).toString() : "100";
-                heightSlider.value = state.heightPx ? state.heightPx.toString() : "100";
-                heightNum.value = state.heightPx ? Math.round(state.heightPx).toString() : "100";
+                const widthVw = state.widthPx ? (state.widthPx / window.innerWidth) * 100 : 10;
+                const heightVh = state.heightPx ? (state.heightPx / window.innerHeight) * 100 : 10;
+
+                widthSlider.value = widthVw.toString();
+                widthNum.value = widthVw.toFixed(2);
+                heightSlider.value = heightVh.toString();
+                heightNum.value = heightVh.toFixed(2);
             }
         }
 
@@ -769,16 +805,38 @@ export const initUIEditor = () => {
         
         const state = elementStates.get(selectedElement);
         if (state) {
-            state.leftPx = getGridSnap(startLeft + dx, gridSnapSize, gridOffsetX);
-            state.topPx = getGridSnap(startTop + dy, gridSnapSize, gridOffsetY);
-            selectedElement.style.setProperty('left', `${state.leftPx}px`, 'important');
-            selectedElement.style.setProperty('top', `${state.topPx}px`, 'important');
+            let targetLeftPx = startLeft + dx;
+            let targetTopPx = startTop + dy;
+
+            // Bounds constraint to prevent off-screen positioning
+            const w = state.widthPx || selectedElement.getBoundingClientRect().width;
+            const h = state.heightPx || selectedElement.getBoundingClientRect().height;
+
+            targetLeftPx = Math.max(0, Math.min(targetLeftPx, window.innerWidth - w));
+            targetTopPx = Math.max(0, Math.min(targetTopPx, window.innerHeight - h));
+
+            state.leftPx = getGridSnap(targetLeftPx, gridSnapSize, gridOffsetX);
+            state.topPx = getGridSnap(targetTopPx, gridSnapSize, gridOffsetY);
+
+            const leftVw = (state.leftPx / window.innerWidth) * 100;
+            const topVh = (state.topPx / window.innerHeight) * 100;
+
+            selectedElement.style.setProperty('left', `${leftVw.toFixed(2)}vw`, 'important');
+            selectedElement.style.setProperty('top', `${topVh.toFixed(2)}vh`, 'important');
+
+            // Enforce real-time zero-overlapping visual indicator
+            const isOverlapping = isOverlappingAny(selectedElement, state.leftPx, state.topPx, w, h);
+            if (isOverlapping) {
+                selectedElement.style.outline = "2px dashed #ef4444";
+            } else {
+                selectedElement.style.outline = "2px dashed #22c55e";
+            }
 
             // Synchronize control panel input values live!
-            leftSlider.value = state.leftPx.toString();
-            leftNum.value = Math.round(state.leftPx).toString();
-            topSlider.value = state.topPx.toString();
-            topNum.value = Math.round(state.topPx).toString();
+            leftSlider.value = leftVw.toString();
+            leftNum.value = leftVw.toFixed(2);
+            topSlider.value = topVh.toString();
+            topNum.value = topVh.toFixed(2);
         }
     };
 
@@ -807,19 +865,31 @@ export const initUIEditor = () => {
         if (!selectedElement) return;
         const state = elementStates.get(selectedElement);
         if (state) {
-            state.leftPx = val;
-            selectedElement.style.setProperty('left', `${val}px`, 'important');
+            state.leftPx = (val / 100) * window.innerWidth;
+            selectedElement.style.setProperty('left', `${val.toFixed(2)}vw`, 'important');
+
+            // Highlight with outline if it overlaps
+            const w = state.widthPx || selectedElement.getBoundingClientRect().width;
+            const h = state.heightPx || selectedElement.getBoundingClientRect().height;
+            const isOverlapping = isOverlappingAny(selectedElement, state.leftPx, state.topPx, w, h);
+            selectedElement.style.outline = isOverlapping ? "2px dashed #ef4444" : "2px dashed #22c55e";
         }
-    }, 0);
+    }, 2);
 
     bindSliderAndNumber(topSlider, topNum, (val) => {
         if (!selectedElement) return;
         const state = elementStates.get(selectedElement);
         if (state) {
-            state.topPx = val;
-            selectedElement.style.setProperty('top', `${val}px`, 'important');
+            state.topPx = (val / 100) * window.innerHeight;
+            selectedElement.style.setProperty('top', `${val.toFixed(2)}vh`, 'important');
+
+            // Highlight with outline if it overlaps
+            const w = state.widthPx || selectedElement.getBoundingClientRect().width;
+            const h = state.heightPx || selectedElement.getBoundingClientRect().height;
+            const isOverlapping = isOverlappingAny(selectedElement, state.leftPx, state.topPx, w, h);
+            selectedElement.style.outline = isOverlapping ? "2px dashed #ef4444" : "2px dashed #22c55e";
         }
-    }, 0);
+    }, 2);
 
     bindSliderAndNumber(scaleSlider, scaleNum, (val) => {
         if (!selectedElement) return;
@@ -835,21 +905,31 @@ export const initUIEditor = () => {
         if (!selectedElement) return;
         const state = elementStates.get(selectedElement);
         if (state && !circularIds.has(selectedElement.id)) {
-            state.widthPx = val;
-            selectedElement.style.setProperty('width', `${val}px`, 'important');
-            selectedElement.style.setProperty('min-width', `${val}px`, 'important');
+            state.widthPx = (val / 100) * window.innerWidth;
+            selectedElement.style.setProperty('width', `${val.toFixed(2)}vw`, 'important');
+            selectedElement.style.setProperty('min-width', `${val.toFixed(2)}vw`, 'important');
+
+            // Highlight with outline if it overlaps
+            const h = state.heightPx || selectedElement.getBoundingClientRect().height;
+            const isOverlapping = isOverlappingAny(selectedElement, state.leftPx, state.topPx, state.widthPx, h);
+            selectedElement.style.outline = isOverlapping ? "2px dashed #ef4444" : "2px dashed #22c55e";
         }
-    }, 0);
+    }, 2);
 
     bindSliderAndNumber(heightSlider, heightNum, (val) => {
         if (!selectedElement) return;
         const state = elementStates.get(selectedElement);
         if (state && !circularIds.has(selectedElement.id)) {
-            state.heightPx = val;
-            selectedElement.style.setProperty('height', `${val}px`, 'important');
-            selectedElement.style.setProperty('min-height', `${val}px`, 'important');
+            state.heightPx = (val / 100) * window.innerHeight;
+            selectedElement.style.setProperty('height', `${val.toFixed(2)}vh`, 'important');
+            selectedElement.style.setProperty('min-height', `${val.toFixed(2)}vh`, 'important');
+
+            // Highlight with outline if it overlaps
+            const w = state.widthPx || selectedElement.getBoundingClientRect().width;
+            const isOverlapping = isOverlappingAny(selectedElement, state.leftPx, state.topPx, w, state.heightPx);
+            selectedElement.style.outline = isOverlapping ? "2px dashed #ef4444" : "2px dashed #22c55e";
         }
-    }, 0);
+    }, 2);
 
     // Bind Grid Controllers
     bindSliderAndNumber(gridSnapSlider, gridSnapNum, (val) => {
@@ -998,19 +1078,40 @@ export const initUIEditor = () => {
         });
     });
 
-    exportBtn.addEventListener("click", () => {
+    const buildLayoutConfig = () => {
         const config: Record<string, any> = {};
         elementsToEdit.forEach(el => {
             const state = elementStates.get(el);
+            let leftVal = el.style.left;
+            let topVal = el.style.top;
+            let widthVal = state && state.widthPx ? `${state.widthPx}px` : undefined;
+            let heightVal = state && state.heightPx ? `${state.heightPx}px` : undefined;
+
+            if (state) {
+                leftVal = `${((state.leftPx / window.innerWidth) * 100).toFixed(2)}vw`;
+                topVal = `${((state.topPx / window.innerHeight) * 100).toFixed(2)}vh`;
+
+                if (state.widthPx && !circularIds.has(el.id)) {
+                    widthVal = `${((state.widthPx / window.innerWidth) * 100).toFixed(2)}vw`;
+                }
+                if (state.heightPx && !circularIds.has(el.id)) {
+                    heightVal = `${((state.heightPx / window.innerHeight) * 100).toFixed(2)}vh`;
+                }
+            }
+
             config[el.id] = {
-                left: el.style.left,
-                top: el.style.top,
+                left: leftVal,
+                top: topVal,
                 scale: state ? state.scale : 1,
-                width: state && state.widthPx ? `${state.widthPx}px` : undefined,
-                height: state && state.heightPx ? `${state.heightPx}px` : undefined
+                width: widthVal,
+                height: heightVal
             };
         });
+        return config;
+    };
 
+    exportBtn.addEventListener("click", () => {
+        const config = buildLayoutConfig();
         const configStr = JSON.stringify(config, null, 2);
         localStorage.setItem("hud_layout_default", configStr); // Make exported config the new default
         
@@ -1022,17 +1123,7 @@ export const initUIEditor = () => {
     });
 
     saveBtn.addEventListener("click", () => {
-        const config: Record<string, any> = {};
-        elementsToEdit.forEach(el => {
-            const state = elementStates.get(el);
-            config[el.id] = {
-                left: el.style.left,
-                top: el.style.top,
-                scale: state ? state.scale : 1,
-                width: state && state.widthPx ? `${state.widthPx}px` : undefined,
-                height: state && state.heightPx ? `${state.heightPx}px` : undefined
-            };
-        });
+        const config = buildLayoutConfig();
         localStorage.setItem("hud_layout", JSON.stringify(config));
         
         const originalText = saveBtn.innerText;
@@ -1050,5 +1141,20 @@ export const initUIEditor = () => {
         localStorage.removeItem("hud_layout_default");
         localStorage.removeItem("hud_layout");
         location.reload();
+    });
+
+    window.addEventListener('resize', () => {
+        if (!isEditing) return;
+        elementsToEdit.forEach(el => {
+            const state = elementStates.get(el);
+            if (state) {
+                const rect = el.getBoundingClientRect();
+                const parentRect = hudContainer.getBoundingClientRect();
+                state.leftPx = rect.left - parentRect.left;
+                state.topPx = rect.top - parentRect.top;
+                state.widthPx = rect.width;
+                state.heightPx = rect.height;
+            }
+        });
     });
 };

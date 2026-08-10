@@ -204,18 +204,22 @@ export function initLobby() {
       inset: '0',
       zIndex: '10',
       pointerEvents: 'none',
-      boxSizing: 'border-box'
+      boxSizing: 'border-box',
+      display: 'flex',
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'stretch',
+      padding: '12px',
+      gap: '16px'
     });
 
     // --- LEFT COLUMN PANEL (No overlapping, elegant vertical layout) ---
     const leftPanel = document.createElement('div');
     leftPanel.id = 'lobby-left-panel';
     Object.assign(leftPanel.style, {
-      position: 'absolute',
-      left: '12px',
-      top: '12px',
-      bottom: '12px',
-      width: 'clamp(550px, 60vw, 850px)',
+      flex: '1',
+      minWidth: '0',
+      maxWidth: '850px',
       display: 'flex',
       flexDirection: 'column',
       justifyContent: 'space-between',
@@ -494,11 +498,8 @@ export function initLobby() {
     const rightPanel = document.createElement('div');
     rightPanel.id = 'lobby-right-panel';
     Object.assign(rightPanel.style, {
-      position: 'absolute',
-      right: '12px',
-      top: '12px',
-      bottom: '12px',
-      width: 'clamp(220px, 24vw, 280px)',
+      width: 'clamp(220px, 25vw, 280px)',
+      flexShrink: '0',
       display: 'flex',
       flexDirection: 'column',
       justifyContent: 'space-between',

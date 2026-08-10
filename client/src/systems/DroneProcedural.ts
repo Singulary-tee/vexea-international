@@ -154,15 +154,30 @@ export function updateProceduralState(
     state.steerAngle = state.steerAngle + (targetSteer - state.steerAngle) * 0.1;
   }
 
-  if (config.animations.includes('turret') && speed > 0.1) {
-    const targetYaw = Math.atan2(smoothedVelocity.x, smoothedVelocity.z);
+  if (config.animations.includes('turret')) {
+    let targetYaw = state.turretYaw + bodyEuler.y;
+    let targetPitch = 0;
+
+    if (speed > 0.01) {
+      targetYaw = Math.atan2(smoothedVelocity.x, smoothedVelocity.z);
+      const horizDist = Math.sqrt(smoothedVelocity.x * smoothedVelocity.x + smoothedVelocity.z * smoothedVelocity.z);
+      targetPitch = Math.atan2(smoothedVelocity.y, horizDist);
+    }
+
     let localYaw = targetYaw - bodyEuler.y;
     let yawDiff = localYaw - state.turretYaw;
     while (yawDiff > Math.PI) yawDiff -= 2*Math.PI;
     while (yawDiff < -Math.PI) yawDiff += 2*Math.PI;
     state.turretYaw += yawDiff * 0.1;
+
+    const maxPitch = config.turretGunAngle ?? 0.5;
+    const clampedPitch = Math.max(-maxPitch, Math.min(maxPitch, targetPitch));
+    let pitchDiff = clampedPitch - state.turretPitch;
+    state.turretPitch += pitchDiff * 0.1;
   }
 }
+
+const tempSteerRot = new THREE.Matrix4();
 
 // Applies rotations to a specific node. Returns true if rotation applied.
 export function applyNodeRotation(
@@ -207,8 +222,8 @@ export function applyNodeRotation(
                               nameLower.includes('lefttires') || 
                               nameLower.includes('righttires');
       if (isSteeringWheel) {
-        const steerRot = new THREE.Matrix4().makeRotationX(state.steerAngle);
-        rOut.premultiply(steerRot);
+        tempSteerRot.makeRotationX(state.steerAngle);
+        rOut.premultiply(tempSteerRot);
       }
       didRotate = true;
     }

@@ -283,7 +283,7 @@ function renderProfileView(container: HTMLElement, userData: any): void {
             ${callsign}
           </div>
           <div style="font-family:${DS.typography.fontFamily}; font-size:8px; color:${DS.colors.textMuted}; letter-spacing:0.5px;">
-            FACTION: <span style="color:${faction === 'VIBE CO.' ? '#00F0FF' : DS.colors.accent}; font-weight:bold;">${faction}</span>
+            FACTION: <span style="color:${faction === 'VIBE CO.' ? DS.colors.factions.vibe.primary : DS.colors.accent}; font-weight:bold;">${faction}</span>
           </div>
         </div>
       </div>
@@ -442,51 +442,51 @@ function renderIntelView(container: HTMLElement, userData: any): void {
   const winRate = totalMatches > 0 ? Math.round((winCount / totalMatches) * 100) : 0;
 
   card.innerHTML = `
-    <div style="font-family:${DS.typography.fontFamily}; font-size:12px; font-weight:bold; color:${DS.colors.accent}; letter-spacing:1px; display:flex; justify-content:space-between; align-items:center; flex-shrink:0;">
+    <div style="font-family:${DS.typography.fontFamily}; font-size:clamp(11px, 1.4vh, 15px); font-weight:bold; color:${DS.colors.accent}; letter-spacing:0.1vw; display:flex; justify-content:space-between; align-items:center; flex-shrink:0;">
       <span>OPERATIVE INTELLIGENCE DOSSIER</span>
-      <span style="font-size:8px; color:#00FF88; background:rgba(0,255,136,0.06); padding:2px 6px; border:1px solid rgba(0,255,136,0.2); letter-spacing:1px; font-weight:bold; border-radius:0px;">FIELD VERIFIED</span>
+      <span style="font-size:clamp(8px, 1vh, 10px); color:#00FF88; background:rgba(0,255,136,0.06); padding:0.2vh 0.6vw; border:1px solid rgba(0,255,136,0.2); letter-spacing:0.1vw; font-weight:bold; border-radius:0px;">FIELD VERIFIED</span>
     </div>
 
     <!-- Operative Summary Header -->
-    <div style="display:flex; justify-content:space-between; align-items:center; background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.04); padding:10px; border-radius:0px;">
-      <div style="display:flex; flex-direction:column; gap:2px;">
-        <div style="font-family:${DS.typography.fontFamily}; font-size:11px; font-weight:bold; color:${DS.colors.text}; letter-spacing:1px;">CODENAME: ${name}</div>
-        <div style="font-family:${DS.typography.fontFamily}; font-size:8px; color:${DS.colors.textMuted};">FACTION AFFILIATION: <b style="color:${DS.colors.accent}">${faction}</b></div>
+    <div style="display:flex; justify-content:space-between; align-items:center; background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.04); padding:1vh; border-radius:0px;">
+      <div style="display:flex; flex-direction:column; gap:0.3vh;">
+        <div style="font-family:${DS.typography.fontFamily}; font-size:clamp(10px, 1.3vh, 13px); font-weight:bold; color:${DS.colors.text}; letter-spacing:0.1vw;">CODENAME: ${name}</div>
+        <div style="font-family:${DS.typography.fontFamily}; font-size:clamp(8px, 1vh, 11px); color:${DS.colors.textMuted};">FACTION AFFILIATION: <b style="color:${DS.colors.accent}">${faction}</b></div>
       </div>
       <div style="text-align:right;">
-        <div style="font-family:${DS.typography.fontFamily}; font-size:7px; color:${DS.colors.textMuted};">COMBAT RATING</div>
-        <div style="font-family:${DS.typography.fontFamily}; font-size:14px; font-weight:bold; color:${DS.colors.accent};">${Math.max(100, totalKills * 15 + winCount * 50)}</div>
+        <div style="font-family:${DS.typography.fontFamily}; font-size:clamp(7px, 0.9vh, 10px); color:${DS.colors.textMuted};">COMBAT RATING</div>
+        <div style="font-family:${DS.typography.fontFamily}; font-size:clamp(12px, 1.6vh, 18px); font-weight:bold; color:${DS.colors.accent};">${Math.max(100, totalKills * 15 + winCount * 50)}</div>
       </div>
     </div>
 
     <!-- Intelligence Metrics Grid -->
-    <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:6px; flex-shrink:0;">
-      <div style="background:rgba(255,255,255,0.01); border:1px solid rgba(255,255,255,0.04); padding:6px 8px; border-radius:0px;">
-        <div style="font-family:${DS.typography.fontFamily}; font-size:7px; color:${DS.colors.textMuted}; font-weight:bold;">CONFIRMED KILLS</div>
-        <div style="font-family:${DS.typography.fontFamily}; font-size:12px; color:${DS.colors.text}; font-weight:bold; margin-top:2px;">${totalKills}</div>
+    <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:0.8vh; flex-shrink:0;">
+      <div style="background:rgba(255,255,255,0.01); border:1px solid rgba(255,255,255,0.04); padding:0.8vh 1vw; border-radius:0px;">
+        <div style="font-family:${DS.typography.fontFamily}; font-size:clamp(7px, 0.9vh, 10px); color:${DS.colors.textMuted}; font-weight:bold;">CONFIRMED KILLS</div>
+        <div style="font-family:${DS.typography.fontFamily}; font-size:clamp(11px, 1.4vh, 15px); color:${DS.colors.text}; font-weight:bold; margin-top:0.2vh;">${totalKills}</div>
       </div>
-      <div style="background:rgba(255,255,255,0.01); border:1px solid rgba(255,255,255,0.04); padding:6px 8px; border-radius:0px;">
-        <div style="font-family:${DS.typography.fontFamily}; font-size:7px; color:${DS.colors.textMuted}; font-weight:bold;">K/D RATIO</div>
-        <div style="font-family:${DS.typography.fontFamily}; font-size:12px; color:${DS.colors.accent}; font-weight:bold; margin-top:2px;">${kdRatio}</div>
+      <div style="background:rgba(255,255,255,0.01); border:1px solid rgba(255,255,255,0.04); padding:0.8vh 1vw; border-radius:0px;">
+        <div style="font-family:${DS.typography.fontFamily}; font-size:clamp(7px, 0.9vh, 10px); color:${DS.colors.textMuted}; font-weight:bold;">K/D RATIO</div>
+        <div style="font-family:${DS.typography.fontFamily}; font-size:clamp(11px, 1.4vh, 15px); color:${DS.colors.accent}; font-weight:bold; margin-top:0.2vh;">${kdRatio}</div>
       </div>
-      <div style="background:rgba(255,255,255,0.01); border:1px solid rgba(255,255,255,0.04); padding:6px 8px; border-radius:0px;">
-        <div style="font-family:${DS.typography.fontFamily}; font-size:7px; color:${DS.colors.textMuted}; font-weight:bold;">EXTRACTION WIN RATE</div>
-        <div style="font-family:${DS.typography.fontFamily}; font-size:12px; color:#00FF88; font-weight:bold; margin-top:2px;">${winRate}%</div>
+      <div style="background:rgba(255,255,255,0.01); border:1px solid rgba(255,255,255,0.04); padding:0.8vh 1vw; border-radius:0px;">
+        <div style="font-family:${DS.typography.fontFamily}; font-size:clamp(7px, 0.9vh, 10px); color:${DS.colors.textMuted}; font-weight:bold;">EXTRACTION WIN RATE</div>
+        <div style="font-family:${DS.typography.fontFamily}; font-size:clamp(11px, 1.4vh, 15px); color:#00FF88; font-weight:bold; margin-top:0.2vh;">${winRate}%</div>
       </div>
     </div>
 
     <!-- Extended Profile Telemetry (Class Breakdown & Recent Matches) -->
-    <div id="intel-v1-details" style="display:flex; flex-direction:column; gap:8px;">
-      <div style="font-family:${DS.typography.fontFamily}; font-size:8px; color:${DS.colors.textMuted};">LOADING PROFILE TELEMETRY...</div>
+    <div id="intel-v1-details" style="display:flex; flex-direction:column; gap:1vh;">
+      <div style="font-family:${DS.typography.fontFamily}; font-size:clamp(8px, 1vh, 11px); color:${DS.colors.textMuted};">LOADING PROFILE TELEMETRY...</div>
     </div>
 
-    <!-- Tactical Commander Briefing -->
-    <div style="background:rgba(0,0,0,0.25); border:1px solid rgba(255,255,255,0.04); padding:8px; border-radius:0px;">
-      <div style="font-family:${DS.typography.fontFamily}; font-size:8px; font-weight:bold; color:${DS.colors.textMuted}; letter-spacing:1px; margin-bottom:4px;">COMMANDER TACTICAL ASSESSMENT</div>
-      <div style="font-family:${DS.typography.fontFamily}; font-size:8px; color:${DS.colors.text}; line-height:1.4;">
+    <!-- Commander Briefing -->
+    <div style="background:rgba(0,0,0,0.25); border:1px solid rgba(255,255,255,0.04); padding:0.8vh; border-radius:0px;">
+      <div style="font-family:${DS.typography.fontFamily}; font-size:clamp(8px, 1vh, 10px); font-weight:bold; color:${DS.colors.textMuted}; letter-spacing:0.1vw; margin-bottom:0.4vh;">COMMANDER ASSESSMENT</div>
+      <div style="font-family:${DS.typography.fontFamily}; font-size:clamp(8px, 1vh, 10px); color:${DS.colors.text}; line-height:1.4;">
         ${totalKills > 20 
           ? 'Contractor displays high combat proficiency in drone elimination and objective control. Recommended for high-tier infiltration sorties.' 
-          : 'Contractor active. Additional field sorties required to refine tactical engagement parameters and increase squad combat yield.'}
+          : 'Contractor active. Additional field sorties required to refine engagement parameters and increase squad combat yield.'}
       </div>
     </div>
   `;
@@ -506,13 +506,13 @@ function renderIntelView(container: HTMLElement, userData: any): void {
         const preferredRole = gameProfile.preferredRole || "ASSAULT";
 
         const classItems = Object.entries(classBreakdown)
-          .map(([cls, count]) => `<span style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.06); padding:2px 6px; font-size:8px; font-family:${DS.typography.fontFamily}; color:${cls === preferredRole ? DS.colors.accent : DS.colors.text}; font-weight:bold;">${cls}: ${count}</span>`)
+          .map(([cls, count]) => `<span style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.06); padding:0.2vh 0.6vw; font-size:clamp(8px, 1vh, 10px); font-family:${DS.typography.fontFamily}; color:${cls === preferredRole ? DS.colors.accent : DS.colors.text}; font-weight:bold;">${cls}: ${count}</span>`)
           .join(' ');
 
         const matchItems = recentMatches.map((m: any) => {
           const resColor = m.result === 'win' ? '#00FF88' : DS.colors.accent;
           return `
-            <div style="display:flex; justify-content:space-between; align-items:center; background:rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.03); padding:4px 6px; font-family:${DS.typography.fontFamily}; font-size:8px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; background:rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.03); padding:0.5vh 0.8vw; font-family:${DS.typography.fontFamily}; font-size:clamp(8px, 1vh, 10px);">
               <span style="color:${resColor}; font-weight:bold;">${(m.result || 'WIN').toUpperCase()}</span>
               <span style="color:${DS.colors.textMuted};">${m.classId || 'ASSAULT'}</span>
               <span style="color:${DS.colors.text};">K: ${m.kills || 0} / D: ${m.deaths || 0}</span>
@@ -522,30 +522,30 @@ function renderIntelView(container: HTMLElement, userData: any): void {
 
         detailsContainer.innerHTML = `
           <!-- Preferred Role & Class Breakdown -->
-          <div style="background:rgba(0,0,0,0.25); border:1px solid rgba(255,255,255,0.04); padding:8px; border-radius:0px;">
-            <div style="font-family:${DS.typography.fontFamily}; font-size:8px; font-weight:bold; color:${DS.colors.textMuted}; letter-spacing:1px; margin-bottom:4px;">CLASS DISTRIBUTION (PREFERRED: <b style="color:${DS.colors.accent}">${preferredRole}</b>)</div>
-            <div style="display:flex; flex-wrap:wrap; gap:4px;">${classItems || '<span style="font-size:8px; color:' + DS.colors.textMuted + ';">NO CLASS DATA LOGGED</span>'}</div>
+          <div style="background:rgba(0,0,0,0.25); border:1px solid rgba(255,255,255,0.04); padding:1vh; border-radius:0px;">
+            <div style="font-family:${DS.typography.fontFamily}; font-size:clamp(8px, 1vh, 10px); font-weight:bold; color:${DS.colors.textMuted}; letter-spacing:0.1vw; margin-bottom:0.4vh;">CLASS DISTRIBUTION (PREFERRED: <b style="color:${DS.colors.accent}">${preferredRole}</b>)</div>
+            <div style="display:flex; flex-wrap:wrap; gap:0.5vh;">${classItems || '<span style="font-size:clamp(8px, 1vh, 10px); color:' + DS.colors.textMuted + ';">NO CLASS DATA LOGGED</span>'}</div>
           </div>
 
           <!-- Recent Engagements -->
-          <div style="background:rgba(0,0,0,0.25); border:1px solid rgba(255,255,255,0.04); padding:8px; border-radius:0px;">
-            <div style="font-family:${DS.typography.fontFamily}; font-size:8px; font-weight:bold; color:${DS.colors.textMuted}; letter-spacing:1px; margin-bottom:4px;">RECENT MATCH TELEMETRY (LAST 5)</div>
-            <div style="display:flex; flex-direction:column; gap:3px;">
-              ${matchItems || '<div style="font-family:' + DS.typography.fontFamily + '; font-size:8px; color:' + DS.colors.textMuted + ';">NO RECENT MATCHES LOGGED</div>'}
+          <div style="background:rgba(0,0,0,0.25); border:1px solid rgba(255,255,255,0.04); padding:1vh; border-radius:0px;">
+            <div style="font-family:${DS.typography.fontFamily}; font-size:clamp(8px, 1vh, 10px); font-weight:bold; color:${DS.colors.textMuted}; letter-spacing:0.1vw; margin-bottom:0.4vh;">RECENT MATCH TELEMETRY (LAST 5)</div>
+            <div style="display:flex; flex-direction:column; gap:0.4vh;">
+              ${matchItems || '<div style="font-family:' + DS.typography.fontFamily + '; font-size:clamp(8px, 1vh, 10px); color:' + DS.colors.textMuted + ';">NO RECENT MATCHES LOGGED</div>'}
             </div>
           </div>
         `;
       } else {
         detailsContainer.innerHTML = `
-          <div style="background:rgba(0,0,0,0.25); border:1px solid rgba(255,255,255,0.04); padding:8px;">
-            <div style="font-family:${DS.typography.fontFamily}; font-size:8px; color:${DS.colors.textMuted};">PROFILE TELEMETRY: INSUFFICIENT MATCH HISTORY (< 3 MATCHES LOGGED).</div>
+          <div style="background:rgba(0,0,0,0.25); border:1px solid rgba(255,255,255,0.04); padding:1vh;">
+            <div style="font-family:${DS.typography.fontFamily}; font-size:clamp(8px, 1vh, 11px); color:${DS.colors.textMuted};">PROFILE TELEMETRY: INSUFFICIENT MATCH HISTORY (< 3 MATCHES LOGGED).</div>
           </div>
         `;
       }
     }).catch(() => {
       const detailsContainer = card.querySelector('#intel-v1-details');
       if (detailsContainer) {
-        detailsContainer.innerHTML = `<div style="font-family:${DS.typography.fontFamily}; font-size:8px; color:${DS.colors.textMuted};">PROFILE TELEMETRY: OFFLINE</div>`;
+        detailsContainer.innerHTML = `<div style="font-family:${DS.typography.fontFamily}; font-size:clamp(8px, 1vh, 11px); color:${DS.colors.textMuted};">PROFILE TELEMETRY: OFFLINE</div>`;
       }
     });
   }
@@ -553,7 +553,7 @@ function renderIntelView(container: HTMLElement, userData: any): void {
   if (IS_DEV) {
     const devBlock = document.createElement('div');
     Object.assign(devBlock.style, {
-      padding: '6px 10px',
+      padding: '0.8vh 1vw',
       background: 'rgba(255, 69, 0, 0.02)',
       border: `1px dashed rgba(255, 69, 0, 0.3)`,
       borderRadius: '0px',
@@ -563,13 +563,13 @@ function renderIntelView(container: HTMLElement, userData: any): void {
       alignItems: 'center'
     });
 
-    devBlock.innerHTML = `<div style="font-family:${DS.typography.fontFamily}; font-size:8px; font-weight:bold; color:${DS.colors.accent}; letter-spacing:1px;">OVERRIDE TERMINAL</div>`;
+    devBlock.innerHTML = `<div style="font-family:${DS.typography.fontFamily}; font-size:clamp(8px, 1vh, 11px); font-weight:bold; color:${DS.colors.accent}; letter-spacing:0.1vw;">OVERRIDE TERMINAL</div>`;
 
     const refillBtn = document.createElement('button');
     refillBtn.textContent = 'REFILL CR & AP';
     Object.assign(refillBtn.style, {
-      padding: '3px 8px', background: DS.colors.accent, border: 'none', color: '#000000',
-      fontFamily: DS.typography.fontFamily, fontSize: '8px', fontWeight: 'bold', letterSpacing: '1px', cursor: 'pointer', borderRadius: '0px'
+      padding: '0.4vh 1vw', background: DS.colors.accent, border: 'none', color: '#000000',
+      fontFamily: DS.typography.fontFamily, fontSize: 'clamp(8px, 1vh, 10px)', fontWeight: 'bold', letterSpacing: '0.08vw', cursor: 'pointer', borderRadius: '0px'
     });
 
     refillBtn.onclick = async () => {
@@ -592,25 +592,25 @@ function renderIntelView(container: HTMLElement, userData: any): void {
 // 3. CHALLENGES VIEW
 function renderChallengesView(container: HTMLElement, userData: any): void {
   const wrap = document.createElement('div');
-  Object.assign(wrap.style, { display: 'flex', flexDirection: 'column', gap: '8px', height: '100%' });
+  Object.assign(wrap.style, { display: 'flex', flexDirection: 'column', gap: '1vh', height: '100%' });
 
   const titleEl = document.createElement('div');
   Object.assign(titleEl.style, {
-    fontFamily: DS.typography.fontFamily, fontSize: '10px', fontWeight: 'bold', color: DS.colors.text,
-    letterSpacing: '2px', display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', flexShrink: '0'
+    fontFamily: DS.typography.fontFamily, fontSize: 'clamp(10px, 1.2vh, 14px)', fontWeight: 'bold', color: DS.colors.text,
+    letterSpacing: '0.15vw', display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', flexShrink: '0'
   });
-  titleEl.innerHTML = `<span>DAILY CONTRACTS</span><span style="font-size:8px; color:${DS.colors.textMuted}; letter-spacing:0.5px;">RESETS IN 14H</span>`;
+  titleEl.innerHTML = `<span>DAILY CONTRACTS</span><span style="font-size:clamp(8px, 1vh, 11px); color:${DS.colors.textMuted}; letter-spacing:0.05vw;">RESETS IN 14H</span>`;
   wrap.appendChild(titleEl);
 
   const grid = document.createElement('div');
-  Object.assign(grid.style, { display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px', flex: '1' });
+  Object.assign(grid.style, { display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1vh', flex: '1' });
 
   const userStats = userData?.stats || {};
   challengesDataList.slice(0, 3).forEach((ch: any) => {
     const itemCard = document.createElement('div');
     itemCard.className = 'mm-glass';
     Object.assign(itemCard.style, {
-      background: 'rgba(255, 255, 255, 0.02)', border: DS.glass.border, padding: '10px',
+      background: 'rgba(255, 255, 255, 0.02)', border: DS.glass.border, padding: '1.2vh 1.2vw',
       display: 'flex', flexDirection: 'column', justifyContent: 'space-between', borderRadius: '0px'
     });
 
@@ -628,12 +628,12 @@ function renderChallengesView(container: HTMLElement, userData: any): void {
     const pct = Math.min(100, Math.round((currentVal / ch.target) * 100));
 
     itemCard.innerHTML = `
-      <div style="display:flex; flex-direction:column; gap:3px;">
-        <div style="font-family:${DS.typography.fontFamily}; font-size:10px; font-weight:bold; color:${DS.colors.text}; letter-spacing:0.5px;">${ch.title}</div>
-        <div style="font-family:${DS.typography.fontFamily}; font-size:8px; color:${DS.colors.textMuted}; line-height:1.3;">${ch.description}</div>
+      <div style="display:flex; flex-direction:column; gap:0.4vh;">
+        <div style="font-family:${DS.typography.fontFamily}; font-size:clamp(10px, 1.2vh, 13px); font-weight:bold; color:${DS.colors.text}; letter-spacing:0.05vw;">${ch.title}</div>
+        <div style="font-family:${DS.typography.fontFamily}; font-size:clamp(8px, 1vh, 11px); color:${DS.colors.textMuted}; line-height:1.3;">${ch.description}</div>
       </div>
-      <div style="display:flex; flex-direction:column; gap:4px; margin-top:8px;">
-        <div style="display:flex; justify-content:space-between; align-items:center; font-family:${DS.typography.fontFamily}; font-size:8px; font-weight:bold; color:${DS.colors.accent};">
+      <div style="display:flex; flex-direction:column; gap:0.5vh; margin-top:1vh;">
+        <div style="display:flex; justify-content:space-between; align-items:center; font-family:${DS.typography.fontFamily}; font-size:clamp(8px, 1vh, 11px); font-weight:bold; color:${DS.colors.accent};">
           <span>+${ch.rewardCredits} CR</span>
           <span>${currentVal}/${ch.target}</span>
         </div>
@@ -652,15 +652,15 @@ function renderChallengesView(container: HTMLElement, userData: any): void {
 // 4. LEADERBOARD VIEW
 function renderLeaderboardView(container: HTMLElement, userData: any): void {
   const wrap = document.createElement('div');
-  Object.assign(wrap.style, { display: 'flex', flexDirection: 'column', gap: '8px', height: '100%' });
+  Object.assign(wrap.style, { display: 'flex', flexDirection: 'column', gap: '1vh', height: '100%' });
 
   const titleEl = document.createElement('div');
-  Object.assign(titleEl.style, { fontFamily: DS.typography.fontFamily, fontSize: '10px', fontWeight: 'bold', color: DS.colors.text, letterSpacing: '2px', flexShrink: '0' });
+  Object.assign(titleEl.style, { fontFamily: DS.typography.fontFamily, fontSize: 'clamp(10px, 1.2vh, 14px)', fontWeight: 'bold', color: DS.colors.text, letterSpacing: '0.15vw', flexShrink: '0' });
   titleEl.textContent = 'GLOBAL CONTRACTOR STANDINGS';
   wrap.appendChild(titleEl);
 
   const table = document.createElement('div');
-  Object.assign(table.style, { display: 'flex', flexDirection: 'column', gap: '4px', flex: '1', overflowY: 'auto' });
+  Object.assign(table.style, { display: 'flex', flexDirection: 'column', gap: '0.5vh', flex: '1', overflowY: 'auto' });
 
   const name = userData?.displayName?.toUpperCase() || 'OPERATIVE';
   const faction = userData?.faction || 'UNAFFILIATED';
@@ -674,16 +674,16 @@ function renderLeaderboardView(container: HTMLElement, userData: any): void {
   Object.assign(rowEl.style, {
     background: 'rgba(255, 69, 0, 0.05)',
     border: `1px solid ${DS.colors.accent}`,
-    padding: '6px 10px', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-    fontFamily: DS.typography.fontFamily, fontSize: '9px', borderRadius: '0px'
+    padding: '0.8vh 1.2vw', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+    fontFamily: DS.typography.fontFamily, fontSize: 'clamp(9px, 1.1vh, 12px)', borderRadius: '0px'
   });
 
   rowEl.innerHTML = `
-    <div style="display:flex; align-items:center; gap:8px;">
-      <span style="font-weight:bold; color:${DS.colors.accent}; width:16px;">#${userEntry.rank}</span>
-      <span style="font-weight:bold; color:${DS.colors.text}; letter-spacing:0.5px;">${userEntry.name}</span>
+    <div style="display:flex; align-items:center; gap:1vw;">
+      <span style="font-weight:bold; color:${DS.colors.accent}; width:2vw;">#${userEntry.rank}</span>
+      <span style="font-weight:bold; color:${DS.colors.text}; letter-spacing:0.05vw;">${userEntry.name}</span>
     </div>
-    <div style="display:flex; gap:10px; color:${DS.colors.textMuted}; font-size:8px;">
+    <div style="display:flex; gap:1vw; color:${DS.colors.textMuted}; font-size:clamp(8px, 1vh, 11px);">
       <span>FACTION: <b style="color:${DS.colors.accent}; font-weight:bold;">${userEntry.faction}</b></span>
       <span>KILLS: <b style="color:${DS.colors.text};">${userEntry.kills}</b></span>
       <span>SCORE: <b style="color:${DS.colors.text};">${userEntry.score}</b></span>
@@ -707,7 +707,7 @@ function renderBattlePassView(container: HTMLElement, userData: any): void {
     flexDirection: 'column',
     width: '100%',
     height: '100%',
-    gap: '8px',
+    gap: '1vh',
     overflow: 'hidden'
   });
 
@@ -717,7 +717,7 @@ function renderBattlePassView(container: HTMLElement, userData: any): void {
     justifyContent: 'space-between',
     alignItems: 'center',
     background: 'rgba(255, 255, 255, 0.02)',
-    padding: '8px 12px',
+    padding: '1vh 1.2vw',
     border: '1px solid rgba(255, 255, 255, 0.05)',
     flexShrink: '0'
   });
@@ -726,13 +726,13 @@ function renderBattlePassView(container: HTMLElement, userData: any): void {
   const bpRemainingDays = Math.max(0, Math.ceil((BP_SEASON_01.endDate - nowMs) / (1000 * 60 * 60 * 24)));
 
   header.innerHTML = `
-    <div style="display:flex; flex-direction:column; gap:2px;">
-      <div style="font-family:${DS.typography.fontFamily}; font-size:12px; font-weight:bold; color:#FFFFFF; letter-spacing:1px;">${BP_SEASON_01.name}</div>
-      <div style="font-family:${DS.typography.fontFamily}; font-size:8px; color:${DS.colors.textMuted}; letter-spacing:0.5px;">SEASON ACTIVE: ${bpRemainingDays} DAYS REMAINING</div>
+    <div style="display:flex; flex-direction:column; gap:0.3vh;">
+      <div style="font-family:${DS.typography.fontFamily}; font-size:clamp(11px, 1.4vh, 15px); font-weight:bold; color:#FFFFFF; letter-spacing:0.1vw;">${BP_SEASON_01.name}</div>
+      <div style="font-family:${DS.typography.fontFamily}; font-size:clamp(8px, 1vh, 11px); color:${DS.colors.textMuted}; letter-spacing:0.05vw;">SEASON ACTIVE: ${bpRemainingDays} DAYS REMAINING</div>
     </div>
     <div style="text-align:right;">
-      <div style="font-family:${DS.typography.fontFamily}; font-size:10px; font-weight:bold; color:${DS.colors.accent};">TOTAL XP: ${currentXP}</div>
-      <div style="font-family:${DS.typography.fontFamily}; font-size:7px; color:${DS.colors.textMuted};">TIERS COMPLETED: ${Math.floor(currentXP / 10)} / ${tierCount - 1}</div>
+      <div style="font-family:${DS.typography.fontFamily}; font-size:clamp(10px, 1.2vh, 14px); font-weight:bold; color:${DS.colors.accent};">TOTAL XP: ${currentXP}</div>
+      <div style="font-family:${DS.typography.fontFamily}; font-size:clamp(7px, 0.9vh, 10px); color:${DS.colors.textMuted};">TIERS COMPLETED: ${Math.floor(currentXP / 10)} / ${tierCount - 1}</div>
     </div>
   `;
   layout.appendChild(header);
@@ -741,10 +741,10 @@ function renderBattlePassView(container: HTMLElement, userData: any): void {
   Object.assign(tiersScroll.style, {
     display: 'grid',
     gridTemplateColumns: 'repeat(auto-fill, minmax(110px, 1fr))',
-    gap: '6px',
+    gap: '0.8vh',
     flex: '1',
     overflowY: 'auto',
-    padding: '2px',
+    padding: '0.2vh',
     minHeight: '0'
   });
 
@@ -756,23 +756,23 @@ function renderBattlePassView(container: HTMLElement, userData: any): void {
     Object.assign(card.style, {
       background: isUnlocked ? 'rgba(255, 255, 255, 0.04)' : 'rgba(10, 10, 10, 0.4)',
       border: `1px solid ${isUnlocked ? (isClaimed ? 'rgba(255, 255, 255, 0.1)' : DS.colors.accent) : 'rgba(255, 255, 255, 0.03)'}`,
-      padding: '8px',
+      padding: '1vh',
       display: 'flex',
       flexDirection: 'column',
-      gap: '4px',
+      gap: '0.5vh',
       position: 'relative',
-      minHeight: '100px',
+      minHeight: '12vh',
       transition: 'all 0.15s ease'
     });
 
     card.innerHTML = `
       <div style="display:flex; justify-content:space-between; align-items:center;">
-        <span style="font-family:${DS.typography.fontFamily}; font-size:9px; font-weight:900; color:${isUnlocked ? '#FFF' : DS.colors.textMuted};">${String(tier.index).padStart(2, '0')}</span>
-        <span style="font-family:${DS.typography.fontFamily}; font-size:7px; font-weight:bold; color:${isClaimed ? DS.colors.textMuted : (isUnlocked ? DS.colors.accent : 'rgba(255, 255, 255, 0.15)')};">${isClaimed ? 'CLAIMED' : (isUnlocked ? 'READY' : 'LOCKED')}</span>
+        <span style="font-family:${DS.typography.fontFamily}; font-size:clamp(9px, 1.1vh, 12px); font-weight:900; color:${isUnlocked ? '#FFF' : DS.colors.textMuted};">${String(tier.index).padStart(2, '0')}</span>
+        <span style="font-family:${DS.typography.fontFamily}; font-size:clamp(7px, 0.9vh, 10px); font-weight:bold; color:${isClaimed ? DS.colors.textMuted : (isUnlocked ? DS.colors.accent : 'rgba(255, 255, 255, 0.15)')};">${isClaimed ? 'CLAIMED' : (isUnlocked ? 'READY' : 'LOCKED')}</span>
       </div>
-      <div style="flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; text-align:center;">
-        <div style="font-family:${DS.typography.fontFamily}; font-size:14px; font-weight:900; color:${isUnlocked ? DS.colors.accent : 'rgba(255,255,255,0.1)'};">${tier.freeReward ? (tier.freeReward.type === 'CREDITS' ? 'CR' : 'ITEM') : '—'}</div>
-        <div style="font-family:${DS.typography.fontFamily}; font-size:8px; font-weight:bold; color:${isUnlocked ? '#FFF' : DS.colors.textMuted}; line-height:1.1;">${tier.freeReward ? tier.freeReward.label : 'NO REWARD'}</div>
+      <div style="flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:0.5vh; text-align:center;">
+        <div style="font-family:${DS.typography.fontFamily}; font-size:clamp(12px, 1.8vh, 18px); font-weight:900; color:${isUnlocked ? DS.colors.accent : 'rgba(255,255,255,0.1)'};">${tier.freeReward ? (tier.freeReward.type === 'CREDITS' ? 'CR' : 'ITEM') : '—'}</div>
+        <div style="font-family:${DS.typography.fontFamily}; font-size:clamp(8px, 1vh, 11px); font-weight:bold; color:${isUnlocked ? '#FFF' : DS.colors.textMuted}; line-height:1.1;">${tier.freeReward ? tier.freeReward.label : 'NO REWARD'}</div>
       </div>
     `;
 
@@ -781,15 +781,15 @@ function renderBattlePassView(container: HTMLElement, userData: any): void {
       claimBtn.textContent = 'CLAIM';
       Object.assign(claimBtn.style, {
         width: '100%',
-        padding: '4px 0',
+        padding: '0.5vh 0',
         background: DS.colors.accent,
         color: '#000',
-        fontSize: '8px',
+        fontSize: 'clamp(8px, 1vh, 10px)',
         fontWeight: '900',
         textAlign: 'center',
-        letterSpacing: '1px',
+        letterSpacing: '0.08vw',
         cursor: 'pointer',
-        marginTop: '4px'
+        marginTop: '0.5vh'
       });
       claimBtn.onclick = (e) => {
         e.stopPropagation();
@@ -801,14 +801,14 @@ function renderBattlePassView(container: HTMLElement, userData: any): void {
       trackLabel.textContent = 'FREE TRACK';
       Object.assign(trackLabel.style, {
         width: '100%',
-        padding: '4px 0',
+        padding: '0.5vh 0',
         background: 'rgba(255, 255, 255, 0.03)',
         color: DS.colors.textMuted,
-        fontSize: '7px',
+        fontSize: 'clamp(7px, 0.9vh, 9px)',
         fontWeight: 'bold',
         textAlign: 'center',
-        letterSpacing: '1px',
-        marginTop: '4px'
+        letterSpacing: '0.08vw',
+        marginTop: '0.5vh'
       });
       card.appendChild(trackLabel);
     }
