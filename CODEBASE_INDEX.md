@@ -47,6 +47,8 @@ This file is the authoritative index of all directories and source files within 
             *   **`BomberBehavior.ts`**: Specialized behavior for bomber drones (`bomberBehavior`). Implements 3-state machine (`SEEKING` -> `LOCKED` -> `COMMITTED`), target tracking, detonation at `detonationTriggerRadius`, and area explosion damage.
             *   **`ReconBehavior.ts`**: Specialized behavior for unarmed recon drones (`reconBehavior`). Implements retreat on close contact, dynamic perpendicular orbit hovering with sinusoidal oscillation, high-altitude waypoint patrol, and zero weapon firing (`shouldFire` is always false).
             *   **`FixedWingBehavior.ts`**: Specialized behavior for fixed-wing strafing drones (`fixedWingBehavior`). Implements 4-phase strafe state machine (`APPROACH` -> `RUN` -> `EXIT` -> `REPOSITION`) using `DroneConfig` strafe distance thresholds.
+            *   **`WheeledBehavior.ts`**: Specialized behavior for wheeled tank drones (`wheeledBehavior`). Implements hold-position combat strategy where body maintains orientation and independent turret handles aiming, retreat at close contact, approach to optimal range, and memory investigation/waypoint patrol.
+            *   **`RobotDogBehavior.ts`**: Specialized behavior for robot dog units (`robotDogBehavior`). Implements aggressive pursuit, circle-strafing, non-holding combat movement, Y-axis targeting hints for stair climbing, and memory investigation/waypoint patrol.
             *   **`HumanoidBehavior.ts`**: Specialized behavior for elite tactical humanoid units (`humanoidBehavior`, `findBestCoverPosition`, `isTargetPinned`). Implements 6-state tactical state machine (`HUNT`, `TAKE_COVER`, `IN_COVER`, `FLANK`, `SUPPRESS`, `INVESTIGATE`), cover evaluation & raycast scoring, target pinning detection, and zero-direct-charge combat positioning.
     *   **`CommanderMemory.ts`**: Modular Zero-GC match-state context compression engine for the LLM Commander. Formulates tight (<250 token) situational awareness strings containing match clock, squad composition, drone asset ledger, casualty delta, utility log, objective state, and clean zone summaries.
     *   **`DroneAvoidance.ts`**: Manages dynamic path avoidance and separation steering behaviors for autonomous drone swarms.
@@ -453,5 +455,15 @@ Every file change in the VEXEA codebase must follow this strict two-step protoco
     *   `server/sentry.ts`: Exported `recordDroneColliderInit` for recording physics breadcrumbs.
     *   `tests/shared.test.ts`: Added unit tests for `getDroneMuzzleWorldPosition` orientationOffset, `getDroneLightWorldPositions`, Wheeled turret kinematic muzzle calculation, and Humanoid `visualScaleTarget` config.
 *   **Verification:** Verified zero lint/type errors (`lint_applet`), full applet build (`compile_applet`), and 100% passing Vitest suite (`vitest run shared.test.ts`).
+
+### Cycle 2026-08-10-02: Implement WheeledBehavior and RobotDogBehavior Systems (Step 3b E2b)
+*   **Target Files:** `server/ai/behavior/behaviors/WheeledBehavior.ts`, `server/ai/behavior/behaviors/RobotDogBehavior.ts`, `server/ai/behavior/index.ts`, `CODEBASE_INDEX.md`
+*   **Status:** Verified & Finalized
+*   **Modifications:**
+    *   `server/ai/behavior/behaviors/WheeledBehavior.ts`: Created `wheeledBehavior` for tank units. Implemented hold-position behavior during engagement range where `steerX = 0, steerZ = 0, targetSpeed = 0`, preserving body heading (`forceHeadingX/Z`) while independent turret aims via `getDroneMuzzleWorldPosition`.
+    *   `server/ai/behavior/behaviors/RobotDogBehavior.ts`: Created `robotDogBehavior` for agile quadrupeds. Implemented non-holding aggressive pursuit, circle-strafing at close range, Y-axis targeting hints (`drone.targetY`) for stair climbing, and memory investigation.
+    *   `server/ai/behavior/index.ts`: Registered `wheeledBehavior` (`DroneType.WHEELED`) and `robotDogBehavior` (`DroneType.ROBOT_DOG`) in `BEHAVIORS` dictionary.
+    *   `CODEBASE_INDEX.md`: Registered new behavior modules and audit log.
+*   **Verification:** Verified compilation via `compile_applet` and lint validation via `lint_applet`.
 
 
