@@ -1,6 +1,7 @@
 import * as screenManager from "./screen-manager";
 import { getAssetUrl } from "../asset-cache";
 import { PanZoomSurface } from "../src/ui/PanZoomSurface";
+import { DS } from "../design-system";
 
 export function initDevMapEditor() {
     let el = document.getElementById('dev-map-editor-screen');
@@ -58,11 +59,11 @@ export function initDevMapEditor() {
     const uiOverlay = document.createElement('div');
     Object.assign(uiOverlay.style, {
         position: 'absolute',
-        top: '20px',
-        left: '20px',
+        top: '1.25rem',
+        left: '1.25rem',
         color: '#0f0',
         fontFamily: 'monospace',
-        fontSize: '14px',
+        fontSize: DS.typography.sizes.body,
         pointerEvents: 'none',
         textShadow: '1px 1px 0 #000'
     });
@@ -73,9 +74,9 @@ export function initDevMapEditor() {
     backBtn.textContent = 'BACK';
     Object.assign(backBtn.style, {
         position: 'absolute',
-        bottom: '20px',
-        left: '20px',
-        padding: '10px 20px',
+        bottom: '1.25rem',
+        left: '1.25rem',
+        padding: '0.63rem 1.25rem',
         backgroundColor: '#f0f',
         color: '#fff',
         border: 'none',

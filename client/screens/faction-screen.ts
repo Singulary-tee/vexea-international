@@ -79,13 +79,13 @@ export function renderFactionScreen(container: HTMLElement, registeredUserData: 
 
   headerCard.innerHTML = `
     <div style="display:flex; align-items:center; gap:1vw;">
-      <div style="font-family:${DS.typography.fontFamily}; font-size:clamp(10px, 1.2vh, 14px); font-weight:bold; color:${DS.colors.accent}; letter-spacing:0.1vw;">
+      <div style="font-family:${DS.typography.fontFamily}; font-size:clamp(0.63rem, 1.2vh, 0.88rem); font-weight:bold; color:${DS.colors.accent}; letter-spacing:0.1vw;">
         SECTOR DEPLOYMENT: ${activeMap.displayName.toUpperCase()}
       </div>
-      ${!isFactionWarActive ? `<span style="font-size:clamp(8px, 1.1vh, 12px); background:rgba(255,68,0,0.15); border:1px solid ${DS.colors.accent}; color:${DS.colors.accent}; padding:0.2vh 0.6vw;">[CEASEFIRE / LOCKED]</span>` : ''}
+      ${!isFactionWarActive ? `<span style="font-size:clamp(0.50rem, 1.1vh, 0.75rem); background:rgba(255,68,0,0.15); border:1px solid ${DS.colors.accent}; color:${DS.colors.accent}; padding:0.2vh 0.6vw;">[CEASEFIRE / LOCKED]</span>` : ''}
     </div>
     <div style="display:flex; align-items:center; gap:1.2vw;">
-      <div style="text-align:right; font-family:${DS.typography.fontFamily}; font-size:clamp(8px, 1vh, 11px); font-weight:bold;">
+      <div style="text-align:right; font-family:${DS.typography.fontFamily}; font-size:clamp(0.50rem, 1vh, 0.69rem); font-weight:bold;">
         <div style="color:${DS.colors.factions.vibe.primary}; letter-spacing:0.08vw;">VIBE CO. 50%</div>
         <div style="color:${DS.colors.accent}; margin-top:0.2vh; letter-spacing:0.08vw;">SLOP INC. 50%</div>
       </div>
@@ -128,19 +128,19 @@ export function renderFactionScreen(container: HTMLElement, registeredUserData: 
             <polygon points="12,2 22,8.5 22,15.5 12,22 2,15.5 2,8.5"/>
             <circle cx="12" cy="12" r="3" fill="${DS.colors.factions.vibe.primary}"/>
           </svg>
-          <div style="font-family:${DS.typography.fontFamily}; font-size:clamp(12px, 1.8vh, 16px); font-weight:bold; color:${DS.colors.factions.vibe.primary}; letter-spacing:0.1vw;">
+          <div style="font-family:${DS.typography.fontFamily}; font-size:clamp(0.75rem, 1.8vh, 1.00rem); font-weight:bold; color:${DS.colors.factions.vibe.primary}; letter-spacing:0.1vw;">
             VIBE CO.
           </div>
         </div>
-        ${vibeSelected ? `<div style="background:${DS.utils.rgba(DS.colors.factions.vibe.primary, 0.15)}; border:1px solid ${DS.colors.factions.vibe.primary}; color:${DS.colors.factions.vibe.primary}; padding:0.2vh 0.5vw; font-family:${DS.typography.fontFamily}; font-size:clamp(8px, 0.9vh, 10px); font-weight:bold; letter-spacing:0.08vw; border-radius:0px;">ACTIVE AFFILIATION</div>` : ''}
+        ${vibeSelected ? `<div style="background:${DS.utils.rgba(DS.colors.factions.vibe.primary, 0.15)}; border:1px solid ${DS.colors.factions.vibe.primary}; color:${DS.colors.factions.vibe.primary}; padding:0.2vh 0.5vw; font-family:${DS.typography.fontFamily}; font-size:clamp(0.50rem, 0.9vh, 0.63rem); font-weight:bold; letter-spacing:0.08vw; border-radius:0px;">ACTIVE AFFILIATION</div>` : ''}
       </div>
-      <div style="font-family:${DS.typography.fontFamily}; font-size:clamp(9px, 1.1vh, 11px); color:${DS.colors.textMuted}; letter-spacing:0.05vw; line-height:1.3;">
+      <div style="font-family:${DS.typography.fontFamily}; font-size:clamp(0.56rem, 1.1vh, 0.69rem); color:${DS.colors.textMuted}; letter-spacing:0.05vw; line-height:1.3;">
         Minimalist tech syndicate specializing in clean stealth operations, drone camera override, and rapid reconnaissance.
       </div>
 
       <div style="background:${DS.utils.rgba(DS.colors.factions.vibe.primary, 0.02)}; border:1px solid ${DS.utils.rgba(DS.colors.factions.vibe.primary, 0.08)}; padding:1vh; display:flex; flex-direction:column; gap:0.5vh; border-radius:0px;">
-        <div style="font-family:${DS.typography.fontFamily}; font-size:clamp(8px, 0.9vh, 10px); color:${DS.colors.factions.vibe.primary}; font-weight:bold; letter-spacing:0.08vw; margin-bottom:0.2vh;">SYNDICATE DOCTRINE</div>
-        <div style="font-family:${DS.typography.fontFamily}; font-size:clamp(9px, 1.1vh, 11px); color:${DS.colors.text}; line-height:1.3;">
+        <div style="font-family:${DS.typography.fontFamily}; font-size:clamp(0.50rem, 0.9vh, 0.63rem); color:${DS.colors.factions.vibe.primary}; font-weight:bold; letter-spacing:0.08vw; margin-bottom:0.2vh;">SYNDICATE DOCTRINE</div>
+        <div style="font-family:${DS.typography.fontFamily}; font-size:clamp(0.56rem, 1.1vh, 0.69rem); color:${DS.colors.text}; line-height:1.3;">
           Focuses on high-mobility drone maneuvering, strategic line-of-sight control, and precise asset extraction.
         </div>
       </div>
@@ -154,7 +154,7 @@ export function renderFactionScreen(container: HTMLElement, registeredUserData: 
     Object.assign(vibeEnlistBtn.style, {
       width: '100%', padding: '1vh', background: 'rgba(255, 255, 255, 0.05)',
       border: '1px solid rgba(255, 255, 255, 0.1)', color: DS.colors.textMuted,
-      fontFamily: DS.typography.fontFamily, fontSize: 'clamp(9px, 1.2vh, 12px)', fontWeight: 'bold',
+      fontFamily: DS.typography.fontFamily, fontSize: 'clamp(0.56rem, 1.2vh, 0.75rem)', fontWeight: 'bold',
       letterSpacing: '0.08vw', cursor: 'not-allowed', borderRadius: '0px', flexShrink: '0'
     });
   } else {
@@ -167,7 +167,7 @@ export function renderFactionScreen(container: HTMLElement, registeredUserData: 
       border: vibeSelected ? `1px solid ${DS.utils.rgba(DS.colors.factions.vibe.primary, 0.3)}` : 'none',
       color: vibeSelected ? DS.colors.factions.vibe.primary : '#000000',
       fontFamily: DS.typography.fontFamily,
-      fontSize: 'clamp(9px, 1.2vh, 12px)',
+      fontSize: 'clamp(0.56rem, 1.2vh, 0.75rem)',
       fontWeight: 'bold',
       letterSpacing: '0.08vw',
       cursor: (vibeSelected || !auth.currentUser) ? 'default' : 'pointer',
@@ -214,19 +214,19 @@ export function renderFactionScreen(container: HTMLElement, registeredUserData: 
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="${DS.colors.accent}" stroke-width="2">
             <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
           </svg>
-          <div style="font-family:${DS.typography.fontFamily}; font-size:clamp(12px, 1.8vh, 16px); font-weight:bold; color:${DS.colors.accent}; letter-spacing:0.1vw;">
+          <div style="font-family:${DS.typography.fontFamily}; font-size:clamp(0.75rem, 1.8vh, 1.00rem); font-weight:bold; color:${DS.colors.accent}; letter-spacing:0.1vw;">
             SLOP INC.
           </div>
         </div>
-        ${slopSelected ? `<div style="background:${DS.utils.rgba(DS.colors.accent, 0.15)}; border:1px solid ${DS.colors.accent}; color:${DS.colors.accent}; padding:0.2vh 0.5vw; font-family:${DS.typography.fontFamily}; font-size:clamp(8px, 0.9vh, 10px); font-weight:bold; letter-spacing:0.08vw; border-radius:0px;">ACTIVE AFFILIATION</div>` : ''}
+        ${slopSelected ? `<div style="background:${DS.utils.rgba(DS.colors.accent, 0.15)}; border:1px solid ${DS.colors.accent}; color:${DS.colors.accent}; padding:0.2vh 0.5vw; font-family:${DS.typography.fontFamily}; font-size:clamp(0.50rem, 0.9vh, 0.63rem); font-weight:bold; letter-spacing:0.08vw; border-radius:0px;">ACTIVE AFFILIATION</div>` : ''}
       </div>
-      <div style="font-family:${DS.typography.fontFamily}; font-size:clamp(9px, 1.1vh, 11px); color:${DS.colors.textMuted}; letter-spacing:0.05vw; line-height:1.3;">
+      <div style="font-family:${DS.typography.fontFamily}; font-size:clamp(0.56rem, 1.1vh, 0.69rem); color:${DS.colors.textMuted}; letter-spacing:0.05vw; line-height:1.3;">
         Industrial defense group focused on ballistic drone chassis, reinforced shielding, and point defense.
       </div>
 
       <div style="background:${DS.utils.rgba(DS.colors.accent, 0.02)}; border:1px solid ${DS.utils.rgba(DS.colors.accent, 0.08)}; padding:1vh; display:flex; flex-direction:column; gap:0.5vh; border-radius:0px;">
-        <div style="font-family:${DS.typography.fontFamily}; font-size:clamp(8px, 0.9vh, 10px); color:${DS.colors.accent}; font-weight:bold; letter-spacing:0.08vw; margin-bottom:0.2vh;">DEFENSE DOCTRINE</div>
-        <div style="font-family:${DS.typography.fontFamily}; font-size:clamp(9px, 1.1vh, 11px); color:${DS.colors.text}; line-height:1.3;">
+        <div style="font-family:${DS.typography.fontFamily}; font-size:clamp(0.50rem, 0.9vh, 0.63rem); color:${DS.colors.accent}; font-weight:bold; letter-spacing:0.08vw; margin-bottom:0.2vh;">DEFENSE DOCTRINE</div>
+        <div style="font-family:${DS.typography.fontFamily}; font-size:clamp(0.56rem, 1.1vh, 0.69rem); color:${DS.colors.text}; line-height:1.3;">
           Prioritizes heavy structural durability, defensive choke point control, and sustained suppressive engagement.
         </div>
       </div>
@@ -240,7 +240,7 @@ export function renderFactionScreen(container: HTMLElement, registeredUserData: 
     Object.assign(slopEnlistBtn.style, {
       width: '100%', padding: '1vh', background: 'rgba(255, 255, 255, 0.05)',
       border: '1px solid rgba(255, 255, 255, 0.1)', color: DS.colors.textMuted,
-      fontFamily: DS.typography.fontFamily, fontSize: 'clamp(9px, 1.2vh, 12px)', fontWeight: 'bold',
+      fontFamily: DS.typography.fontFamily, fontSize: 'clamp(0.56rem, 1.2vh, 0.75rem)', fontWeight: 'bold',
       letterSpacing: '0.08vw', cursor: 'not-allowed', borderRadius: '0px', flexShrink: '0'
     });
   } else {
@@ -253,7 +253,7 @@ export function renderFactionScreen(container: HTMLElement, registeredUserData: 
       border: slopSelected ? `1px solid ${DS.utils.rgba(DS.colors.accent, 0.3)}` : 'none',
       color: slopSelected ? DS.colors.accent : '#000000',
       fontFamily: DS.typography.fontFamily,
-      fontSize: 'clamp(9px, 1.2vh, 12px)',
+      fontSize: 'clamp(0.56rem, 1.2vh, 0.75rem)',
       fontWeight: 'bold',
       letterSpacing: '0.08vw',
       cursor: (slopSelected || !auth.currentUser) ? 'default' : 'pointer',

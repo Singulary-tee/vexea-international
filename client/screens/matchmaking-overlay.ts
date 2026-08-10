@@ -36,7 +36,7 @@ export function showMatchmakingOverlay(options: MatchmakingOverlayOptions): void
     background: "radial-gradient(ellipse at center, rgba(18, 18, 18, 0.98) 0%, rgba(8, 8, 8, 0.90) 100%)",
     border: `1px solid ${DS.colors.accent}`,
     borderRadius: "0px",
-    padding: "24px 36px",
+    padding: "1.50rem 2.25rem",
     display: "flex",
     flexDirection: "column",
     alignItems: "center",
@@ -44,7 +44,7 @@ export function showMatchmakingOverlay(options: MatchmakingOverlayOptions): void
     fontFamily: DS.typography.fontFamily,
     boxShadow: "0 8px 32px rgba(0, 0, 0, 0.9)",
     pointerEvents: "auto",
-    minWidth: "320px",
+    minWidth: "20.00rem",
     maxWidth: "90vw"
   });
 
@@ -57,8 +57,8 @@ export function showMatchmakingOverlay(options: MatchmakingOverlayOptions): void
 
   const pulseIndicator = document.createElement("div");
   Object.assign(pulseIndicator.style, {
-    width: "10px",
-    height: "10px",
+    width: "0.63rem",
+    height: "0.63rem",
     background: DS.colors.accent,
     borderRadius: "0px",
     boxShadow: `0 0 8px ${DS.colors.accent}`,
@@ -68,7 +68,7 @@ export function showMatchmakingOverlay(options: MatchmakingOverlayOptions): void
   const titleText = document.createElement("div");
   titleText.textContent = "MATCHMAKING IN PROGRESS";
   Object.assign(titleText.style, {
-    fontSize: "clamp(13px, 1.8vh, 16px)",
+    fontSize: "clamp(0.81rem, 1.8vh, 1.00rem)",
     fontWeight: "bold",
     color: DS.colors.accent,
     letterSpacing: "2px",
@@ -83,7 +83,7 @@ export function showMatchmakingOverlay(options: MatchmakingOverlayOptions): void
   statusText.id = "mm-overlay-status";
   statusText.textContent = `MAP: ${(options.mapId || "FACILITY").toUpperCase()} | QUEUE: 1 / 10 | MIN: 4`;
   Object.assign(statusText.style, {
-    fontSize: "clamp(10px, 1.4vh, 12px)",
+    fontSize: "clamp(0.63rem, 1.4vh, 0.75rem)",
     color: DS.colors.textSecondary,
     letterSpacing: "1px",
     textTransform: "uppercase"
@@ -98,11 +98,11 @@ export function showMatchmakingOverlay(options: MatchmakingOverlayOptions): void
     border: `1px solid ${DS.colors.accent}`,
     color: DS.colors.accent,
     fontFamily: DS.typography.fontFamily,
-    fontSize: "clamp(11px, 1.4vh, 13px)",
+    fontSize: "clamp(0.69rem, 1.4vh, 0.81rem)",
     fontWeight: "bold",
     letterSpacing: "1px",
     textTransform: "uppercase",
-    padding: "6px 20px",
+    padding: "0.38rem 1.25rem",
     cursor: "pointer",
     borderRadius: "0px",
     marginTop: "4px",
@@ -185,7 +185,7 @@ export function showPreMatchCountdownOverlay(countdownSeconds: number): void {
       background: "radial-gradient(ellipse at center, rgba(20, 20, 20, 0.95) 0%, rgba(10, 10, 10, 0.85) 100%)",
       border: `1px solid ${DS.colors.accent}`,
       borderRadius: "0px",
-      padding: "16px 36px",
+      padding: "1.00rem 2.25rem",
       display: "flex",
       flexDirection: "column",
       alignItems: "center",
@@ -198,7 +198,7 @@ export function showPreMatchCountdownOverlay(countdownSeconds: number): void {
     const label = document.createElement("div");
     label.textContent = "PRE-MATCH COUNTDOWN";
     Object.assign(label.style, {
-      fontSize: "clamp(11px, 1.5vh, 14px)",
+      fontSize: "clamp(0.69rem, 1.5vh, 0.88rem)",
       color: DS.colors.accent,
       letterSpacing: "2px",
       fontWeight: "bold",
@@ -210,7 +210,7 @@ export function showPreMatchCountdownOverlay(countdownSeconds: number): void {
     num.id = "pre-match-countdown-num";
     num.textContent = countdownSeconds.toString();
     Object.assign(num.style, {
-      fontSize: "clamp(36px, 6vh, 54px)",
+      fontSize: "clamp(2.25rem, 6vh, 3.38rem)",
       color: "#FFFFFF",
       fontWeight: "bold",
       lineHeight: "1",
@@ -221,7 +221,7 @@ export function showPreMatchCountdownOverlay(countdownSeconds: number): void {
     const sub = document.createElement("div");
     sub.textContent = "PREPARING OPERATIVES";
     Object.assign(sub.style, {
-      fontSize: "clamp(9px, 1.2vh, 11px)",
+      fontSize: "clamp(0.56rem, 1.2vh, 0.69rem)",
       color: DS.colors.textSecondary,
       letterSpacing: "1px",
       textTransform: "uppercase"

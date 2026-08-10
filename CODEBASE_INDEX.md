@@ -55,6 +55,7 @@ This file is the authoritative index of all directories and source files within 
     *   **`DroneIntelligence.ts`**: Governs spatial awareness for individual drones. Computes sight lines (3D orientation quaternions to check forward vectors and cone of vision angles), performs static map and dynamic Rapier line-of-sight raycasts, and handles memory decay mechanics.
     *   **`DroneMemory.ts`**: Tracks historical sighting positions, target last-seen timestamps, and spatial memory decay for drones.
     *   **`DronePerception.ts`**: Evaluates line-of-sight, raycasting, and sensory awareness updates for AI agents.
+    *   **`GroupTacticalState.ts`**: Centralized zero-GC group tactical state manager (`GroupTacticalState`). Tracks per-group posture state (`ASSAULT`, `SUPPRESS`, `FLANK`, `HOLD`, `RECON`, `RETREAT`, `HARASS`) and validates posture allowlists per drone type.
     *   **`LLMCommander.ts`**: High-level strategic controller refactored to be provider-agnostic via `CommanderAdapter`. Formulates formatted prompt strings, delegates execution to provider adapters, manages strategic AP resource pools, and enforces token budget ceilings.
     *   **`LLMCommanderFeedback.ts`**: Processes post-command evaluation, reinforcement feedback, and action success telemetry for the LLM Commander.
     *   **`strategy/` (LLM Strategy Brief Store)**
@@ -465,5 +466,15 @@ Every file change in the VEXEA codebase must follow this strict two-step protoco
     *   `server/ai/behavior/index.ts`: Registered `wheeledBehavior` (`DroneType.WHEELED`) and `robotDogBehavior` (`DroneType.ROBOT_DOG`) in `BEHAVIORS` dictionary.
     *   `CODEBASE_INDEX.md`: Registered new behavior modules and audit log.
 *   **Verification:** Verified compilation via `compile_applet` and lint validation via `lint_applet`.
+
+### Cycle 2026-08-10-03: Eliminate Asset Load N+1 Blob URL Spans
+*   **Target Files:** `client/asset-cache.ts`, `client/screens/splash.ts`, `CODEBASE_INDEX.md`
+*   **Status:** Verified & Finalized
+*   **Modifications:**
+    *   `client/asset-cache.ts`: Optimized `getCachedOrFetchUrl` to short-circuit and return `blobUrlMap.get(baseName)` directly when present in memory, bypassing redundant IndexedDB reads and `URL.createObjectURL` calls.
+    *   `client/screens/splash.ts`: Awaited `populateBlobUrlMap()` at the start of `preloadAll()` to ensure the in-memory `blobUrlMap` is warm before iterating over preloaded asset files.
+    *   `CODEBASE_INDEX.md`: Updated cycle audit log.
+*   **Verification:** Verified clean linting via `lint_applet` and full build compilation via `compile_applet`.
+
 
 

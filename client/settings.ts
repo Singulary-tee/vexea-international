@@ -46,7 +46,7 @@ function injectMatchTabDOM(sidebar: HTMLElement, content: HTMLElement) {
     const page = document.createElement('div');
     page.id = 'tab-MATCH';
     Object.assign(page.style, {
-        maxWidth: '800px',
+        maxWidth: '50.00rem',
         margin: '0 auto',
         display: 'none',
         flexDirection: 'column',
@@ -56,19 +56,19 @@ function injectMatchTabDOM(sidebar: HTMLElement, content: HTMLElement) {
     const title = document.createElement('h3');
     title.innerText = 'MATCH';
     Object.assign(title.style, {
-        fontSize: '20px',
+        fontSize: DS.typography.sizes.headingMd,
         fontWeight: 'bold',
         color: DS.colors.accent,
         borderBottom: '2px solid #27272a',
-        paddingBottom: '8px',
-        marginBottom: '16px',
+        paddingBottom: '0.50rem',
+        marginBottom: '1.00rem',
         letterSpacing: '1px'
     });
     page.appendChild(title);
 
     const desc = document.createElement('p');
     desc.innerText = 'Active match controls. Quit or abandon active squad connections.';
-    desc.style.fontSize = '12px';
+    desc.style.fontSize = DS.typography.sizes.small;
     desc.style.color = '#a1a1aa';
     page.appendChild(desc);
 
@@ -81,12 +81,12 @@ function injectMatchTabDOM(sidebar: HTMLElement, content: HTMLElement) {
         border: `1px solid ${DS.colors.danger}`,
         color: DS.colors.danger,
         fontFamily: DS.typography.fontFamily,
-        fontSize: '18px',
+        fontSize: DS.typography.sizes.headingSm,
         fontWeight: 'bold',
         letterSpacing: '1px',
         textTransform: 'uppercase',
         cursor: 'pointer',
-        marginTop: '12px',
+        marginTop: '0.75rem',
         borderRadius: '0px'
     });
     page.appendChild(quitBtn);
@@ -117,10 +117,10 @@ function injectMatchTabDOM(sidebar: HTMLElement, content: HTMLElement) {
         
         const card = document.createElement('div');
         Object.assign(card.style, {
-            width: '400px',
+            width: '25.00rem',
             background: '#18181b',
             border: `1px solid ${DS.colors.danger}`,
-            padding: '32px',
+            padding: '2.00rem',
             borderRadius: '0px'
         });
         
@@ -128,11 +128,11 @@ function injectMatchTabDOM(sidebar: HTMLElement, content: HTMLElement) {
         cardTitle.innerText = 'ABANDON MISSION';
         Object.assign(cardTitle.style, {
             fontFamily: DS.typography.fontFamily,
-            fontSize: '20px',
+            fontSize: DS.typography.sizes.headingMd,
             fontWeight: 'bold',
             color: '#ffffff',
             textTransform: 'uppercase',
-            marginBottom: '8px',
+            marginBottom: '0.50rem',
             letterSpacing: '1px'
         });
         
@@ -140,9 +140,9 @@ function injectMatchTabDOM(sidebar: HTMLElement, content: HTMLElement) {
         cardBody.innerText = 'You will be removed from the match. The mission continues without you.';
         Object.assign(cardBody.style, {
             fontFamily: DS.typography.fontFamily,
-            fontSize: '13px',
+            fontSize: DS.typography.sizes.body,
             color: '#a1a1aa',
-            marginBottom: '24px',
+            marginBottom: '1.50rem',
             lineHeight: '1.5'
         });
         
@@ -155,11 +155,11 @@ function injectMatchTabDOM(sidebar: HTMLElement, content: HTMLElement) {
             background: DS.colors.danger,
             color: '#000000',
             fontFamily: DS.typography.fontFamily,
-            fontSize: '14px',
+            fontSize: DS.typography.sizes.body,
             fontWeight: 'bold',
             textTransform: 'uppercase',
             borderRadius: '0px',
-            padding: '10px 20px',
+            padding: '0.63rem 1.25rem',
             border: 'none',
             cursor: 'pointer'
         });
@@ -170,9 +170,9 @@ function injectMatchTabDOM(sidebar: HTMLElement, content: HTMLElement) {
             background: 'transparent',
             border: `1px solid #27272a`,
             color: '#a1a1aa',
-            padding: '10px 20px',
+            padding: '0.63rem 1.25rem',
             fontFamily: DS.typography.fontFamily,
-            fontSize: '14px',
+            fontSize: DS.typography.sizes.body,
             cursor: 'pointer',
             borderRadius: '0px'
         });

@@ -46,7 +46,7 @@ export const initUIEditor = () => {
     editorBar.style.position = "absolute";
     editorBar.style.top = "5%";
     editorBar.style.left = "5%";
-    editorBar.style.width = "clamp(280px, 30vw, 360px)";
+    editorBar.style.width = "clamp(17.50rem, 30vw, 22.50rem)";
     editorBar.style.maxHeight = "90vh";
     editorBar.style.background = `linear-gradient(135deg, ${DS.utils.rgba(DS.colors.background, 0.95)} 0%, ${DS.utils.rgba(DS.colors.background, 0.8)} 100%)`;
     editorBar.style.backdropFilter = DS.glass.blur;
@@ -66,9 +66,9 @@ export const initUIEditor = () => {
     editorBar.style.scrollbarColor = `${DS.colors.success} ${DS.colors.surface}`;
 
     const dragHandle = document.createElement("div");
-    dragHandle.style.height = "8px";
-    dragHandle.style.width = "40px";
-    dragHandle.style.margin = "0 auto 16px auto";
+    dragHandle.style.height = "0.50rem";
+    dragHandle.style.width = "2.50rem";
+    dragHandle.style.margin = "0 auto 1.00rem auto";
     dragHandle.style.background = DS.utils.rgba(DS.colors.textSecondary, 0.3);
     dragHandle.style.borderRadius = "4px";
     dragHandle.style.cursor = "grab";
@@ -101,8 +101,8 @@ export const initUIEditor = () => {
             <div style="display: flex; justify-content: space-between; align-items: center;">
                 <span style="color: ${DS.colors.textSecondary};">SLIDER STEP:</span>
                 <div style="display: flex; align-items: center; gap: ${DS.spacing.md};">
-                    <input type="range" id="editor-step" min="0.1" max="10" step="0.1" value="1" style="width: 80px; accent-color: ${DS.colors.success};">
-                    <input type="number" id="editor-step-num" min="0.1" max="10" step="0.1" value="1.0" style="width: 55px; background: ${DS.colors.surface}; color: ${DS.colors.success}; border: 1px solid ${DS.colors.border}; border-radius: ${DS.borders.radius.none}; padding: ${DS.spacing.sm} ${DS.spacing.md}; font-size: ${DS.typography.tiny}; text-align: right; font-family: ${DS.typography.fontFamilyMono};">
+                    <input type="range" id="editor-step" min="0.1" max="10" step="0.1" value="1" style="width: 5.00rem; accent-color: ${DS.colors.success};">
+                    <input type="number" id="editor-step-num" min="0.1" max="10" step="0.1" value="1.0" style="width: 3.44rem; background: ${DS.colors.surface}; color: ${DS.colors.success}; border: 1px solid ${DS.colors.border}; border-radius: ${DS.borders.radius.none}; padding: ${DS.spacing.sm} ${DS.spacing.md}; font-size: ${DS.typography.tiny}; text-align: right; font-family: ${DS.typography.fontFamilyMono};">
                 </div>
             </div>
 
@@ -110,16 +110,16 @@ export const initUIEditor = () => {
             <div style="display: flex; justify-content: space-between; align-items: center;">
                 <span style="color: ${DS.colors.textSecondary};">LEFT (VW):</span>
                 <div style="display: flex; align-items: center; gap: ${DS.spacing.md};">
-                    <input type="range" id="editor-left" min="0" max="100" step="0.1" value="0" disabled style="width: 80px; accent-color: ${DS.colors.success}; opacity: 0.5;">
-                    <input type="number" id="editor-left-num" min="-50" max="150" step="0.1" value="0" disabled style="width: 55px; background: ${DS.colors.surface}; color: ${DS.colors.textPrimary}; border: 1px solid ${DS.colors.border}; border-radius: ${DS.borders.radius.none}; padding: ${DS.spacing.sm} ${DS.spacing.md}; font-size: ${DS.typography.tiny}; text-align: right; font-family: ${DS.typography.fontFamilyMono};">
+                    <input type="range" id="editor-left" min="0" max="100" step="0.1" value="0" disabled style="width: 5.00rem; accent-color: ${DS.colors.success}; opacity: 0.5;">
+                    <input type="number" id="editor-left-num" min="-50" max="150" step="0.1" value="0" disabled style="width: 3.44rem; background: ${DS.colors.surface}; color: ${DS.colors.textPrimary}; border: 1px solid ${DS.colors.border}; border-radius: ${DS.borders.radius.none}; padding: ${DS.spacing.sm} ${DS.spacing.md}; font-size: ${DS.typography.tiny}; text-align: right; font-family: ${DS.typography.fontFamilyMono};">
                 </div>
             </div>
 
             <div style="display: flex; justify-content: space-between; align-items: center;">
                 <span style="color: ${DS.colors.textSecondary};">TOP (VH):</span>
                 <div style="display: flex; align-items: center; gap: ${DS.spacing.md};">
-                    <input type="range" id="editor-top" min="0" max="100" step="0.1" value="0" disabled style="width: 80px; accent-color: ${DS.colors.success}; opacity: 0.5;">
-                    <input type="number" id="editor-top-num" min="-50" max="150" step="0.1" value="0" disabled style="width: 55px; background: ${DS.colors.surface}; color: ${DS.colors.textPrimary}; border: 1px solid ${DS.colors.border}; border-radius: ${DS.borders.radius.none}; padding: ${DS.spacing.sm} ${DS.spacing.md}; font-size: ${DS.typography.tiny}; text-align: right; font-family: ${DS.typography.fontFamilyMono};">
+                    <input type="range" id="editor-top" min="0" max="100" step="0.1" value="0" disabled style="width: 5.00rem; accent-color: ${DS.colors.success}; opacity: 0.5;">
+                    <input type="number" id="editor-top-num" min="-50" max="150" step="0.1" value="0" disabled style="width: 3.44rem; background: ${DS.colors.surface}; color: ${DS.colors.textPrimary}; border: 1px solid ${DS.colors.border}; border-radius: ${DS.borders.radius.none}; padding: ${DS.spacing.sm} ${DS.spacing.md}; font-size: ${DS.typography.tiny}; text-align: right; font-family: ${DS.typography.fontFamilyMono};">
                 </div>
             </div>
 
@@ -127,8 +127,8 @@ export const initUIEditor = () => {
                 <div style="display: flex; justify-content: space-between; align-items: center;">
                     <span style="color: ${DS.colors.textSecondary};">SCALE:</span>
                     <div style="display: flex; align-items: center; gap: ${DS.spacing.md};">
-                        <input type="range" id="editor-scale" min="0.1" max="5" step="0.05" value="1" disabled style="width: 80px; accent-color: ${DS.colors.success}; opacity: 0.5;">
-                        <input type="number" id="editor-scale-num" min="0.1" max="5" step="0.01" value="1.00" disabled style="width: 55px; background: ${DS.colors.surface}; color: ${DS.colors.textPrimary}; border: 1px solid ${DS.colors.border}; border-radius: ${DS.borders.radius.none}; padding: ${DS.spacing.sm} ${DS.spacing.md}; font-size: ${DS.typography.tiny}; text-align: right; font-family: ${DS.typography.fontFamilyMono};">
+                        <input type="range" id="editor-scale" min="0.1" max="5" step="0.05" value="1" disabled style="width: 5.00rem; accent-color: ${DS.colors.success}; opacity: 0.5;">
+                        <input type="number" id="editor-scale-num" min="0.1" max="5" step="0.01" value="1.00" disabled style="width: 3.44rem; background: ${DS.colors.surface}; color: ${DS.colors.textPrimary}; border: 1px solid ${DS.colors.border}; border-radius: ${DS.borders.radius.none}; padding: ${DS.spacing.sm} ${DS.spacing.md}; font-size: ${DS.typography.tiny}; text-align: right; font-family: ${DS.typography.fontFamilyMono};">
                     </div>
                 </div>
             </div>
@@ -137,15 +137,15 @@ export const initUIEditor = () => {
                 <div style="display: flex; justify-content: space-between; align-items: center;">
                     <span style="color: ${DS.colors.textSecondary};">WIDTH (VW):</span>
                     <div style="display: flex; align-items: center; gap: ${DS.spacing.md};">
-                        <input type="range" id="editor-width" min="0.1" max="100" step="0.1" value="10" disabled style="width: 80px; accent-color: ${DS.colors.success}; opacity: 0.5;">
-                        <input type="number" id="editor-width-num" min="0.1" max="100" step="0.1" value="10" disabled style="width: 55px; background: ${DS.colors.surface}; color: ${DS.colors.textPrimary}; border: 1px solid ${DS.colors.border}; border-radius: ${DS.borders.radius.none}; padding: ${DS.spacing.sm} ${DS.spacing.md}; font-size: ${DS.typography.tiny}; text-align: right; font-family: ${DS.typography.fontFamilyMono};">
+                        <input type="range" id="editor-width" min="0.1" max="100" step="0.1" value="10" disabled style="width: 5.00rem; accent-color: ${DS.colors.success}; opacity: 0.5;">
+                        <input type="number" id="editor-width-num" min="0.1" max="100" step="0.1" value="10" disabled style="width: 3.44rem; background: ${DS.colors.surface}; color: ${DS.colors.textPrimary}; border: 1px solid ${DS.colors.border}; border-radius: ${DS.borders.radius.none}; padding: ${DS.spacing.sm} ${DS.spacing.md}; font-size: ${DS.typography.tiny}; text-align: right; font-family: ${DS.typography.fontFamilyMono};">
                     </div>
                 </div>
                 <div style="display: flex; justify-content: space-between; align-items: center;">
                     <span style="color: ${DS.colors.textSecondary};">HEIGHT (VH):</span>
                     <div style="display: flex; align-items: center; gap: ${DS.spacing.md};">
-                        <input type="range" id="editor-height" min="0.1" max="100" step="0.1" value="10" disabled style="width: 80px; accent-color: ${DS.colors.success}; opacity: 0.5;">
-                        <input type="number" id="editor-height-num" min="0.1" max="100" step="0.1" value="10" disabled style="width: 55px; background: ${DS.colors.surface}; color: ${DS.colors.textPrimary}; border: 1px solid ${DS.colors.border}; border-radius: ${DS.borders.radius.none}; padding: ${DS.spacing.sm} ${DS.spacing.md}; font-size: ${DS.typography.tiny}; text-align: right; font-family: ${DS.typography.fontFamilyMono};">
+                        <input type="range" id="editor-height" min="0.1" max="100" step="0.1" value="10" disabled style="width: 5.00rem; accent-color: ${DS.colors.success}; opacity: 0.5;">
+                        <input type="number" id="editor-height-num" min="0.1" max="100" step="0.1" value="10" disabled style="width: 3.44rem; background: ${DS.colors.surface}; color: ${DS.colors.textPrimary}; border: 1px solid ${DS.colors.border}; border-radius: ${DS.borders.radius.none}; padding: ${DS.spacing.sm} ${DS.spacing.md}; font-size: ${DS.typography.tiny}; text-align: right; font-family: ${DS.typography.fontFamilyMono};">
                     </div>
                 </div>
             </div>
@@ -157,8 +157,8 @@ export const initUIEditor = () => {
             <div style="display: flex; justify-content: space-between; align-items: center;">
                 <span style="color: ${DS.colors.textSecondary};">GRID SNAP (PX):</span>
                 <div style="display: flex; align-items: center; gap: ${DS.spacing.md};">
-                    <input type="range" id="grid-snap" min="1" max="100" step="1" value="5" style="width: 80px; accent-color: ${DS.colors.success};">
-                    <input type="number" id="grid-snap-num" min="1" max="100" step="1" value="5" style="width: 55px; background: ${DS.colors.surface}; color: ${DS.colors.textPrimary}; border: 1px solid ${DS.colors.border}; border-radius: ${DS.borders.radius.none}; padding: ${DS.spacing.sm} ${DS.spacing.md}; font-size: ${DS.typography.tiny}; text-align: right; font-family: ${DS.typography.fontFamilyMono};">
+                    <input type="range" id="grid-snap" min="1" max="100" step="1" value="5" style="width: 5.00rem; accent-color: ${DS.colors.success};">
+                    <input type="number" id="grid-snap-num" min="1" max="100" step="1" value="5" style="width: 3.44rem; background: ${DS.colors.surface}; color: ${DS.colors.textPrimary}; border: 1px solid ${DS.colors.border}; border-radius: ${DS.borders.radius.none}; padding: ${DS.spacing.sm} ${DS.spacing.md}; font-size: ${DS.typography.tiny}; text-align: right; font-family: ${DS.typography.fontFamilyMono};">
                 </div>
             </div>
 
@@ -166,8 +166,8 @@ export const initUIEditor = () => {
             <div style="display: flex; justify-content: space-between; align-items: center;">
                 <span style="color: ${DS.colors.textSecondary};">GRID OFFSET X:</span>
                 <div style="display: flex; align-items: center; gap: ${DS.spacing.md};">
-                    <input type="range" id="grid-offset-x" min="-100" max="100" step="1" value="0" style="width: 80px; accent-color: ${DS.colors.success};">
-                    <input type="number" id="grid-offset-x-num" min="-100" max="100" step="1" value="0" style="width: 55px; background: ${DS.colors.surface}; color: ${DS.colors.textPrimary}; border: 1px solid ${DS.colors.border}; border-radius: ${DS.borders.radius.none}; padding: ${DS.spacing.sm} ${DS.spacing.md}; font-size: ${DS.typography.tiny}; text-align: right; font-family: ${DS.typography.fontFamilyMono};">
+                    <input type="range" id="grid-offset-x" min="-100" max="100" step="1" value="0" style="width: 5.00rem; accent-color: ${DS.colors.success};">
+                    <input type="number" id="grid-offset-x-num" min="-100" max="100" step="1" value="0" style="width: 3.44rem; background: ${DS.colors.surface}; color: ${DS.colors.textPrimary}; border: 1px solid ${DS.colors.border}; border-radius: ${DS.borders.radius.none}; padding: ${DS.spacing.sm} ${DS.spacing.md}; font-size: ${DS.typography.tiny}; text-align: right; font-family: ${DS.typography.fontFamilyMono};">
                 </div>
             </div>
 
@@ -175,15 +175,15 @@ export const initUIEditor = () => {
             <div style="display: flex; justify-content: space-between; align-items: center;">
                 <span style="color: ${DS.colors.textSecondary};">GRID OFFSET Y:</span>
                 <div style="display: flex; align-items: center; gap: ${DS.spacing.md};">
-                    <input type="range" id="grid-offset-y" min="-100" max="100" step="1" value="0" style="width: 80px; accent-color: ${DS.colors.success};">
-                    <input type="number" id="grid-offset-y-num" min="-100" max="100" step="1" value="0" style="width: 55px; background: ${DS.colors.surface}; color: ${DS.colors.textPrimary}; border: 1px solid ${DS.colors.border}; border-radius: ${DS.borders.radius.none}; padding: ${DS.spacing.sm} ${DS.spacing.md}; font-size: ${DS.typography.tiny}; text-align: right; font-family: ${DS.typography.fontFamilyMono};">
+                    <input type="range" id="grid-offset-y" min="-100" max="100" step="1" value="0" style="width: 5.00rem; accent-color: ${DS.colors.success};">
+                    <input type="number" id="grid-offset-y-num" min="-100" max="100" step="1" value="0" style="width: 3.44rem; background: ${DS.colors.surface}; color: ${DS.colors.textPrimary}; border: 1px solid ${DS.colors.border}; border-radius: ${DS.borders.radius.none}; padding: ${DS.spacing.sm} ${DS.spacing.md}; font-size: ${DS.typography.tiny}; text-align: right; font-family: ${DS.typography.fontFamilyMono};">
                 </div>
             </div>
 
             <!-- Show Grid Checkbox -->
             <div style="display: flex; justify-content: space-between; align-items: center;">
                 <span style="color: ${DS.colors.textSecondary};">SHOW VISUAL GRID:</span>
-                <input type="checkbox" id="show-grid-checkbox" checked style="cursor: pointer; width: 14px; height: 14px; accent-color: ${DS.colors.success};">
+                <input type="checkbox" id="show-grid-checkbox" checked style="cursor: pointer; width: 0.88rem; height: 0.88rem; accent-color: ${DS.colors.success};">
             </div>
 
             <!-- Divider -->
@@ -193,8 +193,8 @@ export const initUIEditor = () => {
             <div style="display: flex; justify-content: space-between; align-items: center;">
                 <span style="color: ${DS.colors.textSecondary};">REF OPACITY:</span>
                 <div style="display: flex; align-items: center; gap: ${DS.spacing.md};">
-                    <input type="range" id="ref-opacity" min="0" max="1" step="0.05" value="1" style="width: 80px; accent-color: ${DS.colors.success};">
-                    <input type="number" id="ref-opacity-num" min="0" max="1" step="0.01" value="1.00" style="width: 55px; background: ${DS.colors.surface}; color: ${DS.colors.textPrimary}; border: 1px solid ${DS.colors.border}; border-radius: ${DS.borders.radius.none}; padding: ${DS.spacing.sm} ${DS.spacing.md}; font-size: ${DS.typography.tiny}; text-align: right; font-family: ${DS.typography.fontFamilyMono};">
+                    <input type="range" id="ref-opacity" min="0" max="1" step="0.05" value="1" style="width: 5.00rem; accent-color: ${DS.colors.success};">
+                    <input type="number" id="ref-opacity-num" min="0" max="1" step="0.01" value="1.00" style="width: 3.44rem; background: ${DS.colors.surface}; color: ${DS.colors.textPrimary}; border: 1px solid ${DS.colors.border}; border-radius: ${DS.borders.radius.none}; padding: ${DS.spacing.sm} ${DS.spacing.md}; font-size: ${DS.typography.tiny}; text-align: right; font-family: ${DS.typography.fontFamilyMono};">
                 </div>
             </div>
 
@@ -202,8 +202,8 @@ export const initUIEditor = () => {
             <div style="display: flex; justify-content: space-between; align-items: center;">
                 <span style="color: ${DS.colors.textSecondary};">REF SCALE (%):</span>
                 <div style="display: flex; align-items: center; gap: ${DS.spacing.md};">
-                    <input type="range" id="ref-scale" min="10" max="300" step="1" value="100" style="width: 80px; accent-color: ${DS.colors.success};">
-                    <input type="number" id="ref-scale-num" min="10" max="300" step="1" value="100" style="width: 55px; background: ${DS.colors.surface}; color: ${DS.colors.textPrimary}; border: 1px solid ${DS.colors.border}; border-radius: ${DS.borders.radius.none}; padding: ${DS.spacing.sm} ${DS.spacing.md}; font-size: ${DS.typography.tiny}; text-align: right; font-family: ${DS.typography.fontFamilyMono};">
+                    <input type="range" id="ref-scale" min="10" max="300" step="1" value="100" style="width: 5.00rem; accent-color: ${DS.colors.success};">
+                    <input type="number" id="ref-scale-num" min="10" max="300" step="1" value="100" style="width: 3.44rem; background: ${DS.colors.surface}; color: ${DS.colors.textPrimary}; border: 1px solid ${DS.colors.border}; border-radius: ${DS.borders.radius.none}; padding: ${DS.spacing.sm} ${DS.spacing.md}; font-size: ${DS.typography.tiny}; text-align: right; font-family: ${DS.typography.fontFamilyMono};">
                 </div>
             </div>
 
@@ -211,8 +211,8 @@ export const initUIEditor = () => {
             <div style="display: flex; justify-content: space-between; align-items: center;">
                 <span style="color: ${DS.colors.textSecondary};">REF OFFSET X (PX):</span>
                 <div style="display: flex; align-items: center; gap: ${DS.spacing.md};">
-                    <input type="range" id="ref-offset-x" min="-1000" max="1000" step="1" value="0" style="width: 80px; accent-color: ${DS.colors.success};">
-                    <input type="number" id="ref-offset-x-num" min="-2000" max="2000" step="1" value="0" style="width: 55px; background: ${DS.colors.surface}; color: ${DS.colors.textPrimary}; border: 1px solid ${DS.colors.border}; border-radius: ${DS.borders.radius.none}; padding: ${DS.spacing.sm} ${DS.spacing.md}; font-size: ${DS.typography.tiny}; text-align: right; font-family: ${DS.typography.fontFamilyMono};">
+                    <input type="range" id="ref-offset-x" min="-1000" max="1000" step="1" value="0" style="width: 5.00rem; accent-color: ${DS.colors.success};">
+                    <input type="number" id="ref-offset-x-num" min="-2000" max="2000" step="1" value="0" style="width: 3.44rem; background: ${DS.colors.surface}; color: ${DS.colors.textPrimary}; border: 1px solid ${DS.colors.border}; border-radius: ${DS.borders.radius.none}; padding: ${DS.spacing.sm} ${DS.spacing.md}; font-size: ${DS.typography.tiny}; text-align: right; font-family: ${DS.typography.fontFamilyMono};">
                 </div>
             </div>
 
@@ -220,8 +220,8 @@ export const initUIEditor = () => {
             <div style="display: flex; justify-content: space-between; align-items: center;">
                 <span style="color: ${DS.colors.textSecondary};">REF OFFSET Y (PX):</span>
                 <div style="display: flex; align-items: center; gap: ${DS.spacing.md};">
-                    <input type="range" id="ref-offset-y" min="-1000" max="1000" step="1" value="0" style="width: 80px; accent-color: ${DS.colors.success};">
-                    <input type="number" id="ref-offset-y-num" min="-2000" max="2000" step="1" value="0" style="width: 55px; background: ${DS.colors.surface}; color: ${DS.colors.textPrimary}; border: 1px solid ${DS.colors.border}; border-radius: ${DS.borders.radius.none}; padding: ${DS.spacing.sm} ${DS.spacing.md}; font-size: ${DS.typography.tiny}; text-align: right; font-family: ${DS.typography.fontFamilyMono};">
+                    <input type="range" id="ref-offset-y" min="-1000" max="1000" step="1" value="0" style="width: 5.00rem; accent-color: ${DS.colors.success};">
+                    <input type="number" id="ref-offset-y-num" min="-2000" max="2000" step="1" value="0" style="width: 3.44rem; background: ${DS.colors.surface}; color: ${DS.colors.textPrimary}; border: 1px solid ${DS.colors.border}; border-radius: ${DS.borders.radius.none}; padding: ${DS.spacing.sm} ${DS.spacing.md}; font-size: ${DS.typography.tiny}; text-align: right; font-family: ${DS.typography.fontFamilyMono};">
                 </div>
             </div>
         </div>

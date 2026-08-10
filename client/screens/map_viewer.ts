@@ -32,8 +32,8 @@ export async function launchMapEditor(mapId: string) {
 
         const header = document.createElement('div');
         Object.assign(header.style, {
-            height: '60px',
-            padding: '0 24px',
+            height: '3.75rem',
+            padding: '0 1.50rem',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
@@ -45,7 +45,7 @@ export async function launchMapEditor(mapId: string) {
         Object.assign(title.style, {
             color: DS.colors.accent,
             fontFamily: DS.typography.fontFamily,
-            fontSize: '24px',
+            fontSize: DS.typography.sizes.headingMd,
             fontWeight: DS.typography.weightBold,
             textTransform: 'uppercase',
             letterSpacing: '2px'
@@ -57,9 +57,9 @@ export async function launchMapEditor(mapId: string) {
         Object.assign(closeBtn.style, {
             color: '#0A0A0A',
             background: DS.colors.accent,
-            padding: '8px 24px',
+            padding: '0.50rem 1.50rem',
             fontFamily: DS.typography.fontFamily,
-            fontSize: '18px',
+            fontSize: DS.typography.sizes.headingSm,
             fontWeight: DS.typography.weightBold,
             cursor: 'pointer',
             borderRadius: '0', // sharp corners

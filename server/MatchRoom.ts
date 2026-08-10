@@ -10,6 +10,7 @@ import { processDroneIntelligence, MemoryRecord } from "./ai/DroneIntelligence";
 import { processDroneBehaviors, initBehaviorOutputs } from "./ai/behavior/DroneBehaviorController";
 import { calculateDroneAvoidance } from "./ai/DroneAvoidance";
 import { CommanderMemory } from "./ai/CommanderMemory";
+import { GroupTacticalState, Posture } from "./ai/GroupTacticalState";
 import { GoogleGenAI, Type } from "@google/genai";
 import RAPIER from "@dimforge/rapier3d-compat";
 import { ACTIVE_GAMEMODE } from "../shared/gamemode-configs.js";
@@ -240,6 +241,12 @@ export interface ServerDrone {
   suppressToggle?: boolean;
   investigateHoldTick?: number;
   flankStartTick?: number;
+  posture: Posture | null;
+  humanoidPose: string;
+  peekCooldown: number;
+  lastDamageTick: number;
+  parkedOrder: { type: "move" | "hold"; targetZone: ZoneName; path: ZoneName[]; pathIndex: number } | null;
+  strafeRunTarget?: ZoneName | null;
 }
 
 export interface ServerCamera {
@@ -316,6 +323,7 @@ export class MatchRoom {
   public llmTokensUsedThisMatch = 0;
   public commanderAP: number = ACTIVE_GAMEMODE.llmApStartPool;
   public fixedWingDeploymentsThisMatch: number = 0;
+  public groupTacticalState: GroupTacticalState = new GroupTacticalState();
   public outstandingOrders: Map<string, { targetZone: ZoneName; cyclesOutstanding: number; holdRemainingCycles?: number }> = new Map();
   public failedOperations: string[] = [];
   public zoneSummary!: Record<ZoneName, ServerZoneState>;
@@ -511,6 +519,12 @@ export class MatchRoom {
         targetLastMoveTick: 0,
         suppressToggle: false,
         investigateHoldTick: 0,
+        posture: null,
+        humanoidPose: "stand_run",
+        peekCooldown: 0,
+        lastDamageTick: -9999,
+        parkedOrder: null,
+        strafeRunTarget: null,
       });
     }
 
@@ -1924,6 +1938,7 @@ export class MatchRoom {
               const dz = d.posZ - this.projPosZ[i];
               if (dx * dx + dy * dy + dz * dz < d.rad * d.rad) {
                 d.hp -= this.projDamage[i];
+                d.lastDamageTick = this.serverTick;
                 if (!d.damageLog) d.damageLog = [];
                 d.damageLog.push({
                   playerId: this.projSourceId[i],
@@ -2444,6 +2459,7 @@ export class MatchRoom {
           const factor = 1.0 - dist / radius;
           const splash = Math.floor(maxDamage * factor);
           d.hp -= splash;
+          d.lastDamageTick = this.serverTick;
           if (sourceType === "player") {
             if (!d.damageLog) d.damageLog = [];
             d.damageLog.push({

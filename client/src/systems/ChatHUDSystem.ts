@@ -58,7 +58,7 @@ export class ChatHUDSystem {
         bottom: "35vh",
         width: "35vw",
         height: "20vh",
-        maxWidth: "380px",
+        maxWidth: "23.75rem",
         background: "rgba(0, 0, 0, 0.4)",
         border: "1px solid rgba(255, 255, 255, 0.15)",
         overflowY: "auto",
@@ -66,9 +66,9 @@ export class ChatHUDSystem {
         display: "flex",
         flexDirection: "column",
         gap: "4px",
-        padding: "8px",
+        padding: "0.50rem",
         fontFamily: "monospace",
-        fontSize: "11px",
+        fontSize: DS.typography.sizes.small,
         zIndex: "90",
         userSelect: "text",
         opacity: "1",
@@ -86,10 +86,10 @@ export class ChatHUDSystem {
       Object.assign(inputCont.style, {
         position: "absolute",
         left: "1.5vw",
-        bottom: "calc(35vh - 36px)",
+        bottom: "calc(35vh - 2.25rem)",
         width: "35vw",
-        height: "32px",
-        maxWidth: "380px",
+        height: "2.00rem",
+        maxWidth: "23.75rem",
         background: "#000000",
         border: "1px solid #ffffff",
         display: "none",
@@ -107,9 +107,9 @@ export class ChatHUDSystem {
         background: "transparent",
         border: "none",
         color: "white",
-        padding: "0 8px",
+        padding: "0 0.50rem",
         fontFamily: "monospace",
-        fontSize: "11px",
+        fontSize: DS.typography.sizes.small,
         outline: "none"
       });
       inputCont.appendChild(input);
@@ -123,8 +123,8 @@ export class ChatHUDSystem {
         color: "#000000",
         fontFamily: "monospace",
         fontWeight: "bold",
-        fontSize: "10px",
-        padding: "0 12px",
+        fontSize: DS.typography.sizes.tiny,
+        padding: "0 0.75rem",
         height: "100%",
         cursor: "pointer"
       });

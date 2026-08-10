@@ -39,18 +39,21 @@ class AudioManager {
     private activeFootstepKey: string | null = null;
 
     public updateVolumes(s: any) {
-        Object.entries(this.sounds).forEach(([key, howl]) => {
-            const category = SOUND_CATEGORIES[key] || 'sfx';
-            let vol = 1.0;
-            if (category === 'music') {
-                vol = s.music ? s.musicVolume : 0;
-            } else if (category === 'ui') {
-                vol = s.uiSounds ? s.uiVolume : 0;
-            } else if (category === 'sfx') {
-                vol = s.sfxVolume;
+        for (const key in this.sounds) {
+            if (Object.prototype.hasOwnProperty.call(this.sounds, key)) {
+                const howl = this.sounds[key];
+                const category = SOUND_CATEGORIES[key] || 'sfx';
+                let vol = 1.0;
+                if (category === 'music') {
+                    vol = s.music ? s.musicVolume : 0;
+                } else if (category === 'ui') {
+                    vol = s.uiSounds ? s.uiVolume : 0;
+                } else if (category === 'sfx') {
+                    vol = s.sfxVolume;
+                }
+                howl.volume(vol);
             }
-            howl.volume(vol);
-        });
+        }
     }
 
     public async loadAll(): Promise<void> {

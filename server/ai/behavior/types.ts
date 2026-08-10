@@ -1,3 +1,5 @@
+import { Posture } from "../GroupTacticalState";
+
 export interface BehaviorContext {
   room: {
     rapierWorld: any; // RAPIER.World
@@ -9,9 +11,14 @@ export interface BehaviorContext {
     broadcastReliableEvent: (evt: any) => void;
     applyExplosionDamage: (origin: { x: number; y: number; z: number }, radius: number, damage: number, sourceId: string, sourceType: string) => void;
     despawnDrone?: (drone: any) => void;
+    groupTacticalState?: any;
   };
   dt: number;
   nowMs: number;
+  getGroupPosture: (groupId: string) => Posture | null;
+  countSquadMatesInPosture: (drone: any, posture: Posture) => number;
+  countSquadMatesWithinRange: (drone: any, range: number) => number;
+  getPlayerVelEma: (playerId: string) => { x: number; y: number; z: number } | null;
 }
 
 export interface BehaviorOutput {

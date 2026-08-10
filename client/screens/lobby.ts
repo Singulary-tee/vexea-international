@@ -21,7 +21,7 @@ function openLobbyInvitePopup(lobbyId: string) {
   const overlay = document.createElement('div');
   Object.assign(overlay.style, {
     position: 'fixed',
-    top: '0', left: '0', width: '100vw', height: '100vh',
+    inset: '0',
     background: 'rgba(0, 0, 0, 0.75)',
     backdropFilter: 'blur(10px)',
     zIndex: '3000',
@@ -35,11 +35,11 @@ function openLobbyInvitePopup(lobbyId: string) {
   const popup = document.createElement('div');
   popup.className = 'mm-glass';
   Object.assign(popup.style, {
-    width: 'min(90vw, 420px)',
+    width: 'min(90vw, 26.25rem)',
     background: 'linear-gradient(180deg, rgba(14, 14, 18, 0.98) 0%, rgba(8, 8, 12, 0.99) 100%)',
     border: `1px solid rgba(255, 69, 0, 0.3)`,
     borderRadius: '0px',
-    padding: '16px 20px',
+    padding: '1.00rem 1.25rem',
     display: 'flex',
     flexDirection: 'column',
     gap: '12px',
@@ -49,7 +49,7 @@ function openLobbyInvitePopup(lobbyId: string) {
   const closeBtn = document.createElement('div');
   closeBtn.textContent = '✕';
   Object.assign(closeBtn.style, {
-    position: 'absolute', top: '12px', right: '16px', cursor: 'pointer', fontSize: '16px', color: DS.colors.textMuted
+    position: 'absolute', top: '0.75rem', right: '1.00rem', cursor: 'pointer', fontSize: DS.typography.sizes.headingSm, color: DS.colors.textMuted
   });
   closeBtn.onclick = () => overlay.remove();
   popup.appendChild(closeBtn);
@@ -57,20 +57,20 @@ function openLobbyInvitePopup(lobbyId: string) {
   const title = document.createElement('div');
   title.textContent = 'INVITE FRIENDS TO LOBBY';
   Object.assign(title.style, {
-    fontSize: '14px', fontWeight: 'bold', letterSpacing: '1px', color: DS.colors.accent, borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '6px'
+    fontSize: DS.typography.sizes.body, fontWeight: 'bold', letterSpacing: '1px', color: DS.colors.accent, borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '0.38rem'
   });
   popup.appendChild(title);
 
   const listContainer = document.createElement('div');
   Object.assign(listContainer.style, {
-    display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '240px', overflowY: 'auto'
+    display: 'flex', flexDirection: 'column', gap: '0.50rem', maxHeight: '15.00rem', overflowY: 'auto'
   });
 
   const loadFriends = async () => {
     if (!myUid) {
       const emptyLabel = document.createElement('div');
       emptyLabel.textContent = 'MUST BE SIGNED IN TO INVITE FRIENDS';
-      Object.assign(emptyLabel.style, { fontSize: '11px', color: DS.colors.textMuted, fontStyle: 'italic', padding: '12px 0', textAlign: 'center' });
+      Object.assign(emptyLabel.style, { fontSize: DS.typography.sizes.small, color: DS.colors.textMuted, fontStyle: 'italic', padding: '0.75rem 0', textAlign: 'center' });
       listContainer.appendChild(emptyLabel);
       return;
     }
@@ -80,7 +80,7 @@ function openLobbyInvitePopup(lobbyId: string) {
     if (accepted.length === 0) {
       const emptyLabel = document.createElement('div');
       emptyLabel.textContent = 'NO ACCEPTED FRIENDS FOUND';
-      Object.assign(emptyLabel.style, { fontSize: '11px', color: DS.colors.textMuted, fontStyle: 'italic', padding: '12px 0', textAlign: 'center' });
+      Object.assign(emptyLabel.style, { fontSize: DS.typography.sizes.small, color: DS.colors.textMuted, fontStyle: 'italic', padding: '0.75rem 0', textAlign: 'center' });
       listContainer.appendChild(emptyLabel);
       return;
     }
@@ -88,20 +88,20 @@ function openLobbyInvitePopup(lobbyId: string) {
     accepted.forEach(friend => {
       const row = document.createElement('div');
       Object.assign(row.style, {
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 10px', background: 'rgba(255,255,255,0.02)', borderLeft: '2px solid rgba(255,255,255,0.1)'
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.50rem 0.63rem', background: 'rgba(255,255,255,0.02)', borderLeft: '2px solid rgba(255,255,255,0.1)'
       });
 
       const friendName = friend.displayName || friend.codename || friend.uid;
       const nameDiv = document.createElement('div');
       nameDiv.textContent = friendName;
-      Object.assign(nameDiv.style, { fontSize: '12px', fontWeight: 'bold' });
+      Object.assign(nameDiv.style, { fontSize: DS.typography.sizes.small, fontWeight: 'bold' });
       row.appendChild(nameDiv);
 
       const inviteBtn = document.createElement('button');
       const isAlreadyInvited = sentInviteUids.includes(friend.uid);
       inviteBtn.textContent = isAlreadyInvited ? 'INVITED' : 'INVITE';
       Object.assign(inviteBtn.style, {
-        fontSize: '10px', fontWeight: 'bold', color: isAlreadyInvited ? '#888' : DS.colors.accent, background: 'transparent', border: `1px solid ${isAlreadyInvited ? '#444' : DS.colors.accent}`, padding: '4px 10px', cursor: isAlreadyInvited ? 'default' : 'pointer', borderRadius: '0px'
+        fontSize: DS.typography.sizes.tiny, fontWeight: 'bold', color: isAlreadyInvited ? '#888' : DS.colors.accent, background: 'transparent', border: `1px solid ${isAlreadyInvited ? '#444' : DS.colors.accent}`, padding: '4px 0.63rem', cursor: isAlreadyInvited ? 'default' : 'pointer', borderRadius: '0px'
       });
 
       if (!isAlreadyInvited) {
@@ -209,7 +209,7 @@ export function initLobby() {
       flexDirection: 'row',
       justifyContent: 'space-between',
       alignItems: 'stretch',
-      padding: '12px',
+      padding: '0.75rem',
       gap: '16px'
     });
 
@@ -219,7 +219,7 @@ export function initLobby() {
     Object.assign(leftPanel.style, {
       flex: '1',
       minWidth: '0',
-      maxWidth: '850px',
+      maxWidth: '53.13rem',
       display: 'flex',
       flexDirection: 'column',
       justifyContent: 'space-between',
@@ -234,13 +234,13 @@ export function initLobby() {
     Object.assign(backBtn.style, {
       alignSelf: 'flex-start',
       fontFamily: DS.typography.fontFamily,
-      fontSize: 'clamp(11px, 1.5vh, 14px)',
+      fontSize: 'clamp(0.69rem, 1.5vh, 0.88rem)',
       fontWeight: 'bold',
       textTransform: 'uppercase',
       color: DS.colors.textSecondary,
       letterSpacing: DS.typography.letterSpacing.wide,
       cursor: 'pointer',
-      padding: 'clamp(6px, 1vh, 10px) clamp(12px, 2vw, 20px)',
+      padding: 'clamp(0.38rem, 1vh, 0.63rem) clamp(0.75rem, 2vw, 1.25rem)',
       background: 'rgba(10, 10, 10, 0.75)',
       border: 'none',
       borderBottom: '2px solid rgba(255, 255, 255, 0.1)',
@@ -326,13 +326,13 @@ export function initLobby() {
       cardName.textContent = name.toUpperCase();
       Object.assign(cardName.style, {
         fontFamily: DS.typography.fontFamily,
-        fontSize: 'clamp(8px, 1.1vh, 11px)',
+        fontSize: 'clamp(0.50rem, 1.1vh, 0.69rem)',
         fontWeight: 'bold',
         color: '#CCCCCC',
         letterSpacing: '0.5px',
         textAlign: 'center',
         width: '100%',
-        padding: '6px 2px',
+        padding: '0.38rem 2px',
         boxSizing: 'border-box',
         marginTop: 'auto',
         background: 'transparent',
@@ -407,10 +407,10 @@ export function initLobby() {
       alignItems: 'center',
       justifyContent: 'flex-start',
       gap: '16px',
-      height: 'clamp(70px, 15vh, 120px)',
+      height: 'clamp(4.38rem, 15vh, 7.50rem)',
       pointerEvents: 'none',
       boxSizing: 'border-box',
-      paddingLeft: '12px'
+      paddingLeft: '0.75rem'
     });
 
     const trackCol = document.createElement('div');
@@ -420,7 +420,7 @@ export function initLobby() {
       alignItems: 'center',
       justifyContent: 'space-between',
       position: 'relative',
-      width: '12px',
+      width: '0.75rem',
       height: '100%'
     });
 
@@ -465,8 +465,8 @@ export function initLobby() {
     values.forEach((val, index) => {
       const dot = document.createElement('div');
       Object.assign(dot.style, {
-        width: '6px',
-        height: '6px',
+        width: '0.38rem',
+        height: '0.38rem',
         borderRadius: '50%',
         background: index <= 2 ? DS.colors.accent : 'rgba(255, 255, 255, 0.2)',
         zIndex: '3',
@@ -478,7 +478,7 @@ export function initLobby() {
       valEl.textContent = val;
       Object.assign(valEl.style, {
         fontFamily: DS.typography.fontFamily,
-        fontSize: 'clamp(12px, 1.8vh, 16px)',
+        fontSize: 'clamp(0.75rem, 1.8vh, 1.00rem)',
         fontWeight: '900',
         color: index <= 2 ? '#FFFFFF' : '#444444',
         letterSpacing: '1px',
@@ -498,7 +498,7 @@ export function initLobby() {
     const rightPanel = document.createElement('div');
     rightPanel.id = 'lobby-right-panel';
     Object.assign(rightPanel.style, {
-      width: 'clamp(220px, 25vw, 280px)',
+      width: 'clamp(13.75rem, 25vw, 17.50rem)',
       flexShrink: '0',
       display: 'flex',
       flexDirection: 'column',
@@ -537,11 +537,11 @@ export function initLobby() {
     const modeCard = document.createElement('div');
     Object.assign(modeCard.style, {
       width: '100%',
-      height: 'clamp(65px, 10vh, 85px)',
+      height: 'clamp(4.06rem, 10vh, 5.31rem)',
       borderRadius: '0px',
       border: 'none',
       borderBottom: `3px solid ${DS.colors.accent}`,
-      padding: 'clamp(8px, 1.5vh, 16px)',
+      padding: 'clamp(0.50rem, 1.5vh, 1.00rem)',
       display: 'flex',
       flexDirection: 'column',
       justifyContent: 'flex-end',
@@ -566,7 +566,7 @@ export function initLobby() {
     modeLabel.textContent = 'GAME MODE';
     Object.assign(modeLabel.style, {
       fontFamily: DS.typography.fontFamily,
-      fontSize: 'clamp(8px, 1vh, 10px)',
+      fontSize: 'clamp(0.50rem, 1vh, 0.63rem)',
       color: DS.colors.accent,
       fontWeight: '800',
       letterSpacing: '2px',
@@ -577,7 +577,7 @@ export function initLobby() {
     modeTitle.textContent = availableModes[currentModeIdx];
     Object.assign(modeTitle.style, {
       fontFamily: DS.typography.fontFamily,
-      fontSize: 'clamp(14px, 2vh, 18px)',
+      fontSize: 'clamp(0.88rem, 2vh, 1.13rem)',
       color: '#FFFFFF',
       fontWeight: '800',
       letterSpacing: '1px',
@@ -600,11 +600,11 @@ export function initLobby() {
     const mapCard = document.createElement('div');
     Object.assign(mapCard.style, {
       width: '100%',
-      height: 'clamp(65px, 10vh, 85px)',
+      height: 'clamp(4.06rem, 10vh, 5.31rem)',
       borderRadius: '0px',
       border: 'none',
       borderBottom: '3px solid rgba(255, 255, 255, 0.4)',
-      padding: 'clamp(8px, 1.5vh, 16px)',
+      padding: 'clamp(0.50rem, 1.5vh, 1.00rem)',
       display: 'flex',
       flexDirection: 'column',
       justifyContent: 'flex-end',
@@ -622,7 +622,7 @@ export function initLobby() {
     mapLabel.textContent = 'MAP';
     Object.assign(mapLabel.style, {
       fontFamily: DS.typography.fontFamily,
-      fontSize: 'clamp(8px, 1vh, 10px)',
+      fontSize: 'clamp(0.50rem, 1vh, 0.63rem)',
       color: '#BBBBBB',
       fontWeight: '800',
       letterSpacing: '2px',
@@ -637,7 +637,7 @@ export function initLobby() {
     updateMapTitle();
     Object.assign(mapTitle.style, {
       fontFamily: DS.typography.fontFamily,
-      fontSize: 'clamp(14px, 2vh, 18px)',
+      fontSize: 'clamp(0.88rem, 2vh, 1.13rem)',
       color: '#FFFFFF',
       fontWeight: '800',
       letterSpacing: '1px'
@@ -674,12 +674,12 @@ export function initLobby() {
     inviteFriendsBtn.textContent = 'INVITE FRIENDS';
     Object.assign(inviteFriendsBtn.style, {
       alignSelf: 'flex-end',
-      padding: '4px 10px',
+      padding: '4px 0.63rem',
       background: 'rgba(255, 255, 255, 0.05)',
       border: '1px solid rgba(255, 255, 255, 0.2)',
       color: '#AAAAAA',
       fontFamily: DS.typography.fontFamily,
-      fontSize: 'clamp(9px, 1.2vh, 11px)',
+      fontSize: 'clamp(0.56rem, 1.2vh, 0.69rem)',
       fontWeight: '700',
       textTransform: 'uppercase',
       borderRadius: '0px',
@@ -713,12 +713,12 @@ export function initLobby() {
     readyBtn.textContent = 'READY';
     Object.assign(readyBtn.style, {
       width: '100%',
-      height: 'clamp(40px, 8vh, 56px)',
+      height: 'clamp(2.50rem, 8vh, 3.50rem)',
       background: DS.colors.accent,
       border: 'none',
       color: DS.colors.background,
       fontFamily: DS.typography.fontFamily,
-      fontSize: 'clamp(18px, 3vh, 24px)',
+      fontSize: 'clamp(1.13rem, 3vh, 1.50rem)',
       fontWeight: '900',
       textTransform: 'uppercase',
       borderRadius: '0px',

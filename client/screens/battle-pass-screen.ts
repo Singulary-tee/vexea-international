@@ -50,7 +50,7 @@ export function initBattlePass() {
     height: '100%',
     display: 'flex',
     flexDirection: 'column',
-    padding: 'clamp(20px, 4vh, 40px) clamp(20px, 4vw, 60px)',
+    padding: 'clamp(1.25rem, 4vh, 2.50rem) clamp(1.25rem, 4vw, 3.75rem)',
     boxSizing: 'border-box'
   });
   el.appendChild(content);
@@ -61,16 +61,16 @@ export function initBattlePass() {
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    marginBottom: 'clamp(20px, 5vh, 60px)',
+    marginBottom: 'clamp(1.25rem, 5vh, 3.75rem)',
     borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
-    paddingBottom: '20px'
+    paddingBottom: '1.25rem'
   });
 
   const headerLeft = document.createElement('div');
   const seasonTitle = document.createElement('div');
   seasonTitle.textContent = BP_SEASON_01.name;
   Object.assign(seasonTitle.style, {
-    fontSize: 'clamp(24px, 5vh, 48px)',
+    fontSize: 'clamp(1.50rem, 5vh, 48px)',
     fontWeight: '900',
     letterSpacing: '4px',
     color: '#FFFFFF'
@@ -82,7 +82,7 @@ export function initBattlePass() {
   const bpRemainingDays = Math.max(0, Math.ceil((BP_SEASON_01.endDate - nowMs) / (1000 * 60 * 60 * 24)));
   seasonId.textContent = `ID: ${BP_SEASON_01.id} // REMAINING: ${bpRemainingDays}D`;
   Object.assign(seasonId.style, {
-    fontSize: '12px',
+    fontSize: DS.typography.sizes.small,
     letterSpacing: '2px',
     color: DS.colors.textMuted,
     marginTop: '4px'
@@ -98,12 +98,12 @@ export function initBattlePass() {
   const backBtn = document.createElement('div');
   backBtn.textContent = '[ ESC ] BACK TO MENU';
   Object.assign(backBtn.style, {
-    fontSize: '14px',
+    fontSize: DS.typography.sizes.body,
     fontWeight: 'bold',
     letterSpacing: '1px',
     cursor: 'pointer',
     color: DS.colors.accent,
-    marginBottom: '20px'
+    marginBottom: '1.25rem'
   });
   backBtn.onclick = () => {
     audioManager.play('click');
@@ -114,7 +114,7 @@ export function initBattlePass() {
   const xpDisplay = document.createElement('div');
   xpDisplay.id = 'bp-xp-display';
   Object.assign(xpDisplay.style, {
-    fontSize: '18px',
+    fontSize: DS.typography.sizes.headingSm,
     fontWeight: 'bold',
     color: '#FFFFFF'
   });
@@ -130,7 +130,7 @@ export function initBattlePass() {
     gap: '12px',
     overflowX: 'auto',
     overflowY: 'hidden',
-    paddingBottom: '40px',
+    paddingBottom: '2.50rem',
     flex: '1',
     scrollbarWidth: 'none', // Firefox
     msOverflowStyle: 'none' // IE 10+
@@ -169,7 +169,7 @@ function createTierCard(tier: BattlePassTier, currentXP: number, isClaimed: bool
   
   const card = document.createElement('div');
   Object.assign(card.style, {
-    minWidth: 'clamp(140px, 20vw, 200px)',
+    minWidth: 'clamp(8.75rem, 20vw, 12.50rem)',
     height: '100%',
     background: isUnlocked ? 'rgba(255, 255, 255, 0.05)' : 'rgba(10, 10, 10, 0.6)',
     border: `1px solid ${isUnlocked ? (isClaimed ? 'rgba(255, 255, 255, 0.2)' : DS.colors.accent) : 'rgba(255, 255, 255, 0.05)'}`,
@@ -185,9 +185,9 @@ function createTierCard(tier: BattlePassTier, currentXP: number, isClaimed: bool
   index.textContent = String(tier.index).padStart(2, '0');
   Object.assign(index.style, {
     position: 'absolute',
-    top: '12px',
-    left: '12px',
-    fontSize: '12px',
+    top: '0.75rem',
+    left: '0.75rem',
+    fontSize: DS.typography.sizes.small,
     fontWeight: '900',
     color: isUnlocked ? '#FFFFFF' : DS.colors.textMuted
   });
@@ -198,9 +198,9 @@ function createTierCard(tier: BattlePassTier, currentXP: number, isClaimed: bool
   status.textContent = isClaimed ? 'CLAIMED' : (isUnlocked ? 'READY' : 'LOCKED');
   Object.assign(status.style, {
     position: 'absolute',
-    top: '12px',
-    right: '12px',
-    fontSize: '10px',
+    top: '0.75rem',
+    right: '0.75rem',
+    fontSize: DS.typography.sizes.tiny,
     fontWeight: 'bold',
     letterSpacing: '1px',
     color: isClaimed ? DS.colors.textMuted : (isUnlocked ? DS.colors.accent : 'rgba(255, 255, 255, 0.2)')
@@ -215,7 +215,7 @@ function createTierCard(tier: BattlePassTier, currentXP: number, isClaimed: bool
     flexDirection: 'column',
     alignItems: 'center',
     justifyContent: 'center',
-    padding: '20px',
+    padding: '1.25rem',
     textAlign: 'center'
   });
 
@@ -223,17 +223,17 @@ function createTierCard(tier: BattlePassTier, currentXP: number, isClaimed: bool
     const icon = document.createElement('div');
     icon.textContent = tier.freeReward.type === 'CREDITS' ? 'CR' : 'ITEM';
     Object.assign(icon.style, {
-      fontSize: '24px',
+      fontSize: DS.typography.sizes.headingMd,
       fontWeight: '900',
       color: isUnlocked ? DS.colors.accent : 'rgba(255, 255, 255, 0.2)',
-      marginBottom: '8px'
+      marginBottom: '0.50rem'
     });
     rewardCenter.appendChild(icon);
 
     const label = document.createElement('div');
     label.textContent = tier.freeReward.label;
     Object.assign(label.style, {
-      fontSize: '11px',
+      fontSize: DS.typography.sizes.small,
       fontWeight: 'bold',
       lineHeight: '1.2',
       color: isUnlocked ? '#FFFFFF' : DS.colors.textMuted
@@ -243,7 +243,7 @@ function createTierCard(tier: BattlePassTier, currentXP: number, isClaimed: bool
     const empty = document.createElement('div');
     empty.textContent = '—';
     Object.assign(empty.style, {
-      fontSize: '24px',
+      fontSize: DS.typography.sizes.headingMd,
       color: 'rgba(255, 255, 255, 0.05)'
     });
     rewardCenter.appendChild(empty);
@@ -255,10 +255,10 @@ function createTierCard(tier: BattlePassTier, currentXP: number, isClaimed: bool
   trackLabel.textContent = 'FREE TRACK';
   Object.assign(trackLabel.style, {
     width: '100%',
-    padding: '8px 0',
+    padding: '0.50rem 0',
     background: isUnlocked && !isClaimed ? DS.colors.accent : 'rgba(255, 255, 255, 0.05)',
     color: isUnlocked && !isClaimed ? DS.colors.background : DS.colors.textMuted,
-    fontSize: '10px',
+    fontSize: DS.typography.sizes.tiny,
     fontWeight: '900',
     textAlign: 'center',
     letterSpacing: '2px',

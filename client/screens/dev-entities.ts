@@ -220,32 +220,32 @@ function verifyPivotRotationMath() {
         
         html += `<div>`;
         html += `<div style="font-weight: bold; color: ${DS.colors.text};">1. Points inside mesh bounds:</div>`;
-        html += `<div style="display: flex; justify-content: space-between; padding-left: 8px;"><span>- Turret Pivot inside Turret Mesh:</span><span>${c1_turret}</span></div>`;
-        html += `<div style="display: flex; justify-content: space-between; padding-left: 8px;"><span>- Gun Pivot inside Gun Mesh:</span><span>${c1_gun}</span></div>`;
+        html += `<div style="display: flex; justify-content: space-between; padding-left: 0.50rem;"><span>- Turret Pivot inside Turret Mesh:</span><span>${c1_turret}</span></div>`;
+        html += `<div style="display: flex; justify-content: space-between; padding-left: 0.50rem;"><span>- Gun Pivot inside Gun Mesh:</span><span>${c1_gun}</span></div>`;
         html += `</div>`;
 
         html += `<div>`;
         html += `<div style="font-weight: bold; color: ${DS.colors.text};">2. Points are stationary:</div>`;
-        html += `<div style="display: flex; justify-content: space-between; padding-left: 8px;"><span>- Turret Pivot stationary during yaw:</span><span>${c2_turret}</span></div>`;
-        html += `<div style="display: flex; justify-content: space-between; padding-left: 8px;"><span>- Gun Pivot stationary during pitch:</span><span>${c2_gun}</span></div>`;
+        html += `<div style="display: flex; justify-content: space-between; padding-left: 0.50rem;"><span>- Turret Pivot stationary during yaw:</span><span>${c2_turret}</span></div>`;
+        html += `<div style="display: flex; justify-content: space-between; padding-left: 0.50rem;"><span>- Gun Pivot stationary during pitch:</span><span>${c2_gun}</span></div>`;
         html += `</div>`;
 
         html += `<div>`;
         html += `<div style="font-weight: bold; color: ${DS.colors.text};">3. Point stays inside during rotation:</div>`;
-        html += `<div style="display: flex; justify-content: space-between; padding-left: 8px;"><span>- Turret Pivot never leaves mesh:</span><span>${c3_turret}</span></div>`;
-        html += `<div style="display: flex; justify-content: space-between; padding-left: 8px;"><span>- Gun Pivot never leaves mesh:</span><span>${c3_gun}</span></div>`;
+        html += `<div style="display: flex; justify-content: space-between; padding-left: 0.50rem;"><span>- Turret Pivot never leaves mesh:</span><span>${c3_turret}</span></div>`;
+        html += `<div style="display: flex; justify-content: space-between; padding-left: 0.50rem;"><span>- Gun Pivot never leaves mesh:</span><span>${c3_gun}</span></div>`;
         html += `</div>`;
 
         html += `<div>`;
         html += `<div style="font-weight: bold; color: ${DS.colors.text};">4. Hierarchical dependencies:</div>`;
-        html += `<div style="display: flex; justify-content: space-between; padding-left: 8px;"><span>- Gun Pivot moves with turret yaw:</span><span>${c4_gun}</span></div>`;
+        html += `<div style="display: flex; justify-content: space-between; padding-left: 0.50rem;"><span>- Gun Pivot moves with turret yaw:</span><span>${c4_gun}</span></div>`;
         html += `</div>`;
 
         const allOk = turretPivotInside && gunPivotInside && (turretPivotDriftDuringYaw < 0.001) && (gunPivotDriftDuringPitch < 0.001);
         if (allOk) {
-            html += `<div style="color: ${DS.colors.success}; font-weight: bold; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 6px; text-align: center; margin-top: 4px;">🎉 ALL PIVOT RULES SATISFIED!</div>`;
+            html += `<div style="color: ${DS.colors.success}; font-weight: bold; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 0.38rem; text-align: center; margin-top: 4px;">🎉 ALL PIVOT RULES SATISFIED!</div>`;
         } else {
-            html += `<div style="color: ${DS.colors.danger}; font-weight: bold; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 6px; text-align: center; margin-top: 4px;">⚠️ ALIGN SLIDERS TO PASS TESTS</div>`;
+            html += `<div style="color: ${DS.colors.danger}; font-weight: bold; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 0.38rem; text-align: center; margin-top: 4px;">⚠️ ALIGN SLIDERS TO PASS TESTS</div>`;
         }
 
         html += `</div>`;
@@ -915,21 +915,21 @@ function buildDOM() {
             transform: translateY(100%);
         }
         #de-drawer-content {
-            padding: 16px;
+            padding: 1.00rem;
             overflow-y: auto;
             flex: 1 1 auto;
         }
         .de-tab-row {
             display: flex;
             gap: 4px;
-            margin-bottom: 16px;
+            margin-bottom: 1.00rem;
             overflow-x: auto;
             padding-bottom: 4px;
         }
         .de-tab {
             flex: 0 0 auto;
-            padding: 10px 12px;
-            font-size: 10px;
+            padding: 0.63rem 0.75rem;
+            font-size: ${DS.typography.sizes.tiny};
             text-align: center;
             background: rgba(255,255,255,0.05);
             border: 1px solid rgba(255,255,255,0.1);
@@ -949,14 +949,14 @@ function buildDOM() {
             background: #000;
             color: ${DS.colors.text};
             border: 1px solid ${DS.colors.border};
-            padding: 10px;
-            font-size: 12px;
-            margin-bottom: 16px;
+            padding: 0.63rem;
+            font-size: ${DS.typography.sizes.small};
+            margin-bottom: 1.00rem;
             outline: none;
         }
         .de-slider-block {
-            margin-bottom: 12px;
-            padding: 8px;
+            margin-bottom: 0.75rem;
+            padding: 0.50rem;
             background: rgba(255,255,255,0.02);
             border-radius: 4px;
         }
@@ -965,8 +965,8 @@ function buildDOM() {
             backdrop-filter: blur(8px);
             border: 1px solid ${DS.colors.border};
             color: ${DS.colors.text};
-            padding: 8px 12px;
-            font-size: 11px;
+            padding: 0.50rem 0.75rem;
+            font-size: ${DS.typography.sizes.small};
             border-radius: 4px;
             cursor: pointer;
             pointer-events: auto;
@@ -1013,9 +1013,9 @@ function buildDOM() {
 
     drawer.innerHTML = `
         <div id="de-drawer-content">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 8px;">
-                <span style="font-size: 11px; font-weight: bold; color: ${DS.colors.accent}; letter-spacing: 0.5px;">CALIBRATION PANEL</span>
-                <button id="de-expand-width-btn" class="de-overlay-btn" style="padding: 4px 8px; font-size: 10px; font-weight: bold; background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.1);">EXPAND WIDTH</button>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 0.50rem;">
+                <span style="font-size: ${DS.typography.sizes.small}; font-weight: bold; color: ${DS.colors.accent}; letter-spacing: 0.5px;">CALIBRATION PANEL</span>
+                <button id="de-expand-width-btn" class="de-overlay-btn" style="padding: 4px 0.50rem; font-size: ${DS.typography.sizes.tiny}; font-weight: bold; background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.1);">EXPAND WIDTH</button>
             </div>
 
             <div class="de-tab-row">
@@ -1026,37 +1026,37 @@ function buildDOM() {
             
             <div id="de-sliders-container"></div>
 
-            <div style="margin-top: 16px; padding: 12px; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); border-radius: 4px;">
-                <div style="font-size: 11px; font-weight: bold; color: ${DS.colors.accent}; margin-bottom: 10px; letter-spacing: 0.5px;">VISUAL REFS</div>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
-                    <label style="display: flex; align-items: center; gap: 8px; font-size: 11px; color: #ccc; cursor: pointer;">
-                        <input type="checkbox" id="de-toggle-player" ${showPlayerScale ? 'checked' : ''} style="accent-color: ${DS.colors.accent}; width: 14px; height: 14px;">
+            <div style="margin-top: 1.00rem; padding: 0.75rem; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); border-radius: 4px;">
+                <div style="font-size: ${DS.typography.sizes.small}; font-weight: bold; color: ${DS.colors.accent}; margin-bottom: 0.63rem; letter-spacing: 0.5px;">VISUAL REFS</div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.63rem; margin-bottom: 0.63rem;">
+                    <label style="display: flex; align-items: center; gap: 0.50rem; font-size: ${DS.typography.sizes.small}; color: #ccc; cursor: pointer;">
+                        <input type="checkbox" id="de-toggle-player" ${showPlayerScale ? 'checked' : ''} style="accent-color: ${DS.colors.accent}; width: 0.88rem; height: 0.88rem;">
                         <span>Scale (1.8m)</span>
                     </label>
-                    <label style="display: flex; align-items: center; gap: 8px; font-size: 11px; color: #ccc; cursor: pointer;">
-                        <input type="checkbox" id="de-toggle-collider" ${showCollider ? 'checked' : ''} style="accent-color: ${DS.colors.accent}; width: 14px; height: 14px;">
+                    <label style="display: flex; align-items: center; gap: 0.50rem; font-size: ${DS.typography.sizes.small}; color: #ccc; cursor: pointer;">
+                        <input type="checkbox" id="de-toggle-collider" ${showCollider ? 'checked' : ''} style="accent-color: ${DS.colors.accent}; width: 0.88rem; height: 0.88rem;">
                         <span>Collider</span>
                     </label>
-                    <label style="display: flex; align-items: center; gap: 8px; font-size: 11px; color: #ccc; cursor: pointer;">
-                        <input type="checkbox" id="de-toggle-muzzle" ${showMuzzle ? 'checked' : ''} style="accent-color: ${DS.colors.accent}; width: 14px; height: 14px;">
+                    <label style="display: flex; align-items: center; gap: 0.50rem; font-size: ${DS.typography.sizes.small}; color: #ccc; cursor: pointer;">
+                        <input type="checkbox" id="de-toggle-muzzle" ${showMuzzle ? 'checked' : ''} style="accent-color: ${DS.colors.accent}; width: 0.88rem; height: 0.88rem;">
                         <span>Weapon Node</span>
                     </label>
-                    <label style="display: flex; align-items: center; gap: 8px; font-size: 11px; color: #ccc; cursor: pointer;">
-                        <input type="checkbox" id="de-toggle-pivots" ${showPivots ? 'checked' : ''} style="accent-color: ${DS.colors.accent}; width: 14px; height: 14px;">
+                    <label style="display: flex; align-items: center; gap: 0.50rem; font-size: ${DS.typography.sizes.small}; color: #ccc; cursor: pointer;">
+                        <input type="checkbox" id="de-toggle-pivots" ${showPivots ? 'checked' : ''} style="accent-color: ${DS.colors.accent}; width: 0.88rem; height: 0.88rem;">
                         <span>Turret/Gun Pivots</span>
                     </label>
-                    <button id="de-reset-camera" class="de-overlay-btn" style="padding: 4px 8px; font-size: 10px; background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.1);">RESET CAMERA</button>
+                    <button id="de-reset-camera" class="de-overlay-btn" style="padding: 4px 0.50rem; font-size: ${DS.typography.sizes.tiny}; background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.1);">RESET CAMERA</button>
                 </div>
             </div>
 
-            <div id="de-pivot-validation-section" style="margin-top: 16px; padding: 12px; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); border-radius: 4px; display: ${currentTab === 'WHEELED' ? 'block' : 'none'};">
-                <div style="font-size: 11px; font-weight: bold; color: ${DS.colors.accent}; margin-bottom: 10px; letter-spacing: 0.5px;">PIVOT REAL-TIME VALIDATION</div>
-                <div id="de-pivot-validation-status" style="font-family: monospace; font-size: 10px; padding: 8px; background: rgba(0,0,0,0.3); border-radius: 4px; border: 1px solid rgba(255,255,255,0.05); line-height: 1.4;">
+            <div id="de-pivot-validation-section" style="margin-top: 1.00rem; padding: 0.75rem; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); border-radius: 4px; display: ${currentTab === 'WHEELED' ? 'block' : 'none'};">
+                <div style="font-size: ${DS.typography.sizes.small}; font-weight: bold; color: ${DS.colors.accent}; margin-bottom: 0.63rem; letter-spacing: 0.5px;">PIVOT REAL-TIME VALIDATION</div>
+                <div id="de-pivot-validation-status" style="font-family: monospace; font-size: ${DS.typography.sizes.tiny}; padding: 0.50rem; background: rgba(0,0,0,0.3); border-radius: 4px; border: 1px solid rgba(255,255,255,0.05); line-height: 1.4;">
                     Initializing pivot checks...
                 </div>
             </div>
 
-            <div style="margin-top: 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+            <div style="margin-top: 1.25rem; display: grid; grid-template-columns: 1fr 1fr; gap: 0.50rem;">
                 <button id="de-reset-params" class="de-overlay-btn" style="background: rgba(255,255,255,0.05)">RESET VALUES</button>
                 <button id="de-export-json" class="de-overlay-btn" style="background: ${DS.colors.accent}; color: #000; border: none; font-weight: bold;">EXPORT PRESET</button>
             </div>
@@ -1066,8 +1066,8 @@ function buildDOM() {
     const overlayControls = document.createElement("div");
     Object.assign(overlayControls.style, {
         position: "absolute",
-        top: "16px",
-        left: "16px",
+        top: "1.00rem",
+        left: "1.00rem",
         display: "flex",
         flexDirection: "column",
         gap: "8px",
@@ -1078,13 +1078,13 @@ function buildDOM() {
 
     overlayControls.innerHTML = `
         <div style="display: flex; gap: 8px; pointer-events: auto;">
-            <button id="de-loop-cycle" class="de-overlay-btn" style="width: 170px; text-align: left; font-family: monospace;">LOOP: STANDBY</button>
-            <button id="de-toggle-config-btn" class="de-overlay-btn" style="width: 120px; text-align: center; font-weight: bold;">[ CONFIG ]</button>
+            <button id="de-loop-cycle" class="de-overlay-btn" style="width: 10.63rem; text-align: left; font-family: monospace;">LOOP: STANDBY</button>
+            <button id="de-toggle-config-btn" class="de-overlay-btn" style="width: 7.50rem; text-align: center; font-weight: bold;">[ CONFIG ]</button>
         </div>
-        <button id="de-shoot-once" class="de-overlay-btn" style="width: 170px; text-align: left; color: #FF0064; border-color: rgba(255,0,100,0.4); pointer-events: auto;">[FIRE SINGLE SHOT]</button>
-        <div style="display: flex; gap: 4px; pointer-events: auto; width: 170px;">
-            <button id="de-zoom-in" class="de-overlay-btn" style="flex: 1; text-align: center; font-weight: bold; padding: 6px 0;">[ ZOOM + ]</button>
-            <button id="de-zoom-out" class="de-overlay-btn" style="flex: 1; text-align: center; font-weight: bold; padding: 6px 0;">[ ZOOM - ]</button>
+        <button id="de-shoot-once" class="de-overlay-btn" style="width: 10.63rem; text-align: left; color: #FF0064; border-color: rgba(255,0,100,0.4); pointer-events: auto;">[FIRE SINGLE SHOT]</button>
+        <div style="display: flex; gap: 4px; pointer-events: auto; width: 10.63rem;">
+            <button id="de-zoom-in" class="de-overlay-btn" style="flex: 1; text-align: center; font-weight: bold; padding: 0.38rem 0;">[ ZOOM + ]</button>
+            <button id="de-zoom-out" class="de-overlay-btn" style="flex: 1; text-align: center; font-weight: bold; padding: 0.38rem 0;">[ ZOOM - ]</button>
         </div>
     `;
 
@@ -1093,8 +1093,8 @@ function buildDOM() {
     exitBtn.textContent = "EXIT";
     Object.assign(exitBtn.style, {
         position: "absolute",
-        top: "16px",
-        right: "16px",
+        top: "1.00rem",
+        right: "1.00rem",
         pointerEvents: "auto",
         zIndex: "100"
     });
@@ -1572,13 +1572,13 @@ function buildSliders(tabId: string) {
         const block = document.createElement("div");
         block.className = "de-slider-block";
         block.innerHTML = `
-            <div style="display: flex; justify-content: space-between; align-items: center; font-size: 10px; color: ${DS.colors.textMuted}; margin-bottom: 2px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; font-size: ${DS.typography.sizes.tiny}; color: ${DS.colors.textMuted}; margin-bottom: 2px;">
                 <span>${sliderConf.label}</span>
-                <input type="number" step="any" class="de-val-input" value="${val}" style="width: 70px; background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.1); color: ${DS.colors.accent}; font-family: monospace; font-size: 10px; text-align: right; padding: 2px 4px; border-radius: 2px; outline: none;">
+                <input type="number" step="any" class="de-val-input" value="${val}" style="width: 4.38rem; background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.1); color: ${DS.colors.accent}; font-family: monospace; font-size: ${DS.typography.sizes.tiny}; text-align: right; padding: 2px 4px; border-radius: 2px; outline: none;">
             </div>
             <div style="display: flex; gap: 8px; align-items: center;">
-                <input type="range" class="de-slider" data-key="${key}" min="${sliderConf.min}" max="${sliderConf.max}" step="${sliderConf.step}" value="${val}" style="flex: 1; height: 32px; accent-color: ${DS.colors.accent};">
-                <button class="de-play-anim-btn de-overlay-btn" data-key="${key}" style="padding: 4px 8px; font-size: 10px; font-weight: bold; min-width: 65px; text-align: center; color: ${btnStyleColor}; border-color: ${btnBorderColor};">[ ${btnText} ]</button>
+                <input type="range" class="de-slider" data-key="${key}" min="${sliderConf.min}" max="${sliderConf.max}" step="${sliderConf.step}" value="${val}" style="flex: 1; height: 2.00rem; accent-color: ${DS.colors.accent};">
+                <button class="de-play-anim-btn de-overlay-btn" data-key="${key}" style="padding: 4px 0.50rem; font-size: ${DS.typography.sizes.tiny}; font-weight: bold; min-width: 4.06rem; text-align: center; color: ${btnStyleColor}; border-color: ${btnBorderColor};">[ ${btnText} ]</button>
             </div>
         `;
 
@@ -2888,7 +2888,7 @@ function runSliderAnimationTick(dt: number) {
                 Object.assign(floatText.style, {
                     position: "absolute",
                     color: "#ff0000",
-                    fontSize: "20px",
+                    fontSize: DS.typography.sizes.headingMd,
                     fontFamily: "monospace",
                     fontWeight: "bold",
                     pointerEvents: "none",
@@ -3050,9 +3050,9 @@ function runLoopSimulation(dt: number) {
                 label.style.transform = "translate(-50%, -100%)";
                 label.style.background = "rgba(10, 15, 25, 0.9)";
                 label.style.border = `1px solid ${DS.colors.accent}`;
-                label.style.padding = "2px 6px";
+                label.style.padding = "2px 0.38rem";
                 label.style.borderRadius = "3px";
-                label.style.fontSize = "9px";
+                label.style.fontSize = DS.typography.sizes.tiny;
                 label.style.fontFamily = "monospace";
                 label.style.color = DS.colors.accent;
                 label.style.pointerEvents = "none";
@@ -3571,23 +3571,23 @@ function buildPlayerSliders() {
 
     // Custom header for Active Weapon and Perspective selection
     const headerBlock = document.createElement("div");
-    headerBlock.style.cssText = "margin-bottom: 12px; padding: 10px; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06); border-radius: 4px;";
+    headerBlock.style.cssText = "margin-bottom: 0.75rem; padding: 0.63rem; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06); border-radius: 4px;";
     headerBlock.innerHTML = `
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-            <span style="font-size: 10px; font-weight: bold; color: ${DS.colors.accent}; letter-spacing: 0.5px;">ACTIVE WEAPON PRESET</span>
-            <select id="player-weapon-select" style="background: #000; color: ${DS.colors.text}; border: 1px solid rgba(255,255,255,0.1); font-size: 10px; padding: 2px 4px; border-radius: 2px; outline: none;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.50rem;">
+            <span style="font-size: ${DS.typography.sizes.tiny}; font-weight: bold; color: ${DS.colors.accent}; letter-spacing: 0.5px;">ACTIVE WEAPON PRESET</span>
+            <select id="player-weapon-select" style="background: #000; color: ${DS.colors.text}; border: 1px solid rgba(255,255,255,0.1); font-size: ${DS.typography.sizes.tiny}; padding: 2px 4px; border-radius: 2px; outline: none;">
                 ${Object.keys(DETAILED_WEAPONS).map(k => `<option value="${k}" ${k === activePlayerWeaponKey ? 'selected' : ''}>${k.toUpperCase()}</option>`).join("")}
             </select>
         </div>
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-            <span style="font-size: 10px; font-weight: bold; color: ${DS.colors.accent}; letter-spacing: 0.5px;">PERSPECTIVE VIEW</span>
-            <button id="player-perspective-btn" class="de-overlay-btn" style="padding: 2px 6px; font-size: 9px; min-width: 100px; text-align: center;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.50rem;">
+            <span style="font-size: ${DS.typography.sizes.tiny}; font-weight: bold; color: ${DS.colors.accent}; letter-spacing: 0.5px;">PERSPECTIVE VIEW</span>
+            <button id="player-perspective-btn" class="de-overlay-btn" style="padding: 2px 0.38rem; font-size: ${DS.typography.sizes.tiny}; min-width: 6.25rem; text-align: center;">
                 ${isFirstPersonPerspective ? "FIRST PERSON (ADS)" : "THIRD PERSON"}
             </button>
         </div>
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-            <span style="font-size: 10px; font-weight: bold; color: ${DS.colors.accent}; letter-spacing: 0.5px;">LOOP MODE</span>
-            <select id="player-loop-select" style="background: #000; color: ${DS.colors.text}; border: 1px solid rgba(255,255,255,0.1); font-size: 10px; padding: 2px 4px; border-radius: 2px; outline: none;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.50rem;">
+            <span style="font-size: ${DS.typography.sizes.tiny}; font-weight: bold; color: ${DS.colors.accent}; letter-spacing: 0.5px;">LOOP MODE</span>
+            <select id="player-loop-select" style="background: #000; color: ${DS.colors.text}; border: 1px solid rgba(255,255,255,0.1); font-size: ${DS.typography.sizes.tiny}; padding: 2px 4px; border-radius: 2px; outline: none;">
                 <option value="IDLE" ${playerLoopMode === 'IDLE' ? 'selected' : ''}>IDLE BREATHING</option>
                 <option value="WALK" ${playerLoopMode === 'WALK' ? 'selected' : ''}>WALK SWAY</option>
                 <option value="ADS" ${playerLoopMode === 'ADS' ? 'selected' : ''}>ADS TRANSITION</option>
@@ -3595,8 +3595,8 @@ function buildPlayerSliders() {
                 <option value="DRAW" ${playerLoopMode === 'DRAW' ? 'selected' : ''}>DRAW / EQUIP</option>
             </select>
         </div>
-        <div style="display: flex; justify-content: center; margin-top: 10px;">
-            <button id="player-fire-btn" class="de-overlay-btn" style="width: 100%; padding: 6px; font-size: 10px; font-weight: bold; background: rgba(255, 0, 100, 0.15); border-color: rgba(255, 0, 100, 0.4); color: #ff0064;">
+        <div style="display: flex; justify-content: center; margin-top: 0.63rem;">
+            <button id="player-fire-btn" class="de-overlay-btn" style="width: 100%; padding: 0.38rem; font-size: ${DS.typography.sizes.tiny}; font-weight: bold; background: rgba(255, 0, 100, 0.15); border-color: rgba(255, 0, 100, 0.4); color: #ff0064;">
                 [ TRIGGER FIRE SINGLE SHOT ]
             </button>
         </div>
@@ -3651,13 +3651,13 @@ function buildPlayerSliders() {
         const block = document.createElement("div");
         block.className = "de-slider-block";
         block.innerHTML = `
-            <div style="display: flex; justify-content: space-between; align-items: center; font-size: 10px; color: ${DS.colors.textMuted}; margin-bottom: 2px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; font-size: ${DS.typography.sizes.tiny}; color: ${DS.colors.textMuted}; margin-bottom: 2px;">
                 <span>${sliderConf.label}</span>
-                <input type="number" step="any" class="de-val-input" value="${val}" style="width: 70px; background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.1); color: ${DS.colors.accent}; font-family: monospace; font-size: 10px; text-align: right; padding: 2px 4px; border-radius: 2px; outline: none;">
+                <input type="number" step="any" class="de-val-input" value="${val}" style="width: 4.38rem; background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.1); color: ${DS.colors.accent}; font-family: monospace; font-size: ${DS.typography.sizes.tiny}; text-align: right; padding: 2px 4px; border-radius: 2px; outline: none;">
             </div>
             <div style="display: flex; gap: 8px; align-items: center;">
-                <input type="range" class="de-slider" data-key="${key}" min="${sliderConf.min}" max="${sliderConf.max}" step="${sliderConf.step}" value="${val}" style="flex: 1; height: 32px; accent-color: ${DS.colors.accent};">
-                <button class="de-play-anim-btn de-overlay-btn" data-key="${key}" style="padding: 4px 8px; font-size: 10px; font-weight: bold; min-width: 65px; text-align: center; color: ${btnStyleColor}; border-color: ${btnBorderColor};">[ ${btnText} ]</button>
+                <input type="range" class="de-slider" data-key="${key}" min="${sliderConf.min}" max="${sliderConf.max}" step="${sliderConf.step}" value="${val}" style="flex: 1; height: 2.00rem; accent-color: ${DS.colors.accent};">
+                <button class="de-play-anim-btn de-overlay-btn" data-key="${key}" style="padding: 4px 0.50rem; font-size: ${DS.typography.sizes.tiny}; font-weight: bold; min-width: 4.06rem; text-align: center; color: ${btnStyleColor}; border-color: ${btnBorderColor};">[ ${btnText} ]</button>
             </div>
         `;
 

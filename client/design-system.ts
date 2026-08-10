@@ -97,31 +97,49 @@ export const DS = {
     fontFamilySecondary: "'Rajdhani', sans-serif",
     fontFamilyWordmark: "Arial, 'Helvetica Neue', Helvetica, sans-serif",
     fontFamilyMono: "'Roboto Mono', monospace",
-    large: '48px',
-    medium: '24px',
-    small: '14px',
-    tiny: '11px',
+    sizes: {
+      display: 'clamp(36px, 6vw, 64px)',
+      headingLg: 'clamp(24px, 4vw, 36px)',
+      headingMd: 'clamp(18px, 3vw, 24px)',
+      headingSm: 'clamp(14px, 2.2vw, 18px)',
+      body: 'clamp(12px, 1.8vw, 15px)',
+      small: 'clamp(11px, 1.5vw, 13px)',
+      tiny: 'clamp(9px, 1.2vw, 11px)',
+    },
+    large: 'clamp(28px, 4.5cqi, 48px)',
+    medium: 'clamp(18px, 2.8cqi, 24px)',
+    small: 'clamp(12px, 1.8cqi, 14px)',
+    tiny: 'clamp(9px, 1.4cqi, 11px)',
     weightBold: '700',
     weightMedium: '500',
     weightRegular: '400',
     transform: 'uppercase',
     letterSpacing: {
       normal: 'normal',
-      tight: '1px',
-      wide: '3px',
-      extraWide: '6px',
-      mega: '8px'
+      tight: '0.05em',
+      wide: '0.15em',
+      extraWide: '0.3em',
+      mega: '0.4em'
     }
   },
   spacing: {
     none: '0px',
-    xs: '2px',
-    sm: '4px',
-    md: '8px',
-    lg: '12px',
-    xl: '16px',
-    xxl: '24px',
-    huge: '32px'
+    xs: 'clamp(1px, 0.3cqi, 2px)',
+    sm: 'clamp(2px, 0.5cqi, 4px)',
+    md: 'clamp(4px, 1cqi, 8px)',
+    lg: 'clamp(6px, 1.5cqi, 12px)',
+    xl: 'clamp(10px, 2cqi, 16px)',
+    xxl: 'clamp(16px, 3cqi, 24px)',
+    huge: 'clamp(20px, 4cqi, 32px)'
+  },
+  layout: {
+    headerHeight: 'clamp(44px, 7vh, 56px)',
+    colLeft: 'clamp(160px, 22vw, 240px)',
+    colRight: 'clamp(240px, 28vw, 360px)',
+    sidebarWidth: 'clamp(200px, 25vw, 300px)',
+    cardPadding: 'clamp(10px, 2vw, 20px)',
+    gap: 'clamp(8px, 1.5vw, 16px)',
+    maxContentWidth: '100%'
   },
   borders: {
     thin: '1px solid',
@@ -172,7 +190,7 @@ export function createSkeletonBox(width: string, height: string, label: string =
     display: 'flex',
     alignItems: 'flex-end',
     justifyContent: 'flex-end',
-    padding: '6px',
+    padding: '0.38rem',
     boxSizing: 'border-box'
   });
 
@@ -180,7 +198,7 @@ export function createSkeletonBox(width: string, height: string, label: string =
   tag.textContent = label;
   Object.assign(tag.style, {
     fontFamily: DS.typography.fontFamilyMono,
-    fontSize: '9px',
+    fontSize: '0.56rem',
     letterSpacing: '2px',
     color: 'rgba(255, 69, 0, 0.6)',
     textTransform: 'uppercase'
@@ -189,7 +207,7 @@ export function createSkeletonBox(width: string, height: string, label: string =
   return box;
 }
 
-export function createSkeletonText(width: string, height: string = '14px'): HTMLElement | null {
+export function createSkeletonText(width: string, height: string = '0.88rem'): HTMLElement | null {
   if (typeof document === 'undefined') return null;
   const text = document.createElement('div');
   text.className = 'vexea-skeleton-text';

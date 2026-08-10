@@ -49,7 +49,7 @@ export function initPostMatch() {
     fontFamily: DS.typography.fontFamily,
     color: DS.colors.textPrimary,
     boxSizing: "border-box",
-    padding: "20px",
+    padding: "1.25rem",
     opacity: "0",
     transition: "opacity 300ms ease-in-out",
   });
@@ -95,12 +95,12 @@ export function renderPostMatchScreen(payload?: MatchEndPayload) {
   postMatchScreenEl.innerHTML = `
     <div style="
       width: 100%;
-      max-width: 820px;
+      max-width: 51.25rem;
       background: rgba(15, 15, 15, 0.95);
       border: 1px solid ${DS.colors.border};
       border-top: 3px solid ${outcomeColor};
       border-radius: 0px;
-      padding: 28px;
+      padding: 1.75rem;
       box-sizing: border-box;
       display: flex;
       flex-direction: column;
@@ -108,23 +108,23 @@ export function renderPostMatchScreen(payload?: MatchEndPayload) {
       box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8);
     ">
       <!-- Header Banner -->
-      <div style="display: flex; justify-content: space-between; align-items: flex-end; border-bottom: 1px solid ${DS.colors.border}; padding-bottom: 16px;">
+      <div style="display: flex; justify-content: space-between; align-items: flex-end; border-bottom: 1px solid ${DS.colors.border}; padding-bottom: 1.00rem;">
         <div>
-          <div style="font-size: 12px; color: ${DS.colors.textMuted}; letter-spacing: 3px; font-weight: 700; font-family: ${DS.typography.fontFamilyMono}; text-transform: uppercase;">
+          <div style="font-size: ${DS.typography.sizes.small}; color: ${DS.colors.textMuted}; letter-spacing: 3px; font-weight: 700; font-family: ${DS.typography.fontFamilyMono}; text-transform: uppercase;">
             OPERATIONAL DEBRIEFING
           </div>
-          <div style="font-size: 36px; font-weight: 800; color: ${outcomeColor}; letter-spacing: 2px; line-height: 1.1; margin-top: 4px;">
+          <div style="font-size: ${DS.typography.sizes.headingLg}; font-weight: 800; color: ${outcomeColor}; letter-spacing: 2px; line-height: 1.1; margin-top: 4px;">
             ${outcomeText}
           </div>
-          <div style="font-size: 13px; color: ${DS.colors.textSecondary}; font-family: ${DS.typography.fontFamilyMono}; margin-top: 2px;">
+          <div style="font-size: ${DS.typography.sizes.body}; color: ${DS.colors.textSecondary}; font-family: ${DS.typography.fontFamilyMono}; margin-top: 2px;">
             ${statusMessage}
           </div>
         </div>
         <div style="text-align: right;">
-          <div style="font-size: 11px; color: ${DS.colors.textMuted}; letter-spacing: 2px; font-family: ${DS.typography.fontFamilyMono};">
+          <div style="font-size: ${DS.typography.sizes.small}; color: ${DS.colors.textMuted}; letter-spacing: 2px; font-family: ${DS.typography.fontFamilyMono};">
             INDIVIDUAL SCORE
           </div>
-          <div style="font-size: 32px; font-weight: 800; color: ${DS.colors.accent}; font-family: ${DS.typography.fontFamilyMono};">
+          <div style="font-size: ${DS.typography.sizes.headingLg}; font-weight: 800; color: ${DS.colors.accent}; font-family: ${DS.typography.fontFamilyMono};">
             ${scoreIndividual.toLocaleString()}
           </div>
         </div>
@@ -132,74 +132,74 @@ export function renderPostMatchScreen(payload?: MatchEndPayload) {
 
       <!-- Real Active Stats Grid (10 Stats) -->
       <div>
-        <div style="font-size: 11px; color: ${DS.colors.textMuted}; letter-spacing: 2px; font-weight: 700; font-family: ${DS.typography.fontFamilyMono}; margin-bottom: 10px; text-transform: uppercase;">
+        <div style="font-size: ${DS.typography.sizes.small}; color: ${DS.colors.textMuted}; letter-spacing: 2px; font-weight: 700; font-family: ${DS.typography.fontFamilyMono}; margin-bottom: 0.63rem; text-transform: uppercase;">
           TRACKED COMBAT METRICS
         </div>
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px;">
           
-          <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid ${DS.colors.border}; border-radius: 0px; padding: 12px; text-align: center;">
-            <div style="font-size: 10px; color: ${DS.colors.textMuted}; letter-spacing: 1px; font-family: ${DS.typography.fontFamilyMono}; text-transform: uppercase;">DRONE ELIMINATIONS</div>
-            <div style="font-size: 24px; font-weight: 800; color: ${DS.colors.textPrimary}; margin-top: 4px; font-family: ${DS.typography.fontFamilyMono};">${droneEliminations}</div>
+          <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid ${DS.colors.border}; border-radius: 0px; padding: 0.75rem; text-align: center;">
+            <div style="font-size: ${DS.typography.sizes.tiny}; color: ${DS.colors.textMuted}; letter-spacing: 1px; font-family: ${DS.typography.fontFamilyMono}; text-transform: uppercase;">DRONE ELIMINATIONS</div>
+            <div style="font-size: ${DS.typography.sizes.headingMd}; font-weight: 800; color: ${DS.colors.textPrimary}; margin-top: 4px; font-family: ${DS.typography.fontFamilyMono};">${droneEliminations}</div>
           </div>
 
-          <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid ${DS.colors.border}; border-radius: 0px; padding: 12px; text-align: center;">
-            <div style="font-size: 10px; color: ${DS.colors.textMuted}; letter-spacing: 1px; font-family: ${DS.typography.fontFamilyMono}; text-transform: uppercase;">DAMAGE DEALT</div>
-            <div style="font-size: 24px; font-weight: 800; color: ${DS.colors.textPrimary}; margin-top: 4px; font-family: ${DS.typography.fontFamilyMono};">${damageDealt.toLocaleString()}</div>
+          <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid ${DS.colors.border}; border-radius: 0px; padding: 0.75rem; text-align: center;">
+            <div style="font-size: ${DS.typography.sizes.tiny}; color: ${DS.colors.textMuted}; letter-spacing: 1px; font-family: ${DS.typography.fontFamilyMono}; text-transform: uppercase;">DAMAGE DEALT</div>
+            <div style="font-size: ${DS.typography.sizes.headingMd}; font-weight: 800; color: ${DS.colors.textPrimary}; margin-top: 4px; font-family: ${DS.typography.fontFamilyMono};">${damageDealt.toLocaleString()}</div>
           </div>
 
-          <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid ${DS.colors.border}; border-radius: 0px; padding: 12px; text-align: center;">
-            <div style="font-size: 10px; color: ${DS.colors.textMuted}; letter-spacing: 1px; font-family: ${DS.typography.fontFamilyMono}; text-transform: uppercase;">DAMAGE RECEIVED</div>
-            <div style="font-size: 24px; font-weight: 800; color: ${DS.colors.textPrimary}; margin-top: 4px; font-family: ${DS.typography.fontFamilyMono};">${damageReceived.toLocaleString()}</div>
+          <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid ${DS.colors.border}; border-radius: 0px; padding: 0.75rem; text-align: center;">
+            <div style="font-size: ${DS.typography.sizes.tiny}; color: ${DS.colors.textMuted}; letter-spacing: 1px; font-family: ${DS.typography.fontFamilyMono}; text-transform: uppercase;">DAMAGE RECEIVED</div>
+            <div style="font-size: ${DS.typography.sizes.headingMd}; font-weight: 800; color: ${DS.colors.textPrimary}; margin-top: 4px; font-family: ${DS.typography.fontFamilyMono};">${damageReceived.toLocaleString()}</div>
           </div>
 
-          <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid ${DS.colors.border}; border-radius: 0px; padding: 12px; text-align: center;">
-            <div style="font-size: 10px; color: ${DS.colors.textMuted}; letter-spacing: 1px; font-family: ${DS.typography.fontFamilyMono}; text-transform: uppercase;">DEATHS</div>
-            <div style="font-size: 24px; font-weight: 800; color: ${DS.colors.textPrimary}; margin-top: 4px; font-family: ${DS.typography.fontFamilyMono};">${deaths}</div>
+          <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid ${DS.colors.border}; border-radius: 0px; padding: 0.75rem; text-align: center;">
+            <div style="font-size: ${DS.typography.sizes.tiny}; color: ${DS.colors.textMuted}; letter-spacing: 1px; font-family: ${DS.typography.fontFamilyMono}; text-transform: uppercase;">DEATHS</div>
+            <div style="font-size: ${DS.typography.sizes.headingMd}; font-weight: 800; color: ${DS.colors.textPrimary}; margin-top: 4px; font-family: ${DS.typography.fontFamilyMono};">${deaths}</div>
           </div>
 
-          <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid ${DS.colors.border}; border-radius: 0px; padding: 12px; text-align: center;">
-            <div style="font-size: 10px; color: ${DS.colors.textMuted}; letter-spacing: 1px; font-family: ${DS.typography.fontFamilyMono}; text-transform: uppercase;">ASSISTS</div>
-            <div style="font-size: 24px; font-weight: 800; color: ${DS.colors.textPrimary}; margin-top: 4px; font-family: ${DS.typography.fontFamilyMono};">${assists}</div>
+          <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid ${DS.colors.border}; border-radius: 0px; padding: 0.75rem; text-align: center;">
+            <div style="font-size: ${DS.typography.sizes.tiny}; color: ${DS.colors.textMuted}; letter-spacing: 1px; font-family: ${DS.typography.fontFamilyMono}; text-transform: uppercase;">ASSISTS</div>
+            <div style="font-size: ${DS.typography.sizes.headingMd}; font-weight: 800; color: ${DS.colors.textPrimary}; margin-top: 4px; font-family: ${DS.typography.fontFamilyMono};">${assists}</div>
           </div>
 
-          <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid ${DS.colors.border}; border-radius: 0px; padding: 12px; text-align: center;">
-            <div style="font-size: 10px; color: ${DS.colors.textMuted}; letter-spacing: 1px; font-family: ${DS.typography.fontFamilyMono}; text-transform: uppercase;">REVIVES PERFORMED</div>
-            <div style="font-size: 24px; font-weight: 800; color: ${DS.colors.textPrimary}; margin-top: 4px; font-family: ${DS.typography.fontFamilyMono};">${revivesPerformed}</div>
+          <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid ${DS.colors.border}; border-radius: 0px; padding: 0.75rem; text-align: center;">
+            <div style="font-size: ${DS.typography.sizes.tiny}; color: ${DS.colors.textMuted}; letter-spacing: 1px; font-family: ${DS.typography.fontFamilyMono}; text-transform: uppercase;">REVIVES PERFORMED</div>
+            <div style="font-size: ${DS.typography.sizes.headingMd}; font-weight: 800; color: ${DS.colors.textPrimary}; margin-top: 4px; font-family: ${DS.typography.fontFamilyMono};">${revivesPerformed}</div>
           </div>
 
-          <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid ${DS.colors.border}; border-radius: 0px; padding: 12px; text-align: center;">
-            <div style="font-size: 10px; color: ${DS.colors.textMuted}; letter-spacing: 1px; font-family: ${DS.typography.fontFamilyMono}; text-transform: uppercase;">TIME ALIVE</div>
-            <div style="font-size: 24px; font-weight: 800; color: ${DS.colors.textPrimary}; margin-top: 4px; font-family: ${DS.typography.fontFamilyMono};">${timeAliveStr}</div>
+          <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid ${DS.colors.border}; border-radius: 0px; padding: 0.75rem; text-align: center;">
+            <div style="font-size: ${DS.typography.sizes.tiny}; color: ${DS.colors.textMuted}; letter-spacing: 1px; font-family: ${DS.typography.fontFamilyMono}; text-transform: uppercase;">TIME ALIVE</div>
+            <div style="font-size: ${DS.typography.sizes.headingMd}; font-weight: 800; color: ${DS.colors.textPrimary}; margin-top: 4px; font-family: ${DS.typography.fontFamilyMono};">${timeAliveStr}</div>
           </div>
 
-          <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid ${DS.colors.border}; border-radius: 0px; padding: 12px; text-align: center;">
-            <div style="font-size: 10px; color: ${DS.colors.textMuted}; letter-spacing: 1px; font-family: ${DS.typography.fontFamilyMono}; text-transform: uppercase;">DISTANCE TRAVELLED</div>
-            <div style="font-size: 24px; font-weight: 800; color: ${DS.colors.textPrimary}; margin-top: 4px; font-family: ${DS.typography.fontFamilyMono};">${distanceTravelled}m</div>
+          <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid ${DS.colors.border}; border-radius: 0px; padding: 0.75rem; text-align: center;">
+            <div style="font-size: ${DS.typography.sizes.tiny}; color: ${DS.colors.textMuted}; letter-spacing: 1px; font-family: ${DS.typography.fontFamilyMono}; text-transform: uppercase;">DISTANCE TRAVELLED</div>
+            <div style="font-size: ${DS.typography.sizes.headingMd}; font-weight: 800; color: ${DS.colors.textPrimary}; margin-top: 4px; font-family: ${DS.typography.fontFamilyMono};">${distanceTravelled}m</div>
           </div>
 
-          <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid ${DS.colors.border}; border-radius: 0px; padding: 12px; text-align: center;">
-            <div style="font-size: 10px; color: ${DS.colors.textMuted}; letter-spacing: 1px; font-family: ${DS.typography.fontFamilyMono}; text-transform: uppercase;">OBJECTIVE TIME</div>
-            <div style="font-size: 24px; font-weight: 800; color: ${DS.colors.textPrimary}; margin-top: 4px; font-family: ${DS.typography.fontFamilyMono};">${objectiveTimeHeld}s</div>
+          <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid ${DS.colors.border}; border-radius: 0px; padding: 0.75rem; text-align: center;">
+            <div style="font-size: ${DS.typography.sizes.tiny}; color: ${DS.colors.textMuted}; letter-spacing: 1px; font-family: ${DS.typography.fontFamilyMono}; text-transform: uppercase;">OBJECTIVE TIME</div>
+            <div style="font-size: ${DS.typography.sizes.headingMd}; font-weight: 800; color: ${DS.colors.textPrimary}; margin-top: 4px; font-family: ${DS.typography.fontFamilyMono};">${objectiveTimeHeld}s</div>
           </div>
 
-          <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid ${DS.colors.border}; border-radius: 0px; padding: 12px; text-align: center;">
-            <div style="font-size: 10px; color: ${DS.colors.textMuted}; letter-spacing: 1px; font-family: ${DS.typography.fontFamilyMono}; text-transform: uppercase;">INDIVIDUAL SCORE</div>
-            <div style="font-size: 24px; font-weight: 800; color: ${DS.colors.accent}; margin-top: 4px; font-family: ${DS.typography.fontFamilyMono};">${scoreIndividual}</div>
+          <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid ${DS.colors.border}; border-radius: 0px; padding: 0.75rem; text-align: center;">
+            <div style="font-size: ${DS.typography.sizes.tiny}; color: ${DS.colors.textMuted}; letter-spacing: 1px; font-family: ${DS.typography.fontFamilyMono}; text-transform: uppercase;">INDIVIDUAL SCORE</div>
+            <div style="font-size: ${DS.typography.sizes.headingMd}; font-weight: 800; color: ${DS.colors.accent}; margin-top: 4px; font-family: ${DS.typography.fontFamilyMono};">${scoreIndividual}</div>
           </div>
 
         </div>
       </div>
 
       <!-- Footer Action -->
-      <div style="display: flex; justify-content: flex-end; padding-top: 12px; border-top: 1px solid ${DS.colors.border};">
+      <div style="display: flex; justify-content: flex-end; padding-top: 0.75rem; border-top: 1px solid ${DS.colors.border};">
         <button id="post-match-return-btn" style="
           background: ${DS.colors.accent};
           color: #FFFFFF;
           border: none;
           border-radius: 0px;
-          padding: 12px 32px;
+          padding: 0.75rem 2.00rem;
           font-family: ${DS.typography.fontFamily};
-          font-size: 16px;
+          font-size: ${DS.typography.sizes.headingSm};
           font-weight: 700;
           letter-spacing: 2px;
           cursor: pointer;

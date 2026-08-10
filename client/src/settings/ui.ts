@@ -66,7 +66,7 @@ export function openSettingsUI(
             -webkit-appearance: none;
             appearance: none;
             background: #27272a;
-            height: 6px;
+            height: 0.38rem;
             border-radius: 0px;
             outline: none;
             cursor: pointer;
@@ -74,8 +74,8 @@ export function openSettingsUI(
         #vexea-settings-overlay input[type="range"]::-webkit-slider-thumb {
             -webkit-appearance: none;
             appearance: none;
-            width: 14px;
-            height: 14px;
+            width: 0.88rem;
+            height: 0.88rem;
             border-radius: 0px;
             background: ${DS.colors.accent};
             cursor: pointer;
@@ -85,9 +85,9 @@ export function openSettingsUI(
             border: 1px solid #27272a;
             color: #ffffff;
             font-family: monospace;
-            padding: 6px 10px;
+            padding: 0.38rem 0.63rem;
             outline: none;
-            font-size: 12px;
+            font-size: ${DS.typography.sizes.small};
         }
         #vexea-settings-overlay input[type="text"]:focus {
             border-color: ${DS.colors.accent};
@@ -95,7 +95,7 @@ export function openSettingsUI(
         #vexea-settings-overlay .settings-card {
             background: #18181b;
             border: 1px solid #27272a;
-            padding: 12px 14px;
+            padding: 0.75rem 0.88rem;
             display: flex;
             flex-direction: column;
             gap: 10px;
@@ -104,7 +104,7 @@ export function openSettingsUI(
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 6px 0;
+            padding: 0.38rem 0;
             border-bottom: 1px solid rgba(255,255,255,0.04);
         }
         #vexea-settings-overlay .settings-row:last-child {
@@ -115,11 +115,11 @@ export function openSettingsUI(
             border: none;
             color: #a1a1aa;
             font-family: ${DS.typography.fontFamily};
-            font-size: 11px;
+            font-size: ${DS.typography.sizes.small};
             font-weight: bold;
             letter-spacing: 1px;
-            padding: 0 12px;
-            height: 52px;
+            padding: 0 0.75rem;
+            height: 3.25rem;
             display: inline-flex;
             align-items: center;
             cursor: pointer;
@@ -141,8 +141,8 @@ export function openSettingsUI(
             border: 1px solid #27272a;
             color: #ffffff;
             font-family: monospace;
-            font-size: 11px;
-            padding: 6px 12px;
+            font-size: ${DS.typography.sizes.small};
+            padding: 0.38rem 0.75rem;
             cursor: pointer;
             font-weight: bold;
             letter-spacing: 0.5px;
@@ -158,8 +158,8 @@ export function openSettingsUI(
             border: 1px solid #27272a;
             color: #a1a1aa;
             font-family: monospace;
-            font-size: 11px;
-            padding: 6px 10px;
+            font-size: ${DS.typography.sizes.small};
+            padding: 0.38rem 0.63rem;
             cursor: pointer;
             font-weight: bold;
             transition: all 100ms ease;
@@ -174,8 +174,8 @@ export function openSettingsUI(
             color: #ffffff;
         }
         #vexea-settings-overlay .swatch-chip {
-            width: 28px;
-            height: 28px;
+            width: 1.75rem;
+            height: 1.75rem;
             border: 2px solid #27272a;
             cursor: pointer;
             display: flex;
@@ -194,7 +194,7 @@ export function openSettingsUI(
         #vexea-settings-overlay .reticle-card {
             border: 1px solid #27272a;
             background: #18181b;
-            padding: 10px;
+            padding: 0.63rem;
             cursor: pointer;
             display: flex;
             flex-direction: column;
@@ -202,7 +202,7 @@ export function openSettingsUI(
             justify-content: center;
             gap: 6px;
             transition: all 100ms ease;
-            min-width: 80px;
+            min-width: 5.00rem;
         }
         #vexea-settings-overlay .reticle-card:hover {
             border-color: #71717a;
@@ -219,8 +219,8 @@ export function openSettingsUI(
             gap: 8px;
         }
         #vexea-settings-overlay .cyber-toggle-track {
-            width: 36px;
-            height: 18px;
+            width: 2.25rem;
+            height: 1.13rem;
             background: #27272a;
             border: 1px solid #3f3f46;
             position: relative;
@@ -231,8 +231,8 @@ export function openSettingsUI(
             border-color: ${DS.colors.accent};
         }
         #vexea-settings-overlay .cyber-toggle-thumb {
-            width: 14px;
-            height: 14px;
+            width: 0.88rem;
+            height: 0.88rem;
             background: #ffffff;
             position: absolute;
             top: 1px;
@@ -240,22 +240,22 @@ export function openSettingsUI(
             transition: all 120ms ease;
         }
         #vexea-settings-overlay .cyber-toggle.active .cyber-toggle-thumb {
-            left: 19px;
+            left: 1.19rem;
             background: #000000;
         }
     `;
     overlayEl.appendChild(styleTag);
 
-    // Top Header (52px fixed, Layer 1 - unified single bar)
+    // Top Header (Layer 1 - unified single bar)
     const header = document.createElement('div');
     header.id = 'settings-header';
     Object.assign(header.style, {
-        height: '52px',
+        height: DS.layout.headerHeight,
         borderBottom: '1px solid #27272a',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        padding: '0 16px',
+        padding: '0 1.00rem',
         background: '#111113',
         flexShrink: '0',
         gap: '12px'
@@ -270,11 +270,11 @@ export function openSettingsUI(
     const logo = document.createElement('div');
     logo.innerText = 'SETTINGS';
     Object.assign(logo.style, {
-        fontSize: '15px',
+        fontSize: DS.typography.sizes.headingSm,
         fontWeight: '900',
         color: '#ffffff',
         fontFamily: DS.typography.fontFamily,
-        letterSpacing: '2px'
+        letterSpacing: DS.typography.letterSpacing.wide
     });
 
     logoGroup.appendChild(logo);
@@ -291,7 +291,7 @@ export function openSettingsUI(
         height: '100%',
         flex: '1',
         gap: '12px',
-        marginLeft: '20px'
+        marginLeft: '1.25rem'
     });
     header.appendChild(tabsRow);
 
@@ -302,9 +302,9 @@ export function openSettingsUI(
         background: '#27272a',
         borderColor: '#3f3f46',
         color: '#ffffff',
-        padding: '6px 16px',
+        padding: '0.38rem 1.00rem',
         fontFamily: DS.typography.fontFamily,
-        fontSize: '11px',
+        fontSize: DS.typography.sizes.small,
         fontWeight: 'bold',
         letterSpacing: '1px',
         flexShrink: '0',
@@ -324,7 +324,7 @@ export function openSettingsUI(
     Object.assign(contentArea.style, {
         flex: '1',
         overflowY: 'auto',
-        padding: '16px 20px',
+        padding: '1.00rem 1.25rem',
         boxSizing: 'border-box'
     });
     overlayEl.appendChild(contentArea);
@@ -386,7 +386,7 @@ function renderTabContent(tabId: string, parent: HTMLDivElement, s: VexeaSetting
 
     const page = document.createElement('div');
     page.style.width = '100%';
-    page.style.maxWidth = '1100px';
+    page.style.maxWidth = '100%';
     page.style.margin = '0 auto';
     page.style.display = 'flex';
     page.style.flexDirection = 'column';
@@ -501,7 +501,7 @@ function renderControlsTab(container: HTMLElement, s: VexeaSettingsData) {
         const fsBtn = document.createElement('button');
         fsBtn.innerText = 'TOGGLE FULLSCREEN';
         fsBtn.className = 'action-btn';
-        fsBtn.style.minWidth = '160px';
+        fsBtn.style.minWidth = '10.00rem';
         bind(fsBtn, 'click', () => {
             if (!document.fullscreenElement) {
                 document.documentElement.requestFullscreen().catch(() => {});
@@ -517,17 +517,17 @@ function renderControlsTab(container: HTMLElement, s: VexeaSettingsData) {
         // Keybindings card
         const bindCard = document.createElement('div');
         bindCard.className = 'settings-card';
-        bindCard.style.marginTop = '10px';
+        bindCard.style.marginTop = '0.63rem';
 
         const bTitle = document.createElement('div');
         bTitle.innerText = '// KEYBOARD & MOUSE BINDINGS (DESKTOP)';
         Object.assign(bTitle.style, {
-            fontSize: '12px',
+            fontSize: DS.typography.sizes.small,
             fontWeight: 'bold',
             fontFamily: 'monospace',
             color: DS.colors.accent,
             letterSpacing: '1px',
-            marginBottom: '6px'
+            marginBottom: '0.38rem'
         });
         bindCard.appendChild(bTitle);
 
@@ -552,7 +552,7 @@ function renderControlsTab(container: HTMLElement, s: VexeaSettingsData) {
 
             const lbl = document.createElement('span');
             lbl.innerText = act.label;
-            lbl.style.fontSize = '12px';
+            lbl.style.fontSize = DS.typography.sizes.small;
             lbl.style.fontFamily = 'monospace';
             row.appendChild(lbl);
 
@@ -564,7 +564,7 @@ function renderControlsTab(container: HTMLElement, s: VexeaSettingsData) {
             const bindBtn = document.createElement('button');
             bindBtn.innerText = currentKey;
             bindBtn.className = 'action-btn';
-            bindBtn.style.minWidth = '110px';
+            bindBtn.style.minWidth = '6.88rem';
 
             bind(bindBtn, 'click', () => {
                 if (listeningAction) return;
@@ -783,7 +783,7 @@ function renderGraphicsTab(container: HTMLElement, s: VexeaSettingsData) {
     const sTitle = document.createElement('div');
     sTitle.innerText = '// DETAILED TSL SHADER EFFECTS';
     Object.assign(sTitle.style, {
-        fontSize: '11px',
+        fontSize: DS.typography.sizes.small,
         fontWeight: 'bold',
         fontFamily: 'monospace',
         color: DS.colors.accent,
@@ -851,12 +851,12 @@ function renderGraphicsTab(container: HTMLElement, s: VexeaSettingsData) {
     const dTitle = document.createElement('div');
     dTitle.innerText = '// HARDWARE & RENDERER DIAGNOSTICS';
     Object.assign(dTitle.style, {
-        fontSize: '11px',
+        fontSize: DS.typography.sizes.small,
         fontWeight: 'bold',
         fontFamily: 'monospace',
         color: DS.colors.accent,
         letterSpacing: '1px',
-        marginBottom: '10px'
+        marginBottom: '0.63rem'
     });
     rightCol.appendChild(dTitle);
 
@@ -866,7 +866,7 @@ function renderGraphicsTab(container: HTMLElement, s: VexeaSettingsData) {
     const canvasH = window.innerHeight * dpr;
 
     rightCol.innerHTML += `
-        <div style="font-family:monospace; font-size:11px; display:flex; flex-direction:column; gap:8px; color:#a1a1aa;">
+        <div style="font-family:monospace; font-size: ${DS.typography.sizes.small}; display:flex; flex-direction:column; gap:0.50rem; color:#a1a1aa;">
             <div style="display:flex; justify-content:space-between; border-bottom:1px solid #27272a; padding-bottom:4px;">
                 <span>RENDER BACKEND:</span>
                 <span style="color:#22c55e; font-weight:bold;">${rendererBackend}</span>
@@ -889,13 +889,13 @@ function renderGraphicsTab(container: HTMLElement, s: VexeaSettingsData) {
             </div>
         </div>
 
-        <div style="margin-top:16px;">
-            <div style="font-family:monospace; font-size:10px; color:#71717a; margin-bottom:6px;">SHADER COMPOSITION PREVIEW</div>
-            <div style="height:110px; background:#050505; border:1px solid #27272a; position:relative; overflow:hidden; display:flex; align-items:center; justify-content:center;">
+        <div style="margin-top:1.00rem;">
+            <div style="font-family:monospace; font-size: ${DS.typography.sizes.tiny}; color:#71717a; margin-bottom:0.38rem;">SHADER COMPOSITION PREVIEW</div>
+            <div style="height:6.88rem; background:#050505; border:1px solid #27272a; position:relative; overflow:hidden; display:flex; align-items:center; justify-content:center;">
                 <!-- Simulated Bloom Glow -->
-                <div style="width:50px; height:50px; background:${DS.colors.accent}; border-radius:50%; filter:blur(${s.bloom ? '12px' : '0px'}); opacity:${s.exposure * 0.8}; transition:all 150ms ease;"></div>
+                <div style="width:3.13rem; height:3.13rem; background:${DS.colors.accent}; border-radius:50%; filter:blur(${s.bloom ? '0.75rem' : '0px'}); opacity:${s.exposure * 0.8}; transition:all 150ms ease;"></div>
                 <!-- Core Mesh -->
-                <div style="width:20px; height:20px; background:#ffffff; position:absolute; border:1px solid rgba(255,255,255,0.4);"></div>
+                <div style="width:1.25rem; height:1.25rem; background:#ffffff; position:absolute; border:1px solid rgba(255,255,255,0.4);"></div>
                 <!-- Vignette Overlay -->
                 ${s.vignette ? `<div style="position:absolute; inset:0; box-shadow:inset 0 0 40px rgba(0,0,0,0.9); pointer-events:none;"></div>` : ''}
             </div>
@@ -971,22 +971,22 @@ function renderAudioTab(container: HTMLElement, s: VexeaSettingsData) {
     const aTitle = document.createElement('div');
     aTitle.innerText = '// INTERACTIVE ACOUSTIC AUDITION';
     Object.assign(aTitle.style, {
-        fontSize: '11px',
+        fontSize: DS.typography.sizes.small,
         fontWeight: 'bold',
         fontFamily: 'monospace',
         color: DS.colors.accent,
         letterSpacing: '1px',
-        marginBottom: '10px'
+        marginBottom: '0.63rem'
     });
     rightCol.appendChild(aTitle);
 
     const desc = document.createElement('p');
     desc.innerText = 'Test real-time acoustic samples and spatial audio cues under the current gain profile.';
     Object.assign(desc.style, {
-        fontSize: '11px',
+        fontSize: DS.typography.sizes.small,
         color: '#71717a',
         lineHeight: '1.4',
-        margin: '0 0 12px 0'
+        margin: '0 0 0.75rem 0'
     });
     rightCol.appendChild(desc);
 
@@ -1007,7 +1007,7 @@ function renderAudioTab(container: HTMLElement, s: VexeaSettingsData) {
         btn.innerText = sample.label;
         btn.className = 'action-btn';
         btn.style.textAlign = 'left';
-        btn.style.padding = '8px 12px';
+        btn.style.padding = '0.50rem 0.75rem';
         bind(btn, 'click', () => {
             audioManager.play(sample.sound);
         });
@@ -1019,12 +1019,12 @@ function renderAudioTab(container: HTMLElement, s: VexeaSettingsData) {
     // Visual Meter Bars
     const metersWrap = document.createElement('div');
     Object.assign(metersWrap.style, {
-        marginTop: '16px',
+        marginTop: '1.00rem',
         display: 'flex',
         flexDirection: 'column',
         gap: '6px',
         fontFamily: 'monospace',
-        fontSize: '10px',
+        fontSize: DS.typography.sizes.tiny,
         color: '#a1a1aa'
     });
 
@@ -1069,7 +1069,7 @@ function renderHudTab(container: HTMLElement, s: VexeaSettingsData, onClose: () 
     const editBtn = document.createElement('button');
     editBtn.innerText = 'LAUNCH EDITOR';
     editBtn.className = 'action-btn';
-    editBtn.style.minWidth = '160px';
+    editBtn.style.minWidth = '10.00rem';
     bind(editBtn, 'click', () => {
         if (typeof (window as any).vexeaEditUI === 'function') {
             (window as any).vexeaEditUI();
@@ -1101,13 +1101,13 @@ function renderHudTab(container: HTMLElement, s: VexeaSettingsData, onClose: () 
     rowCross.style.display = 'flex';
     rowCross.style.flexDirection = 'column';
     rowCross.style.gap = '8px';
-    rowCross.style.padding = '8px 0';
+    rowCross.style.padding = '0.50rem 0';
     rowCross.style.borderBottom = '1px solid rgba(255,255,255,0.04)';
 
     const cLabelWrap = document.createElement('div');
     cLabelWrap.innerHTML = `
-        <div style="font-weight:bold; font-size:13px; color:#ffffff;">Crosshair Geometry Style</div>
-        <div style="color:#71717a; font-size:11px;">Shape structure of central look reticle.</div>
+        <div style="font-weight:bold; font-size: ${DS.typography.sizes.body}; color:#ffffff;">Crosshair Geometry Style</div>
+        <div style="color:#71717a; font-size: ${DS.typography.sizes.small};">Shape structure of central look reticle.</div>
     `;
     rowCross.appendChild(cLabelWrap);
 
@@ -1128,7 +1128,7 @@ function renderHudTab(container: HTMLElement, s: VexeaSettingsData, onClose: () 
         card.style.color = s.crosshairStyle === style.id ? DS.colors.accent : '#a1a1aa';
         card.innerHTML = `
             ${style.svg}
-            <span style="font-family:monospace; font-size:10px; font-weight:bold;">${style.label}</span>
+            <span style="font-family:monospace; font-size: ${DS.typography.sizes.tiny}; font-weight:bold;">${style.label}</span>
         `;
         bind(card, 'click', () => {
             s.crosshairStyle = style.id as any;
@@ -1151,13 +1151,13 @@ function renderHudTab(container: HTMLElement, s: VexeaSettingsData, onClose: () 
     rowCol.style.display = 'flex';
     rowCol.style.flexDirection = 'column';
     rowCol.style.gap = '8px';
-    rowCol.style.padding = '8px 0';
+    rowCol.style.padding = '0.50rem 0';
     rowCol.style.borderBottom = '1px solid rgba(255,255,255,0.04)';
 
     const colLabelWrap = document.createElement('div');
     colLabelWrap.innerHTML = `
-        <div style="font-weight:bold; font-size:13px; color:#ffffff;">Crosshair Color Palette</div>
-        <div style="color:#71717a; font-size:11px;">High-contrast reticle tint overlay.</div>
+        <div style="font-weight:bold; font-size: ${DS.typography.sizes.body}; color:#ffffff;">Crosshair Color Palette</div>
+        <div style="color:#71717a; font-size: ${DS.typography.sizes.small};">High-contrast reticle tint overlay.</div>
     `;
     rowCol.appendChild(colLabelWrap);
 
@@ -1250,12 +1250,12 @@ function renderHudTab(container: HTMLElement, s: VexeaSettingsData, onClose: () 
     const pTitle = document.createElement('div');
     pTitle.innerText = '// LIVE RETICLE & HUD PREVIEW';
     Object.assign(pTitle.style, {
-        fontSize: '11px',
+        fontSize: DS.typography.sizes.small,
         fontWeight: 'bold',
         fontFamily: 'monospace',
         color: DS.colors.accent,
         letterSpacing: '1px',
-        marginBottom: '10px'
+        marginBottom: '0.63rem'
     });
     rightCol.appendChild(pTitle);
 
@@ -1263,7 +1263,7 @@ function renderHudTab(container: HTMLElement, s: VexeaSettingsData, onClose: () 
     previewBox.id = 'live-reticle-preview-box';
     Object.assign(previewBox.style, {
         width: '100%',
-        height: '180px',
+        height: '11.25rem',
         background: '#040405',
         border: '1px solid #27272a',
         position: 'relative',
@@ -1284,7 +1284,7 @@ function renderHudTab(container: HTMLElement, s: VexeaSettingsData, onClose: () 
             <rect width="100%" height="100%" fill="url(#grid)" />
         </svg>
         <!-- Dummy enemy silhouette -->
-        <div style="position:absolute; width:40px; height:80px; border:1px solid rgba(239,68,68,0.3); background:rgba(239,68,68,0.06); pointer-events:none;"></div>
+        <div style="position:absolute; width:2.50rem; height:5.00rem; border:1px solid rgba(239,68,68,0.3); background:rgba(239,68,68,0.06); pointer-events:none;"></div>
         <!-- Reticle Preview Host -->
         <div id="reticle-svg-host" style="position:relative; z-index:2;"></div>
     `;
@@ -1294,9 +1294,9 @@ function renderHudTab(container: HTMLElement, s: VexeaSettingsData, onClose: () 
     const liveReadout = document.createElement('div');
     liveReadout.id = 'live-reticle-readout';
     Object.assign(liveReadout.style, {
-        marginTop: '10px',
+        marginTop: '0.63rem',
         fontFamily: 'monospace',
-        fontSize: '10px',
+        fontSize: DS.typography.sizes.tiny,
         color: '#a1a1aa',
         display: 'flex',
         flexDirection: 'column',
@@ -1426,12 +1426,12 @@ function renderServerTab(container: HTMLElement, s: VexeaSettingsData) {
     statusRow.className = 'settings-row';
     statusRow.innerHTML = `
         <div>
-            <div style="font-weight:bold; font-size:13px; color:#ffffff;">Socket Connection State</div>
-            <div style="color:#71717a; font-size:11px;">Authoritative real-time transport channel.</div>
+            <div style="font-weight:bold; font-size: ${DS.typography.sizes.body}; color:#ffffff;">Socket Connection State</div>
+            <div style="color:#71717a; font-size: ${DS.typography.sizes.small};">Authoritative real-time transport channel.</div>
         </div>
         <div style="display:flex; align-items:center; gap:8px;">
-            <div style="width:8px; height:8px; background:#22c55e; border-radius:50%;"></div>
-            <span style="font-family:monospace; font-size:12px; font-weight:bold; color:#22c55e;">CONNECTED</span>
+            <div style="width:0.50rem; height:0.50rem; background:#22c55e; border-radius:50%;"></div>
+            <span style="font-family:monospace; font-size: ${DS.typography.sizes.small}; font-weight:bold; color:#22c55e;">CONNECTED</span>
         </div>
     `;
     card.appendChild(statusRow);
@@ -1445,7 +1445,7 @@ function renderServerTab(container: HTMLElement, s: VexeaSettingsData) {
     const inputUrl = document.createElement('input');
     inputUrl.type = 'text';
     inputUrl.value = s.serverUrl || window.location.origin;
-    inputUrl.style.width = '240px';
+    inputUrl.style.width = '15.00rem';
 
     const saveBtn = document.createElement('button');
     saveBtn.innerText = 'APPLY';
@@ -1466,10 +1466,10 @@ function renderServerTab(container: HTMLElement, s: VexeaSettingsData) {
     pingRow.className = 'settings-row';
     pingRow.innerHTML = `
         <div>
-            <div style="font-weight:bold; font-size:13px; color:#ffffff;">Network Round-Trip Time (RTT)</div>
-            <div style="color:#71717a; font-size:11px;">Calculated ping latency to primary cluster.</div>
+            <div style="font-weight:bold; font-size: ${DS.typography.sizes.body}; color:#ffffff;">Network Round-Trip Time (RTT)</div>
+            <div style="color:#71717a; font-size: ${DS.typography.sizes.small};">Calculated ping latency to primary cluster.</div>
         </div>
-        <div style="font-family:monospace; font-size:13px; color:#00F0FF; font-weight:bold;">18 ms</div>
+        <div style="font-family:monospace; font-size: ${DS.typography.sizes.body}; color:#00F0FF; font-weight:bold;">18 ms</div>
     `;
     card.appendChild(pingRow);
 
@@ -1477,10 +1477,10 @@ function renderServerTab(container: HTMLElement, s: VexeaSettingsData) {
     tickRow.className = 'settings-row';
     tickRow.innerHTML = `
         <div>
-            <div style="font-weight:bold; font-size:13px; color:#ffffff;">Simulation & Network Tick Rates</div>
-            <div style="color:#71717a; font-size:11px;">Authoritative tick synchronization frequency.</div>
+            <div style="font-weight:bold; font-size: ${DS.typography.sizes.body}; color:#ffffff;">Simulation & Network Tick Rates</div>
+            <div style="color:#71717a; font-size: ${DS.typography.sizes.small};">Authoritative tick synchronization frequency.</div>
         </div>
-        <div style="font-family:monospace; font-size:12px; color:#ffffff;">NET: 20 Hz | PHYS: 60 Hz</div>
+        <div style="font-family:monospace; font-size: ${DS.typography.sizes.small}; color:#ffffff;">NET: 20 Hz | PHYS: 60 Hz</div>
     `;
     card.appendChild(tickRow);
 
@@ -1510,7 +1510,7 @@ function renderDevAssetsTab(container: HTMLElement, s: VexeaSettingsData) {
     const dTitle = document.createElement('div');
     dTitle.innerText = '// INDEXEDDB ASSET CACHE MANAGER';
     Object.assign(dTitle.style, {
-        fontSize: '12px',
+        fontSize: DS.typography.sizes.small,
         fontWeight: 'bold',
         fontFamily: 'monospace',
         color: DS.colors.accent,
@@ -1521,14 +1521,14 @@ function renderDevAssetsTab(container: HTMLElement, s: VexeaSettingsData) {
     // Cache footprint gauge
     const gaugeWrap = document.createElement('div');
     gaugeWrap.id = 'cache-storage-gauge';
-    gaugeWrap.style.margin = '4px 0 10px 0';
+    gaugeWrap.style.margin = '4px 0 0.63rem 0';
     card.appendChild(gaugeWrap);
 
     // Asset table host
     const tableHost = document.createElement('div');
     tableHost.id = 'cache-asset-table-host';
     Object.assign(tableHost.style, {
-        maxHeight: '260px',
+        maxHeight: '16.25rem',
         overflowY: 'auto',
         border: '1px solid #27272a',
         background: '#111113'
@@ -1541,7 +1541,7 @@ function renderDevAssetsTab(container: HTMLElement, s: VexeaSettingsData) {
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
-        marginTop: '8px'
+        marginTop: '0.50rem'
     });
 
     const purgeBtn = document.createElement('button');
@@ -1573,7 +1573,7 @@ function renderDevAssetsTab(container: HTMLElement, s: VexeaSettingsData) {
     // Pipeline options card
     const pipeCard = document.createElement('div');
     pipeCard.className = 'settings-card';
-    pipeCard.style.marginTop = '10px';
+    pipeCard.style.marginTop = '0.63rem';
 
     const rowGLTF = createRow('GLTF Mesh Streaming Pipeline', 'Mesh decompression loading profile.');
     const pipelines = ['Chunked', 'Full Load', 'Lazy Instance'];
@@ -1603,11 +1603,11 @@ function renderDevAssetsTab(container: HTMLElement, s: VexeaSettingsData) {
 
             if (gaugeWrap) {
                 gaugeWrap.innerHTML = `
-                    <div style="display:flex; justify-content:space-between; font-family:monospace; font-size:11px; color:#a1a1aa; margin-bottom:4px;">
+                    <div style="display:flex; justify-content:space-between; font-family:monospace; font-size: ${DS.typography.sizes.small}; color:#a1a1aa; margin-bottom:4px;">
                         <span>STORAGE FOOTPRINT:</span>
                         <span style="color:#ffffff;">${totalMB} MB / ${budgetMB.toFixed(1)} MB (${pct.toFixed(1)}%)</span>
                     </div>
-                    <div style="height:6px; background:#27272a; width:100%;">
+                    <div style="height:0.38rem; background:#27272a; width:100%;">
                         <div style="height:100%; width:${pct}%; background:${pct > 80 ? '#ef4444' : '#22c55e'}; transition:all 200ms ease;"></div>
                     </div>
                 `;
@@ -1616,19 +1616,19 @@ function renderDevAssetsTab(container: HTMLElement, s: VexeaSettingsData) {
             if (tableHost) {
                 if (files.length === 0) {
                     tableHost.innerHTML = `
-                        <div style="padding:20px; text-align:center; font-family:monospace; font-size:11px; color:#71717a;">
+                        <div style="padding:1.25rem; text-align:center; font-family:monospace; font-size: ${DS.typography.sizes.small}; color:#71717a;">
                             No files currently cached in IndexedDB. Assets stream on demand.
                         </div>
                     `;
                 } else {
                     let tableHTML = `
-                        <table style="width:100%; border-collapse:collapse; font-family:monospace; font-size:11px; color:#a1a1aa;">
+                        <table style="width:100%; border-collapse:collapse; font-family:monospace; font-size: ${DS.typography.sizes.small}; color:#a1a1aa;">
                             <thead>
                                 <tr style="border-bottom:1px solid #27272a; background:#18181b; color:#ffffff; text-align:left;">
-                                    <th style="padding:6px 10px;">ASSET FILENAME</th>
-                                    <th style="padding:6px 10px;">SIZE</th>
-                                    <th style="padding:6px 10px;">CACHED DATE</th>
-                                    <th style="padding:6px 10px; text-align:right;">ACTION</th>
+                                    <th style="padding:0.38rem 0.63rem;">ASSET FILENAME</th>
+                                    <th style="padding:0.38rem 0.63rem;">SIZE</th>
+                                    <th style="padding:0.38rem 0.63rem;">CACHED DATE</th>
+                                    <th style="padding:0.38rem 0.63rem; text-align:right;">ACTION</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -1639,11 +1639,11 @@ function renderDevAssetsTab(container: HTMLElement, s: VexeaSettingsData) {
                         const dateStr = new Date(f.timestamp).toLocaleTimeString();
                         tableHTML += `
                             <tr style="border-bottom:1px solid rgba(255,255,255,0.03);">
-                                <td style="padding:6px 10px; color:#ffffff;">${f.filename}</td>
-                                <td style="padding:6px 10px;">${sizeKB} KB</td>
-                                <td style="padding:6px 10px;">${dateStr}</td>
-                                <td style="padding:6px 10px; text-align:right;">
-                                    <button class="action-btn delete-asset-btn" data-file="${f.filename}" style="padding:2px 8px; font-size:9px; color:#ef4444; border-color:#ef4444;">DELETE</button>
+                                <td style="padding:0.38rem 0.63rem; color:#ffffff;">${f.filename}</td>
+                                <td style="padding:0.38rem 0.63rem;">${sizeKB} KB</td>
+                                <td style="padding:0.38rem 0.63rem;">${dateStr}</td>
+                                <td style="padding:0.38rem 0.63rem; text-align:right;">
+                                    <button class="action-btn delete-asset-btn" data-file="${f.filename}" style="padding:2px 0.50rem; font-size: ${DS.typography.sizes.tiny}; color:#ef4444; border-color:#ef4444;">DELETE</button>
                                 </td>
                             </tr>
                         `;
@@ -1679,18 +1679,18 @@ function renderLegalTab(container: HTMLElement, s: VexeaSettingsData) {
 
     const textDesc = document.createElement('p');
     textDesc.innerText = 'Vexea open source compliance and redistributable third-party licenses.';
-    textDesc.style.fontSize = '12px';
+    textDesc.style.fontSize = DS.typography.sizes.small;
     textDesc.style.color = '#a1a1aa';
     card.appendChild(textDesc);
 
     const scrollBox = document.createElement('div');
     Object.assign(scrollBox.style, {
-        height: '180px',
+        height: '11.25rem',
         border: '1px solid #27272a',
         background: '#111113',
-        padding: '10px',
+        padding: '0.63rem',
         overflowY: 'auto',
-        fontSize: '11px',
+        fontSize: DS.typography.sizes.small,
         fontFamily: 'monospace',
         whiteSpace: 'pre-wrap',
         color: '#71717a'
@@ -1712,10 +1712,10 @@ Copyright (c) Guillermo Rauch
     const stamp = document.createElement('div');
     stamp.innerText = 'CLIENT BUILD v2.5.0-STABLE | RENDER CORE: THREE.JS TSL';
     Object.assign(stamp.style, {
-        fontSize: '10px',
+        fontSize: DS.typography.sizes.tiny,
         fontFamily: 'monospace',
         color: '#52525b',
-        marginTop: '6px'
+        marginTop: '0.38rem'
     });
     card.appendChild(stamp);
 
@@ -1738,13 +1738,13 @@ function createRow(titleText: string, descText: string): HTMLDivElement {
     const t = document.createElement('span');
     t.innerText = titleText;
     t.style.fontWeight = 'bold';
-    t.style.fontSize = '13px';
+    t.style.fontSize = DS.typography.sizes.body;
     t.style.color = '#ffffff';
 
     const d = document.createElement('span');
     d.innerText = descText;
     d.style.color = '#71717a';
-    d.style.fontSize = '11px';
+    d.style.fontSize = DS.typography.sizes.small;
 
     textWrap.appendChild(t);
     textWrap.appendChild(d);
@@ -1775,7 +1775,7 @@ function createSlider(
     range.max = max.toString();
     range.step = step.toString();
     range.value = currentVal.toString();
-    range.style.width = '140px';
+    range.style.width = '8.75rem';
 
     const label = document.createElement('span');
     const formatVal = (v: number) => {
@@ -1787,8 +1787,8 @@ function createSlider(
     label.innerText = formatVal(currentVal);
     Object.assign(label.style, {
         fontFamily: 'monospace',
-        fontSize: '12px',
-        minWidth: '40px',
+        fontSize: DS.typography.sizes.small,
+        minWidth: '2.50rem',
         textAlign: 'right',
         color: '#ffffff'
     });

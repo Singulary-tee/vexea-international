@@ -19,10 +19,10 @@ export class LoadingScreen {
     this.overlay = document.createElement("div");
     this.overlay.className = "fullscreen-overlay loading-overlay";
     this.overlay.style.position = "fixed";
-    this.overlay.style.top = "0";
-    this.overlay.style.left = "0";
-    this.overlay.style.width = "100vw";
-    this.overlay.style.height = "100vh";
+    this.overlay.style.inset = "0";
+    this.overlay.style.width = "100%";
+    this.overlay.style.height = "100%";
+    this.overlay.style.minHeight = "-webkit-fill-available";
     this.overlay.style.backgroundColor = DS.colors.background;
     this.overlay.style.zIndex = "9999";
     this.overlay.style.display = "flex";
@@ -45,27 +45,27 @@ export class LoadingScreen {
     wordmark.textContent = "VEXEΛ";
     wordmark.style.fontFamily = DS.typography.fontFamilyWordmark;
     wordmark.style.color = DS.colors.text;
-    wordmark.style.fontSize = "48px";
+    wordmark.style.fontSize = "clamp(1.75rem, 6vw, 48px)";
     wordmark.style.fontWeight = "800";
-    wordmark.style.letterSpacing = "6px";
-    wordmark.style.marginBottom = "10px";
+    wordmark.style.letterSpacing = "0.2em";
+    wordmark.style.marginBottom = "0.63rem";
     this.overlay.appendChild(wordmark);
 
     // Phase Label
     this.phaseLabel = document.createElement("div");
     this.phaseLabel.style.color = DS.colors.accent;
-    this.phaseLabel.style.fontSize = "18px";
+    this.phaseLabel.style.fontSize = "clamp(0.75rem, 2.5vw, 1.13rem)";
     this.phaseLabel.style.textTransform = "uppercase";
-    this.phaseLabel.style.marginBottom = "5px";
+    this.phaseLabel.style.marginBottom = "0.31rem";
     this.phaseLabel.innerText = "INITIALIZING";
     this.overlay.appendChild(this.phaseLabel);
 
     // Progress Bar Container
     const progressContainer = document.createElement("div");
-    progressContainer.style.width = "calc(100% - 40px)";
+    progressContainer.style.width = "clamp(15.00rem, 60vw, 37.50rem)";
     progressContainer.style.height = "4px";
     progressContainer.style.backgroundColor = DS.colors.surface;
-    progressContainer.style.marginBottom = "5px";
+    progressContainer.style.marginBottom = "0.31rem";
     progressContainer.style.borderRadius = "0px";
 
     // Progress Bar Fill
@@ -80,16 +80,16 @@ export class LoadingScreen {
     // Percentage Text
     this.percentageText = document.createElement("div");
     this.percentageText.style.color = DS.colors.text;
-    this.percentageText.style.fontSize = "14px";
+    this.percentageText.style.fontSize = "clamp(0.69rem, 1.8vw, 0.88rem)";
     this.percentageText.innerText = "0%";
     this.overlay.appendChild(this.percentageText);
 
     // Tip Text
     this.tipText = document.createElement("div");
     this.tipText.style.position = "absolute";
-    this.tipText.style.bottom = "20px";
+    this.tipText.style.bottom = "1.25rem";
     this.tipText.style.color = DS.colors.textMuted;
-    this.tipText.style.fontSize = "14px";
+    this.tipText.style.fontSize = "clamp(0.63rem, 1.5vw, 0.81rem)";
     this.tipText.style.textAlign = "center";
     this.tipText.style.width = "100%";
     this.tipText.innerText = this.tips[0];

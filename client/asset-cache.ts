@@ -191,52 +191,52 @@ export function mapRequestedFileToReal(filename: string): string {
 
 export const blobUrlMap = new Map<string, string>();
 
-let isPopulatingBlobUrlMap = false;
+let activePopulatePromise: Promise<void> | null = null;
 
 export async function populateBlobUrlMap(): Promise<void> {
-  // Prevent concurrent repopulation from revoking URLs mid-load
-  if (isPopulatingBlobUrlMap) return;
-  isPopulatingBlobUrlMap = true;
+  // Deduplicate concurrent calls to prevent clearing or revoking blob URLs mid-load
+  if (activePopulatePromise) return activePopulatePromise;
 
-  const db = await initDB();
-  return new Promise((resolve) => {
-    const transaction = db.transaction(STORE_NAME, "readonly");
-    const store = transaction.objectStore(STORE_NAME);
-    const request = store.openCursor();
+  activePopulatePromise = (async () => {
+    try {
+      const db = await initDB();
+      await new Promise<void>((resolve) => {
+        const transaction = db.transaction(STORE_NAME, "readonly");
+        const store = transaction.objectStore(STORE_NAME);
+        const request = store.openCursor();
 
-    // Snapshot old URLs to revoke AFTER new ones are created
-    const oldUrls = Array.from(blobUrlMap.values());
-    blobUrlMap.clear();
-
-    request.onsuccess = (event: any) => {
-      const cursor = event.target.result;
-      if (cursor) {
-        const record = cursor.value;
-        const blobUrl = URL.createObjectURL(record.blob);
-        blobUrlMap.set(record.filename, blobUrl);
-        cursor.continue();
-      } else {
-        // Revoke old URLs only after the new map is fully populated
-        for (const url of oldUrls) {
-          URL.revokeObjectURL(url);
-        }
-        // Pre-decode all cached images into DOM Image elements to prevent pop-in during screen transitions
-        for (const [filename, url] of blobUrlMap.entries()) {
-          const lower = filename.toLowerCase();
-          if (lower.endsWith('.webp') || lower.endsWith('.png') || lower.endsWith('.jpg') || lower.endsWith('.jpeg')) {
-            const img = new Image();
-            img.src = url;
+        request.onsuccess = (event: any) => {
+          const cursor = event.target.result;
+          if (cursor) {
+            const record = cursor.value;
+            // Only create new object URL if not already present in map to preserve active texture bindings
+            if (!blobUrlMap.has(record.filename)) {
+              const blobUrl = URL.createObjectURL(record.blob);
+              blobUrlMap.set(record.filename, blobUrl);
+            }
+            cursor.continue();
+          } else {
+            // Pre-decode all cached images into DOM Image elements to prevent pop-in during screen transitions
+            for (const [filename, url] of blobUrlMap.entries()) {
+              const lower = filename.toLowerCase();
+              if (lower.endsWith('.webp') || lower.endsWith('.png') || lower.endsWith('.jpg') || lower.endsWith('.jpeg')) {
+                const img = new Image();
+                img.src = url;
+              }
+            }
+            resolve();
           }
-        }
-        isPopulatingBlobUrlMap = false;
-        resolve();
-      }
-    };
-    request.onerror = () => {
-      isPopulatingBlobUrlMap = false;
-      resolve();
-    };
-  });
+        };
+        request.onerror = () => {
+          resolve();
+        };
+      });
+    } finally {
+      activePopulatePromise = null;
+    }
+  })();
+
+  return activePopulatePromise;
 }
 
 /**
@@ -354,11 +354,19 @@ export async function getCachedOrFetchUrl(
     const requestedName = filename.substring(filename.lastIndexOf("/") + 1);
     const baseName = mapRequestedFileToReal(requestedName);
 
+    const existingBlobUrl = blobUrlMap.get(baseName);
+    if (existingBlobUrl) {
+      if (onProgress) onProgress(100);
+      return existingBlobUrl;
+    }
+
     // 2. Check Local Cache first
     const cachedBlob = await getCachedBlob(baseName);
     if (cachedBlob) {
       if (onProgress) onProgress(100);
-      return URL.createObjectURL(cachedBlob);
+      const url = URL.createObjectURL(cachedBlob);
+      blobUrlMap.set(baseName, url);
+      return url;
     }
 
     // 3. Download from appropriate GitHub Release CDN
@@ -489,7 +497,9 @@ export async function getCachedOrFetchUrl(
     await setCachedBlob(baseName, blob);
 
     if (onProgress) onProgress(100);
-    return URL.createObjectURL(blob);
+    const url = URL.createObjectURL(blob);
+    blobUrlMap.set(baseName, url);
+    return url;
   } catch (error) {
     console.error(`[Cache] Fallback redirect activated for ${filename} due to:`, error);
     // Ultimate local backup fallback so development continues uninterrupted
@@ -539,19 +549,19 @@ export async function ensureAssetsDownloaded(onComplete: () => void, mapId: stri
   const dialog = document.createElement("div");
   Object.assign(dialog.style, {
     background: DS.colors.background, border: `${DS.borders.thin} ${DS.colors.accent}`, padding: DS.spacing.xxl,
-    display: "flex", flexDirection: "column", gap: DS.spacing.xl, minWidth: "300px", maxWidth: "400px"
+    display: "flex", flexDirection: "column", gap: DS.spacing.xl, minWidth: "18.75rem", maxWidth: "25.00rem"
   });
 
   const title = document.createElement("div");
   title.textContent = "GAME ASSETS REQUIRED";
   Object.assign(title.style, {
-    fontFamily: DS.typography.fontFamily, fontSize: "20px", color: DS.colors.accent,
+    fontFamily: DS.typography.fontFamily, fontSize: DS.typography.sizes.headingMd, color: DS.colors.accent,
     fontWeight: "bold", textTransform: "uppercase"
   });
 
   const desc = document.createElement("div");
   desc.textContent = `To enter the match, the engine needs to download missing combat assets. Proceed?`;
-  Object.assign(desc.style, { fontFamily: DS.typography.fontFamily, fontSize: "14px", color: "#E8E8E8" });
+  Object.assign(desc.style, { fontFamily: DS.typography.fontFamily, fontSize: DS.typography.sizes.body, color: "#E8E8E8" });
 
   const progressWrap = document.createElement("div");
   Object.assign(progressWrap.style, { display: "none", flexDirection: "column", gap: "8px" });
@@ -563,18 +573,18 @@ export async function ensureAssetsDownloaded(onComplete: () => void, mapId: stri
   barWrapper.appendChild(barInner);
   
   const progressText = document.createElement("div");
-  Object.assign(progressText.style, { fontFamily: DS.typography.fontFamily, fontSize: "12px", color: "#888888" });
+  Object.assign(progressText.style, { fontFamily: DS.typography.fontFamily, fontSize: DS.typography.sizes.small, color: "#888888" });
   
   progressWrap.appendChild(barWrapper);
   progressWrap.appendChild(progressText);
 
   const btnWrap = document.createElement("div");
-  Object.assign(btnWrap.style, { display: "flex", gap: "12px", marginTop: "8px" });
+  Object.assign(btnWrap.style, { display: "flex", gap: "0.75rem", marginTop: "0.50rem" });
 
   const cancelBtn = document.createElement("button");
   cancelBtn.textContent = "CANCEL";
   Object.assign(cancelBtn.style, {
-    flex: "1", padding: "8px", background: "transparent", border: "1px solid #555",
+    flex: "1", padding: "0.50rem", background: "transparent", border: "1px solid #555",
     color: "#888", fontFamily: DS.typography.fontFamily, cursor: "pointer"
   });
   cancelBtn.addEventListener("click", () => document.body.removeChild(modal));
@@ -582,7 +592,7 @@ export async function ensureAssetsDownloaded(onComplete: () => void, mapId: stri
   const acceptBtn = document.createElement("button");
   acceptBtn.textContent = "DOWNLOAD";
   Object.assign(acceptBtn.style, {
-    flex: "1", padding: "8px", background: DS.colors.accent, border: "none",
+    flex: "1", padding: "0.50rem", background: DS.colors.accent, border: "none",
     color: DS.colors.background, fontFamily: DS.typography.fontFamily, fontWeight: "bold", cursor: "pointer"
   });
 

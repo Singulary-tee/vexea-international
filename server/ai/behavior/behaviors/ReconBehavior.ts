@@ -5,6 +5,9 @@ export function reconBehavior(drone: any, ctx: BehaviorContext, out: BehaviorOut
   const intel = INTEL_CONFIGS[DroneType.RECON];
   const conf = DRONE_CONFIGS[DroneType.RECON];
 
+  const groupPosture = ctx.getGroupPosture(drone.groupId) || "RECON";
+  drone.posture = groupPosture;
+
   if (drone.mode === "COMBAT" && drone.combatTarget) {
     const target = drone.combatTarget.lastSensedPosition;
     const dx = target.x - drone.posX;

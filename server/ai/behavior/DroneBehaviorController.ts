@@ -9,6 +9,7 @@ import {
 import { calculateDroneAvoidance } from "../DroneAvoidance";
 import { BEHAVIORS } from "./index";
 import { BehaviorContext, BehaviorOutput } from "./types";
+import { Posture } from "../GroupTacticalState";
 
 const BASE_DETECTION_DISTANCE = 3.0;
 const DETECTION_TIME_HORIZON = 0.5;
@@ -52,10 +53,68 @@ export function initBehaviorOutputs(maxDrones: number = 50) {
   }
 }
 
+const tempVelEma = { x: 0, y: 0, z: 0 };
+
+function getGroupPosture(groupId: string): Posture | null {
+  return reusableCtx.room?.groupTacticalState ? reusableCtx.room.groupTacticalState.getPosture(groupId) : null;
+}
+
+function countSquadMatesInPosture(drone: any, posture: Posture): number {
+  if (!reusableCtx.room || !reusableCtx.room.drones) return 0;
+  let count = 0;
+  const drones = reusableCtx.room.drones;
+  for (let i = 0; i < drones.length; i++) {
+    const d = drones[i];
+    if (d.id !== drone.id && d.groupId === drone.groupId && d.state !== DroneState.DEAD) {
+      const dx = d.posX - drone.posX;
+      const dy = d.posY - drone.posY;
+      const dz = d.posZ - drone.posZ;
+      if (dx * dx + dy * dy + dz * dz <= 400) { // < 20m
+        const p = reusableCtx.room.groupTacticalState ? reusableCtx.room.groupTacticalState.getPosture(d.groupId) : null;
+        if (p === posture) count++;
+      }
+    }
+  }
+  return count;
+}
+
+function countSquadMatesWithinRange(drone: any, range: number): number {
+  if (!reusableCtx.room || !reusableCtx.room.drones) return 0;
+  let count = 0;
+  const drones = reusableCtx.room.drones;
+  const rangeSq = range * range;
+  for (let i = 0; i < drones.length; i++) {
+    const d = drones[i];
+    if (d.id !== drone.id && d.groupId === drone.groupId && d.state !== DroneState.DEAD) {
+      const dx = d.posX - drone.posX;
+      const dy = d.posY - drone.posY;
+      const dz = d.posZ - drone.posZ;
+      if (dx * dx + dy * dy + dz * dz <= rangeSq) {
+        count++;
+      }
+    }
+  }
+  return count;
+}
+
+function getPlayerVelEma(playerId: string): { x: number; y: number; z: number } | null {
+  if (!reusableCtx.room || !reusableCtx.room.players) return null;
+  const p = reusableCtx.room.players.get(playerId);
+  if (!p) return null;
+  tempVelEma.x = p.velEmaX || 0;
+  tempVelEma.y = p.velEmaY || 0;
+  tempVelEma.z = p.velEmaZ || 0;
+  return tempVelEma;
+}
+
 const reusableCtx: BehaviorContext = {
   room: null as any,
   dt: 0,
   nowMs: 0,
+  getGroupPosture,
+  countSquadMatesInPosture,
+  countSquadMatesWithinRange,
+  getPlayerVelEma,
 };
 
 export function processDroneBehaviors(drones: any[], room: any, dt: number = 0.0166, nowMs: number) {

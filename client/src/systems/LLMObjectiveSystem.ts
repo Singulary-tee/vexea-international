@@ -1,6 +1,7 @@
 import * as THREE from "three/webgpu";
 import { MatchController } from "../../MatchController";
 import { ACTIVE_GAMEMODE } from "../../../shared/gamemode-configs";
+import { DS } from "../../design-system";
 
 /**
  * LLMObjectiveSystem: Manages interaction with the rogue LLM Core objective terminal in zone_core (384, 384).
@@ -43,7 +44,7 @@ export class LLMObjectiveSystem {
     overlay.id = "llm-objective-overlay";
     Object.assign(overlay.style, {
       position: "absolute",
-      bottom: "120px",
+      bottom: "7.50rem",
       left: "50%",
       transform: "translateX(-50%)",
       display: "none",
@@ -60,7 +61,7 @@ export class LLMObjectiveSystem {
     hint.id = "llm-objective-hint";
     Object.assign(hint.style, {
       color: "#ffaa00",
-      fontSize: "13px",
+      fontSize: DS.typography.sizes.body,
       fontWeight: "bold",
       letterSpacing: "1.5px",
       textShadow: "0 0 8px rgba(255, 170, 0, 0.6)",
@@ -77,14 +78,14 @@ export class LLMObjectiveSystem {
       btn.textContent = "HOLD TO DISABLE LLM";
       Object.assign(btn.style, {
         pointerEvents: "auto",
-        minWidth: "160px",
+        minWidth: "10.00rem",
         minHeight: "48px",
-        padding: "10px 18px",
+        padding: "0.63rem 1.13rem",
         background: "rgba(255, 170, 0, 0.2)",
         border: "2px solid #ffaa00",
         borderRadius: "4px",
         color: "#ffffff",
-        fontSize: "12px",
+        fontSize: DS.typography.sizes.small,
         fontWeight: "bold",
         letterSpacing: "1px",
         boxShadow: "0 0 12px rgba(255, 170, 0, 0.4)",
@@ -117,8 +118,8 @@ export class LLMObjectiveSystem {
     // Progress Bar Container
     const barWrap = document.createElement("div");
     Object.assign(barWrap.style, {
-      width: "200px",
-      height: "10px",
+      width: "12.50rem",
+      height: "0.63rem",
       background: "rgba(0, 0, 0, 0.7)",
       border: "1px solid rgba(255, 170, 0, 0.6)",
       borderRadius: "2px",
@@ -142,7 +143,7 @@ export class LLMObjectiveSystem {
     const pText = document.createElement("div");
     pText.id = "llm-objective-progress-text";
     Object.assign(pText.style, {
-      fontSize: "10px",
+      fontSize: DS.typography.sizes.tiny,
       color: "#ffaa00",
       fontWeight: "bold",
       letterSpacing: "1px"

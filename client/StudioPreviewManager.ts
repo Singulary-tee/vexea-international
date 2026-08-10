@@ -171,6 +171,7 @@ class StudioPreviewManagerImpl {
   private activeSkinId = 'STANDARD';
   private currentLoadRequestId = 0;
   private gltfCache = new Map<string, any>();
+  private pendingGltfPromises = new Map<string, Promise<any>>();
   private activeLoadPromise: Promise<void> | null = null;
 
   public async waitForReady(): Promise<void> {
@@ -409,11 +410,21 @@ class StudioPreviewManagerImpl {
       let gltf;
       if (this.gltfCache.has(glbName)) {
         gltf = this.gltfCache.get(glbName);
+      } else if (this.pendingGltfPromises.has(glbName)) {
+        gltf = await this.pendingGltfPromises.get(glbName);
       } else {
-        const loader = createConfiguredGLTFLoader(undefined, (window as any).renderer);
-        const url = await getCachedOrFetchUrl(glbName, "Asset");
-        gltf = await loader.loadAsync(url);
-        this.gltfCache.set(glbName, gltf);
+        const loadPromise = (async () => {
+          const loader = createConfiguredGLTFLoader(undefined, (window as any).renderer);
+          const url = await getCachedOrFetchUrl(glbName, "Asset");
+          return await loader.loadAsync(url);
+        })();
+        this.pendingGltfPromises.set(glbName, loadPromise);
+        try {
+          gltf = await loadPromise;
+          this.gltfCache.set(glbName, gltf);
+        } finally {
+          this.pendingGltfPromises.delete(glbName);
+        }
       }
       
       // Cancel if a newer load request arrived while fetching
@@ -699,9 +710,25 @@ class StudioPreviewManagerImpl {
     try {
       await preloadAttachments();
 
-      const loader = createConfiguredGLTFLoader();
-      const url = await getCachedOrFetchUrl("scar_l-optimized.glb", "Asset");
-      const gltf = await loader.loadAsync(url);
+      let gltf;
+      if (this.gltfCache.has("scar_l-optimized.glb")) {
+        gltf = this.gltfCache.get("scar_l-optimized.glb");
+      } else if (this.pendingGltfPromises.has("scar_l-optimized.glb")) {
+        gltf = await this.pendingGltfPromises.get("scar_l-optimized.glb");
+      } else {
+        const loadPromise = (async () => {
+          const loader = createConfiguredGLTFLoader();
+          const url = await getCachedOrFetchUrl("scar_l-optimized.glb", "Asset");
+          return await loader.loadAsync(url);
+        })();
+        this.pendingGltfPromises.set("scar_l-optimized.glb", loadPromise);
+        try {
+          gltf = await loadPromise;
+          this.gltfCache.set("scar_l-optimized.glb", gltf);
+        } finally {
+          this.pendingGltfPromises.delete("scar_l-optimized.glb");
+        }
+      }
       const weapon = SkeletonUtils.clone(gltf.scene) as THREE.Group;
 
       fixSkinnedMeshBones(weapon, gltf.scene);
@@ -906,12 +933,13 @@ class StudioPreviewManagerImpl {
     if (this.currentMode === 'INACTIVE') return;
 
     // Smooth scale-in transition
-    this.activeModelGroup.children.forEach(model => {
+    for (let i = 0; i < this.activeModelGroup.children.length; i++) {
+      const model = this.activeModelGroup.children[i];
       if (model.userData.targetScale) {
         const target = model.userData.targetScale as THREE.Vector3;
         model.scale.lerp(target, Math.min(dt * 12, 1.0));
       }
-    });
+    }
 
     // Update animation mixer if active
     if (this.activeMixer) {

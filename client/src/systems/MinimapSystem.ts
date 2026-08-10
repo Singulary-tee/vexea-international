@@ -237,10 +237,10 @@ export class MinimapSystem {
     if (now - this.lastMarkerUpdate > 50 || this.cachedMarkers.length === 0) {
       this.lastMarkerUpdate = now;
       this.cachedMarkers.length = 0;
-      this.match.droneJitterMap.forEach((buffer) => {
-        if (buffer.count === 0) return;
+      for (const buffer of this.match.droneJitterMap.values()) {
+        if (buffer.count === 0) continue;
         const head = buffer.states[(buffer.head - 1 + 3) % 3];
-        if (!head || head.state === DroneState.DEAD) return;
+        if (!head || head.state === DroneState.DEAD) continue;
 
         let markerColor = DS.colors.textSecondary; // Ground
         if (head.type === 0 || head.type === 1 || head.type === 3) {
@@ -254,10 +254,10 @@ export class MinimapSystem {
           dz: head.posZ,
           color: markerColor
         });
-      });
+      }
 
-      this.match.remotePlayersTargetData.forEach((data, id) => {
-        if (!data || !data.isAlive) return;
+      for (const [id, data] of this.match.remotePlayersTargetData.entries()) {
+        if (!data || !data.isAlive) continue;
         const isHostile = id.startsWith('bot_') || id.startsWith('ai_');
         const markerColor = isHostile ? '#FF3366' : DS.colors.success;
         this.cachedMarkers.push({
@@ -266,7 +266,7 @@ export class MinimapSystem {
           color: markerColor,
           isPlayer: true
         });
-      });
+      }
     }
 
     // 3. Draw Drones and Remote Players from cached markers

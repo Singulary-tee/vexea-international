@@ -352,8 +352,8 @@ export class NetworkSyncSystem {
       if (ch) {
         const kills = msg.droneHp <= 0;
         ch.style.background = kills ? DS.colors.accent : DS.colors.text;
-        ch.style.width = kills ? "20px" : "15px";
-        ch.style.height = kills ? "20px" : "15px";
+        ch.style.width = kills ? "1.25rem" : "0.94rem";
+        ch.style.height = kills ? "1.25rem" : "0.94rem";
         ch.style.borderRadius = "50%";
         setTimeout(() => {
           ch.style.background = "transparent";

@@ -2,9 +2,47 @@ import { DroneType, DRONE_CONFIGS, INTEL_CONFIGS, WAYPOINTS } from "../../../../
 import { BehaviorContext, BehaviorOutput } from "../types";
 import { UNKNOWN_THRESHOLD } from "../../DroneMemory";
 
+const INVESTIGATE_ARRIVAL_RADIUS = 2.0;
+const PATROL_SPEED_MULT = 0.5;
+const INVESTIGATE_SPEED_MULT = 0.6;
+const WAYPOINT_ARRIVAL_THRESHOLD = 0.1;
+
 export function wheeledBehavior(drone: any, ctx: BehaviorContext, out: BehaviorOutput) {
   const intel = INTEL_CONFIGS[DroneType.WHEELED];
   const conf = DRONE_CONFIGS[DroneType.WHEELED];
+
+  const groupPosture = ctx.getGroupPosture(drone.groupId) || "ASSAULT";
+  drone.posture = groupPosture;
+
+  if (groupPosture === "HOLD") {
+    out.steerX = 0;
+    out.steerZ = 0;
+    out.targetSpeed = 0;
+    if (drone.mode === "COMBAT" && drone.combatTarget) {
+      out.shouldFire = true;
+      const target = drone.combatTarget.lastSensedPosition;
+      const dx = target.x - drone.posX;
+      const dz = target.z - drone.posZ;
+      const dist = Math.sqrt(dx * dx + dz * dz) || 1;
+      out.forceHeadingX = dx / dist;
+      out.forceHeadingZ = dz / dist;
+    }
+    return;
+  }
+
+  if (groupPosture === "SUPPRESS" && drone.mode === "COMBAT" && drone.combatTarget) {
+    const target = drone.combatTarget.lastSensedPosition;
+    const dx = target.x - drone.posX;
+    const dz = target.z - drone.posZ;
+    const dist = Math.sqrt(dx * dx + dz * dz) || 1;
+    out.steerX = 0;
+    out.steerZ = 0;
+    out.targetSpeed = 0;
+    out.shouldFire = true;
+    out.forceHeadingX = dx / dist;
+    out.forceHeadingZ = dz / dist;
+    return;
+  }
 
   if (drone.mode === "COMBAT" && drone.combatTarget) {
     const target = drone.combatTarget.lastSensedPosition;
@@ -13,25 +51,20 @@ export function wheeledBehavior(drone: any, ctx: BehaviorContext, out: BehaviorO
     const dz = target.z - drone.posZ;
     const dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
 
-    // Check LOS
-    const sensorPos = { x: drone.posX, y: drone.posY + 0.5, z: drone.posZ };
-    const dir = { x: dx / dist, y: dy / dist, z: dz / dist };
-    const hasLOS = ctx.room.collisionMap ? !ctx.room.collisionMap.rayIntersectsAny(sensorPos, dir, dist) : true;
-
     if (dist < intel.engagementMin) {
-      // Too close — retreat to engagementMin + 5m buffer
+      // Too close — retreat
       out.steerX = -dx / dist;
       out.steerZ = -dz / dist;
       out.targetSpeed = conf.speed;
-    } else if (dist >= intel.engagementMin && dist <= intel.engagementMax && hasLOS) {
+    } else if (dist >= intel.engagementMin && dist <= intel.engagementMax) {
       // HOLD POSITION — turret handles aiming via getDroneMuzzleWorldPosition
       out.steerX = 0;
       out.steerZ = 0;
       out.targetSpeed = 0;
       out.shouldFire = true;
-      // Body heading stays as-is; do not force rotation toward target
-      out.forceHeadingX = drone.currentHeadingX;
-      out.forceHeadingZ = drone.currentHeadingZ;
+      // Setting forceHeading to zero tells DroneBehaviorController to skip body rotation updates
+      out.forceHeadingX = 0;
+      out.forceHeadingZ = 0;
     } else {
       // APPROACH to optimal range
       out.steerX = dx / dist;
@@ -45,10 +78,10 @@ export function wheeledBehavior(drone: any, ctx: BehaviorContext, out: BehaviorO
       const dx = investigateTarget.x - drone.posX;
       const dz = investigateTarget.z - drone.posZ;
       const dist = Math.sqrt(dx * dx + dz * dz);
-      if (dist > 2.0) {
+      if (dist > INVESTIGATE_ARRIVAL_RADIUS) {
         out.steerX = dx / dist;
         out.steerZ = dz / dist;
-        out.targetSpeed = conf.speed * 0.6;
+        out.targetSpeed = conf.speed * INVESTIGATE_SPEED_MULT;
       } else {
         // Arrived at last known position, hold and scan
         out.steerX = 0;
@@ -61,10 +94,10 @@ export function wheeledBehavior(drone: any, ctx: BehaviorContext, out: BehaviorO
       const dx = wp.x - drone.posX;
       const dz = wp.z - drone.posZ;
       const dist = Math.sqrt(dx * dx + dz * dz);
-      if (dist > 0.1) {
+      if (dist > WAYPOINT_ARRIVAL_THRESHOLD) {
         out.steerX = dx / dist;
         out.steerZ = dz / dist;
-        out.targetSpeed = conf.speed * 0.5;
+        out.targetSpeed = conf.speed * PATROL_SPEED_MULT;
       }
     }
   }

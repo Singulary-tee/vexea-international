@@ -184,7 +184,7 @@ export function initMainMenu() {
         border: ${DS.glass.border};
         border-radius: 0px;
       }
-      .mm-wordmark { font-size: clamp(18px, 3vw, 36px); }
+      .mm-wordmark { font-size: clamp(1.13rem, 3vw, 2.25rem); }
       .mm-right-panel-content {
         transition: opacity ${DS.transitions.panel};
       }
@@ -192,10 +192,13 @@ export function initMainMenu() {
       .mm-fisheye-wrap {
         position: absolute;
         inset: 0;
-        transform: scale(0.97) perspective(1200px) rotateX(2.5deg);
-        transform-style: preserve-3d;
         pointer-events: none;
         z-index: 2;
+      }
+      @media (min-width: 64.00rem) {
+        .mm-fisheye-wrap {
+          transform: scale(0.98);
+        }
       }
       .mm-fisheye-wrap > * {
         pointer-events: auto;
@@ -203,7 +206,7 @@ export function initMainMenu() {
       .mm-top-shadow {
         position: absolute;
         top: 0; left: 0; right: 0;
-        height: clamp(80px, 15vh, 160px);
+        height: clamp(5.00rem, 15vh, 10.00rem);
         background: linear-gradient(to bottom, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.6) 40%, rgba(0,0,0,0) 100%);
         z-index: 1;
         pointer-events: none;
@@ -235,11 +238,11 @@ export function initMainMenu() {
         box-sizing: border-box;
         font-family: ${DS.typography.fontFamily};
         font-weight: bold;
-        font-size: clamp(10px, 6.5cqi, 24px);
+        font-size: clamp(0.63rem, 6.5cqi, 1.50rem);
         text-transform: uppercase;
         color: #FFFFFF;
         text-shadow: 1px 1px 4px rgba(0,0,0,1);
-        padding: clamp(4px, 3cqi, 12px);
+        padding: clamp(4px, 3cqi, 0.75rem);
         z-index: 2;
         pointer-events: none;
         white-space: nowrap;
@@ -248,10 +251,14 @@ export function initMainMenu() {
         text-overflow: clip;
       }
       #settings-sidebar::-webkit-scrollbar { display:none; }
-      @media (max-width: 768px) {
-         .mm-wordmark { font-size: 24px !important; }
+      @media (max-width: 48.00rem) {
+         .mm-wordmark { font-size: ${DS.typography.sizes.headingMd} !important; }
          .mm-profile-rank { display: none !important; }
-         .mm-new-card-title { font-size: clamp(10px, 7.5cqi, 20px) !important; padding: 6px !important; }
+         .mm-new-card-title { font-size: clamp(0.63rem, 7.5cqi, 1.25rem) !important; padding: 0.38rem !important; }
+         #mm-nav-container { gap: 6px !important; }
+         .mm-nav-btn { font-size: ${DS.typography.sizes.tiny} !important; padding: 2px 4px !important; }
+         #profile-cr-display { display: none !important; }
+         #mm-main-layout { width: calc(100vw - 1.50rem) !important; left: 0.75rem !important; }
       }
       @keyframes pulse-glow {
         0%, 100% {
@@ -375,7 +382,7 @@ export function initMainMenu() {
   const topRow = document.createElement('div');
   Object.assign(topRow.style, {
     position: 'absolute', top: '0', left: '0', right: '0', zIndex: '10',
-    padding: 'clamp(6px, 1vh, 10px) clamp(12px, 2vw, 20px)',
+    padding: 'clamp(0.38rem, 1vh, 0.63rem) clamp(0.75rem, 2vw, 1.25rem)',
     display: 'flex', justifyContent: 'space-between', alignItems: 'center'
   });
 
@@ -418,12 +425,12 @@ export function initMainMenu() {
     btn.textContent = item.label;
     Object.assign(btn.style, {
       fontFamily: DS.typography.fontFamily,
-      fontSize: 'clamp(11px, 1.2vw, 13px)',
+      fontSize: 'clamp(0.69rem, 1.2vw, 0.81rem)',
       fontWeight: 'bold',
       letterSpacing: '1.5px',
       color: item.id === 'DEFAULT' ? DS.colors.accent : 'rgba(255, 255, 255, 0.6)',
       cursor: 'pointer',
-      padding: '4px 8px',
+      padding: '4px 0.50rem',
       borderBottom: item.id === 'DEFAULT' ? `2px solid ${DS.colors.accent}` : '2px solid transparent',
       transition: 'all 0.2s ease',
       userSelect: 'none',
@@ -465,8 +472,8 @@ export function initMainMenu() {
   const avatarSquare = document.createElement('div');
   avatarSquare.id = 'profile-avatar-square';
   Object.assign(avatarSquare.style, {
-    width: 'clamp(28px, 3.5vh, 34px)',
-    height: 'clamp(28px, 3.5vh, 34px)',
+    width: 'clamp(1.75rem, 3.5vh, 2.13rem)',
+    height: 'clamp(1.75rem, 3.5vh, 2.13rem)',
     aspectRatio: '1 / 1',
     borderRadius: '0px',
     border: `1px solid ${DS.colors.accent}`,
@@ -494,7 +501,7 @@ export function initMainMenu() {
   const xpBarTrack = document.createElement('div');
   Object.assign(xpBarTrack.style, {
     width: '3px',
-    height: '28px',
+    height: '1.75rem',
     background: 'rgba(255, 255, 255, 0.18)',
     borderRadius: '0px',
     overflow: 'hidden',
@@ -527,7 +534,7 @@ export function initMainMenu() {
   profileNameText = document.createElement('div');
   Object.assign(profileNameText.style, {
     fontFamily: DS.typography.fontFamily,
-    fontSize: 'clamp(10px, 1.2vh, 12px)',
+    fontSize: 'clamp(0.63rem, 1.2vh, 0.75rem)',
     color: DS.colors.text,
     textTransform: 'uppercase',
     letterSpacing: '1px',
@@ -540,9 +547,9 @@ export function initMainMenu() {
   profileRankBadge.className = 'mm-profile-rank';
   Object.assign(profileRankBadge.style, {
     background: DS.colors.accent,
-    padding: '1px 5px',
+    padding: '1px 0.31rem',
     fontFamily: DS.typography.fontFamily,
-    fontSize: 'clamp(8px, 1vh, 9px)',
+    fontSize: 'clamp(0.50rem, 1vh, 0.56rem)',
     fontWeight: DS.typography.weightBold,
     color: DS.colors.background,
     borderRadius: '0px',
@@ -563,12 +570,12 @@ export function initMainMenu() {
     justifyContent: 'center',
     gap: '2px',
     fontFamily: DS.typography.fontFamily,
-    fontSize: 'clamp(9px, 1.1vh, 10.5px)',
+    fontSize: 'clamp(0.56rem, 1.1vh, 0.66rem)',
     color: DS.colors.accent,
     fontWeight: 'bold',
     letterSpacing: '0.5px',
     pointerEvents: 'none',
-    height: '28px',
+    height: '1.75rem',
     flexShrink: '0'
   });
 
@@ -679,7 +686,7 @@ export function initMainMenu() {
   const sepLeft1 = document.createElement('div');
   Object.assign(sepLeft1.style, {
     width: '1px',
-    height: '18px',
+    height: '1.13rem',
     background: 'rgba(255, 255, 255, 0.15)',
     flexShrink: '0'
   });
@@ -689,7 +696,7 @@ export function initMainMenu() {
   const sepLeft2 = document.createElement('div');
   Object.assign(sepLeft2.style, {
     width: '1px',
-    height: '18px',
+    height: '1.13rem',
     background: 'rgba(255, 255, 255, 0.15)',
     flexShrink: '0'
   });
@@ -732,7 +739,7 @@ export function initMainMenu() {
   const sepRight1 = document.createElement('div');
   Object.assign(sepRight1.style, {
     width: '1px',
-    height: '18px',
+    height: '1.13rem',
     background: 'rgba(255, 255, 255, 0.15)',
     flexShrink: '0'
   });
@@ -742,7 +749,7 @@ export function initMainMenu() {
   const sepRight2 = document.createElement('div');
   Object.assign(sepRight2.style, {
     width: '1px',
-    height: '18px',
+    height: '1.13rem',
     background: 'rgba(255, 255, 255, 0.15)',
     flexShrink: '0'
   });
@@ -759,15 +766,15 @@ export function initMainMenu() {
   const mainLayout = document.createElement('div');
   mainLayout.id = 'mm-main-layout';
   Object.assign(mainLayout.style, {
-    position: 'absolute', top: 'clamp(58px, 8vh, 72px)', bottom: 'clamp(12px, 2vh, 20px)', 
-    left: 'clamp(12px, 2vh, 20px)', zIndex: '2',
+    position: 'absolute', top: 'clamp(3.63rem, 8vh, 4.50rem)', bottom: 'clamp(0.75rem, 2vh, 1.25rem)', 
+    left: 'clamp(0.75rem, 2vh, 1.25rem)', zIndex: '2',
     display: 'flex', flexDirection: 'column', gap: 'clamp(10px, 1.5vh, 20px)',
-    width: 'clamp(320px, 45vw, 48vw)', transition: 'opacity 0.3s'
+    width: 'clamp(20.00rem, 45vw, 48vw)', transition: 'opacity 0.3s'
   });
 
   const menuLeftColumn = document.createElement('div');
   Object.assign(menuLeftColumn.style, {
-    display: 'flex', flexDirection: 'column', gap: 'clamp(6px, 1.0vh, 12px)', flex: '1', minHeight: '0'
+    display: 'flex', flexDirection: 'column', gap: 'clamp(0.38rem, 1.0vh, 0.75rem)', flex: '1', minHeight: '0'
   });
 
   const createNewCard = (title: string, bgImage: string) => {
@@ -794,7 +801,7 @@ export function initMainMenu() {
   playCard.style.width = '100%';
   playCard.style.minHeight = '0';
   playCard.style.backgroundPosition = 'right top 25%';
-  playObj.titleEl.style.fontSize = 'clamp(17px, 12.5cqi, 42px)';
+  playObj.titleEl.style.fontSize = 'clamp(1.06rem, 12.5cqi, 2.63rem)';
   playCard.onclick = (e) => {
     e.stopPropagation();
     const lastMapId = localStorage.getItem('lastChosenMap') || getDefaultMap().id;
@@ -805,7 +812,7 @@ export function initMainMenu() {
   Object.assign(playContent.style, {
     position: 'absolute', inset: '0',
     display: 'flex', flexDirection: 'column', justifyContent: 'space-between', alignItems: 'flex-end',
-    padding: 'clamp(4px, 1vh, 8px)', gap: '4px', zIndex: '3', pointerEvents: 'none'
+    padding: 'clamp(4px, 1vh, 0.50rem)', gap: '4px', zIndex: '3', pointerEvents: 'none'
   });
 
   if (IS_DEV) {
@@ -820,7 +827,7 @@ export function initMainMenu() {
         btn.textContent = text;
         Object.assign(btn.style, {
             color: '#000000', border: 'none', background: DS.colors.accent,
-            padding: '3px 8px', fontFamily: DS.typography.fontFamily, fontSize: 'clamp(10px, 2.25cqi, 14px)', cursor: 'pointer',
+            padding: '3px 0.50rem', fontFamily: DS.typography.fontFamily, fontSize: 'clamp(0.63rem, 2.25cqi, 0.88rem)', cursor: 'pointer',
             fontWeight: 'bold', textShadow: 'none', borderRadius: '0px', whiteSpace: 'nowrap', lineHeight: '1.2'
         });
         btn.onclick = onClick;
@@ -866,9 +873,9 @@ export function initMainMenu() {
     qmBtn.className = 'mm-deploy-btn-glow';
     Object.assign(qmBtn.style, {
       color: DS.colors.background, background: DS.colors.accent, border: 'none',
-      padding: '8px 20px',
+      padding: '0.50rem 1.25rem',
       fontFamily: DS.typography.fontFamily, fontWeight: DS.typography.weightBold,
-      fontSize: 'clamp(16px, 4cqi, 24px)', cursor: 'pointer', pointerEvents: 'auto',
+      fontSize: 'clamp(1.00rem, 4cqi, 1.50rem)', cursor: 'pointer', pointerEvents: 'auto',
       borderRadius: '0px', textAlign: 'center', whiteSpace: 'nowrap', boxShadow: '0 2px 6px rgba(0,0,0,0.5)', zIndex: '5',
       marginTop: 'auto'
     });
@@ -904,7 +911,7 @@ export function initMainMenu() {
   // --- ROW 2: UPDATES, FACTION, INTEL, LOADOUT (25% of Row 1) ---
   const row2Container = document.createElement('div');
   Object.assign(row2Container.style, {
-    display: 'flex', flexDirection: 'row', gap: 'clamp(6px, 1vw, 10px)', width: '100%', flex: '1.0', minHeight: '0'
+    display: 'flex', flexDirection: 'row', gap: 'clamp(0.38rem, 1vw, 0.63rem)', width: '100%', flex: '1.0', minHeight: '0'
   });
 
   // 1. UPDATES CARD
@@ -935,7 +942,7 @@ export function initMainMenu() {
   updatesMainText.textContent = 'BETA v0.1';
   Object.assign(updatesMainText.style, {
     position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
-    fontFamily: DS.typography.fontFamily, fontSize: 'clamp(8px, 1.5vh, 12px)', color: '#FFFFFF',
+    fontFamily: DS.typography.fontFamily, fontSize: 'clamp(0.50rem, 1.5vh, 0.75rem)', color: '#FFFFFF',
     fontWeight: 'bold', letterSpacing: '2px', textAlign: 'center', width: '90%',
     textShadow: '0 2px 6px rgba(0,0,0,0.9)', zIndex: '4', pointerEvents: 'none'
   });
@@ -944,8 +951,8 @@ export function initMainMenu() {
   const updatesSubtext = document.createElement('div');
   updatesSubtext.textContent = 'NEW MAP & WEAPONS';
   Object.assign(updatesSubtext.style, {
-    position: 'absolute', bottom: 'clamp(4px, 0.8vh, 8px)', left: 'clamp(6px, 1cqi, 10px)',
-    fontFamily: DS.typography.fontFamily, fontSize: 'clamp(6px, 0.8vh, 8px)', color: 'rgba(255,255,255,0.85)',
+    position: 'absolute', bottom: 'clamp(4px, 0.8vh, 0.50rem)', left: 'clamp(0.38rem, 1cqi, 0.63rem)',
+    fontFamily: DS.typography.fontFamily, fontSize: 'clamp(0.38rem, 0.8vh, 0.50rem)', color: 'rgba(255,255,255,0.85)',
     fontWeight: 'bold', letterSpacing: '1px', textShadow: '1px 1px 3px rgba(0,0,0,0.9)', zIndex: '4', pointerEvents: 'none'
   });
   updatesCard.appendChild(updatesSubtext);
@@ -983,13 +990,13 @@ export function initMainMenu() {
   const bpInfo = document.createElement('div');
   Object.assign(bpInfo.style, {
     position: 'absolute', inset: '0', display: 'flex', flexDirection: 'column', justifyContent: 'flex-end',
-    padding: 'clamp(6px, 1vh, 10px)', pointerEvents: 'none', zIndex: '4'
+    padding: 'clamp(0.38rem, 1vh, 0.63rem)', pointerEvents: 'none', zIndex: '4'
   });
 
   const tierText = document.createElement('div');
   tierText.textContent = `TIER ${String(currentTier).padStart(2, '0')}`;
   Object.assign(tierText.style, {
-    fontFamily: DS.typography.fontFamily, fontSize: 'clamp(9px, 1.2vh, 11px)', color: '#FFFFFF',
+    fontFamily: DS.typography.fontFamily, fontSize: 'clamp(0.56rem, 1.2vh, 0.69rem)', color: '#FFFFFF',
     fontWeight: '900', letterSpacing: '1px', textShadow: '0 2px 4px rgba(0,0,0,0.8)'
   });
   bpInfo.appendChild(tierText);
@@ -1003,7 +1010,7 @@ export function initMainMenu() {
   const barFill = document.createElement('div');
   Object.assign(barFill.style, {
     width: `${progressPct}%`, height: '100%', background: DS.colors.accent,
-    boxShadow: `0 0 10px ${DS.colors.accent}`, transition: 'width 0.5s ease-out'
+    boxShadow: `0 0 0.63rem ${DS.colors.accent}`, transition: 'width 0.5s ease-out'
   });
   barContainer.appendChild(barFill);
   bpInfo.appendChild(barContainer);
@@ -1017,7 +1024,7 @@ export function initMainMenu() {
   // --- ROW 3: CHALLENGES & STORE (50% of Row 1) ---
   const row3Container = document.createElement('div');
   Object.assign(row3Container.style, {
-    display: 'flex', flexDirection: 'row', gap: 'clamp(6px, 1vw, 10px)', width: '100%', flex: '2.3', minHeight: '0'
+    display: 'flex', flexDirection: 'row', gap: 'clamp(0.38rem, 1vw, 0.63rem)', width: '100%', flex: '2.3', minHeight: '0'
   });
 
   // 1. STORE CARD (Offers Carousel)
@@ -1037,11 +1044,11 @@ export function initMainMenu() {
   const promoTextEl = document.createElement('div');
   Object.assign(promoTextEl.style, {
     position: 'absolute',
-    bottom: '8px',
-    right: '8px',
+    bottom: '0.50rem',
+    right: '0.50rem',
     color: '#FFFFFF',
     fontFamily: DS.typography.fontFamily,
-    fontSize: 'clamp(12px, 2vh, 16px)',
+    fontSize: 'clamp(0.75rem, 2vh, 1.00rem)',
     fontWeight: 'bold',
     letterSpacing: '1px',
     zIndex: '4',
@@ -1087,7 +1094,7 @@ export function initMainMenu() {
   challengesPanel.id = 'mm-challenges-panel';
   Object.assign(challengesPanel.style, {
     position: 'relative', flex: '1', height: '100%', minHeight: '0', zIndex: '2',
-    display: 'flex', flexDirection: 'column', padding: 'clamp(4px, 0.8vh, 8px)',
+    display: 'flex', flexDirection: 'column', padding: 'clamp(4px, 0.8vh, 0.50rem)',
     gap: 'clamp(1px, 0.3vh, 3px)', overflow: 'hidden', background: 'rgba(0, 0, 0, 0.8)',
     boxShadow: '0 0 25px 15px rgba(0, 0, 0, 0.85)', borderRadius: '0px', cursor: 'default',
     transition: 'opacity 0.3s'
@@ -1101,14 +1108,14 @@ export function initMainMenu() {
   const challengesTitle = document.createElement('div');
   challengesTitle.textContent = 'CHALLENGES';
   Object.assign(challengesTitle.style, {
-    fontFamily: DS.typography.fontFamily, fontSize: 'clamp(9px, 1.2vh, 11px)', fontWeight: '200', color: '#FFFFFF',
-    letterSpacing: '6px', textAlign: 'center', width: '100%'
+    fontFamily: DS.typography.fontFamily, fontSize: 'clamp(0.56rem, 1.2vh, 0.69rem)', fontWeight: '200', color: '#FFFFFF',
+    letterSpacing: '0.38rem', textAlign: 'center', width: '100%'
   });
 
   const challengesTimer = document.createElement('div');
   challengesTimer.textContent = 'RESETS IN 14H';
   Object.assign(challengesTimer.style, {
-    fontFamily: DS.typography.fontFamily, fontSize: 'clamp(5.5px, 0.7vh, 7px)', color: 'rgba(255,255,255,0.45)',
+    fontFamily: DS.typography.fontFamily, fontSize: 'clamp(0.34rem, 0.7vh, 0.44rem)', color: 'rgba(255,255,255,0.45)',
     fontWeight: '300', letterSpacing: '1px', textAlign: 'center', marginTop: '1px'
   });
 
@@ -1150,14 +1157,14 @@ export function initMainMenu() {
     const chName = document.createElement('div');
     chName.textContent = ch.name;
     Object.assign(chName.style, {
-      fontFamily: DS.typography.fontFamily, fontSize: 'clamp(7px, 0.9vh, 8.5px)', fontWeight: 'bold', color: '#FFFFFF',
+      fontFamily: DS.typography.fontFamily, fontSize: 'clamp(0.44rem, 0.9vh, 0.53rem)', fontWeight: 'bold', color: '#FFFFFF',
       lineHeight: '1.0'
     });
 
     const chReward = document.createElement('div');
     chReward.textContent = ch.reward;
     Object.assign(chReward.style, {
-      fontFamily: DS.typography.fontFamily, fontSize: 'clamp(6px, 0.8vh, 7.5px)', fontWeight: 'normal', color: '#FFFFFF',
+      fontFamily: DS.typography.fontFamily, fontSize: 'clamp(0.38rem, 0.8vh, 0.47rem)', fontWeight: 'normal', color: '#FFFFFF',
       lineHeight: '1.0'
     });
 
@@ -1168,7 +1175,7 @@ export function initMainMenu() {
     const descRow = document.createElement('div');
     descRow.textContent = ch.desc;
     Object.assign(descRow.style, {
-      fontFamily: DS.typography.fontFamily, fontSize: 'clamp(5px, 0.65vh, 7px)', color: 'rgba(255,255,255,0.6)',
+      fontFamily: DS.typography.fontFamily, fontSize: 'clamp(0.31rem, 0.65vh, 0.44rem)', color: 'rgba(255,255,255,0.6)',
       lineHeight: '1.0', marginTop: '1px'
     });
     item.appendChild(descRow);
@@ -1191,7 +1198,7 @@ export function initMainMenu() {
     const chVal = document.createElement('div');
     chVal.textContent = `${ch.current}/${ch.target}`;
     Object.assign(chVal.style, {
-      fontFamily: DS.typography.fontFamily, fontSize: 'clamp(6px, 0.8vh, 7.5px)', color: '#FFFFFF', fontWeight: 'bold',
+      fontFamily: DS.typography.fontFamily, fontSize: 'clamp(0.38rem, 0.8vh, 0.47rem)', color: '#FFFFFF', fontWeight: 'bold',
       lineHeight: '1.0'
     });
 
@@ -1222,14 +1229,14 @@ export function initMainMenu() {
   const tabContentLayout = document.createElement('div');
   tabContentLayout.id = 'mm-tab-layout';
   Object.assign(tabContentLayout.style, {
-    position: 'absolute', top: 'clamp(38px, 6.5vh, 52px)', bottom: 'clamp(12px, 2vh, 24px)', 
-    left: 'clamp(12px, 2vw, 24px)', right: 'clamp(12px, 2vw, 24px)', zIndex: '3',
+    position: 'absolute', top: 'clamp(2.38rem, 6.5vh, 3.25rem)', bottom: 'clamp(0.75rem, 2vh, 1.50rem)', 
+    left: 'clamp(0.75rem, 2vw, 1.50rem)', right: 'clamp(0.75rem, 2vw, 1.50rem)', zIndex: '3',
     display: 'none', flexDirection: 'column',
-    maxWidth: '1400px', margin: '0 auto',
+    maxWidth: '87.50rem', margin: '0 auto',
     background: 'radial-gradient(ellipse at center, rgba(3, 3, 5, 0.98) 0%, rgba(3, 3, 5, 0.85) 65%, rgba(3, 3, 5, 0.3) 85%, rgba(3, 3, 5, 0) 100%)',
     border: 'none',
     borderRadius: '0px',
-    padding: 'clamp(10px, 1.8vh, 18px)',
+    padding: 'clamp(0.63rem, 1.8vh, 1.13rem)',
     boxSizing: 'border-box',
     overflow: 'hidden'
   });
@@ -1448,15 +1455,15 @@ function clearActiveCard() {
 function createPanelBlock(label: string, renderContent: (container: HTMLElement) => void, isLast: boolean = false) {
   const block = document.createElement('div');
   Object.assign(block.style, {
-    padding: 'clamp(8px, 2vh, 16px) 0', borderBottom: isLast ? 'none' : '1px solid rgba(255,255,255,0.06)'
+    padding: 'clamp(0.50rem, 2vh, 1.00rem) 0', borderBottom: isLast ? 'none' : '1px solid rgba(255,255,255,0.06)'
   });
   
   if (label) {
     const lbl = document.createElement('div');
     lbl.textContent = label;
     Object.assign(lbl.style, {
-      fontFamily: DS.typography.fontFamily, fontSize: 'clamp(8px, 1.25vh, 11px)', textTransform: 'uppercase',
-      color: DS.colors.textMuted, letterSpacing: '4px', marginBottom: 'clamp(4px, 1vh, 8px)'
+      fontFamily: DS.typography.fontFamily, fontSize: 'clamp(0.50rem, 1.25vh, 0.69rem)', textTransform: 'uppercase',
+      color: DS.colors.textMuted, letterSpacing: '4px', marginBottom: 'clamp(4px, 1vh, 0.50rem)'
     });
     block.appendChild(lbl);
   }
@@ -1559,20 +1566,20 @@ function renderRightPanel() {
            ];
            stats.forEach(s => {
              const row = document.createElement('div');
-             Object.assign(row.style, { display: 'flex', justifyContent: 'space-between', marginBottom: 'clamp(4px, 1vh, 8px)' });
+             Object.assign(row.style, { display: 'flex', justifyContent: 'space-between', marginBottom: 'clamp(4px, 1vh, 0.50rem)' });
              const lbl = document.createElement('span'); lbl.textContent = s.l;
-             Object.assign(lbl.style, { fontFamily: DS.typography.fontFamily, fontSize: 'clamp(10px, 1.5vh, 14px)', color: DS.colors.textMuted });
+             Object.assign(lbl.style, { fontFamily: DS.typography.fontFamily, fontSize: 'clamp(0.63rem, 1.5vh, 0.88rem)', color: DS.colors.textMuted });
              const val = document.createElement('span'); 
              val.id = `intel-summary-val-${s.key}`;
              val.textContent = s.v;
-             Object.assign(val.style, { fontFamily: DS.typography.fontFamily, fontSize: 'clamp(14px, 2.5vh, 18px)', color: DS.colors.text, fontWeight: DS.typography.weightBold });
+             Object.assign(val.style, { fontFamily: DS.typography.fontFamily, fontSize: 'clamp(0.88rem, 2.5vh, 1.13rem)', color: DS.colors.text, fontWeight: DS.typography.weightBold });
              row.appendChild(lbl); row.appendChild(val); c.appendChild(row);
            });
          }));
 
          container.appendChild(createPanelBlock('LAST MATCH', c => {
            const lbl = document.createElement('div'); lbl.textContent = 'NO DATA AVAILABLE';
-           Object.assign(lbl.style, { fontFamily: DS.typography.fontFamily, fontSize: 'clamp(10px, 1.5vh, 14px)', color: DS.colors.textMuted });
+           Object.assign(lbl.style, { fontFamily: DS.typography.fontFamily, fontSize: 'clamp(0.63rem, 1.5vh, 0.88rem)', color: DS.colors.textMuted });
            c.appendChild(lbl);
          }, true));
       }
@@ -1616,7 +1623,7 @@ function renderRightPanel() {
         leftTitle.textContent = 'SELECT OPERATIONAL DIRECTIVE';
         Object.assign(leftTitle.style, {
           fontFamily: DS.typography.fontFamily,
-          fontSize: '8.5px',
+          fontSize: DS.typography.sizes.tiny,
           color: DS.colors.textMuted,
           letterSpacing: '1.5px',
           fontWeight: 'bold',
@@ -1642,7 +1649,7 @@ function renderRightPanel() {
             background: isSelected ? 'rgba(255, 69, 0, 0.05)' : 'rgba(255, 255, 255, 0.01)',
             border: isSelected ? `1px solid ${DS.colors.accent}` : '1px solid rgba(255, 255, 255, 0.05)',
             borderRadius: '0px',
-            padding: '6px 10px',
+            padding: '0.38rem 0.63rem',
             cursor: 'pointer',
             position: 'relative',
             display: 'flex',
@@ -1674,7 +1681,7 @@ function renderRightPanel() {
           nameEl.textContent = mode.label;
           Object.assign(nameEl.style, {
             fontFamily: DS.typography.fontFamily,
-            fontSize: '11.5px',
+            fontSize: DS.typography.sizes.small,
             fontWeight: 'bold',
             color: isSelected ? DS.colors.text : 'rgba(255, 255, 255, 0.6)',
             letterSpacing: '0.8px'
@@ -1684,7 +1691,7 @@ function renderRightPanel() {
           descEl.textContent = mode.desc.toUpperCase();
           Object.assign(descEl.style, {
             fontFamily: DS.typography.fontFamily,
-            fontSize: '8px',
+            fontSize: DS.typography.sizes.tiny,
             color: isSelected ? 'rgba(255, 255, 255, 0.6)' : 'rgba(255, 255, 255, 0.3)',
             letterSpacing: '0.5px'
           });
@@ -1697,10 +1704,10 @@ function renderRightPanel() {
           statusEl.textContent = isSelected ? 'ACTIVE' : 'READY';
           Object.assign(statusEl.style, {
             fontFamily: DS.typography.fontFamily,
-            fontSize: '7.5px',
+            fontSize: DS.typography.sizes.tiny,
             fontWeight: 'bold',
             letterSpacing: '0.8px',
-            padding: '2px 6px',
+            padding: '2px 0.38rem',
             borderRadius: '0px',
             background: isSelected ? 'rgba(255, 69, 0, 0.15)' : 'rgba(255, 255, 255, 0.03)',
             color: isSelected ? DS.colors.accent : 'rgba(255, 255, 255, 0.4)',
@@ -1738,7 +1745,7 @@ function renderRightPanel() {
         centerTitle.textContent = 'ZONE INTEL & SECTOR MAP';
         Object.assign(centerTitle.style, {
           fontFamily: DS.typography.fontFamily,
-          fontSize: '8.5px',
+          fontSize: DS.typography.sizes.tiny,
           color: DS.colors.textMuted,
           letterSpacing: '1.5px',
           fontWeight: 'bold',
@@ -1752,7 +1759,7 @@ function renderRightPanel() {
           background: 'rgba(255, 255, 255, 0.015)',
           border: '1px solid rgba(255, 255, 255, 0.05)',
           borderRadius: '0px',
-          padding: '8px 10px',
+          padding: '0.50rem 0.63rem',
           display: 'flex',
           flexDirection: 'column',
           gap: '6px',
@@ -1763,12 +1770,12 @@ function renderRightPanel() {
 
         zoneCard.innerHTML = `
           <div style="display:flex; justify-content:space-between; align-items:center;">
-            <span style="font-family:${DS.typography.fontFamily}; font-size:10px; font-weight:bold; color:${DS.colors.text}; letter-spacing:0.8px;">${getDefaultMap().displayName.toUpperCase()}</span>
-            <span style="font-family:${DS.typography.fontFamily}; font-size:7.5px; font-weight:bold; color:#00FF88; background:rgba(0,255,136,0.08); padding:1px 5px; border:1px solid rgba(0,255,136,0.2);">SECURE</span>
+            <span style="font-family:${DS.typography.fontFamily}; font-size: ${DS.typography.sizes.tiny}; font-weight:bold; color:${DS.colors.text}; letter-spacing:0.8px;">${getDefaultMap().displayName.toUpperCase()}</span>
+            <span style="font-family:${DS.typography.fontFamily}; font-size: ${DS.typography.sizes.tiny}; font-weight:bold; color:#00FF88; background:rgba(0,255,136,0.08); padding:1px 0.31rem; border:1px solid rgba(0,255,136,0.2);">SECURE</span>
           </div>
 
           <!-- Zone Blueprint Map SVG Preview -->
-          <div style="width:100%; height:clamp(60px, 11vh, 90px); background:rgba(0,0,0,0.4); border:1px solid rgba(255,255,255,0.06); border-radius:0px; display:flex; align-items:center; justify-content:center; position:relative; overflow:hidden;">
+          <div style="width:100%; height:clamp(3.75rem, 11vh, 5.63rem); background:rgba(0,0,0,0.4); border:1px solid rgba(255,255,255,0.06); border-radius:0px; display:flex; align-items:center; justify-content:center; position:relative; overflow:hidden;">
             <svg width="100%" height="100%" viewBox="0 0 200 120" preserveAspectRatio="xMidYMid meet">
               <rect width="200" height="120" fill="#050508"/>
               <path d="M20,20 L180,20 L180,100 L20,100 Z" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="1" stroke-dasharray="4 2"/>
@@ -1780,7 +1787,7 @@ function renderRightPanel() {
               <circle cx="65" cy="45" r="4" fill="#00F0FF"/>
               <circle cx="135" cy="75" r="4" fill="#00FF88"/>
             </svg>
-            <div style="position:absolute; bottom:4px; left:6px; font-family:${DS.typography.fontFamily}; font-size:6.5px; color:${DS.colors.textMuted}; letter-spacing:0.8px;">BLUEPRINT v2.1</div>
+            <div style="position:absolute; bottom:4px; left:0.38rem; font-family:${DS.typography.fontFamily}; font-size: ${DS.typography.sizes.tiny}; color:${DS.colors.textMuted}; letter-spacing:0.8px;">BLUEPRINT v2.1</div>
           </div>
         `;
         centerCol.appendChild(zoneCard);
@@ -1799,7 +1806,7 @@ function renderRightPanel() {
         rightTitle.textContent = 'DEPLOYMENT PARAMETERS';
         Object.assign(rightTitle.style, {
           fontFamily: DS.typography.fontFamily,
-          fontSize: '8.5px',
+          fontSize: DS.typography.sizes.tiny,
           color: DS.colors.textMuted,
           letterSpacing: '1.5px',
           fontWeight: 'bold',
@@ -1813,7 +1820,7 @@ function renderRightPanel() {
           background: 'rgba(255, 255, 255, 0.015)',
           border: '1px solid rgba(255, 255, 255, 0.05)',
           borderRadius: '0px',
-          padding: '8px 10px',
+          padding: '0.50rem 0.63rem',
           display: 'flex',
           flexDirection: 'column',
           gap: '6px',
@@ -1834,7 +1841,7 @@ function renderRightPanel() {
         matchTypeLabel.textContent = 'MATCH TYPE';
         Object.assign(matchTypeLabel.style, {
           fontFamily: DS.typography.fontFamily,
-          fontSize: '8px',
+          fontSize: DS.typography.sizes.tiny,
           color: DS.colors.textMuted,
           letterSpacing: '1.5px',
           fontWeight: 'bold'
@@ -1852,8 +1859,8 @@ function renderRightPanel() {
         Object.assign(openBtn.style, {
           flex: '1',
           textAlign: 'center',
-          padding: '6px 3px',
-          fontSize: '9px',
+          padding: '0.38rem 3px',
+          fontSize: DS.typography.sizes.tiny,
           fontWeight: 'bold',
           fontFamily: DS.typography.fontFamily,
           letterSpacing: '0.8px',
@@ -1869,8 +1876,8 @@ function renderRightPanel() {
         Object.assign(privateBtn.style, {
           flex: '1',
           textAlign: 'center',
-          padding: '6px 3px',
-          fontSize: '9px',
+          padding: '0.38rem 3px',
+          fontSize: DS.typography.sizes.tiny,
           fontWeight: 'bold',
           fontFamily: DS.typography.fontFamily,
           letterSpacing: '0.8px',
@@ -1893,7 +1900,7 @@ function renderRightPanel() {
           display: 'flex',
           flexDirection: 'column',
           gap: '4px',
-          padding: '6px 8px',
+          padding: '0.38rem 0.50rem',
           background: 'rgba(255, 255, 255, 0.01)',
           border: 'none',
           borderRadius: '0px'
@@ -1903,7 +1910,7 @@ function renderRightPanel() {
         contrLabel.textContent = 'ACTIVE CONTRACTORS IN SECTOR';
         Object.assign(contrLabel.style, {
           fontFamily: DS.typography.fontFamily,
-          fontSize: '8px',
+          fontSize: DS.typography.sizes.tiny,
           color: DS.colors.textMuted,
           letterSpacing: '0.8px',
           fontWeight: 'bold'
@@ -1913,7 +1920,7 @@ function renderRightPanel() {
         contrValue.textContent = '1 / 10 OPERATIVES';
         Object.assign(contrValue.style, {
           fontFamily: DS.typography.fontFamily,
-          fontSize: '11px',
+          fontSize: DS.typography.sizes.small,
           color: DS.colors.text,
           fontWeight: 'bold',
           letterSpacing: '0.5px'
@@ -1928,12 +1935,12 @@ function renderRightPanel() {
         deployBtn.textContent = 'DEPLOY TO SECTOR';
         Object.assign(deployBtn.style, {
           width: '100%',
-          height: 'clamp(32px, 4.5vh, 42px)',
+          height: 'clamp(2.00rem, 4.5vh, 2.63rem)',
           background: DS.colors.accent,
           color: DS.colors.background,
           border: 'none',
           fontFamily: DS.typography.fontFamily,
-          fontSize: 'clamp(12px, 1.8vh, 15px)',
+          fontSize: 'clamp(0.75rem, 1.8vh, 0.94rem)',
           fontWeight: DS.typography.weightBold,
           textTransform: 'uppercase',
           cursor: 'pointer',
@@ -1966,10 +1973,10 @@ function renderRightPanel() {
          let sr = 0;
          const stars: HTMLElement[] = [];
          container.appendChild(createPanelBlock('', c => {
-           const row = document.createElement('div'); Object.assign(row.style, { display: 'flex', gap: 'clamp(4px, 1vh, 8px)', marginBottom: 'clamp(8px, 2vh, 16px)' });
+           const row = document.createElement('div'); Object.assign(row.style, { display: 'flex', gap: 'clamp(4px, 1vh, 0.50rem)', marginBottom: 'clamp(0.50rem, 2vh, 1.00rem)' });
            for (let i=1; i<=5; i++) {
              const s = document.createElement('div'); s.innerHTML = '★';
-             Object.assign(s.style, { fontSize: 'clamp(20px, 3.5vh, 32px)', color: DS.colors.border, cursor: 'pointer', lineHeight: '1' });
+             Object.assign(s.style, { fontSize: 'clamp(1.25rem, 3.5vh, 2.00rem)', color: DS.colors.border, cursor: 'pointer', lineHeight: '1' });
              s.onclick = () => { sr = i; stars.forEach((st, idx) => st.style.color = idx < sr ? DS.colors.accent : DS.colors.border); };
              stars.push(s); row.appendChild(s);
            }
@@ -1978,16 +1985,16 @@ function renderRightPanel() {
            const txt = document.createElement('textarea');
            txt.placeholder = 'Describe your experience.';
            Object.assign(txt.style, {
-             width: '100%', height: 'clamp(50px, 10vh, 80px)', background: 'rgba(0,0,0,0.4)', border: DS.glass.border,
-             color: DS.colors.text, fontFamily: DS.typography.fontFamily, fontSize: 'clamp(10px, 1.5vh, 13px)', padding: 'clamp(5px, 1vh, 10px)', resize: 'none'
+             width: '100%', height: 'clamp(3.13rem, 10vh, 5.00rem)', background: 'rgba(0,0,0,0.4)', border: DS.glass.border,
+             color: DS.colors.text, fontFamily: DS.typography.fontFamily, fontSize: 'clamp(0.63rem, 1.5vh, 0.81rem)', padding: 'clamp(0.31rem, 1vh, 0.63rem)', resize: 'none'
            });
            c.appendChild(txt);
          }));
          container.appendChild(createPanelBlock('', c => {
            const btn = document.createElement('button'); btn.textContent = 'SUBMIT';
            Object.assign(btn.style, {
-             width: '100%', height: 'clamp(30px, 4vh, 40px)', background: DS.colors.accent, color: DS.colors.background, border: 'none',
-             fontFamily: DS.typography.fontFamily, fontSize: 'clamp(14px, 2.5vh, 18px)', fontWeight: DS.typography.weightBold, textTransform: 'uppercase', cursor: 'pointer'
+             width: '100%', height: 'clamp(1.88rem, 4vh, 2.50rem)', background: DS.colors.accent, color: DS.colors.background, border: 'none',
+             fontFamily: DS.typography.fontFamily, fontSize: 'clamp(0.88rem, 2.5vh, 1.13rem)', fontWeight: DS.typography.weightBold, textTransform: 'uppercase', cursor: 'pointer'
            });
            btn.onclick = async () => {
              const auth = getAuth();
@@ -2037,14 +2044,14 @@ function renderRightPanel() {
               MAP_REGISTRY.forEach(map => {
                   const mapBtn = document.createElement('div');
                   Object.assign(mapBtn.style, {
-                      padding: 'clamp(8px, 1.5vh, 12px)',
-                      marginBottom: '8px',
+                      padding: 'clamp(0.50rem, 1.5vh, 0.75rem)',
+                      marginBottom: '0.50rem',
                       borderLeft: `2px solid ${DS.colors.accent}`,
                       background: 'rgba(255,255,255,0.05)',
                       cursor: 'pointer',
                       color: DS.colors.text,
                       fontFamily: DS.typography.fontFamily,
-                      fontSize: 'clamp(14px, 2.5vh, 18px)'
+                      fontSize: 'clamp(0.88rem, 2.5vh, 1.13rem)'
                   });
                   mapBtn.textContent = map.displayName;
                   mapBtn.addEventListener('mouseenter', () => { mapBtn.style.background = 'rgba(255,255,255,0.1)'; });
@@ -2181,32 +2188,32 @@ function showArchitecturalAnalysis() {
   const subtextMargin = '4px';
 
   content.innerHTML = `
-    <div style="font-weight:bold; color:${DS.colors.accent}; margin-bottom:${sectionMargin}; font-size:clamp(14px, 2vw, 18px); letter-spacing:1px;">[ARCHITECTURAL SERVICE ANALYSIS]</div>
+    <div style="font-weight:bold; color:${DS.colors.accent}; margin-bottom:${sectionMargin}; font-size:clamp(0.88rem, 2vw, 1.13rem); letter-spacing:1px;">[ARCHITECTURAL SERVICE ANALYSIS]</div>
     
-    <div style="margin-bottom:${sectionMargin}; border-bottom:1px solid #333; padding-bottom:clamp(10px, 2vh, 15px);">
-      <div style="color:${DS.colors.success}; font-weight:bold; margin-bottom:${labelMargin}; font-size:clamp(11px, 1.5vw, 14px);">DOPPLER (Secret Management)</div>
-      <div style="font-size:clamp(10px, 1.2vw, 12px);">VITE_DOPPLER_TOKEN: <span style="color:${dopplerToken === 'PRESENT' ? DS.colors.success : DS.colors.danger};">${dopplerToken}</span></div>
-      <div style="color:${DS.colors.textMuted}; font-size:clamp(8px, 1vw, 10px); margin-top:${subtextMargin};">* Required for dynamic secret injection on client-side if enabled.</div>
+    <div style="margin-bottom:${sectionMargin}; border-bottom:1px solid #333; padding-bottom:clamp(0.63rem, 2vh, 0.94rem);">
+      <div style="color:${DS.colors.success}; font-weight:bold; margin-bottom:${labelMargin}; font-size:clamp(0.69rem, 1.5vw, 0.88rem);">DOPPLER (Secret Management)</div>
+      <div style="font-size:clamp(0.63rem, 1.2vw, 0.75rem);">VITE_DOPPLER_TOKEN: <span style="color:${dopplerToken === 'PRESENT' ? DS.colors.success : DS.colors.danger};">${dopplerToken}</span></div>
+      <div style="color:${DS.colors.textMuted}; font-size:clamp(0.50rem, 1vw, 0.63rem); margin-top:${subtextMargin};">* Required for dynamic secret injection on client-side if enabled.</div>
     </div>
 
-    <div style="margin-bottom:${sectionMargin}; border-bottom:1px solid #333; padding-bottom:clamp(10px, 2vh, 15px);">
-      <div style="color:${DS.colors.accent}; font-weight:bold; margin-bottom:${labelMargin}; font-size:clamp(11px, 1.5vw, 14px);">CONFIGCAT (Feature Flags)</div>
-      <div style="font-size:clamp(10px, 1.2vw, 12px);">CLIENT SCOPE: <span style="color:${hasClientKey === 'ACTIVE' ? DS.colors.success : DS.colors.warning};">${hasClientKey}</span></div>
-      <div style="font-size:clamp(10px, 1.2vw, 12px);">SHARED SCOPE: <span style="color:${hasSharedKey === 'ACTIVE' ? DS.colors.success : DS.colors.warning};">${hasSharedKey}</span></div>
-      <div style="color:${DS.colors.textMuted}; font-size:clamp(8px, 1vw, 10px); margin-top:${subtextMargin};">* Checks if SDK keys are present in environment variables.</div>
+    <div style="margin-bottom:${sectionMargin}; border-bottom:1px solid #333; padding-bottom:clamp(0.63rem, 2vh, 0.94rem);">
+      <div style="color:${DS.colors.accent}; font-weight:bold; margin-bottom:${labelMargin}; font-size:clamp(0.69rem, 1.5vw, 0.88rem);">CONFIGCAT (Feature Flags)</div>
+      <div style="font-size:clamp(0.63rem, 1.2vw, 0.75rem);">CLIENT SCOPE: <span style="color:${hasClientKey === 'ACTIVE' ? DS.colors.success : DS.colors.warning};">${hasClientKey}</span></div>
+      <div style="font-size:clamp(0.63rem, 1.2vw, 0.75rem);">SHARED SCOPE: <span style="color:${hasSharedKey === 'ACTIVE' ? DS.colors.success : DS.colors.warning};">${hasSharedKey}</span></div>
+      <div style="color:${DS.colors.textMuted}; font-size:clamp(0.50rem, 1vw, 0.63rem); margin-top:${subtextMargin};">* Checks if SDK keys are present in environment variables.</div>
     </div>
 
-    <div style="margin-bottom:${sectionMargin}; border-bottom:1px solid #333; padding-bottom:clamp(10px, 2vh, 15px);">
-      <div style="color:${DS.colors.dev}; font-weight:bold; margin-bottom:${labelMargin}; font-size:clamp(11px, 1.5vw, 14px);">SENTRY (Error & Perf Tracking)</div>
-      <div style="font-size:clamp(10px, 1.2vw, 12px);">ENABLED FLAG: <span style="color:${sentryFlag === 'ENABLED' ? DS.colors.success : DS.colors.danger};">${sentryFlag}</span></div>
-      <div style="font-size:clamp(10px, 1.2vw, 12px);">DSN STATUS: <span style="color:${sentryDsn === 'PRESENT' ? DS.colors.success : DS.colors.danger};">${sentryDsn}</span></div>
-      <div style="font-size:clamp(10px, 1.2vw, 12px);">INIT STATUS: <span style="color:${sentryStatus === 'INITIALIZED' ? DS.colors.success : DS.colors.danger}; font-weight:bold;">${sentryStatus}</span></div>
-      <div style="font-size:clamp(10px, 1.2vw, 12px);">FLAGS_USED_ENABLED: <span style="color:${flagsUsedEnabled === 'TRUE' ? DS.colors.success : DS.colors.warning};">${flagsUsedEnabled}</span></div>
-      <div style="color:${DS.colors.textMuted}; font-size:clamp(8px, 1vw, 10px); margin-top:${subtextMargin};">* Sentry only initializes if BOTH flag is true and DSN is present.</div>
+    <div style="margin-bottom:${sectionMargin}; border-bottom:1px solid #333; padding-bottom:clamp(0.63rem, 2vh, 0.94rem);">
+      <div style="color:${DS.colors.dev}; font-weight:bold; margin-bottom:${labelMargin}; font-size:clamp(0.69rem, 1.5vw, 0.88rem);">SENTRY (Error & Perf Tracking)</div>
+      <div style="font-size:clamp(0.63rem, 1.2vw, 0.75rem);">ENABLED FLAG: <span style="color:${sentryFlag === 'ENABLED' ? DS.colors.success : DS.colors.danger};">${sentryFlag}</span></div>
+      <div style="font-size:clamp(0.63rem, 1.2vw, 0.75rem);">DSN STATUS: <span style="color:${sentryDsn === 'PRESENT' ? DS.colors.success : DS.colors.danger};">${sentryDsn}</span></div>
+      <div style="font-size:clamp(0.63rem, 1.2vw, 0.75rem);">INIT STATUS: <span style="color:${sentryStatus === 'INITIALIZED' ? DS.colors.success : DS.colors.danger}; font-weight:bold;">${sentryStatus}</span></div>
+      <div style="font-size:clamp(0.63rem, 1.2vw, 0.75rem);">FLAGS_USED_ENABLED: <span style="color:${flagsUsedEnabled === 'TRUE' ? DS.colors.success : DS.colors.warning};">${flagsUsedEnabled}</span></div>
+      <div style="color:${DS.colors.textMuted}; font-size:clamp(0.50rem, 1vw, 0.63rem); margin-top:${subtextMargin};">* Sentry only initializes if BOTH flag is true and DSN is present.</div>
     </div>
 
     <div style="margin-top:${sectionMargin}; display:flex; justify-content:flex-end;">
-      <button id="close-analysis-btn" style="background:${DS.colors.accent}; color:#000; border:none; padding:clamp(6px, 1vh, 8px) clamp(16px, 2vw, 24px); font-family:${DS.typography.fontFamily}; font-weight:bold; cursor:pointer; font-size:clamp(10px, 1.2vw, 12px);">CLOSE ANALYSIS</button>
+      <button id="close-analysis-btn" style="background:${DS.colors.accent}; color:#000; border:none; padding:clamp(0.38rem, 1vh, 0.50rem) clamp(1.00rem, 2vw, 1.50rem); font-family:${DS.typography.fontFamily}; font-weight:bold; cursor:pointer; font-size:clamp(0.63rem, 1.2vw, 0.75rem);">CLOSE ANALYSIS</button>
     </div>
   `;
 
@@ -2224,7 +2231,7 @@ export function showMenuNotification(msg: string, type: 'info' | 'warning' = 'in
     container.id = 'vex-menu-notification-container';
     Object.assign(container.style, {
       position: 'absolute',
-      top: 'clamp(36px, 5vh, 50px)',
+      top: 'clamp(2.25rem, 5vh, 3.13rem)',
       left: '50%',
       transform: 'translateX(-50%)',
       zIndex: '4500',
@@ -2239,9 +2246,9 @@ export function showMenuNotification(msg: string, type: 'info' | 'warning' = 'in
   const toast = document.createElement('div');
   toast.className = 'mm-glass';
   Object.assign(toast.style, {
-    padding: '8px 16px',
+    padding: '0.50rem 1.00rem',
     fontFamily: DS.typography.fontFamily,
-    fontSize: '12px',
+    fontSize: DS.typography.sizes.small,
     letterSpacing: '2px',
     color: type === 'warning' ? DS.colors.danger : DS.colors.accent,
     borderLeft: `3px solid ${type === 'warning' ? DS.colors.danger : DS.colors.accent}`,
@@ -2293,7 +2300,7 @@ function createUnifiedAuthOverlay(db: any, auth: any, defaultTab: 'GUEST' | 'AUT
     background: 'radial-gradient(circle at center, rgba(3, 3, 5, 0.98) 0%, rgba(3, 3, 5, 0.9) 60%, rgba(3, 3, 5, 0.4) 90%, rgba(3, 3, 5, 0) 100%)',
     backdropFilter: 'blur(15px)',
     display: 'flex', alignItems: 'center', justifyContent: 'center',
-    padding: '16px',
+    padding: '1.00rem',
     fontFamily: DS.typography.fontFamily, color: DS.colors.text,
     overflowY: 'auto'
   });
@@ -2301,14 +2308,14 @@ function createUnifiedAuthOverlay(db: any, auth: any, defaultTab: 'GUEST' | 'AUT
   const box = document.createElement('div');
   box.className = 'mm-glass';
   Object.assign(box.style, {
-    width: 'min(92vw, 680px)',
+    width: 'min(92vw, 42.50rem)',
     maxHeight: '90vh',
     overflowY: 'auto',
     WebkitOverflowScrolling: 'touch',
     background: 'linear-gradient(180deg, rgba(14, 14, 18, 0.98) 0%, rgba(6, 6, 9, 0.99) 100%)',
     border: `1px solid rgba(255, 69, 0, 0.25)`,
     boxShadow: '0 0 35px rgba(0, 0, 0, 0.8), 0 0 15px rgba(255, 69, 0, 0.15)',
-    padding: '20px 20px',
+    padding: '1.25rem 1.25rem',
     position: 'relative',
     display: 'flex',
     flexDirection: 'column',
@@ -2320,9 +2327,9 @@ function createUnifiedAuthOverlay(db: any, auth: any, defaultTab: 'GUEST' | 'AUT
   const closeBtn = document.createElement('button');
   closeBtn.textContent = '✕';
   Object.assign(closeBtn.style, {
-    position: 'absolute', top: '14px', right: '16px',
+    position: 'absolute', top: '0.88rem', right: '1.00rem',
     background: 'none', border: 'none', color: DS.colors.textMuted,
-    fontSize: '18px', cursor: 'pointer', zIndex: '10'
+    fontSize: DS.typography.sizes.headingSm, cursor: 'pointer', zIndex: '10'
   });
   closeBtn.onclick = () => overlay.remove();
   box.appendChild(closeBtn);
@@ -2337,7 +2344,7 @@ function createUnifiedAuthOverlay(db: any, auth: any, defaultTab: 'GUEST' | 'AUT
   word.textContent = 'VEXEΛ SECURE PORTAL';
   Object.assign(word.style, {
     fontFamily: DS.typography.fontFamilyWordmark,
-    fontSize: '20px', fontWeight: '800', letterSpacing: '5px',
+    fontSize: DS.typography.sizes.headingMd, fontWeight: '800', letterSpacing: '0.31rem',
     color: DS.colors.accent
   });
   branding.appendChild(word);
@@ -2346,7 +2353,7 @@ function createUnifiedAuthOverlay(db: any, auth: any, defaultTab: 'GUEST' | 'AUT
   sub.textContent = 'RESTRICTED SYSTEM ACCESS — OPERATIVE IDENTIFICATION';
   Object.assign(sub.style, {
     fontFamily: DS.typography.fontFamily,
-    fontSize: '10px', letterSpacing: '2px', color: DS.colors.textMuted, marginTop: '2px'
+    fontSize: DS.typography.sizes.tiny, letterSpacing: '2px', color: DS.colors.textMuted, marginTop: '2px'
   });
   branding.appendChild(sub);
   box.appendChild(branding);
@@ -2362,19 +2369,19 @@ function createUnifiedAuthOverlay(db: any, auth: any, defaultTab: 'GUEST' | 'AUT
 
   const updateTabStyles = () => {
     Object.assign(tabGuestBtn.style, {
-      flex: '1', padding: '10px', background: 'none', border: 'none',
+      flex: '1', padding: '0.63rem', background: 'none', border: 'none',
       borderBottom: activeTab === 'GUEST' ? `2px solid ${DS.colors.accent}` : '2px solid transparent',
       color: activeTab === 'GUEST' ? DS.colors.text : DS.colors.textMuted,
-      fontFamily: DS.typography.fontFamily, fontSize: '11px', fontWeight: 'bold',
+      fontFamily: DS.typography.fontFamily, fontSize: DS.typography.sizes.small, fontWeight: 'bold',
       letterSpacing: '1px', cursor: 'pointer', transition: 'all 0.2s'
     });
     tabGuestBtn.textContent = '1. GUEST ENLISTMENT';
 
     Object.assign(tabAuthBtn.style, {
-      flex: '1', padding: '10px', background: 'none', border: 'none',
+      flex: '1', padding: '0.63rem', background: 'none', border: 'none',
       borderBottom: activeTab === 'AUTH' ? `2px solid ${DS.colors.accent}` : '2px solid transparent',
       color: activeTab === 'AUTH' ? DS.colors.text : DS.colors.textMuted,
-      fontFamily: DS.typography.fontFamily, fontSize: '11px', fontWeight: 'bold',
+      fontFamily: DS.typography.fontFamily, fontSize: DS.typography.sizes.small, fontWeight: 'bold',
       letterSpacing: '1px', cursor: 'pointer', transition: 'all 0.2s'
     });
     tabAuthBtn.textContent = '2. ACCOUNT ACCESS';
@@ -2399,14 +2406,14 @@ function createUnifiedAuthOverlay(db: any, auth: any, defaultTab: 'GUEST' | 'AUT
         const activeCard = document.createElement('div');
         activeCard.className = 'mm-glass';
         Object.assign(activeCard.style, {
-          padding: '16px', display: 'flex', flexDirection: 'column', gap: '8px',
+          padding: '1.00rem', display: 'flex', flexDirection: 'column', gap: '0.50rem',
           borderLeft: `3px solid ${DS.colors.accent}`
         });
         activeCard.innerHTML = `
-          <div style="font-size:10px; color:${DS.colors.accent}; letter-spacing:2px; font-weight:bold;">ACTIVE GUEST SESSION</div>
-          <div style="font-size:16px; font-weight:bold; letter-spacing:2px; color:${DS.colors.text};">${registeredUserData.displayName}</div>
-          <div style="font-size:11px; color:${DS.colors.textMuted};">FACTION: <span style="color:#FFF;">${registeredUserData.faction || 'UNAFFILIATED'}</span></div>
-          <div style="font-size:10px; color:${DS.colors.textMuted}; line-height:1.4; margin-top:4px;">
+          <div style="font-size: ${DS.typography.sizes.tiny}; color:${DS.colors.accent}; letter-spacing:2px; font-weight:bold;">ACTIVE GUEST SESSION</div>
+          <div style="font-size: ${DS.typography.sizes.headingSm}; font-weight:bold; letter-spacing:2px; color:${DS.colors.text};">${registeredUserData.displayName}</div>
+          <div style="font-size: ${DS.typography.sizes.small}; color:${DS.colors.textMuted};">FACTION: <span style="color:#FFF;">${registeredUserData.faction || 'UNAFFILIATED'}</span></div>
+          <div style="font-size: ${DS.typography.sizes.tiny}; color:${DS.colors.textMuted}; line-height:1.4; margin-top:4px;">
             You are logged in under a guest session. Progress is saved locally. Switch to the Account Access tab to link a permanent Google or Email account.
           </div>
         `;
@@ -2419,7 +2426,7 @@ function createUnifiedAuthOverlay(db: any, auth: any, defaultTab: 'GUEST' | 'AUT
         const inputLabel = document.createElement('div');
         inputLabel.textContent = 'CONTRACTOR CODENAME';
         Object.assign(inputLabel.style, {
-          fontSize: '11px', letterSpacing: '2px', color: DS.colors.accent
+          fontSize: DS.typography.sizes.small, letterSpacing: '2px', color: DS.colors.accent
         });
         inputGroup.appendChild(inputLabel);
         
@@ -2427,9 +2434,9 @@ function createUnifiedAuthOverlay(db: any, auth: any, defaultTab: 'GUEST' | 'AUT
         input.type = 'text';
         input.placeholder = 'ENTER CODENAME [3-16 ALPHANUMERIC]';
         Object.assign(input.style, {
-          width: '100%', padding: '10px 12px', background: 'rgba(0, 0, 0, 0.5)',
+          width: '100%', padding: '0.63rem 0.75rem', background: 'rgba(0, 0, 0, 0.5)',
           border: DS.glass.border, color: DS.colors.text, fontFamily: DS.typography.fontFamily,
-          fontSize: '13px', letterSpacing: '2px', outline: 'none', textAlign: 'center',
+          fontSize: DS.typography.sizes.body, letterSpacing: '2px', outline: 'none', textAlign: 'center',
           boxSizing: 'border-box'
         });
         inputGroup.appendChild(input);
@@ -2438,7 +2445,7 @@ function createUnifiedAuthOverlay(db: any, auth: any, defaultTab: 'GUEST' | 'AUT
         const factionLabel = document.createElement('div');
         factionLabel.textContent = 'FACTION AFFILIATION';
         Object.assign(factionLabel.style, {
-          fontSize: '11px', letterSpacing: '2px', color: DS.colors.textMuted
+          fontSize: DS.typography.sizes.small, letterSpacing: '2px', color: DS.colors.textMuted
         });
         contentContainer.appendChild(factionLabel);
 
@@ -2452,12 +2459,12 @@ function createUnifiedAuthOverlay(db: any, auth: any, defaultTab: 'GUEST' | 'AUT
         const vibeCard = document.createElement('div');
         vibeCard.className = 'mm-glass';
         Object.assign(vibeCard.style, {
-          padding: '12px', cursor: 'pointer', display: 'flex', flexDirection: 'column',
+          padding: '0.75rem', cursor: 'pointer', display: 'flex', flexDirection: 'column',
           alignItems: 'center', textAlign: 'center', transition: 'all 200ms ease'
         });
         vibeCard.innerHTML = `
-          <div style="font-size:14px; font-weight:bold; letter-spacing:1px; color:${DS.colors.factions.vibe.primary};">VIBE CO.</div>
-          <div style="font-size:9px; letter-spacing:1px; color:${DS.colors.factions.vibe.muted}; margin-top:2px;">SILENT & PRECISE</div>
+          <div style="font-size: ${DS.typography.sizes.body}; font-weight:bold; letter-spacing:1px; color:${DS.colors.factions.vibe.primary};">VIBE CO.</div>
+          <div style="font-size: ${DS.typography.sizes.tiny}; letter-spacing:1px; color:${DS.colors.factions.vibe.muted}; margin-top:2px;">SILENT & PRECISE</div>
         `;
         vibeCard.onclick = () => {
           selectedFaction = 'VIBE CO.';
@@ -2468,12 +2475,12 @@ function createUnifiedAuthOverlay(db: any, auth: any, defaultTab: 'GUEST' | 'AUT
         const slopCard = document.createElement('div');
         slopCard.className = 'mm-glass';
         Object.assign(slopCard.style, {
-          padding: '12px', cursor: 'pointer', display: 'flex', flexDirection: 'column',
+          padding: '0.75rem', cursor: 'pointer', display: 'flex', flexDirection: 'column',
           alignItems: 'center', textAlign: 'center', transition: 'all 200ms ease'
         });
         slopCard.innerHTML = `
-          <div style="font-size:14px; font-weight:bold; letter-spacing:1px; color:${DS.colors.factions.slop.primary};">SLOP INC.</div>
-          <div style="font-size:9px; letter-spacing:1px; color:${DS.colors.factions.slop.muted}; margin-top:2px;">BRUTALIST & UTILITY</div>
+          <div style="font-size: ${DS.typography.sizes.body}; font-weight:bold; letter-spacing:1px; color:${DS.colors.factions.slop.primary};">SLOP INC.</div>
+          <div style="font-size: ${DS.typography.sizes.tiny}; letter-spacing:1px; color:${DS.colors.factions.slop.muted}; margin-top:2px;">BRUTALIST & UTILITY</div>
         `;
         slopCard.onclick = () => {
           selectedFaction = 'SLOP INC.';
@@ -2487,15 +2494,15 @@ function createUnifiedAuthOverlay(db: any, auth: any, defaultTab: 'GUEST' | 'AUT
 
         const errText = document.createElement('div');
         Object.assign(errText.style, {
-          fontSize: '11px', color: DS.colors.danger, textAlign: 'center', height: '14px'
+          fontSize: DS.typography.sizes.small, color: DS.colors.danger, textAlign: 'center', height: '0.88rem'
         });
         contentContainer.appendChild(errText);
 
         const enlistBtn = document.createElement('button');
         enlistBtn.textContent = 'ENLIST AS GUEST';
         Object.assign(enlistBtn.style, {
-          width: '100%', padding: '12px', background: DS.colors.accent, color: DS.colors.background,
-          fontFamily: DS.typography.fontFamily, fontSize: '14px', fontWeight: 'bold',
+          width: '100%', padding: '0.75rem', background: DS.colors.accent, color: DS.colors.background,
+          fontFamily: DS.typography.fontFamily, fontSize: DS.typography.sizes.body, fontWeight: 'bold',
           letterSpacing: '2px', border: 'none', cursor: 'pointer'
         });
 
@@ -2546,7 +2553,7 @@ function createUnifiedAuthOverlay(db: any, auth: any, defaultTab: 'GUEST' | 'AUT
         const profileCard = document.createElement('div');
         profileCard.className = 'mm-glass';
         Object.assign(profileCard.style, {
-          padding: '16px', display: 'flex', flexDirection: 'column', gap: '12px',
+          padding: '1.00rem', display: 'flex', flexDirection: 'column', gap: '0.75rem',
           border: `1px solid ${DS.colors.accent}`, background: 'rgba(0, 240, 255, 0.03)'
         });
 
@@ -2556,15 +2563,15 @@ function createUnifiedAuthOverlay(db: any, auth: any, defaultTab: 'GUEST' | 'AUT
         const headerTitle = document.createElement('div');
         const providerName = (user.providerData[0]?.providerId || 'GOOGLE / EMAIL').toUpperCase();
         headerTitle.innerHTML = `
-          <div style="font-size:10px; color:${DS.colors.accent}; letter-spacing:2px; font-weight:bold;">AUTHENTICATED ACCOUNT</div>
-          <div style="font-size:10px; color:${DS.colors.textMuted}; margin-top:2px;">PROVIDER: ${providerName}</div>
+          <div style="font-size: ${DS.typography.sizes.tiny}; color:${DS.colors.accent}; letter-spacing:2px; font-weight:bold;">AUTHENTICATED ACCOUNT</div>
+          <div style="font-size: ${DS.typography.sizes.tiny}; color:${DS.colors.textMuted}; margin-top:2px;">PROVIDER: ${providerName}</div>
         `;
 
         const statusBadge = document.createElement('div');
         statusBadge.textContent = '[AUTHENTICATED]';
         Object.assign(statusBadge.style, {
-          fontSize: '9px', fontWeight: 'bold', color: '#00FF66', border: '1px solid #00FF66',
-          padding: '2px 6px', background: 'rgba(0, 255, 102, 0.12)', letterSpacing: '1px'
+          fontSize: DS.typography.sizes.tiny, fontWeight: 'bold', color: '#00FF66', border: '1px solid #00FF66',
+          padding: '2px 0.38rem', background: 'rgba(0, 255, 102, 0.12)', letterSpacing: '1px'
         });
 
         headerRow.appendChild(headerTitle);
@@ -2573,21 +2580,21 @@ function createUnifiedAuthOverlay(db: any, auth: any, defaultTab: 'GUEST' | 'AUT
 
         // User Avatar & Info
         const infoRow = document.createElement('div');
-        Object.assign(infoRow.style, { display: 'flex', alignItems: 'center', gap: '12px', marginTop: '2px' });
+        Object.assign(infoRow.style, { display: 'flex', alignItems: 'center', gap: '0.75rem', marginTop: '2px' });
 
         if (user.photoURL) {
           const img = document.createElement('img');
           img.src = user.photoURL;
           img.alt = 'User Avatar';
-          Object.assign(img.style, { width: '42px', height: '42px', borderRadius: '50%', border: `1px solid ${DS.colors.accent}`, flexShrink: '0' });
+          Object.assign(img.style, { width: '2.63rem', height: '2.63rem', borderRadius: '50%', border: `1px solid ${DS.colors.accent}`, flexShrink: '0' });
           infoRow.appendChild(img);
         } else {
           const avatarBadge = document.createElement('div');
           avatarBadge.textContent = (registeredUserData?.displayName || user.displayName || user.email || 'OP').charAt(0).toUpperCase();
           Object.assign(avatarBadge.style, {
-            width: '42px', height: '42px', borderRadius: '50%', background: DS.colors.accent,
+            width: '2.63rem', height: '2.63rem', borderRadius: '50%', background: DS.colors.accent,
             color: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: '18px', fontWeight: 'bold', flexShrink: '0'
+            fontSize: DS.typography.sizes.headingSm, fontWeight: 'bold', flexShrink: '0'
           });
           infoRow.appendChild(avatarBadge);
         }
@@ -2596,22 +2603,22 @@ function createUnifiedAuthOverlay(db: any, auth: any, defaultTab: 'GUEST' | 'AUT
         Object.assign(details.style, { display: 'flex', flexDirection: 'column', gap: '2px', minWidth: '0' });
         const nameStr = (registeredUserData?.displayName || user.displayName || user.email?.split('@')[0] || 'OPERATIVE').toUpperCase();
         details.innerHTML = `
-          <div style="font-size:15px; font-weight:bold; color:${DS.colors.text}; letter-spacing:1px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${nameStr}</div>
-          <div style="font-size:11px; color:${DS.colors.textMuted}; font-family:monospace; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${user.email || user.uid}</div>
-          <div style="font-size:10px; color:${DS.colors.textMuted}; margin-top:2px;">FACTION: <span style="color:#FFF; font-weight:bold;">${registeredUserData?.faction || 'VIBE CO.'}</span></div>
+          <div style="font-size: ${DS.typography.sizes.body}; font-weight:bold; color:${DS.colors.text}; letter-spacing:1px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${nameStr}</div>
+          <div style="font-size: ${DS.typography.sizes.small}; color:${DS.colors.textMuted}; font-family:monospace; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${user.email || user.uid}</div>
+          <div style="font-size: ${DS.typography.sizes.tiny}; color:${DS.colors.textMuted}; margin-top:2px;">FACTION: <span style="color:#FFF; font-weight:bold;">${registeredUserData?.faction || 'VIBE CO.'}</span></div>
         `;
         infoRow.appendChild(details);
         profileCard.appendChild(infoRow);
 
         // Action Buttons Row
         const actionsRow = document.createElement('div');
-        Object.assign(actionsRow.style, { display: 'flex', gap: '10px', marginTop: '6px' });
+        Object.assign(actionsRow.style, { display: 'flex', gap: '0.63rem', marginTop: '0.38rem' });
 
         const logoutBtn = document.createElement('button');
         logoutBtn.textContent = 'LOG OUT OF ACCOUNT';
         Object.assign(logoutBtn.style, {
-          flex: '1', padding: '10px', background: 'rgba(255, 68, 0, 0.15)', border: `1px solid ${DS.colors.accent}`,
-          color: DS.colors.accent, fontFamily: DS.typography.fontFamily, fontSize: '11px', fontWeight: 'bold',
+          flex: '1', padding: '0.63rem', background: 'rgba(255, 68, 0, 0.15)', border: `1px solid ${DS.colors.accent}`,
+          color: DS.colors.accent, fontFamily: DS.typography.fontFamily, fontSize: DS.typography.sizes.small, fontWeight: 'bold',
           letterSpacing: '1px', cursor: 'pointer', transition: 'all 0.2s'
         });
 
@@ -2630,8 +2637,8 @@ function createUnifiedAuthOverlay(db: any, auth: any, defaultTab: 'GUEST' | 'AUT
         const closeBtn = document.createElement('button');
         closeBtn.textContent = 'CLOSE OVERLAY';
         Object.assign(closeBtn.style, {
-          flex: '1', padding: '10px', background: 'rgba(255,255,255,0.08)', border: DS.glass.border,
-          color: DS.colors.text, fontFamily: DS.typography.fontFamily, fontSize: '11px', fontWeight: 'bold',
+          flex: '1', padding: '0.63rem', background: 'rgba(255,255,255,0.08)', border: DS.glass.border,
+          color: DS.colors.text, fontFamily: DS.typography.fontFamily, fontSize: DS.typography.sizes.small, fontWeight: 'bold',
           letterSpacing: '1px', cursor: 'pointer'
         });
         closeBtn.onclick = () => overlay.remove();
@@ -2649,15 +2656,15 @@ function createUnifiedAuthOverlay(db: any, auth: any, defaultTab: 'GUEST' | 'AUT
         const warnBox = document.createElement('div');
         warnBox.className = 'mm-glass';
         Object.assign(warnBox.style, {
-          padding: '16px', display: 'flex', flexDirection: 'column', gap: '12px',
+          padding: '1.00rem', display: 'flex', flexDirection: 'column', gap: '0.75rem',
           border: `1px solid ${DS.colors.accent}`, background: 'rgba(255, 68, 0, 0.08)'
         });
         warnBox.innerHTML = `
-          <div style="font-size:12px; font-weight:bold; color:${DS.colors.accent}; letter-spacing:1px;">⚠️ OVERWRITE GUEST SESSION WARNING</div>
-          <div style="font-size:11px; color:${DS.colors.text}; line-height:1.5;">
+          <div style="font-size: ${DS.typography.sizes.small}; font-weight:bold; color:${DS.colors.accent}; letter-spacing:1px;">⚠️ OVERWRITE GUEST SESSION WARNING</div>
+          <div style="font-size: ${DS.typography.sizes.small}; color:${DS.colors.text}; line-height:1.5;">
             Logging into an existing account will end your current guest session <strong style="color:${DS.colors.accent}">${registeredUserData?.displayName || 'GUEST'}</strong> and discard unlinked progress.
           </div>
-          <div style="font-size:10px; color:${DS.colors.textMuted};">Are you sure you want to proceed with account authentication?</div>
+          <div style="font-size: ${DS.typography.sizes.tiny}; color:${DS.colors.textMuted};">Are you sure you want to proceed with account authentication?</div>
         `;
 
         const warnBtnRow = document.createElement('div');
@@ -2666,15 +2673,15 @@ function createUnifiedAuthOverlay(db: any, auth: any, defaultTab: 'GUEST' | 'AUT
         const confirmBtn = document.createElement('button');
         confirmBtn.textContent = 'YES, LOG IN NOW';
         Object.assign(confirmBtn.style, {
-          flex: '1', padding: '10px', background: DS.colors.accent, color: DS.colors.background,
-          fontFamily: DS.typography.fontFamily, fontSize: '11px', fontWeight: 'bold', border: 'none', cursor: 'pointer'
+          flex: '1', padding: '0.63rem', background: DS.colors.accent, color: DS.colors.background,
+          fontFamily: DS.typography.fontFamily, fontSize: DS.typography.sizes.small, fontWeight: 'bold', border: 'none', cursor: 'pointer'
         });
 
         const cancelBtn = document.createElement('button');
         cancelBtn.textContent = 'CANCEL';
         Object.assign(cancelBtn.style, {
-          flex: '1', padding: '10px', background: 'rgba(255,255,255,0.1)', color: DS.colors.text,
-          fontFamily: DS.typography.fontFamily, fontSize: '11px', fontWeight: 'bold', border: DS.glass.border, cursor: 'pointer'
+          flex: '1', padding: '0.63rem', background: 'rgba(255,255,255,0.1)', color: DS.colors.text,
+          fontFamily: DS.typography.fontFamily, fontSize: DS.typography.sizes.small, fontWeight: 'bold', border: DS.glass.border, cursor: 'pointer'
         });
 
         confirmBtn.onclick = async () => {
@@ -2698,26 +2705,26 @@ function createUnifiedAuthOverlay(db: any, auth: any, defaultTab: 'GUEST' | 'AUT
       // Status box
       const statusBox = document.createElement('div');
       statusBox.className = 'mm-glass';
-      Object.assign(statusBox.style, { padding: '10px 12px', display: 'flex', flexDirection: 'column', gap: '4px' });
+      Object.assign(statusBox.style, { padding: '0.63rem 0.75rem', display: 'flex', flexDirection: 'column', gap: '4px' });
       const currentUid = user ? user.uid : 'NOT_LOGGED_IN';
       const isAnon = user ? user.isAnonymous : true;
       const authProvider = isAnon ? 'GUEST SESSION' : (user?.providerData[0]?.providerId || 'EMAIL / PASSWORD');
       statusBox.innerHTML = `
-        <div style="font-size:10px; color:${DS.colors.textMuted}; letter-spacing:1px;">CURRENT USER IDENTIFIER</div>
-        <div style="font-size:11px; font-weight:bold; color:${DS.colors.text}; font-family:monospace; word-break:break-all;">${currentUid}</div>
-        <div style="font-size:10px; color:${DS.colors.accent}; font-weight:bold; margin-top:2px;">PROVIDER: ${authProvider.toUpperCase()}</div>
+        <div style="font-size: ${DS.typography.sizes.tiny}; color:${DS.colors.textMuted}; letter-spacing:1px;">CURRENT USER IDENTIFIER</div>
+        <div style="font-size: ${DS.typography.sizes.small}; font-weight:bold; color:${DS.colors.text}; font-family:monospace; word-break:break-all;">${currentUid}</div>
+        <div style="font-size: ${DS.typography.sizes.tiny}; color:${DS.colors.accent}; font-weight:bold; margin-top:2px;">PROVIDER: ${authProvider.toUpperCase()}</div>
       `;
       contentContainer.appendChild(statusBox);
 
       // Google Auth button
       const googleBtn = document.createElement('button');
       googleBtn.innerHTML = `
-        <svg width="16" height="16" viewBox="0 0 24 24" style="vertical-align:middle; margin-right:8px;"><path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17z"/><path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.11-6.72-4.96H1.29v3.15C3.26 21.3 7.31 24 12 24z"/><path fill="#FBBC05" d="M5.28 14.24c-.25-.72-.38-1.49-.38-2.24s.13-1.52.38-2.24V6.61H1.29C.47 8.24 0 10.06 0 12s.47 3.76 1.29 5.39l3.99-3.15z"/><path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.31 0 3.26 2.7 1.29 6.61l3.99 3.15c.95-2.85 3.6-4.96 6.72-4.96z"/></svg>
+        <svg width="16" height="16" viewBox="0 0 24 24" style="vertical-align:middle; margin-right:0.50rem;"><path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17z"/><path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.11-6.72-4.96H1.29v3.15C3.26 21.3 7.31 24 12 24z"/><path fill="#FBBC05" d="M5.28 14.24c-.25-.72-.38-1.49-.38-2.24s.13-1.52.38-2.24V6.61H1.29C.47 8.24 0 10.06 0 12s.47 3.76 1.29 5.39l3.99-3.15z"/><path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.31 0 3.26 2.7 1.29 6.61l3.99 3.15c.95-2.85 3.6-4.96 6.72-4.96z"/></svg>
         SIGN IN WITH GOOGLE
       `;
       Object.assign(googleBtn.style, {
-        width: '100%', padding: '11px', background: '#FFFFFF', color: '#000000',
-        fontFamily: DS.typography.fontFamily, fontSize: '12px', fontWeight: 'bold',
+        width: '100%', padding: '0.69rem', background: '#FFFFFF', color: '#000000',
+        fontFamily: DS.typography.fontFamily, fontSize: DS.typography.sizes.small, fontWeight: 'bold',
         border: 'none', borderRadius: '0px', cursor: 'pointer', display: 'flex',
         alignItems: 'center', justifyContent: 'center'
       });
@@ -2766,21 +2773,21 @@ function createUnifiedAuthOverlay(db: any, auth: any, defaultTab: 'GUEST' | 'AUT
 
       const divOr = document.createElement('div');
       divOr.textContent = '— OR USE EMAIL / PASSWORD —';
-      Object.assign(divOr.style, { fontSize: '10px', color: DS.colors.textMuted, textAlign: 'center' });
+      Object.assign(divOr.style, { fontSize: DS.typography.sizes.tiny, color: DS.colors.textMuted, textAlign: 'center' });
       contentContainer.appendChild(divOr);
 
       const emailInput = document.createElement('input');
       emailInput.type = 'email'; emailInput.placeholder = 'EMAIL ADDRESS';
       Object.assign(emailInput.style, {
-        width: '100%', padding: '10px', background: 'rgba(0,0,0,0.5)', border: DS.glass.border,
-        color: DS.colors.text, fontFamily: DS.typography.fontFamily, fontSize: '12px', outline: 'none', boxSizing: 'border-box'
+        width: '100%', padding: '0.63rem', background: 'rgba(0,0,0,0.5)', border: DS.glass.border,
+        color: DS.colors.text, fontFamily: DS.typography.fontFamily, fontSize: DS.typography.sizes.small, outline: 'none', boxSizing: 'border-box'
       });
 
       const passInput = document.createElement('input');
       passInput.type = 'password'; passInput.placeholder = 'PASSWORD';
       Object.assign(passInput.style, {
-        width: '100%', padding: '10px', background: 'rgba(0,0,0,0.5)', border: DS.glass.border,
-        color: DS.colors.text, fontFamily: DS.typography.fontFamily, fontSize: '12px', outline: 'none', boxSizing: 'border-box'
+        width: '100%', padding: '0.63rem', background: 'rgba(0,0,0,0.5)', border: DS.glass.border,
+        color: DS.colors.text, fontFamily: DS.typography.fontFamily, fontSize: DS.typography.sizes.small, outline: 'none', boxSizing: 'border-box'
       });
 
       contentContainer.appendChild(emailInput);
@@ -2792,8 +2799,8 @@ function createUnifiedAuthOverlay(db: any, auth: any, defaultTab: 'GUEST' | 'AUT
       const loginBtn = document.createElement('button');
       loginBtn.textContent = 'EMAIL LOGIN';
       Object.assign(loginBtn.style, {
-        flex: '1', padding: '10px', background: DS.colors.accent, color: DS.colors.background,
-        fontFamily: DS.typography.fontFamily, fontSize: '11px', fontWeight: 'bold', border: 'none', cursor: 'pointer'
+        flex: '1', padding: '0.63rem', background: DS.colors.accent, color: DS.colors.background,
+        fontFamily: DS.typography.fontFamily, fontSize: DS.typography.sizes.small, fontWeight: 'bold', border: 'none', cursor: 'pointer'
       });
 
       const execEmailLogin = async () => {
@@ -2835,8 +2842,8 @@ function createUnifiedAuthOverlay(db: any, auth: any, defaultTab: 'GUEST' | 'AUT
       const registerBtn = document.createElement('button');
       registerBtn.textContent = 'CREATE ACCOUNT';
       Object.assign(registerBtn.style, {
-        flex: '1', padding: '10px', background: 'rgba(255,255,255,0.1)', color: DS.colors.text,
-        fontFamily: DS.typography.fontFamily, fontSize: '11px', fontWeight: 'bold', border: DS.glass.border, cursor: 'pointer'
+        flex: '1', padding: '0.63rem', background: 'rgba(255,255,255,0.1)', color: DS.colors.text,
+        fontFamily: DS.typography.fontFamily, fontSize: DS.typography.sizes.small, fontWeight: 'bold', border: DS.glass.border, cursor: 'pointer'
       });
 
       const execCreateAccount = async () => {
@@ -2902,9 +2909,9 @@ function createUnifiedAuthOverlay(db: any, auth: any, defaultTab: 'GUEST' | 'AUT
         const devWipeBtn = document.createElement('button');
         devWipeBtn.textContent = '[DEV] WIPE GUEST & RESET ONBOARDING';
         Object.assign(devWipeBtn.style, {
-          width: '100%', padding: '10px', background: DS.colors.danger,
+          width: '100%', padding: '0.63rem', background: DS.colors.danger,
           border: 'none', color: '#FFFFFF', fontFamily: DS.typography.fontFamily,
-          fontSize: '11px', fontWeight: 'bold', cursor: 'pointer', marginTop: '10px'
+          fontSize: DS.typography.sizes.small, fontWeight: 'bold', cursor: 'pointer', marginTop: '0.63rem'
         });
         devWipeBtn.onclick = async () => {
           if (auth) {
@@ -2968,13 +2975,13 @@ function openSquadFriendsModal() {
   const container = document.createElement('div');
   container.className = 'mm-glass';
   Object.assign(container.style, {
-    width: 'min(92vw, 720px)',
+    width: 'min(92vw, 45.00rem)',
     maxHeight: '90vh',
     overflowY: 'auto',
     WebkitOverflowScrolling: 'touch',
     background: 'linear-gradient(180deg, rgba(12, 12, 15, 0.98) 0%, rgba(6, 6, 8, 0.99) 100%)',
     border: `1px solid rgba(255, 69, 0, 0.25)`,
-    padding: '20px 20px',
+    padding: '1.25rem 1.25rem',
     display: 'flex',
     flexDirection: 'column',
     gap: '12px',
@@ -2987,10 +2994,10 @@ function openSquadFriendsModal() {
   closeBtn.innerHTML = '✕';
   Object.assign(closeBtn.style, {
     position: 'absolute',
-    top: '12px',
-    right: '16px',
+    top: '0.75rem',
+    right: '1.00rem',
     cursor: 'pointer',
-    fontSize: '18px',
+    fontSize: DS.typography.sizes.headingSm,
     color: DS.colors.textMuted,
     transition: 'color 0.2s',
     fontFamily: 'sans-serif'
@@ -3006,11 +3013,11 @@ function openSquadFriendsModal() {
   const title = document.createElement('div');
   title.textContent = 'FRIENDS MANAGER';
   Object.assign(title.style, {
-    fontSize: '18px',
+    fontSize: DS.typography.sizes.headingSm,
     fontWeight: 'bold',
     letterSpacing: '2px',
     borderBottom: `2px solid ${DS.colors.accent}`,
-    paddingBottom: '6px',
+    paddingBottom: '0.38rem',
     color: DS.colors.text
   });
   container.appendChild(title);
@@ -3021,7 +3028,7 @@ function openSquadFriendsModal() {
     display: 'flex',
     gap: '16px',
     borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
-    paddingBottom: '6px'
+    paddingBottom: '0.38rem'
   });
 
   const friendsTab = document.createElement('div');
@@ -3034,7 +3041,7 @@ function openSquadFriendsModal() {
   const styleTab = (tab: HTMLElement, isActive: boolean) => {
     Object.assign(tab.style, {
       cursor: 'pointer',
-      fontSize: '11px',
+      fontSize: DS.typography.sizes.small,
       fontWeight: 'bold',
       letterSpacing: '1px',
       color: isActive ? DS.colors.accent : DS.colors.textMuted,
@@ -3061,7 +3068,7 @@ function openSquadFriendsModal() {
     if (activeTab === 'FRIENDS') {
       const listContainer = document.createElement('div');
       Object.assign(listContainer.style, {
-        display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '280px', overflowY: 'auto', paddingRight: '4px'
+        display: 'flex', flexDirection: 'column', gap: '0.50rem', maxHeight: '17.50rem', overflowY: 'auto', paddingRight: '4px'
       });
 
       const refreshFriendsList = async () => {
@@ -3071,7 +3078,7 @@ function openSquadFriendsModal() {
         if (!myUid) {
           const emptyLabel = document.createElement('div');
           emptyLabel.textContent = 'MUST BE SIGNED IN TO VIEW FRIENDS';
-          Object.assign(emptyLabel.style, { fontSize: '11px', color: DS.colors.textMuted, fontStyle: 'italic', padding: '6px 0' });
+          Object.assign(emptyLabel.style, { fontSize: DS.typography.sizes.small, color: DS.colors.textMuted, fontStyle: 'italic', padding: '0.38rem 0' });
           listContainer.appendChild(emptyLabel);
           return;
         }
@@ -3081,7 +3088,7 @@ function openSquadFriendsModal() {
         if (accepted.length === 0) {
           const emptyLabel = document.createElement('div');
           emptyLabel.textContent = 'NO FRIENDS ADDED YET';
-          Object.assign(emptyLabel.style, { fontSize: '11px', color: DS.colors.textMuted, fontStyle: 'italic', padding: '6px 0' });
+          Object.assign(emptyLabel.style, { fontSize: DS.typography.sizes.small, color: DS.colors.textMuted, fontStyle: 'italic', padding: '0.38rem 0' });
           listContainer.appendChild(emptyLabel);
           return;
         }
@@ -3089,12 +3096,12 @@ function openSquadFriendsModal() {
         accepted.forEach(friend => {
           const friendRow = document.createElement('div');
           Object.assign(friendRow.style, {
-            display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 12px', background: 'rgba(255,255,255,0.02)', borderLeft: `2px solid ${DS.colors.accent}`
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.50rem 0.75rem', background: 'rgba(255,255,255,0.02)', borderLeft: `2px solid ${DS.colors.accent}`
           });
 
           const friendName = friend.displayName || friend.codename || friend.uid;
           const nameLabel = document.createElement('div');
-          nameLabel.innerHTML = `<span style="font-weight:bold; font-size:13px;">${friendName}</span> <span style="font-size:9px; color:#44ff44; margin-left:8px;">● ONLINE</span>`;
+          nameLabel.innerHTML = `<span style="font-weight:bold; font-size: ${DS.typography.sizes.body};">${friendName}</span> <span style="font-size: ${DS.typography.sizes.tiny}; color:#44ff44; margin-left:0.50rem;">● ONLINE</span>`;
           friendRow.appendChild(nameLabel);
           listContainer.appendChild(friendRow);
         });
@@ -3105,7 +3112,7 @@ function openSquadFriendsModal() {
     } else if (activeTab === 'REQUESTS') {
       const listContainer = document.createElement('div');
       Object.assign(listContainer.style, {
-        display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '280px', overflowY: 'auto', paddingRight: '4px'
+        display: 'flex', flexDirection: 'column', gap: '0.50rem', maxHeight: '17.50rem', overflowY: 'auto', paddingRight: '4px'
       });
 
       const refreshIncomingRequestsList = async () => {
@@ -3122,7 +3129,7 @@ function openSquadFriendsModal() {
         if (incomingList.length === 0 && lobbyInvitesList.length === 0) {
           const emptyLabel = document.createElement('div');
           emptyLabel.textContent = 'NO PENDING INCOMING REQUESTS OR LOBBY INVITES';
-          Object.assign(emptyLabel.style, { fontSize: '11px', color: DS.colors.textMuted, fontStyle: 'italic', padding: '6px 0' });
+          Object.assign(emptyLabel.style, { fontSize: DS.typography.sizes.small, color: DS.colors.textMuted, fontStyle: 'italic', padding: '0.38rem 0' });
           listContainer.appendChild(emptyLabel);
           return;
         }
@@ -3158,14 +3165,14 @@ function openSquadFriendsModal() {
         for (const req of incomingList) {
           const reqRow = document.createElement('div');
           Object.assign(reqRow.style, {
-            display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '6px 8px', background: 'rgba(255,255,255,0.02)'
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.38rem 0.50rem', background: 'rgba(255,255,255,0.02)'
           });
 
           const senderName = userProfileCache.get(req.senderUid) || req.senderUid;
 
           const nameLabel = document.createElement('div');
-          nameLabel.innerHTML = `<span style="font-weight:bold;">${senderName}</span> <span style="font-size:9px; color:#ffaa00; margin-left:6px;">● FRIEND REQUEST</span>`;
-          Object.assign(nameLabel.style, { fontSize: '12px' });
+          nameLabel.innerHTML = `<span style="font-weight:bold;">${senderName}</span> <span style="font-size: ${DS.typography.sizes.tiny}; color:#ffaa00; margin-left:0.38rem;">● FRIEND REQUEST</span>`;
+          Object.assign(nameLabel.style, { fontSize: DS.typography.sizes.small });
           reqRow.appendChild(nameLabel);
 
           const actionsContainer = document.createElement('div');
@@ -3174,7 +3181,7 @@ function openSquadFriendsModal() {
           const acceptBtn = document.createElement('div');
           acceptBtn.textContent = 'ACCEPT';
           Object.assign(acceptBtn.style, {
-            fontSize: '10px', fontWeight: 'bold', color: '#44ff44', cursor: 'pointer', padding: '2px 6px', border: '1px solid #44ff44', borderRadius: '0px'
+            fontSize: DS.typography.sizes.tiny, fontWeight: 'bold', color: '#44ff44', cursor: 'pointer', padding: '2px 0.38rem', border: '1px solid #44ff44', borderRadius: '0px'
           });
           acceptBtn.onclick = async () => {
             import('../audio').then(({ audioManager }) => audioManager.play('click'));
@@ -3185,7 +3192,7 @@ function openSquadFriendsModal() {
           const declineBtn = document.createElement('div');
           declineBtn.textContent = 'DECLINE';
           Object.assign(declineBtn.style, {
-            fontSize: '10px', fontWeight: 'bold', color: '#ff4444', cursor: 'pointer', padding: '2px 6px', border: '1px solid #ff4444', borderRadius: '0px'
+            fontSize: DS.typography.sizes.tiny, fontWeight: 'bold', color: '#ff4444', cursor: 'pointer', padding: '2px 0.38rem', border: '1px solid #ff4444', borderRadius: '0px'
           });
           declineBtn.onclick = async () => {
             import('../audio').then(({ audioManager }) => audioManager.play('click'));
@@ -3202,12 +3209,12 @@ function openSquadFriendsModal() {
         for (const invite of lobbyInvitesList) {
           const inviteRow = document.createElement('div');
           Object.assign(inviteRow.style, {
-            display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '6px 8px', background: 'rgba(255,69,0,0.05)', borderLeft: `2px solid ${DS.colors.accent}`
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.38rem 0.50rem', background: 'rgba(255,69,0,0.05)', borderLeft: `2px solid ${DS.colors.accent}`
           });
 
           const nameLabel = document.createElement('div');
-          nameLabel.innerHTML = `<span style="font-weight:bold;">${invite.fromName}</span> <span style="font-size:9px; color:${DS.colors.accent}; margin-left:6px;">● LOBBY INVITE</span>`;
-          Object.assign(nameLabel.style, { fontSize: '12px' });
+          nameLabel.innerHTML = `<span style="font-weight:bold;">${invite.fromName}</span> <span style="font-size: ${DS.typography.sizes.tiny}; color:${DS.colors.accent}; margin-left:0.38rem;">● LOBBY INVITE</span>`;
+          Object.assign(nameLabel.style, { fontSize: DS.typography.sizes.small });
           inviteRow.appendChild(nameLabel);
 
           const actionsContainer = document.createElement('div');
@@ -3216,7 +3223,7 @@ function openSquadFriendsModal() {
           const acceptBtn = document.createElement('div');
           acceptBtn.textContent = 'JOIN LOBBY';
           Object.assign(acceptBtn.style, {
-            fontSize: '10px', fontWeight: 'bold', color: '#44ff44', cursor: 'pointer', padding: '2px 6px', border: '1px solid #44ff44', borderRadius: '0px'
+            fontSize: DS.typography.sizes.tiny, fontWeight: 'bold', color: '#44ff44', cursor: 'pointer', padding: '2px 0.38rem', border: '1px solid #44ff44', borderRadius: '0px'
           });
           acceptBtn.onclick = async () => {
             import('../audio').then(({ audioManager }) => audioManager.play('click'));
@@ -3227,7 +3234,7 @@ function openSquadFriendsModal() {
           const declineBtn = document.createElement('div');
           declineBtn.textContent = 'DECLINE';
           Object.assign(declineBtn.style, {
-            fontSize: '10px', fontWeight: 'bold', color: '#ff4444', cursor: 'pointer', padding: '2px 6px', border: '1px solid #ff4444', borderRadius: '0px'
+            fontSize: DS.typography.sizes.tiny, fontWeight: 'bold', color: '#ff4444', cursor: 'pointer', padding: '2px 0.38rem', border: '1px solid #ff4444', borderRadius: '0px'
           });
           declineBtn.onclick = async () => {
             import('../audio').then(({ audioManager }) => audioManager.play('click'));
@@ -3247,23 +3254,23 @@ function openSquadFriendsModal() {
     } else {
       const searchBox = document.createElement('div');
       Object.assign(searchBox.style, {
-        display: 'flex', gap: '8px', marginBottom: '8px'
+        display: 'flex', gap: '0.50rem', marginBottom: '0.50rem'
       });
       const input = document.createElement('input');
       input.placeholder = 'ENTER CODENAME...';
       Object.assign(input.style, {
-        flex: '1', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.15)', color: '#FFF', padding: '6px 12px', fontSize: '12px', fontFamily: DS.typography.fontFamily, outline: 'none'
+        flex: '1', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.15)', color: '#FFF', padding: '0.38rem 0.75rem', fontSize: DS.typography.sizes.small, fontFamily: DS.typography.fontFamily, outline: 'none'
       });
 
       const addBtn = document.createElement('div');
       addBtn.textContent = 'ADD';
       Object.assign(addBtn.style, {
-        background: DS.colors.accent, color: DS.colors.background, padding: '6px 16px', fontWeight: 'bold', fontSize: '12px', cursor: 'pointer', display: 'flex', alignItems: 'center'
+        background: DS.colors.accent, color: DS.colors.background, padding: '0.38rem 1.00rem', fontWeight: 'bold', fontSize: DS.typography.sizes.small, cursor: 'pointer', display: 'flex', alignItems: 'center'
       });
 
       const feedbackMsg = document.createElement('div');
       Object.assign(feedbackMsg.style, {
-        fontSize: '11px', marginBottom: '8px', minHeight: '14px'
+        fontSize: DS.typography.sizes.small, marginBottom: '0.50rem', minHeight: '0.88rem'
       });
 
       const handleAddFriend = async () => {

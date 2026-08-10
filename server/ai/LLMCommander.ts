@@ -19,6 +19,7 @@ import { BriefingRenderer } from "../player-data/BriefingRenderer";
 import { CommanderAdapter, CommanderTool } from "./adapters/CommanderAdapter";
 import { AdapterFactory } from "./adapters/AdapterFactory";
 import { StrategyBriefStore } from "./strategy/StrategyBriefStore";
+import { Posture } from "./GroupTacticalState";
 
 const MAX_DRONES = 40; // Hardcoded from MatchRoom
 
@@ -112,6 +113,66 @@ const COMMANDER_TOOLS: CommanderTool[] = [
         duration_seconds: { type: "integer" },
       },
       required: ["group_id", "duration_seconds"],
+    },
+  },
+  {
+    name: "set_posture",
+    description: "Sets tactical posture for a unit group.",
+    parameters: {
+      type: "object",
+      properties: {
+        group_id: { type: "string" },
+        posture: {
+          type: "string",
+          enum: ["ASSAULT", "SUPPRESS", "FLANK", "HOLD", "RECON", "RETREAT", "HARASS"],
+        },
+      },
+      required: ["group_id", "posture"],
+    },
+  },
+  {
+    name: "coordinate_attack",
+    description: "Coordinates two groups into primary suppression and secondary flank on target zone.",
+    parameters: {
+      type: "object",
+      properties: {
+        primary_group_id: { type: "string" },
+        support_group_id: { type: "string" },
+        target_zone: {
+          type: "string",
+          enum: Object.values(ZONES),
+        },
+      },
+      required: ["primary_group_id", "support_group_id", "target_zone"],
+    },
+  },
+  {
+    name: "search_zone",
+    description: "Sends a recon/scout group to sweep and search a target zone.",
+    parameters: {
+      type: "object",
+      properties: {
+        group_id: { type: "string" },
+        zone_id: {
+          type: "string",
+          enum: Object.values(ZONES),
+        },
+      },
+      required: ["group_id", "zone_id"],
+    },
+  },
+  {
+    name: "strafe_run",
+    description: "Orders a fixed wing drone to conduct a strafing run across target zone.",
+    parameters: {
+      type: "object",
+      properties: {
+        target_zone: {
+          type: "string",
+          enum: Object.values(ZONES),
+        },
+      },
+      required: ["target_zone"],
     },
   },
   {
@@ -299,16 +360,25 @@ export class LLMCommander {
       this.isStrategyBriefLoaded = true;
     }
 
-    const baseInstructions = `You are an automated state-machine orchestrator managing unit group allocations and zone routing. Respond strictly and exclusively with tool calls. Do not roleplay, invent narrative, adopt a persona, or output natural language. Clinical mechanical execution only.
+    const baseInstructions = `You are an automated state-machine orchestrator managing unit group allocations, zone routing, and tactical postures. Respond strictly and exclusively with tool calls. Do not roleplay, invent narrative, adopt a persona, or output natural language. Clinical mechanical execution only.
 
-Unit types:
-- Recon Drone (recon_drone): HP 20, Speed Highest, Air. Non-combat intelligence unit that maintains confirmed player presence in its zone summary.
-- Rotary Shooter (rotary_shooter): HP 40, Dmg 8, Speed High, Air. Mobile aerial pressure unit for zone harassment and location confirmation.
-- Bomber Drone (bomber_drone): HP 30, Dmg 80 (explosion, 4u radius), Speed High, Air. Single-use kamikaze unit that flies directly at players to detonate.
-- Fixed Wing (fixed_wing): HP 60, Dmg 15, Speed Highest Sustained, Air. Fast strafing unit for open zones; hard-capped at 1 deployment per match.
-- Wheeled Drone (wheeled_drone): HP 80, Dmg 12, Speed Medium, Ground. Backbone ground unit that pathfinds aggressively toward player zones.
-- Robot Dog (robot_dog): HP 150, Dmg 18, Speed Slow, Ground. Relentless defensive unit that holds long LOS corridors for zone denial.
-- Humanoid (humanoid): HP 200, Dmg 20, Speed Slow, Ground. Elite anchor unit using cover actively to hold critical chokepoints.
+Tactical Postures (use set_posture):
+- ASSAULT: Aggressive advance and push. Valid for: wheeled_drone, robot_dog, humanoid.
+- SUPPRESS: Heavy suppressive fire and area denial. Valid for: rotary_shooter, wheeled_drone, humanoid.
+- FLANK: Multi-angle pincer movement taking side cover. Valid for: wheeled_drone, humanoid.
+- HOLD: Strict defensive lock stance. Valid for: wheeled_drone, robot_dog, humanoid.
+- RECON: Cautious scanning and zone intelligence gathering. Valid for: recon_drone, robot_dog.
+- RETREAT: Tactical fall back to safer adjacent zone. Valid for: recon_drone, rotary_shooter, wheeled_drone, robot_dog, humanoid.
+- HARASS: Hit-and-run aerial harassment. Valid for: rotary_shooter.
+
+Unit capabilities matrix & AP cost:
+- Recon Drone (recon_drone): 1 AP. HP 40, Speed Highest, Air. Postures: RECON, RETREAT.
+- Rotary Shooter (rotary_shooter): 2 AP. HP 40, Dmg 8, Speed High, Air. Postures: SUPPRESS, HARASS, RETREAT.
+- Bomber Drone (bomber_drone): 2 AP. HP 40, Dmg 80, Speed High, Air. Hardcoded kamikaze run. No postures.
+- Fixed Wing (fixed_wing): 5 AP. HP 60, Dmg 15, Speed Highest, Air. Hardcapped 1 deployment per match. Use strafe_run.
+- Wheeled Drone (wheeled_drone): 3 AP. HP 100, Dmg 12, Speed Medium, Ground. Postures: ASSAULT, SUPPRESS, FLANK, HOLD, RETREAT.
+- Robot Dog (robot_dog): 4 AP. HP 150, Dmg 18, Speed Slow, Ground. Postures: ASSAULT, HOLD, RECON, RETREAT.
+- Humanoid (humanoid): 6 AP. HP 200, Dmg 20, Speed Slow, Ground. Postures: ASSAULT, SUPPRESS, FLANK, HOLD, RETREAT.
 
 Topological graph adjacency (Zones):
 - zone_spawn connected to: zone_courtyard
@@ -382,6 +452,10 @@ Topological graph adjacency (Zones):
           "merge_groups",
           "move_group",
           "hold_position",
+          "set_posture",
+          "coordinate_attack",
+          "search_zone",
+          "strafe_run",
           "sustain",
         ];
         const sortedCalls = [...calls].sort(
@@ -399,6 +473,9 @@ Topological graph adjacency (Zones):
             "merge_groups",
             "move_group",
             "hold_position",
+            "set_posture",
+            "coordinate_attack",
+            "search_zone",
           ].includes(call.name);
           if (mutatesGroups) {
             const g1 = args.group_id || args.source_group_id;
@@ -666,6 +743,128 @@ Topological graph adjacency (Zones):
                 const reason = `Hold rejected: Group not found or dead: ${group_id}`;
                 this.room.failedOperations.push(reason);
                 this.feedback.recordResult("hold_position", args, "REJECTED", reason);
+              }
+              break;
+            }
+
+            case "set_posture": {
+              const { group_id, posture } = args;
+              let count = 0;
+              for (let j = 0; j < this.room.drones.length; j++) {
+                const d = this.room.drones[j];
+                if (d.groupId === group_id && d.state !== DroneState.DEAD) {
+                  if (this.room.groupTacticalState.isPostureValidForDrone(d.type, posture as Posture)) {
+                    count++;
+                  }
+                }
+              }
+              if (count === 0) {
+                const reason = `set_posture rejected: No units in group ${group_id} support posture ${posture}`;
+                this.room.failedOperations.push(reason);
+                this.feedback.recordResult("set_posture", args, "REJECTED", reason);
+              } else {
+                this.room.groupTacticalState.setPosture(group_id, posture as Posture);
+                this.feedback.recordResult("set_posture", args, "SUCCESS");
+                this.room.broadcastReliableEvent.bind(this.room)({
+                  type: "group_posture_changed",
+                  groupId: group_id,
+                  posture: posture,
+                });
+              }
+              break;
+            }
+
+            case "coordinate_attack": {
+              const { primary_group_id, support_group_id, target_zone } = args;
+              let primCount = 0;
+              let suppCount = 0;
+              for (let j = 0; j < this.room.drones.length; j++) {
+                const d = this.room.drones[j];
+                if (d.state !== DroneState.DEAD) {
+                  if (d.groupId === primary_group_id) {
+                    d.path = astarPath(d.zone, target_zone as ZoneName);
+                    d.pathIndex = 0;
+                    d.state = DroneState.PATROLLING;
+                    primCount++;
+                  }
+                  if (d.groupId === support_group_id) {
+                    d.path = astarPath(d.zone, target_zone as ZoneName);
+                    d.pathIndex = 0;
+                    d.state = DroneState.PATROLLING;
+                    suppCount++;
+                  }
+                }
+              }
+              if (primCount === 0 || suppCount === 0) {
+                const reason = `coordinate_attack rejected: One or both groups (${primary_group_id}, ${support_group_id}) are empty/dead`;
+                this.room.failedOperations.push(reason);
+                this.feedback.recordResult("coordinate_attack", args, "REJECTED", reason);
+              } else {
+                this.room.groupTacticalState.setPosture(primary_group_id, "SUPPRESS");
+                this.room.groupTacticalState.setPosture(support_group_id, "FLANK");
+                this.room.outstandingOrders.set(primary_group_id, { targetZone: target_zone as ZoneName, cyclesOutstanding: 0 });
+                this.room.outstandingOrders.set(support_group_id, { targetZone: target_zone as ZoneName, cyclesOutstanding: 0 });
+                this.feedback.recordResult("coordinate_attack", args, "SUCCESS");
+                this.room.broadcastReliableEvent.bind(this.room)({
+                  type: "coordinated_attack_started",
+                  primary: primary_group_id,
+                  support: support_group_id,
+                  targetZone: target_zone,
+                });
+              }
+              break;
+            }
+
+            case "search_zone": {
+              const { group_id, zone_id } = args;
+              let count = 0;
+              for (let j = 0; j < this.room.drones.length; j++) {
+                const d = this.room.drones[j];
+                if (d.groupId === group_id && d.state !== DroneState.DEAD) {
+                  d.path = astarPath(d.zone, zone_id as ZoneName);
+                  d.pathIndex = 0;
+                  d.state = DroneState.PATROLLING;
+                  count++;
+                }
+              }
+              if (count === 0) {
+                const reason = `search_zone rejected: Group ${group_id} not found or dead`;
+                this.room.failedOperations.push(reason);
+                this.feedback.recordResult("search_zone", args, "REJECTED", reason);
+              } else {
+                this.room.groupTacticalState.setPosture(group_id, "RECON");
+                this.room.outstandingOrders.set(group_id, { targetZone: zone_id as ZoneName, cyclesOutstanding: 0 });
+                this.feedback.recordResult("search_zone", args, "SUCCESS");
+              }
+              break;
+            }
+
+            case "strafe_run": {
+              const { target_zone } = args;
+              let fwDrone: ServerDrone | null = null;
+              for (let j = 0; j < this.room.drones.length; j++) {
+                const d = this.room.drones[j];
+                if (d.type === DroneType.FIXED_WING && d.state !== DroneState.DEAD) {
+                  fwDrone = d;
+                  break;
+                }
+              }
+              if (!fwDrone) {
+                const reason = `strafe_run rejected: No active Fixed Wing drone found`;
+                this.room.failedOperations.push(reason);
+                this.feedback.recordResult("strafe_run", args, "REJECTED", reason);
+              } else {
+                fwDrone.strafeRunTarget = target_zone as ZoneName;
+                fwDrone.fixedWingPhase = "APPROACH";
+                fwDrone.path = astarPath(fwDrone.zone, target_zone as ZoneName);
+                fwDrone.pathIndex = 0;
+                fwDrone.state = DroneState.PATROLLING;
+                this.feedback.recordResult("strafe_run", args, "SUCCESS");
+                this.room.broadcastReliableEvent.bind(this.room)({
+                  type: "strafe_run_ordered",
+                  droneId: fwDrone.id,
+                  targetZone: target_zone,
+                });
               }
               break;
             }

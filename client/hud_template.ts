@@ -2,7 +2,7 @@ import { DS } from './design-system';
 
 export const HUD_HTML = `
     <!-- MAIN INTERACTIVE PORT -->
-    <div id="vexea-view" class="relative w-screen h-screen overflow-hidden bg-transparent  select-none text-white touch-none" style="font-family: ${DS.typography.fontFamilySecondary} !important; font-weight: ${DS.typography.weightMedium} !important;">
+    <div id="vexea-view" class="absolute inset-0 w-full h-full overflow-hidden bg-transparent select-none text-white touch-none" style="font-family: ${DS.typography.fontFamilySecondary} !important; font-weight: ${DS.typography.weightMedium} !important;">
       
       <!-- Death Overlay -->
       <div id="death-overlay" style="display: none; position: absolute; inset: 0; z-index: 1000; background: ${DS.shadows.overlay}; flex-direction: column; align-items: center; justify-content: center; pointer-events: none; color: white; font-family: ${DS.typography.fontFamilySecondary}, sans-serif; user-select: none;">
@@ -84,7 +84,7 @@ export const HUD_HTML = `
 #hud-timer {
   font-weight: ${DS.typography.weightMedium} !important;
   white-space: nowrap !important;
-  font-size: clamp(12px, 1.5vw, 18px) !important;
+  font-size: clamp(0.75rem, 1.5vw, 1.13rem) !important;
   background: transparent !important;
   text-shadow: 0 1px 2px rgba(0,0,0,0.5);
   font-family: ${DS.typography.fontFamilySecondary} !important;
@@ -92,7 +92,7 @@ export const HUD_HTML = `
 #hud-location {
   color: white !important;
   white-space: nowrap !important;
-  font-size: clamp(9px, 1.1vw, 13px) !important;
+  font-size: clamp(0.56rem, 1.1vw, 0.81rem) !important;
   background: transparent !important;
   text-shadow: 0 1px 2px rgba(0,0,0,0.5);
 }
@@ -102,10 +102,10 @@ export const HUD_HTML = `
   position: absolute !important;
   top: 1.05vh !important;
   right: 0.75vw !important;
-  width: 104px !important;
-  height: 95px !important;
-  min-width: 104px !important;
-  min-height: 95px !important;
+  width: 6.50rem !important;
+  height: 5.94rem !important;
+  min-width: 6.50rem !important;
+  min-height: 5.94rem !important;
   pointer-events: auto !important;
   background: ${DS.utils.rgba('#000000', 0.3)} !important;
   border: 1px solid rgba(255, 255, 255, 0.8) !important;
@@ -138,27 +138,27 @@ export const HUD_HTML = `
 #minimap-label {
   position: absolute !important;
   /* Float below minimap with gap */
-  top: calc(1.05vh + 95px + 3px) !important;
+  top: calc(1.05vh + 5.94rem + 3px) !important;
   right: 0.75vw !important;
-  width: 95px !important;
+  width: 5.94rem !important;
   text-align: center !important;
   color: white !important;
   background: transparent !important;
   font-weight: ${DS.typography.weightMedium} !important;
-  font-size: clamp(10px, 1.1vw, 14px) !important;
+  font-size: clamp(0.63rem, 1.1vw, 0.88rem) !important;
   border: none !important;
   text-shadow: 0 1px 2px rgba(0,0,0,0.5);
   font-family: ${DS.typography.fontFamilySecondary} !important;
 }
 #minimap-label svg {
-  height: 12px !important;
+  height: 0.75rem !important;
   width: auto !important;
   color: white !important;
 }
-@media (max-width: 714px) {
+@media (max-width: 44.63rem) {
   #minimap-label {
-    top: calc(2.1vh + 95px + 6px) !important;
-    width: 95px !important;
+    top: calc(2.1vh + 5.94rem + 0.38rem) !important;
+    width: 5.94rem !important;
   }
 }
 
@@ -181,9 +181,9 @@ export const HUD_HTML = `
 #btn-settings { top: 1vh !important; }
 #btn-mic { top: 6vh !important; }
 #btn-chat { top: 11vh !important; }
-@media (max-width: 714px) {
+@media (max-width: 44.63rem) {
   .btn-sidekick {
-    right: calc(0.75vw + 100px + 10px) !important;
+    right: calc(0.75vw + 6.25rem + 0.63rem) !important;
   }
 }
 
@@ -194,7 +194,7 @@ export const HUD_HTML = `
   left: 50%;
   transform: translate(-50%, -50%);
   width: 80vw;
-  max-width: 450px;
+  max-width: 28.13rem;
   background: rgba(0, 0, 0, 0.85);
   border: ${DS.borders.thin} #444;
   border-radius: ${DS.borders.radius.md};
@@ -213,8 +213,8 @@ export const HUD_HTML = `
   bottom: 4.5vh !important;
   width: 18.75vw !important;
   height: 18.75vw !important;
-  min-width: 150px !important;
-  min-height: 150px !important;
+  min-width: 9.38rem !important;
+  min-height: 9.38rem !important;
   pointer-events: auto !important;
   border-radius: 50% !important;
   background: transparent !important;
@@ -236,8 +236,8 @@ export const HUD_HTML = `
   top: 8.28vh !important;
   width: 5.4vw !important;
   height: 5.4vw !important;
-  min-width: 50px !important;
-  min-height: 50px !important;
+  min-width: 3.13rem !important;
+  min-height: 3.13rem !important;
   pointer-events: auto !important;
   border-radius: 50% !important;
   background: transparent !important;
@@ -254,8 +254,8 @@ export const HUD_HTML = `
   bottom: 17.5vh !important;
   width: 5.4vw !important;
   height: 5.4vw !important;
-  min-width: 50px !important;
-  min-height: 50px !important;
+  min-width: 3.13rem !important;
+  min-height: 3.13rem !important;
   pointer-events: auto !important;
   border-radius: 50% !important;
   background: transparent !important;
@@ -274,7 +274,7 @@ export const HUD_HTML = `
   transform: translateX(-50%) !important;
   width: 32vw !important;
   height: 2vh !important;
-  min-height: 12px !important;
+  min-height: 0.75rem !important;
   background: transparent !important;
   overflow: hidden !important;
 }
@@ -310,7 +310,7 @@ export const HUD_HTML = `
 #health-text {
   font-weight: 500 !important;
   color: black !important;
-  font-size: clamp(8px, 0.9vw, 11px) !important;
+  font-size: clamp(0.50rem, 0.9vw, 0.69rem) !important;
   display: block !important;
 }
 #health-text-wrap svg {
@@ -341,15 +341,15 @@ export const HUD_HTML = `
   color: white !important;
   background: transparent !important;
   font-weight: 500 !important;
-  font-size: clamp(10px, 1.1vw, 14px) !important;
+  font-size: clamp(0.63rem, 1.1vw, 0.88rem) !important;
   border: none !important;
   text-shadow: 0 1px 2px rgba(0,0,0,0.5);
 }
 .btn-util {
   width: 7vw !important;
   height: 7vw !important;
-  min-width: 64px !important;
-  min-height: 64px !important;
+  min-width: 4.00rem !important;
+  min-height: 4.00rem !important;
   border-radius: 50% !important;
   background: transparent !important;
   border: none !important; /* No outline */
@@ -380,10 +380,10 @@ export const HUD_HTML = `
   letter-spacing: ${DS.typography.letterSpacing.tight} !important;
   color: #CCCCCC !important;
   line-height: 1 !important;
-  font-size: 10px !important;
+  font-size: ${DS.typography.sizes.tiny} !important;
 }
-.ammo-mag { font-size: 10px !important; }
-.ammo-res { font-size: 8px !important; margin-left: 2px !important; }
+.ammo-mag { font-size: ${DS.typography.sizes.tiny} !important; }
+.ammo-res { font-size: ${DS.typography.sizes.tiny} !important; margin-left: 2px !important; }
 .weapon-slot {
   width: 50% !important;
   height: 100% !important;
@@ -406,8 +406,8 @@ export const HUD_HTML = `
   left: 0 !important;
   width: 0 !important;
   height: 0 !important;
-  border-top: 10.1px solid #FFFFFF !important;
-  border-right: 10.1px solid transparent !important;
+  border-top: 0.63rem solid #FFFFFF !important;
+  border-right: 0.63rem solid transparent !important;
 }
 #weapon-slot-1 { opacity: 1 !important; }
 #weapon-slot-2 { opacity: 1 !important; }
@@ -430,8 +430,8 @@ export const HUD_HTML = `
   bottom: 2.5vh !important;
   width: 13.5vw !important;
   height: 13.5vw !important;
-  min-width: 100px !important;
-  min-height: 100px !important;
+  min-width: 6.25rem !important;
+  min-height: 6.25rem !important;
 }
 
 #btn-ads {
@@ -439,8 +439,8 @@ export const HUD_HTML = `
   bottom: 7.5vh !important;
   width: 6.75vw !important;
   height: 6.75vw !important;
-  min-width: 60px !important;
-  min-height: 60px !important;
+  min-width: 3.75rem !important;
+  min-height: 3.75rem !important;
 }
 
 #btn-reload {
@@ -448,8 +448,8 @@ export const HUD_HTML = `
   bottom: 17.5vh !important;
   width: 5.25vw !important;
   height: 5.25vw !important;
-  min-width: 45px !important;
-  min-height: 45px !important;
+  min-width: 2.81rem !important;
+  min-height: 2.81rem !important;
 }
 
 #btn-jump {
@@ -457,8 +457,8 @@ export const HUD_HTML = `
   bottom: 14vh !important;
   width: 6vw !important;
   height: 6vw !important;
-  min-width: 50px !important;
-  min-height: 50px !important;
+  min-width: 3.13rem !important;
+  min-height: 3.13rem !important;
 }
 
 #btn-crouch {
@@ -466,8 +466,8 @@ export const HUD_HTML = `
   bottom: 12.5vh !important;
   width: 5.25vw !important;
   height: 5.25vw !important;
-  min-width: 45px !important;
-  min-height: 45px !important;
+  min-width: 2.81rem !important;
+  min-height: 2.81rem !important;
 }
 
 #btn-dash {
@@ -475,8 +475,8 @@ export const HUD_HTML = `
   bottom: 1vh !important;
   width: 5.25vw !important;
   height: 5.25vw !important;
-  min-width: 45px !important;
-  min-height: 45px !important;
+  min-width: 2.81rem !important;
+  min-height: 2.81rem !important;
 }
 
 /* SVG Constraints */
@@ -489,7 +489,7 @@ export const HUD_HTML = `
   width: 55% !important;
   position: absolute !important;
   top: 50% !important;
-  right: 14px !important;
+  right: 0.88rem !important;
   transform: translateY(-50%) scaleX(-1) !important;
   pointer-events: none !important;
   color: inherit !important;
@@ -523,17 +523,17 @@ export const HUD_HTML = `
   <div id="look-zone-right"></div>
   
   <button id="btn-match-status" title="Match Status & Ping Diagnostics">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:22px; height:22px;">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:1.38rem; height:1.38rem;">
       <path d="M18 20V10M12 20V4M6 20v-6" stroke-linecap="round" stroke-linejoin="round"/>
     </svg>
   </button>
 
   <!-- MATCH STATUS & LIVE PING MODAL -->
-  <div id="match-status-modal" style="display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 85vw; max-width: 420px; background: rgba(12, 12, 14, 0.92); border: ${DS.borders.thin} ${DS.utils.rgba(DS.colors.text, 0.15)}; backdrop-filter: ${DS.glass.blur}; border-radius: ${DS.borders.radius.lg}; padding: ${DS.spacing.xxl}; z-index: 1000; color: white; font-family: ${DS.typography.fontFamilySecondary}, sans-serif; box-shadow: 0 10px 30px rgba(0,0,0,0.7);">
-    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 12px; margin-bottom: 16px;">
+  <div id="match-status-modal" style="display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 85vw; max-width: 26.25rem; background: rgba(12, 12, 14, 0.92); border: ${DS.borders.thin} ${DS.utils.rgba(DS.colors.text, 0.15)}; backdrop-filter: ${DS.glass.blur}; border-radius: ${DS.borders.radius.lg}; padding: ${DS.spacing.xxl}; z-index: 1000; color: white; font-family: ${DS.typography.fontFamilySecondary}, sans-serif; box-shadow: 0 0.63rem 1.88rem rgba(0,0,0,0.7);">
+    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 0.75rem; margin-bottom: 1.00rem;">
       <div style="display: flex; align-items: center; gap: 10px;">
-        <div style="width: 36px; height: 36px; border-radius: 50%; background: rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center;">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 20px; height: 20px; color: #22c55e;">
+        <div style="width: 2.25rem; height: 2.25rem; border-radius: 50%; background: rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 1.25rem; height: 1.25rem; color: #22c55e;">
             <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
             <circle cx="12" cy="7" r="4" />
           </svg>
@@ -547,29 +547,29 @@ export const HUD_HTML = `
     </div>
 
     <!-- MATCH STATS -->
-    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 16px; text-align: center;">
-      <div style="background: rgba(255,255,255,0.05); padding: 8px; border-radius: 6px;">
+    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.50rem; margin-bottom: 1.00rem; text-align: center;">
+      <div style="background: rgba(255,255,255,0.05); padding: 0.50rem; border-radius: 0.38rem;">
         <div style="font-size: 0.7rem; color: #a1a1aa; text-transform: uppercase;">KILLS</div>
         <div id="status-kills" style="font-size: 1.3rem; font-weight: 700; color: #22c55e;">0</div>
       </div>
-      <div style="background: rgba(255,255,255,0.05); padding: 8px; border-radius: 6px;">
+      <div style="background: rgba(255,255,255,0.05); padding: 0.50rem; border-radius: 0.38rem;">
         <div style="font-size: 0.7rem; color: #a1a1aa; text-transform: uppercase;">DEATHS</div>
         <div id="status-deaths" style="font-size: 1.3rem; font-weight: 700; color: #ef4444;">0</div>
       </div>
-      <div style="background: rgba(255,255,255,0.05); padding: 8px; border-radius: 6px;">
+      <div style="background: rgba(255,255,255,0.05); padding: 0.50rem; border-radius: 0.38rem;">
         <div style="font-size: 0.7rem; color: #a1a1aa; text-transform: uppercase;">SCORE</div>
         <div id="status-score" style="font-size: 1.3rem; font-weight: 700; color: #eab308;">0</div>
       </div>
     </div>
 
     <!-- NETCODE & PING DIAGNOSTICS -->
-    <div style="background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; padding: 12px;">
-      <div style="font-size: 0.8rem; font-weight: 700; letter-spacing: 0.1em; color: #a1a1aa; margin-bottom: 8px; text-transform: uppercase; display: flex; align-items: center; justify-content: space-between;">
+    <div style="background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.08); border-radius: 0.50rem; padding: 0.75rem;">
+      <div style="font-size: 0.8rem; font-weight: 700; letter-spacing: 0.1em; color: #a1a1aa; margin-bottom: 0.50rem; text-transform: uppercase; display: flex; align-items: center; justify-content: space-between;">
         <span>NETCODE & PING STATS</span>
         <span id="status-net-mode" style="color: #3b82f6; font-size: 0.7rem;">CLIENT PREDICTIVE</span>
       </div>
       
-      <div style="display: flex; flex-direction: column; gap: 6px; font-size: 0.85rem;">
+      <div style="display: flex; flex-direction: column; gap: 0.38rem; font-size: 0.85rem;">
         <div style="display: flex; justify-content: space-between;">
           <span style="color: #71717a;">PING (RTT):</span>
           <span id="status-ping-val" style="font-weight: 700; color: #22c55e;">-- ms</span>
@@ -599,7 +599,7 @@ export const HUD_HTML = `
   <div id="minimap-container">
     <canvas id="minimap-canvas"></canvas>
     <div id="minimap-players" style="position: absolute; inset: 0; pointer-events: none;">
-      <div id="minimap-player-arrow" style="position: absolute; top: 50%; left: 50%; width: 20px; height: 20px; margin-top: -10px; margin-left: -10px; display: flex; align-items: center; justify-content: center; transform-origin: center;">
+      <div id="minimap-player-arrow" style="position: absolute; top: 50%; left: 50%; width: 1.25rem; height: 1.25rem; margin-top: -0.63rem; margin-left: -0.63rem; display: flex; align-items: center; justify-content: center; transform-origin: center;">
         <svg version="1.0" xmlns="http://www.w3.org/2000/svg"
  viewBox="0 0 101.000000 116.000000"
  preserveAspectRatio="xMidYMid meet">
@@ -674,10 +674,10 @@ m386 -565 c56 -61 57 -107 4 -174 -80 -102 -259 -48 -259 78 0 156 149 212
   </button>
 
   <div id="joystick-boundary">
-    <div style="position: absolute; top: 4px; left: 50%; transform: translateX(-50%); width: 8px; height: 6px; background: white; clip-path: polygon(50% 0%, 0% 100%, 100% 100%);"></div>
-    <div style="position: absolute; bottom: 4px; left: 50%; transform: translateX(-50%); width: 8px; height: 6px; background: white; clip-path: polygon(50% 100%, 0% 0%, 100% 0%);"></div>
-    <div style="position: absolute; left: 4px; top: 50%; transform: translateY(-50%); width: 6px; height: 8px; background: white; clip-path: polygon(0% 50%, 100% 0%, 100% 100%);"></div>
-    <div style="position: absolute; right: 4px; top: 50%; transform: translateY(-50%); width: 6px; height: 8px; background: white; clip-path: polygon(100% 50%, 0% 0%, 0% 100%);"></div>
+    <div style="position: absolute; top: 4px; left: 50%; transform: translateX(-50%); width: 0.50rem; height: 0.38rem; background: white; clip-path: polygon(50% 0%, 0% 100%, 100% 100%);"></div>
+    <div style="position: absolute; bottom: 4px; left: 50%; transform: translateX(-50%); width: 0.50rem; height: 0.38rem; background: white; clip-path: polygon(50% 100%, 0% 0%, 100% 0%);"></div>
+    <div style="position: absolute; left: 4px; top: 50%; transform: translateY(-50%); width: 0.38rem; height: 0.50rem; background: white; clip-path: polygon(0% 50%, 100% 0%, 100% 100%);"></div>
+    <div style="position: absolute; right: 4px; top: 50%; transform: translateY(-50%); width: 0.38rem; height: 0.50rem; background: white; clip-path: polygon(100% 50%, 0% 0%, 0% 100%);"></div>
     <div id="joystick-knob"></div>
   </div>
   
@@ -700,7 +700,7 @@ fill="${DS.colors.text}" stroke="none">
 </svg>
   </button>
 
-  <button id="btn-sprint" class="btn-action" style="position: absolute; left: 7.14vw; top: 16.56vh; width: 5.4vw; height: 5.4vw; min-width: 50px; min-height: 50px; display: none;">
+  <button id="btn-sprint" class="btn-action" style="position: absolute; left: 7.14vw; top: 16.56vh; width: 5.4vw; height: 5.4vw; min-width: 3.13rem; min-height: 3.13rem; display: none;">
     <svg version="1.0" xmlns="http://www.w3.org/2000/svg"
      viewBox="0 0 147.000000 147.000000"
      preserveAspectRatio="xMidYMid meet">
@@ -725,8 +725,8 @@ fill="${DS.colors.text}" stroke="none">
 
   <div id="auto-label">AUTO &rarr;</div>
   <button id="btn-walkie" class="btn-util" style="position: absolute; left: 26vw; bottom: 4vh;">
-    <div id="util-1-badge" style="position: absolute; top: -6px; right: -6px; width: 18px; height: 18px; background: rgba(10, 10, 12, 0.85); color: #FFFFFF; font-size: 11px; font-weight: 700; padding: 0; border-radius: 0px; border: 1px solid rgba(255,255,255,0.3); font-family: monospace; text-shadow: 0 1px 2px #000; display: flex; align-items: center; justify-content: center;">G</div>
-    <div id="util-1-cooldown" style="position: absolute; inset: 0; background: rgba(10, 10, 12, 0.75); display: none; align-items: center; justify-content: center; color: #FFFFFF; font-weight: bold; font-size: 13px; border-radius: 0px; font-family: monospace;"></div>
+    <div id="util-1-badge" style="position: absolute; top: -0.38rem; right: -0.38rem; width: 1.13rem; height: 1.13rem; background: rgba(10, 10, 12, 0.85); color: #FFFFFF; font-size: ${DS.typography.sizes.small}; font-weight: 700; padding: 0; border-radius: 0px; border: 1px solid rgba(255,255,255,0.3); font-family: monospace; text-shadow: 0 1px 2px #000; display: flex; align-items: center; justify-content: center;">G</div>
+    <div id="util-1-cooldown" style="position: absolute; inset: 0; background: rgba(10, 10, 12, 0.75); display: none; align-items: center; justify-content: center; color: #FFFFFF; font-weight: bold; font-size: ${DS.typography.sizes.body}; border-radius: 0px; font-family: monospace;"></div>
     <svg version="1.0" xmlns="http://www.w3.org/2000/svg"
  viewBox="0 0 74.000000 163.000000"
  preserveAspectRatio="xMidYMid meet">
@@ -748,7 +748,7 @@ fill="${DS.colors.text}" stroke="none">
 </svg>
   </button>
   
-  <button id="btn-helmet" class="btn-util" style="position: absolute; left: 34.5vw; bottom: 4vh; width: 7vw; height: 7vw; min-width: 64px; min-height: 64px; display: flex; align-items: center; justify-content: center; background: transparent; border: none;">
+  <button id="btn-helmet" class="btn-util" style="position: absolute; left: 34.5vw; bottom: 4vh; width: 7vw; height: 7vw; min-width: 4.00rem; min-height: 4.00rem; display: flex; align-items: center; justify-content: center; background: transparent; border: none;">
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" style="width: 70%; height: 70%;" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
       <path d="M 50 15 C 26 15 18 30 18 52 C 18 55 20 58 23 58 C 26 58 28 55 29 52 C 32 35 41 25 50 25 C 59 25 68 35 71 52 C 72 55 74 58 77 58 C 80 58 82 55 82 52 C 82 30 74 15 50 15 Z" fill="${DS.utils.rgba(DS.colors.text, 0.08)}" />
       <path d="M 21 54 C 21 48 79 48 79 54 C 79 58 75 62 70 62 L 30 62 C 25 62 21 58 21 54 Z" fill="${DS.utils.rgba(DS.colors.text, 0.2)}" />
@@ -812,14 +812,14 @@ fill="currentColor" stroke="none">
     </div>
   </div>
 
-  <div id="medkit-arrow" style="position: absolute; right: 26vw; bottom: calc(4vh + 7vw + 5px); width: 24px; height: 24px; color: white; opacity: 0.85; pointer-events: auto; display: flex; align-items: center; justify-content: center;">
+  <div id="medkit-arrow" style="position: absolute; right: 26vw; bottom: calc(4vh + 7vw + 0.31rem); width: 1.50rem; height: 1.50rem; color: white; opacity: 0.85; pointer-events: auto; display: flex; align-items: center; justify-content: center;">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="width: 100%; height: 100%;">
       <polyline points="18 15 12 9 6 15"></polyline>
     </svg>
   </div>
   <button id="btn-medkit" class="btn-util" style="position: absolute; right: 26vw; bottom: 4vh;">
-    <div id="util-2-badge" style="position: absolute; top: -6px; right: -6px; width: 18px; height: 18px; background: rgba(10, 10, 12, 0.85); color: #FFFFFF; font-size: 11px; font-weight: 700; padding: 0; border-radius: 0px; border: 1px solid rgba(255,255,255,0.3); font-family: monospace; text-shadow: 0 1px 2px #000; display: flex; align-items: center; justify-content: center;">F</div>
-    <div id="util-2-cooldown" style="position: absolute; inset: 0; background: rgba(10, 10, 12, 0.75); display: none; align-items: center; justify-content: center; color: #FFFFFF; font-weight: bold; font-size: 13px; border-radius: 0px; font-family: monospace;"></div>
+    <div id="util-2-badge" style="position: absolute; top: -0.38rem; right: -0.38rem; width: 1.13rem; height: 1.13rem; background: rgba(10, 10, 12, 0.85); color: #FFFFFF; font-size: ${DS.typography.sizes.small}; font-weight: 700; padding: 0; border-radius: 0px; border: 1px solid rgba(255,255,255,0.3); font-family: monospace; text-shadow: 0 1px 2px #000; display: flex; align-items: center; justify-content: center;">F</div>
+    <div id="util-2-cooldown" style="position: absolute; inset: 0; background: rgba(10, 10, 12, 0.75); display: none; align-items: center; justify-content: center; color: #FFFFFF; font-weight: bold; font-size: ${DS.typography.sizes.body}; border-radius: 0px; font-family: monospace;"></div>
     <svg version="1.0" xmlns="http://www.w3.org/2000/svg"
  viewBox="0 0 128.000000 117.000000"
  preserveAspectRatio="xMidYMid meet">
@@ -998,31 +998,31 @@ m-65 -309 c46 -5 86 -12 89 -14 4 -5 -23 -81 -37 -103 -7 -9 -31 -4 -105 25
 
   <!-- POST MATCH SUMMARY SCREEN -->
   <div id="post-match-screen" style="display: none; position: absolute; inset: 0; z-index: 2000; background: ${DS.utils.rgba('#050505', 0.95)}; backdrop-filter: ${DS.glass.blur}; -webkit-backdrop-filter: ${DS.glass.blur}; flex-direction: column; align-items: center; justify-content: center; color: white; padding: ${DS.spacing.lg};">
-    <div style="width: 100%; max-width: 640px; border: ${DS.borders.thin} ${DS.utils.rgba(DS.colors.text, 0.08)}; background: ${DS.utils.rgba('#0A0A0A', 0.85)}; box-shadow: 0 0 30px rgba(0,0,0,0.8); padding: ${DS.spacing.xl}; display: flex; flex-direction: column; gap: ${DS.spacing.lg};">
+    <div style="width: 100%; max-width: 40.00rem; border: ${DS.borders.thin} ${DS.utils.rgba(DS.colors.text, 0.08)}; background: ${DS.utils.rgba('#0A0A0A', 0.85)}; box-shadow: 0 0 1.88rem rgba(0,0,0,0.8); padding: ${DS.spacing.xl}; display: flex; flex-direction: column; gap: ${DS.spacing.lg};">
       
       <!-- TITLE & STATUS -->
       <div style="text-align: center; border-bottom: ${DS.borders.thin} ${DS.utils.rgba(DS.colors.text, 0.1)}; padding-bottom: ${DS.spacing.md};">
-        <div id="summary-victory-status" style="font-size: 28px; font-weight: ${DS.typography.weightMedium}; letter-spacing: ${DS.typography.letterSpacing.extraWide}; color: ${DS.colors.accent};">OPERATION COMPLETE</div>
+        <div id="summary-victory-status" style="font-size: ${DS.typography.sizes.headingLg}; font-weight: ${DS.typography.weightMedium}; letter-spacing: ${DS.typography.letterSpacing.extraWide}; color: ${DS.colors.accent};">OPERATION COMPLETE</div>
         <div style="font-size: ${DS.typography.tiny}; letter-spacing: ${DS.typography.letterSpacing.wide}; color: ${DS.colors.textSecondary}; margin-top: ${DS.spacing.sm};">CONTRACT DIVISION SYSTEM ENGAGEMENT SUMMARY</div>
       </div>
 
       <!-- PERSONAL SUMMARY GRID -->
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 10px;">
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.50rem; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 0.63rem;">
         <div style="display: flex; flex-direction: column; gap: 4px;">
-          <div style="font-size: 10px; letter-spacing: 2px; color: #888888;">CONTRACTOR SCORE</div>
-          <div id="summary-score" style="font-size: 36px; font-weight: 500; color: white;">0</div>
+          <div style="font-size: ${DS.typography.sizes.tiny}; letter-spacing: 2px; color: #888888;">CONTRACTOR SCORE</div>
+          <div id="summary-score" style="font-size: ${DS.typography.sizes.headingLg}; font-weight: 500; color: white;">0</div>
         </div>
         <div style="display: flex; flex-direction: column; gap: 4px; justify-content: center; align-items: flex-end; text-align: right;">
-          <div style="font-size: 10px; letter-spacing: ${DS.typography.letterSpacing.tight}; color: #888888;">BATTLEPASS TIER</div>
-          <div style="font-size: 18px; font-weight: ${DS.typography.weightMedium}; color: ${DS.colors.accent}; display: flex; align-items: center; gap: ${DS.spacing.sm};">
-            TIER <span id="summary-bp-tier">1</span> <span style="font-size: 12px; color: #4ade80;">(+20% XP)</span>
+          <div style="font-size: ${DS.typography.sizes.tiny}; letter-spacing: ${DS.typography.letterSpacing.tight}; color: #888888;">BATTLEPASS TIER</div>
+          <div style="font-size: ${DS.typography.sizes.headingSm}; font-weight: ${DS.typography.weightMedium}; color: ${DS.colors.accent}; display: flex; align-items: center; gap: ${DS.spacing.sm};">
+            TIER <span id="summary-bp-tier">1</span> <span style="font-size: ${DS.typography.sizes.small}; color: #4ade80;">(+20% XP)</span>
           </div>
         </div>
       </div>
 
       <!-- PERFORMANCE METRICS STATS -->
       <div style="display: flex; flex-direction: column; gap: 6px;">
-        <div style="font-size: 11px; letter-spacing: 3px; color: ${DS.colors.accent}; font-weight: 500;">PERFORMANCE ASSESSMENT</div>
+        <div style="font-size: ${DS.typography.sizes.small}; letter-spacing: 3px; color: ${DS.colors.accent}; font-weight: 500;">PERFORMANCE ASSESSMENT</div>
         
         <div id="summary-stats-container" style="display: flex; flex-direction: column; gap: 4px;">
           <!-- Dynamically filled stats rows -->
@@ -1031,12 +1031,12 @@ m-65 -309 c46 -5 86 -12 89 -14 4 -5 -23 -81 -37 -103 -7 -9 -31 -4 -105 25
 
       <!-- REWARDS GAINED (CREDITS, XP, PASS) -->
       <div style="background: ${DS.utils.rgba(DS.colors.accent, 0.05)}; border: ${DS.borders.thin} ${DS.utils.rgba(DS.colors.accent, 0.15)}; padding: ${DS.spacing.md}; display: flex; flex-direction: column; gap: ${DS.spacing.sm};">
-        <div style="font-size: 10px; letter-spacing: ${DS.typography.letterSpacing.tight}; color: ${DS.colors.accent}; font-weight: ${DS.typography.weightMedium};">EARNED CREDITS & STAMINA TARIFF</div>
-        <div style="display: flex; justify-content: space-between; font-size: 13px;">
+        <div style="font-size: ${DS.typography.sizes.tiny}; letter-spacing: ${DS.typography.letterSpacing.tight}; color: ${DS.colors.accent}; font-weight: ${DS.typography.weightMedium};">EARNED CREDITS & STAMINA TARIFF</div>
+        <div style="display: flex; justify-content: space-between; font-size: ${DS.typography.sizes.body};">
           <span style="color: #888888;">MATCH COMPLETION ALLOTMENT</span>
           <span style="color: #4ade80; font-weight: 500;">+25 CR</span>
         </div>
-        <div style="display: flex; justify-content: space-between; font-size: 13px;">
+        <div style="display: flex; justify-content: space-between; font-size: ${DS.typography.sizes.body};">
           <span style="color: #888888;">OPERATION ENVELOPE TAX (ENERGY)</span>
           <span style="color: #f87171; font-weight: 500;">-10 EN</span>
         </div>
@@ -1044,7 +1044,7 @@ m-65 -309 c46 -5 86 -12 89 -14 4 -5 -23 -81 -37 -103 -7 -9 -31 -4 -105 25
 
       <!-- DISPATCH BUTTON -->
       <div>
-        <button id="main-menu-btn" style="width: 100%; padding: 14px; background: ${DS.colors.accent}; border: none; color: ${DS.colors.background}; font-family: inherit; font-size: 16px; font-weight: ${DS.typography.weightMedium}; letter-spacing: ${DS.typography.letterSpacing.wide}; cursor: pointer; transition: all 200ms ease;">
+        <button id="main-menu-btn" style="width: 100%; padding: 0.88rem; background: ${DS.colors.accent}; border: none; color: ${DS.colors.background}; font-family: inherit; font-size: ${DS.typography.sizes.headingSm}; font-weight: ${DS.typography.weightMedium}; letter-spacing: ${DS.typography.letterSpacing.wide}; cursor: pointer; transition: all 200ms ease;">
           RETURN TO COMMAND PORTAL
         </button>
       </div>

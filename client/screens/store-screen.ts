@@ -63,7 +63,7 @@ export function renderStoreScreen(container: HTMLElement, registeredUserData: an
   featuredLabel.textContent = 'PROMOTIONAL BROADCAST';
   Object.assign(featuredLabel.style, {
     fontFamily: DS.typography.fontFamily,
-    fontSize: '8.5px',
+    fontSize: DS.typography.sizes.tiny,
     color: DS.colors.textMuted,
     letterSpacing: '1.5px',
     fontWeight: 'bold',
@@ -83,7 +83,7 @@ export function renderStoreScreen(container: HTMLElement, registeredUserData: an
     flex: '1',
     background: `linear-gradient(180deg, ${DS.utils.rgba(DS.colors.accent, 0.04)} 0%, rgba(255, 255, 255, 0.01) 100%)`,
     border: `1px solid ${DS.colors.accent}`,
-    padding: '10px 12px',
+    padding: '0.63rem 0.75rem',
     borderRadius: '4px',
     display: 'flex',
     flexDirection: 'column',
@@ -109,24 +109,24 @@ export function renderStoreScreen(container: HTMLElement, registeredUserData: an
   featuredCard.innerHTML += `
     <div style="display:flex; flex-direction:column; gap:0.5vh; min-height:0;">
       <div style="display:flex; justify-content:space-between; align-items:center;">
-        <span style="font-family:${DS.typography.fontFamily}; font-size:clamp(8px, 1vh, 11px); color:${DS.colors.accent}; font-weight:bold; letter-spacing:0.1vw;">FEATURED DEAL</span>
-        <span style="font-family:${DS.typography.fontFamily}; font-size:clamp(8px, 1vh, 10px); color:#00FF88; font-weight:bold; letter-spacing:0.05vw; background:rgba(0,255,136,0.06); padding:0.2vh 0.5vw; border:1px solid rgba(0,255,136,0.15);">30% OFF</span>
+        <span style="font-family:${DS.typography.fontFamily}; font-size:clamp(0.50rem, 1vh, 0.69rem); color:${DS.colors.accent}; font-weight:bold; letter-spacing:0.1vw;">FEATURED DEAL</span>
+        <span style="font-family:${DS.typography.fontFamily}; font-size:clamp(0.50rem, 1vh, 0.63rem); color:#00FF88; font-weight:bold; letter-spacing:0.05vw; background:rgba(0,255,136,0.06); padding:0.2vh 0.5vw; border:1px solid rgba(0,255,136,0.15);">30% OFF</span>
       </div>
-      <div style="font-family:${DS.typography.fontFamily}; font-size:clamp(13px, 2vh, 16px); font-weight:bold; color:${DS.colors.text}; letter-spacing:0.1vw; line-height:1.1; margin-top:0.2vh;">
+      <div style="font-family:${DS.typography.fontFamily}; font-size:clamp(0.81rem, 2vh, 1.00rem); font-weight:bold; color:${DS.colors.text}; letter-spacing:0.1vw; line-height:1.1; margin-top:0.2vh;">
         ${featuredOffer.title.toUpperCase()}
       </div>
-      <div style="font-family:${DS.typography.fontFamily}; font-size:9.5px; color:${DS.colors.textMuted}; line-height:1.3;">
+      <div style="font-family:${DS.typography.fontFamily}; font-size: ${DS.typography.sizes.tiny}; color:${DS.colors.textMuted}; line-height:1.3;">
         ${featuredOffer.description}
       </div>
     </div>
 
     <!-- Inside Specifications Bulletins -->
     <div style="display:flex; flex-direction:column; gap:0.5vh; background:rgba(255,255,255,0.01); border:1px solid rgba(255,255,255,0.03); padding:0.8vh 1vw; border-radius:0px;">
-      <div style="font-family:${DS.typography.fontFamily}; font-size:7.5px; color:${DS.colors.textMuted}; font-weight:bold; letter-spacing:0.05vw;">INCLUDED SPECS:</div>
-      <div style="font-family:${DS.typography.fontFamily}; font-size:clamp(8px, 1.1vh, 12px); color:${DS.colors.text}; font-weight:bold; display:flex; align-items:center; gap:0.5vw;">
+      <div style="font-family:${DS.typography.fontFamily}; font-size: ${DS.typography.sizes.tiny}; color:${DS.colors.textMuted}; font-weight:bold; letter-spacing:0.05vw;">INCLUDED SPECS:</div>
+      <div style="font-family:${DS.typography.fontFamily}; font-size:clamp(0.50rem, 1.1vh, 0.75rem); color:${DS.colors.text}; font-weight:bold; display:flex; align-items:center; gap:0.5vw;">
         <span style="color:${DS.colors.accent};">•</span> VX-88 TEST COATING ASSEMBLY
       </div>
-      <div style="font-family:${DS.typography.fontFamily}; font-size:clamp(8px, 1.1vh, 12px); color:${DS.colors.text}; font-weight:bold; display:flex; align-items:center; gap:0.5vw;">
+      <div style="font-family:${DS.typography.fontFamily}; font-size:clamp(0.50rem, 1.1vh, 0.75rem); color:${DS.colors.text}; font-weight:bold; display:flex; align-items:center; gap:0.5vw;">
         <span style="color:${DS.colors.accent};">•</span> PRE-TUNED INTEGRATION MATRIX
       </div>
     </div>
@@ -144,12 +144,12 @@ export function renderStoreScreen(container: HTMLElement, registeredUserData: an
   featPreviewBtn.textContent = 'INSPECT';
   Object.assign(featPreviewBtn.style, {
     flex: '1',
-    padding: '8px',
+    padding: '0.50rem',
     background: 'rgba(255, 255, 255, 0.02)',
     border: '1px solid rgba(255, 255, 255, 0.08)',
     color: DS.colors.text,
     fontFamily: DS.typography.fontFamily,
-    fontSize: '9px',
+    fontSize: DS.typography.sizes.tiny,
     fontWeight: 'bold',
     letterSpacing: '1px',
     cursor: 'pointer',
@@ -165,12 +165,12 @@ export function renderStoreScreen(container: HTMLElement, registeredUserData: an
   featBuyBtn.textContent = `ACQUIRE DEAL — ${featuredOffer.priceCredits} CR`;
   Object.assign(featBuyBtn.style, {
     flex: '2.2',
-    padding: '8px',
+    padding: '0.50rem',
     background: DS.colors.accent,
     border: 'none',
     color: '#000000',
     fontFamily: DS.typography.fontFamily,
-    fontSize: '9px',
+    fontSize: DS.typography.sizes.tiny,
     fontWeight: 'bold',
     letterSpacing: '1px',
     cursor: 'pointer',
@@ -213,7 +213,7 @@ export function renderStoreScreen(container: HTMLElement, registeredUserData: an
   filterLabel.textContent = 'EQUIPMENT CATALOG';
   Object.assign(filterLabel.style, {
     fontFamily: DS.typography.fontFamily,
-    fontSize: '8.5px',
+    fontSize: DS.typography.sizes.tiny,
     color: DS.colors.textMuted,
     letterSpacing: '1.5px',
     fontWeight: 'bold',
@@ -232,12 +232,12 @@ export function renderStoreScreen(container: HTMLElement, registeredUserData: an
     filterBtn.textContent = cat.label;
     const isFilterActive = activeCategoryFilter === cat.id;
     Object.assign(filterBtn.style, {
-      padding: '2px 6px',
+      padding: '2px 0.38rem',
       background: isFilterActive ? 'rgba(255, 255, 255, 0.05)' : 'transparent',
       color: isFilterActive ? DS.colors.accent : 'rgba(255, 255, 255, 0.4)',
       border: isFilterActive ? `1px solid ${DS.colors.accent}` : '1px solid transparent',
       fontFamily: DS.typography.fontFamily,
-      fontSize: '7.5px',
+      fontSize: DS.typography.sizes.tiny,
       fontWeight: 'bold',
       letterSpacing: '0.8px',
       borderRadius: '2px',
@@ -290,13 +290,13 @@ export function renderStoreScreen(container: HTMLElement, registeredUserData: an
     card.innerHTML = `
       <div style="display:flex; flex-direction:column; gap:0.3vh;">
         <div style="display:flex; justify-content:space-between; align-items:center;">
-          <span style="font-family:${DS.typography.fontFamily}; font-size:clamp(8px, 1vh, 10px); color:${DS.colors.accent}; font-weight:bold; letter-spacing:0.08vw; text-transform:uppercase;">${item.category}</span>
-          <span style="font-family:${DS.typography.fontFamily}; font-size:clamp(7px, 0.9vh, 9px); color:${DS.colors.textMuted}; font-weight:bold;">REQ LVL ${item.requiredLevel}</span>
+          <span style="font-family:${DS.typography.fontFamily}; font-size:clamp(0.50rem, 1vh, 0.63rem); color:${DS.colors.accent}; font-weight:bold; letter-spacing:0.08vw; text-transform:uppercase;">${item.category}</span>
+          <span style="font-family:${DS.typography.fontFamily}; font-size:clamp(0.44rem, 0.9vh, 0.56rem); color:${DS.colors.textMuted}; font-weight:bold;">REQ LVL ${item.requiredLevel}</span>
         </div>
-        <div style="font-family:${DS.typography.fontFamily}; font-size:clamp(10px, 1.2vh, 13px); font-weight:bold; color:${DS.colors.text}; letter-spacing:0.04vw; margin-top:0.2vh; line-height:1.1;">
+        <div style="font-family:${DS.typography.fontFamily}; font-size:clamp(0.63rem, 1.2vh, 0.81rem); font-weight:bold; color:${DS.colors.text}; letter-spacing:0.04vw; margin-top:0.2vh; line-height:1.1;">
           ${item.title.toUpperCase()}
         </div>
-        <div style="font-family:${DS.typography.fontFamily}; font-size:clamp(8px, 1vh, 10px); color:${DS.colors.textMuted}; line-height:1.2; margin-top:0.2vh; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;">
+        <div style="font-family:${DS.typography.fontFamily}; font-size:clamp(0.50rem, 1vh, 0.63rem); color:${DS.colors.textMuted}; line-height:1.2; margin-top:0.2vh; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;">
           ${item.description}
         </div>
       </div>
@@ -309,12 +309,12 @@ export function renderStoreScreen(container: HTMLElement, registeredUserData: an
     previewBtn.textContent = 'INSPECT';
     Object.assign(previewBtn.style, {
       flex: '1',
-      padding: '5px',
+      padding: '0.31rem',
       background: 'rgba(255, 255, 255, 0.02)',
       border: '1px solid rgba(255, 255, 255, 0.08)',
       color: DS.colors.text,
       fontFamily: DS.typography.fontFamily,
-      fontSize: '8px',
+      fontSize: DS.typography.sizes.tiny,
       fontWeight: 'bold',
       letterSpacing: '0.5px',
       cursor: 'pointer',
@@ -348,12 +348,12 @@ export function renderStoreScreen(container: HTMLElement, registeredUserData: an
     buyBtn.textContent = `${item.priceCredits} CR`;
     Object.assign(buyBtn.style, {
       flex: '1',
-      padding: '5px',
+      padding: '0.31rem',
       background: DS.colors.accent,
       border: 'none',
       color: '#000000',
       fontFamily: DS.typography.fontFamily,
-      fontSize: '8px',
+      fontSize: DS.typography.sizes.tiny,
       fontWeight: 'bold',
       letterSpacing: '0.5px',
       cursor: 'pointer',
@@ -467,21 +467,21 @@ function open3DSkinPreviewModal(title: string, skin: any, itemKey?: string): voi
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 'clamp(8px, 2vh, 16px)',
+    padding: 'clamp(0.50rem, 2vh, 1.00rem)',
     boxSizing: 'border-box'
   });
 
   const modal = document.createElement('div');
   Object.assign(modal.style, {
-    width: 'min(640px, 95vw)',
-    height: 'min(500px, 92vh)',
+    width: 'min(40.00rem, 95vw)',
+    height: 'min(31.25rem, 92vh)',
     maxHeight: '96vh',
     background: '#050508',
     border: `1px solid ${DS.colors.accent}`,
     display: 'flex',
     flexDirection: 'column',
     position: 'relative',
-    padding: 'clamp(8px, 1.5vw, 12px)',
+    padding: 'clamp(0.50rem, 1.5vw, 0.75rem)',
     gap: '0.8vh',
     borderRadius: '0px',
     boxSizing: 'border-box',
@@ -489,11 +489,11 @@ function open3DSkinPreviewModal(title: string, skin: any, itemKey?: string): voi
   });
 
   modal.innerHTML = `
-    <div style="display:flex; justify-content:space-between; align-items:center; height:clamp(36px, 8vh, 44px); flex-shrink:0;">
-      <div style="font-family:${DS.typography.fontFamily}; font-size:clamp(11px, 2.5vw, 15px); font-weight:bold; color:${DS.colors.text}; letter-spacing:1.5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; flex:1; margin-right:1vw;">
+    <div style="display:flex; justify-content:space-between; align-items:center; height:clamp(2.25rem, 8vh, 44px); flex-shrink:0;">
+      <div style="font-family:${DS.typography.fontFamily}; font-size:clamp(0.69rem, 2.5vw, 0.94rem); font-weight:bold; color:${DS.colors.text}; letter-spacing:1.5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; flex:1; margin-right:1vw;">
         3D INSPECTOR — ${title}
       </div>
-      <button id="close-3d-modal" style="background:none; border:1px solid ${DS.colors.accent}; color:${DS.colors.accent}; font-family:${DS.typography.fontFamily}; font-size:clamp(11px, 2.5vw, 13px); font-weight:bold; cursor:pointer; min-width:5vw; height:4vh; padding:0 1.2vw; display:inline-flex; align-items:center; justify-content:center; flex-shrink:0; border-radius:0px;">CLOSE [X]</button>
+      <button id="close-3d-modal" style="background:none; border:1px solid ${DS.colors.accent}; color:${DS.colors.accent}; font-family:${DS.typography.fontFamily}; font-size:clamp(0.69rem, 2.5vw, 0.81rem); font-weight:bold; cursor:pointer; min-width:5vw; height:4vh; padding:0 1.2vw; display:inline-flex; align-items:center; justify-content:center; flex-shrink:0; border-radius:0px;">CLOSE [X]</button>
     </div>
   `;
 
@@ -514,11 +514,11 @@ function open3DSkinPreviewModal(title: string, skin: any, itemKey?: string): voi
   tipNotice.textContent = 'DRAG / TOUCH TO ROTATE 360°';
   Object.assign(tipNotice.style, {
     position: 'absolute',
-    bottom: '6px',
+    bottom: '0.38rem',
     left: '50%',
     transform: 'translateX(-50%)',
     fontFamily: DS.typography.fontFamily,
-    fontSize: '8px',
+    fontSize: DS.typography.sizes.tiny,
     color: 'rgba(255,255,255,0.4)',
     letterSpacing: '1px',
     pointerEvents: 'none',

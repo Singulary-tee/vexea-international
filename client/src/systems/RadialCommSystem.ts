@@ -75,8 +75,8 @@ export class RadialCommSystem {
     wheel.id = "radial-comm-wheel";
     Object.assign(wheel.style, {
       position: "relative",
-      width: "320px",
-      height: "320px",
+      width: "20.00rem",
+      height: "20.00rem",
       background: "rgba(10, 10, 12, 0.95)",
       border: `2px solid ${DS.colors.border}`,
       borderRadius: "50%",
@@ -90,8 +90,8 @@ export class RadialCommSystem {
     const hub = document.createElement("div");
     Object.assign(hub.style, {
       position: "absolute",
-      width: "80px",
-      height: "80px",
+      width: "5.00rem",
+      height: "5.00rem",
       background: "rgba(0, 0, 0, 0.5)",
       border: `1px solid rgba(255, 255, 255, 0.1)`,
       borderRadius: "50%",
@@ -104,8 +104,8 @@ export class RadialCommSystem {
     
     const crosshair = document.createElement("div");
     Object.assign(crosshair.style, {
-      width: "16px",
-      height: "16px",
+      width: "1.00rem",
+      height: "1.00rem",
       border: `1px solid ${DS.colors.accent}`,
       borderRadius: "50%"
     });
@@ -148,7 +148,7 @@ export class RadialCommSystem {
       Object.assign(label.style, {
         color: "white",
         fontFamily: "monospace",
-        fontSize: "11px",
+        fontSize: DS.typography.sizes.small,
         fontWeight: "bold",
         pointerEvents: "none"
       });
@@ -158,7 +158,7 @@ export class RadialCommSystem {
       Object.assign(desc.style, {
         color: "#888",
         fontFamily: "monospace",
-        fontSize: "8px",
+        fontSize: DS.typography.sizes.tiny,
         marginTop: "2px",
         pointerEvents: "none",
         textTransform: "uppercase"
@@ -275,7 +275,7 @@ export class RadialCommSystem {
 
     // Determine visual center and position wheel relative to start coordinates
     if (this.wheelEl) {
-      const wheelHalf = 160; // 320px width/height divided by 2
+      const wheelHalf = 160; // 20.00rem width/height divided by 2
       let cx = startX !== undefined ? startX : window.innerWidth / 2;
       let cy = startY !== undefined ? startY : window.innerHeight / 2;
       

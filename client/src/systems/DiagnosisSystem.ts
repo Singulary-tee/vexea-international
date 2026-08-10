@@ -300,7 +300,7 @@ export class DiagnosisSystem {
                             div.style.color = DS.colors.success;
                             div.style.background = DS.shadows.overlay;
                             div.style.padding = "2px 4px";
-                            div.style.fontSize = "10px";
+                            div.style.fontSize = DS.typography.sizes.tiny;
                             div.style.fontFamily = "monospace";
                             div.style.whiteSpace = "pre";
                             

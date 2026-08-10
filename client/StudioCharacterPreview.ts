@@ -501,16 +501,16 @@ export function toggleDevPanel() {
   panelContainer.id = "dev-placement-panel";
   Object.assign(panelContainer.style, {
     position: "fixed",
-    top: "60px",
-    right: "20px",
-    width: "320px",
-    maxHeight: "calc(100vh - 80px)",
+    top: "3.75rem",
+    right: "1.25rem",
+    width: "20.00rem",
+    maxHeight: "calc(100vh - 5.00rem)",
     overflowY: "auto",
     zIndex: "99999",
     background: "rgba(8, 8, 12, 0.98)", // Smoky dark background compliance
     border: `1px solid ${DS.colors.dev}`,
     borderRadius: "0px", // Strict 0px compliance
-    padding: "12px",
+    padding: "0.75rem",
     display: "flex",
     flexDirection: "column",
     gap: "10px",
@@ -528,7 +528,7 @@ export function toggleDevPanel() {
     justifyContent: "space-between",
     alignItems: "center",
     borderBottom: `1px solid rgba(255, 0, 100, 0.2)`,
-    paddingBottom: "6px",
+    paddingBottom: "0.38rem",
     cursor: "move",
     userSelect: "none"
   });
@@ -536,7 +536,7 @@ export function toggleDevPanel() {
   const title = document.createElement("div");
   title.textContent = "STUDIO PREVIEW DEVELOPER CONTROLS";
   Object.assign(title.style, {
-    fontSize: "12px",
+    fontSize: DS.typography.sizes.small,
     fontWeight: "bold",
     color: DS.colors.dev,
     letterSpacing: "1px"
@@ -547,7 +547,7 @@ export function toggleDevPanel() {
   closeBtn.textContent = "✕";
   Object.assign(closeBtn.style, {
     cursor: "pointer",
-    fontSize: "14px",
+    fontSize: DS.typography.sizes.body,
     color: DS.colors.textMuted
   });
   closeBtn.addEventListener("click", () => {
@@ -618,9 +618,9 @@ export function toggleDevPanel() {
     border: "1px solid rgba(255, 255, 255, 0.1)",
     borderRadius: "0px",
     fontFamily: DS.typography.fontFamily,
-    fontSize: "10px",
+    fontSize: DS.typography.sizes.tiny,
     fontWeight: "bold",
-    padding: "4px 8px",
+    padding: "4px 0.50rem",
     cursor: "pointer",
     textAlign: "center"
   });
@@ -635,7 +635,7 @@ export function toggleDevPanel() {
   // Preset Angle Selector
   const presetsTitle = document.createElement("div");
   presetsTitle.textContent = "ROTATION PRESETS:";
-  Object.assign(presetsTitle.style, { fontSize: "10px", color: DS.colors.textMuted, marginTop: "4px" });
+  Object.assign(presetsTitle.style, { fontSize: DS.typography.sizes.tiny, color: DS.colors.textMuted, marginTop: "4px" });
   panelContainer.appendChild(presetsTitle);
 
   const presetGroup = document.createElement("div");
@@ -660,7 +660,7 @@ export function toggleDevPanel() {
       borderRadius: "0px",
       color: DS.colors.textPrimary,
       fontFamily: DS.typography.fontFamily,
-      fontSize: "9px",
+      fontSize: DS.typography.sizes.tiny,
       fontWeight: "bold",
       padding: "4px",
       cursor: "pointer"
@@ -708,7 +708,7 @@ export function toggleDevPanel() {
     const lbl = document.createElement("span");
     lbl.textContent = labelText;
     Object.assign(lbl.style, {
-      fontSize: "10px",
+      fontSize: DS.typography.sizes.tiny,
       color: DS.colors.textMuted,
       fontWeight: "bold"
     });
@@ -716,7 +716,7 @@ export function toggleDevPanel() {
     const valDisplay = document.createElement("span");
     valDisplay.textContent = Number(currentConfig[field]).toFixed(2);
     Object.assign(valDisplay.style, {
-      fontSize: "10px",
+      fontSize: DS.typography.sizes.tiny,
       color: DS.colors.dev,
       fontFamily: DS.typography.fontFamilyMono
     });
@@ -832,7 +832,7 @@ export function toggleDevPanel() {
     flexDirection: "column",
     gap: "6px",
     borderTop: "1px solid rgba(255, 255, 255, 0.05)",
-    paddingTop: "8px",
+    paddingTop: "0.50rem",
     marginTop: "4px"
   });
 
@@ -844,9 +844,9 @@ export function toggleDevPanel() {
     border: `1px solid ${DS.colors.accent}`,
     borderRadius: "0px",
     fontFamily: DS.typography.fontFamily,
-    fontSize: "10px",
+    fontSize: DS.typography.sizes.tiny,
     fontWeight: "bold",
-    padding: "6px",
+    padding: "0.38rem",
     cursor: "pointer"
   });
   saveBtn.addEventListener("click", () => {
@@ -868,9 +868,9 @@ export function toggleDevPanel() {
     border: "1px solid rgba(255, 255, 255, 0.15)",
     borderRadius: "0px",
     fontFamily: DS.typography.fontFamily,
-    fontSize: "10px",
+    fontSize: DS.typography.sizes.tiny,
     fontWeight: "bold",
-    padding: "6px",
+    padding: "0.38rem",
     cursor: "pointer"
   });
   copyBtn.addEventListener("click", () => {
@@ -894,7 +894,7 @@ export function toggleDevPanel() {
     border: "1px solid rgba(255, 255, 255, 0.05)",
     borderRadius: "0px",
     fontFamily: DS.typography.fontFamily,
-    fontSize: "9px",
+    fontSize: DS.typography.sizes.tiny,
     fontWeight: "bold",
     padding: "4px",
     cursor: "pointer"

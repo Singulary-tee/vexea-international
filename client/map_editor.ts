@@ -90,7 +90,7 @@ export const initMapEditor = (
       </div>
 
       <!-- Settings Modal -->
-      <div id="editor-settings-modal" class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-black/95 border border-[${DS.colors.border}] p-6 rounded hidden pointer-events-auto flex-col gap-4 min-w-[250px]">
+      <div id="editor-settings-modal" class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-black/95 border border-[${DS.colors.border}] p-6 rounded hidden pointer-events-auto flex-col gap-4 min-w-[15.63rem]">
         <h2 class="text-xl font-bold text-white mb-2">Editor Settings</h2>
         <label class="flex justify-between items-center text-gray-300">
             Grid Size:

@@ -5,6 +5,9 @@ export function rotaryShooterBehavior(drone: any, ctx: BehaviorContext, out: Beh
   const intel = INTEL_CONFIGS[DroneType.ROTARY_SHOOTER];
   const conf = DRONE_CONFIGS[DroneType.ROTARY_SHOOTER];
 
+  const groupPosture = ctx.getGroupPosture(drone.groupId) || "HARASS";
+  drone.posture = groupPosture;
+
   if (drone.mode === "COMBAT" && drone.combatTarget) {
     const target = drone.combatTarget.lastSensedPosition;
     const dx = target.x - drone.posX;

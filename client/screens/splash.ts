@@ -160,7 +160,7 @@ export function initSplash() {
   if (el.children.length === 0) {
     Object.assign(el.style, {
       display: 'flex', flexDirection: 'column',
-      width: '100vw', height: '100vh',
+      width: '100%', height: '100%', minHeight: '-webkit-fill-available',
       alignItems: 'center', justifyContent: 'center'
     });
 
@@ -179,7 +179,7 @@ export function initSplash() {
     
     const loadingBarWrapper = document.createElement('div');
     Object.assign(loadingBarWrapper.style, {
-      width: '120px', height: '2px', background: DS.colors.surface, overflow: 'hidden',
+      width: '7.50rem', height: '2px', background: DS.colors.surface, overflow: 'hidden',
       borderRadius: '0px'
     });
 
@@ -193,7 +193,7 @@ export function initSplash() {
     const initText = document.createElement('div');
     initText.textContent = 'CHARGING SYSTEM CACHE... 0%';
     Object.assign(initText.style, {
-      fontFamily: DS.typography.fontFamily, fontSize: '13px', letterSpacing: '4px',
+      fontFamily: DS.typography.fontFamily, fontSize: DS.typography.sizes.body, letterSpacing: '4px',
       color: DS.colors.textPrimary, textTransform: 'uppercase', opacity: '1', marginTop: '0', height: 'auto'
     });
 
@@ -216,6 +216,7 @@ export function initSplash() {
     };
 
     const preloadAll = async () => {
+      await populateBlobUrlMap();
       const allFiles = [
         ...SOUNDS_TO_PRELOAD.map(f => ({ name: f, cat: 'Sound' as const })),
         ...TEXTURES_TO_PRELOAD.map(f => ({ name: f, cat: 'Asset' as const })),
@@ -260,7 +261,7 @@ export function initSplash() {
         el.style.backgroundImage = `url('${getAssetUrl("splash_screen.webp")}')`;
       }
 
-      loadingBarInner.style.width = '120px';
+      loadingBarInner.style.width = '7.50rem';
 
       setTimeout(() => {
         loadingBarWrapper.style.transition = 'opacity 200ms';
