@@ -32,6 +32,7 @@
 *   **Anti-Cheat (Visibility Culling):**
     *   DTLS encryption does not protect against RAM scanning/browser hooks parsing WebRTC Data Channels.
     *   **Defense:** Server-Side Visibility Culling. The server never sends coordinates for drones outside the player's line-of-sight and audio detection radius.
+*   **Secret Protection & Leak Prevention:** Under no circumstances should the agent ever run commands (such as `printenv`, `env`, or custom scripts logging `process.env`) that print, display, or expose environment variables or credential secrets in the context window or logs, unless the user gives an explicit, direct order to do so.
 
 ---
 
@@ -118,60 +119,11 @@
 *   **Input Payload (Semantic State):** Receives pre-computed zone summaries. Server calculates a `combat_effectiveness` enum (full, degraded, critical, destroyed) and remaining unit counts for every abstract "Group".
 *   **Fog of War:** Semantic summary only defines player location if a drone holds active LOS or acoustically detects unsilenced fire. State degrades to `UNKNOWN` over time, forcing Recon.
 *   **Batch Validation & Execution:**
-    *   Server handles the array of calls atomically. Order forced as: Spawn -> Split -> Merge -> Move.
+    *   Server handles the array of calls atomically. 
     *   Lock sets prevent mutating commands (Merge, Split, Move) from creating concurrency conflicts.
     *   Four validations: Schema conformity, Entity existence, Topology adjacency, Resource unit pool check.
     *   **No Silent Discards:** Validation failures are appended to a `failed_operations` array with rejection reasons in the adjacent 8-second prompt payload.
-*   **Tool Call Schema:**
-```json
-{
-  "tools": [
-    {
-      "name": "move_group",
-      "parameters": {
-        "group_id": "string",
-        "target_zone": "string",
-        "priority": "low|normal|high"
-      }
-    },
-    {
-      "name": "merge_groups",
-      "parameters": {
-        "source_group_id": "string",
-        "target_group_id": "string"
-      }
-    },
-    {
-      "name": "split_group",
-      "parameters": {
-        "source_group_id": "string",
-        "unit_count": "integer"
-      }
-    },
-    {
-      "name": "hold_position",
-      "parameters": {
-        "group_id": "string",
-        "duration_seconds": "integer"
-      }
-    },
-    {
-      "name": "spawn_units",
-      "parameters": {
-        "zone_id": "string",
-        "unit_type": "ground|air",
-        "count": "integer",
-        "behavior_profile": "assault|patrol|recon"
-      }
-    },
-    {
-      "name": "sustain",
-      "parameters": {
-        "reason": "string"
-      }
-    }
-  ]
-}
+
 
 ---
 
@@ -188,7 +140,7 @@
 
 ## 11. Strict Sizing Mathematization, Algorithmic Rigor & Anti-Eyeballing Protocol (LAW)
 *   **Absolute Ban on Eyeballing & Magic Numbers:** Eyeballing layout sizes, margins, gaps, font sizes, paddings, HUD elements, 3D canvas model scaling, or inserting ad-hoc "magic numbers" and hacky calculation tweaks into physics, steering, collision avoidance, or AI systems is strictly forbidden.
-*   **Mathematical Proof Required for UI:** Every visual element must be laid out using precise percentages, viewport-relative math (`vh`, `vw`, `vmax`, `vmin`, `clamp`), or pixel budgets that sum up to ≤ 100% of the available container. Every developer or agent must mathematically prove that elements inside any viewport container cannot overlap or clip under any supported screen sizes and ratios.
+*   **Mathematical Proof Required for UI:** Every visual element must be laid out using precise percentages, viewport-relative math (`vh`, `vw`, `vmax`, `vmin`, `clamp`),  that sum up to ≤ 100% of the available container. Every developer or agent must mathematically prove that elements inside any viewport container cannot overlap or clip under any supported screen sizes and ratios.
 *   **Systematic Algorithmic Modeling Required:** All physics forces, steering behaviors, collision avoidance vectors, AI perception thresholds, and movement calculations must be implemented as clean, mathematically grounded modules (e.g., formal Reciprocal Velocity Obstacles / RVO, defined potential fields, explicit state machine transitions). Patching bugs with hardcoded, arbitrary offsets or ad-hoc conditional tweaks ("hoping" it fixes edge cases) is a critical failure. All behavior must be derived from verifiable physical or geometric principles inside dedicated domain modules.
 
 ---

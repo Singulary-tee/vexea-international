@@ -1259,6 +1259,10 @@ export function initMainMenu() {
 }
 
 function updateProfileBox() {
+  if (!profileNameText || !profileRankBadge) {
+    console.warn("[MainMenu] updateProfileBox called before profileNameText or profileRankBadge is initialized.");
+    return;
+  }
   const leaderboardCard = document.getElementById('leaderboard-card');
   if (leaderboardCard) {
     import('../asset-cache').then(({ getAssetUrl }) => {
@@ -1524,6 +1528,10 @@ function updatePlayTabSelection() {
 }
 
 function renderRightPanel() {
+  if (!rightPanelContent) {
+    console.warn("[MainMenu] renderRightPanel called before rightPanelContent is initialized.");
+    return;
+  }
   rightPanelContent.style.opacity = '1';
   
   // Right Column Overflow Logic

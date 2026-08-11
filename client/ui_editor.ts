@@ -503,143 +503,173 @@ export const initUIEditor = () => {
     "top": "0.75vh",
     "scale": 1.2
   },
+  "btn-match-status": {
+    "left": "0.75vw",
+    "top": "1.05vh",
+    "scale": 1,
+    "width": "2.38vw",
+    "height": "4.27vh"
+  },
   "hud-timer-container": {
-    "left": "15.57vw",
-    "top": "2.59vh",
+    "left": "47.50vw",
+    "top": "9.11vh",
     "scale": 1,
     "width": "5.74vw",
     "height": "1.89vh"
   },
   "minimap-container": {
-    "left": "30.87vw",
-    "top": "1.85vh",
+    "left": "85.81vw",
+    "top": "4.17vh",
     "scale": 1,
-    "width": "4.42vw",
-    "height": "8.06vh"
+    "width": "12.00vw",
+    "height": "23.00vh"
   },
   "minimap-label": {
-    "left": "30.95vw",
-    "top": "10.19vh",
-    "scale": 1
+    "left": "86.78vw",
+    "top": "28.13vh",
+    "scale": 1,
+    "width": "11.14vw",
+    "height": "3.94vh"
   },
   "btn-settings": {
-    "left": "29.34vw",
-    "top": "1.20vh",
+    "left": "81.16vw",
+    "top": "1.04vh",
     "scale": 1,
-    "width": "1.49vw",
-    "height": "3.15vh"
+    "width": "4.40vw",
+    "height": "10.15vh"
   },
   "btn-mic": {
-    "left": "29.34vw",
-    "top": "6.85vh",
+    "left": "81.16vw",
+    "top": "17.71vh",
     "scale": 1,
-    "width": "1.49vw",
-    "height": "3.15vh"
+    "width": "4.49vw",
+    "height": "10.15vh"
   },
   "btn-chat": {
-    "left": "29.34vw",
-    "top": "3.98vh",
+    "left": "81.16vw",
+    "top": "9.38vh",
     "scale": 1,
-    "width": "1.49vw",
-    "height": "3.15vh"
+    "width": "4.49vw",
+    "height": "10.15vh"
   },
   "joystick-boundary": {
-    "left": "4.20vw",
-    "top": "21.67vh",
-    "scale": 0.6
+    "left": "11.72vw",
+    "top": "61.20vh",
+    "scale": 0.6,
+    "width": "5.71vw",
+    "height": "10.26vh"
   },
   "btn-sprint": {
-    "left": "7.14vw",
-    "top": "16.56vh",
-    "scale": 1
+    "left": "14.66vw",
+    "top": "40.36vh",
+    "scale": 1,
+    "width": "2.98vw",
+    "height": "5.35vh"
   },
   "btn-fire-left": {
-    "left": "1.49vw",
-    "top": "14.81vh",
-    "scale": 1.2
+    "left": "4.10vw",
+    "top": "41.67vh",
+    "scale": 1.2,
+    "width": "3.57vw",
+    "height": "6.42vh"
   },
   "weapon-slots-wrap": {
-    "left": "16.53vw",
-    "top": "28.15vh",
+    "left": "45.51vw",
+    "top": "80.21vh",
     "scale": 1,
-    "width": "7.72vw",
-    "height": "2.59vh"
+    "width": "20.61vw",
+    "height": "7.30vh"
   },
   "btn-walkie": {
-    "left": "12.94vw",
-    "top": "26.11vh",
-    "scale": 1.22
+    "left": "36.12vw",
+    "top": "75.00vh",
+    "scale": 1.22,
+    "width": "4.64vw",
+    "height": "8.34vh"
   },
   "btn-helmet": {
-    "left": "15.04vw",
-    "top": "28.33vh",
+    "left": "41.76vw",
+    "top": "81.25vh",
     "scale": 0.58,
-    "width": "2.80vw",
-    "height": "5.93vh"
+    "width": "2.21vw",
+    "height": "3.97vh"
   },
   "btn-medkit": {
-    "left": "25.27vw",
-    "top": "29.07vh",
-    "scale": 0.6
+    "left": "70.37vw",
+    "top": "83.33vh",
+    "scale": 0.6,
+    "width": "2.28vw",
+    "height": "4.10vh"
   },
   "medkit-arrow": {
-    "left": "25.58vw",
-    "top": "27.78vh",
+    "left": "68.96vw",
+    "top": "79.17vh",
     "scale": 1,
-    "width": "1.05vw",
-    "height": "2.22vh"
+    "width": "7.30vw",
+    "height": "6.80vh"
   },
   "compass-placeholder": {
-    "left": "14.87vw",
-    "top": "1.11vh",
+    "left": "41.76vw",
+    "top": "3.13vh",
     "scale": 1,
-    "width": "7.21vw",
-    "height": "3.31vh"
+    "width": "19.51vw",
+    "height": "5.10vh"
   },
   "auto-label": {
-    "left": "17.58vw",
-    "top": "26.67vh",
+    "left": "48.79vw",
+    "top": "76.04vh",
     "scale": 1,
-    "width": "2.65vw"
+    "width": "9.00vw",
+    "height": "3.94vh"
   },
   "health-bar": {
-    "left": "14.60vw",
-    "top": "32.59vh",
+    "left": "40.82vw",
+    "top": "93.75vh",
     "scale": 0.8,
-    "width": "10.06vw",
-    "height": "0.93vh"
+    "width": "21.71vw",
+    "height": "2.30vh"
   },
   "health-plus-sq-wrap": {
-    "left": "13.29vw",
-    "top": "31.30vh",
+    "left": "33.30vw",
+    "top": "89.58vh",
     "scale": 2.9,
-    "width": "1.33vw",
-    "height": "3.29vh"
+    "width": "11.20vw",
+    "height": "9.00vh"
   },
   "btn-fire-right": {
-    "left": "30.78vw",
-    "top": "21.48vh",
-    "scale": 0.6
+    "left": "85.84vw",
+    "top": "61.46vh",
+    "scale": 0.6,
+    "width": "4.11vw",
+    "height": "7.38vh"
   },
   "btn-ads": {
-    "left": "32.53vw",
-    "top": "17.22vh",
-    "scale": 0.62
+    "left": "90.54vw",
+    "top": "47.92vh",
+    "scale": 0.62,
+    "width": "2.21vw",
+    "height": "3.97vh"
   },
   "btn-reload": {
-    "left": "28.86vw",
-    "top": "25.37vh",
-    "scale": 0.95
+    "left": "80.22vw",
+    "top": "71.88vh",
+    "scale": 0.95,
+    "width": "2.54vw",
+    "height": "4.56vh"
   },
   "btn-jump": {
-    "left": "29.47vw",
-    "top": "30.19vh",
-    "scale": 0.6
+    "left": "82.09vw",
+    "top": "85.42vh",
+    "scale": 0.6,
+    "width": "1.83vw",
+    "height": "3.28vh"
   },
   "btn-crouch": {
-    "left": "31.48vw",
-    "top": "29.26vh",
-    "scale": 0.85
+    "left": "87.25vw",
+    "top": "84.38vh",
+    "scale": 0.85,
+    "width": "2.27vw",
+    "height": "4.08vh"
   }
 };
         savedConfigRaw = JSON.stringify(defaultLayout);

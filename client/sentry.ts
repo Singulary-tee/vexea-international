@@ -68,6 +68,19 @@ export function initClientSentry(customDsn?: string): void {
     // Tracing
     tracesSampleRate,
     tracePropagationTargets: ["localhost", /^https:\/\/[^/]+\/api/],
+    ignoreErrors: [
+      "failed to connect to websocket",
+      "WebSocket closed without opened.",
+      "[vite] failed to connect to websocket"
+    ],
+    beforeBreadcrumb(breadcrumb) {
+      if (breadcrumb.category === "xhr" || breadcrumb.category === "fetch") {
+        if (breadcrumb.data && typeof breadcrumb.data.url === "string" && breadcrumb.data.url.startsWith("blob:")) {
+          return null; // Ignore local blob fetches
+        }
+      }
+      return breadcrumb;
+    },
     // Profiling
     profileSessionSampleRate: enableProfiling ? 1.0 : 0,
     profilesSampleRate: enableProfiling ? 1.0 : 0,

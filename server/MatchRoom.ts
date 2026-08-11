@@ -234,9 +234,9 @@ export interface ServerDrone {
   stuckTicks?: number;
   fixedWingPhase?: 'APPROACH' | 'RUN' | 'EXIT' | 'REPOSITION';
   humanoidPhase?: string;
-  cachedCoverPos?: { x: number; y: number; z: number } | null;
+  cachedCoverPos: { x: number; y: number; z: number };
   coverCacheTick?: number;
-  targetLastPos?: { x: number; y: number; z: number };
+  targetLastPos: { x: number; y: number; z: number };
   targetLastMoveTick?: number;
   suppressToggle?: boolean;
   investigateHoldTick?: number;
@@ -245,7 +245,7 @@ export interface ServerDrone {
   humanoidPose: string;
   peekCooldown: number;
   lastDamageTick: number;
-  parkedOrder: { type: "move" | "hold"; targetZone: ZoneName; path: ZoneName[]; pathIndex: number } | null;
+  parkedOrder: { type: "move" | "hold"; targetZone: ZoneName; path: ZoneName[]; pathIndex: number; active: boolean };
   strafeRunTarget?: ZoneName | null;
 }
 
@@ -513,7 +513,7 @@ export class MatchRoom {
         collider: null,
         fixedWingPhase: 'APPROACH',
         humanoidPhase: 'HUNT',
-        cachedCoverPos: null,
+        cachedCoverPos: { x: 0, y: 0, z: 0 },
         coverCacheTick: 0,
         targetLastPos: { x: 0, y: 0, z: 0 },
         targetLastMoveTick: 0,
@@ -523,7 +523,7 @@ export class MatchRoom {
         humanoidPose: "stand_run",
         peekCooldown: 0,
         lastDamageTick: -9999,
-        parkedOrder: null,
+        parkedOrder: { type: "move" as "move" | "hold", targetZone: ZONES.CORE, path: [] as ZoneName[], pathIndex: 0, active: false },
         strafeRunTarget: null,
       });
     }

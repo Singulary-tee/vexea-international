@@ -1,7 +1,8 @@
 import RAPIER from "@dimforge/rapier3d-compat";
-import { DroneType, DroneState, DRONE_CONFIGS, INTEL_CONFIGS, WAYPOINTS } from "../../../../shared/constants";
+import { DroneType, DroneState, DRONE_CONFIGS, INTEL_CONFIGS, WAYPOINTS, ZONES } from "../../../../shared/constants";
 import { BehaviorContext, BehaviorOutput } from "../types";
 import { computeGroundSteering, applyGroundPhysics, checkGrounded } from "../BaseGroundBehavior";
+import { astarPath } from "../../../MatchRoom";
 
 const SERVER_TICK_RATE = 60;
 const COVER_CACHE_TICKS = 10;
@@ -16,6 +17,9 @@ const tempPredictPos = { x: 0, y: 0, z: 0 };
 const tempFlankLeft = { x: 0, z: 0 };
 const tempFlankRight = { x: 0, z: 0 };
 
+let COVER_RAY_1: RAPIER.Ray | null = null;
+let COVER_RAY_2: RAPIER.Ray | null = null;
+
 const CANDIDATE_ANGLES = 4;
 const CANDIDATE_DISTANCES = [3, 6, 9, 12];
 
@@ -27,6 +31,9 @@ export function findBestCoverPositionZeroGC(
   room: any,
   intel: any
 ): { x: number; y: number; z: number } | null {
+  if (!COVER_RAY_1) COVER_RAY_1 = new RAPIER.Ray({ x: 0, y: 0, z: 0 }, { x: 0, y: 0, z: 0 });
+  if (!COVER_RAY_2) COVER_RAY_2 = new RAPIER.Ray({ x: 0, y: 0, z: 0 }, { x: 0, y: 0, z: 0 });
+
   let found = false;
   let maxScore = -Infinity;
 
@@ -56,9 +63,14 @@ export function findBestCoverPositionZeroGC(
           tempRayDir.x = dx / rayDist;
           tempRayDir.y = 0;
           tempRayDir.z = dz / rayDist;
-          const ray = new RAPIER.Ray(tempRayOrigin, tempRayDir);
+          COVER_RAY_1.origin.x = tempRayOrigin.x;
+          COVER_RAY_1.origin.y = tempRayOrigin.y;
+          COVER_RAY_1.origin.z = tempRayOrigin.z;
+          COVER_RAY_1.dir.x = tempRayDir.x;
+          COVER_RAY_1.dir.y = tempRayDir.y;
+          COVER_RAY_1.dir.z = tempRayDir.z;
           const hit = room.rapierWorld.castRay(
-            ray,
+            COVER_RAY_1,
             rayDist,
             true,
             RAPIER.QueryFilterFlags.EXCLUDE_SENSORS | RAPIER.QueryFilterFlags.EXCLUDE_DYNAMIC,
@@ -118,11 +130,8 @@ export function humanoidBehavior(drone: any, ctx: BehaviorContext, out: Behavior
   drone.posture = groupPosture;
 
   if (!drone.humanoidPhase) drone.humanoidPhase = "HUNT";
-  if (drone.cachedCoverPos === undefined) drone.cachedCoverPos = null;
   if (!drone.coverCacheTick) drone.coverCacheTick = 0;
-  if (!drone.targetLastPos) drone.targetLastPos = { x: 0, y: 0, z: 0 };
   if (!drone.targetLastMoveTick) drone.targetLastMoveTick = 0;
-  if (drone.suppressToggle === undefined) drone.suppressToggle = false;
   if (!drone.investigateHoldTick) drone.investigateHoldTick = 0;
   if (!drone.humanoidPose) drone.humanoidPose = "stand_run";
   if (!drone.peekCooldown) drone.peekCooldown = 0;
@@ -131,20 +140,21 @@ export function humanoidBehavior(drone: any, ctx: BehaviorContext, out: Behavior
 
   // Park & Resume Order state tracking
   if (targetEntity) {
-    if (!drone.parkedOrder && drone.path && drone.path.length > 0) {
-      drone.parkedOrder = {
-        type: "move",
-        targetZone: drone.path[drone.path.length - 1],
-        path: drone.path,
-        pathIndex: drone.pathIndex,
-      };
+    if (!drone.parkedOrder.active && drone.path && drone.path.length > 0) {
+      drone.parkedOrder.type = "move";
+      drone.parkedOrder.targetZone = drone.path[drone.path.length - 1];
+      drone.parkedOrder.path.length = 0;
+      for (let i = 0; i < drone.path.length; i++) drone.parkedOrder.path[i] = drone.path[i];
+      drone.parkedOrder.pathIndex = drone.pathIndex;
+      drone.parkedOrder.active = true;
     }
-  } else if (drone.parkedOrder) {
+  } else if (drone.parkedOrder.active) {
     // Target lost: resume parked movement order
-    drone.path = drone.parkedOrder.path;
+    drone.path.length = 0;
+    for (let i = 0; i < drone.parkedOrder.path.length; i++) drone.path[i] = drone.parkedOrder.path[i];
     drone.pathIndex = drone.parkedOrder.pathIndex;
     drone.state = DroneState.PATROLLING;
-    drone.parkedOrder = null;
+    drone.parkedOrder.active = false;
   }
 
   // Predictive target position calculation using target velocity EMA
@@ -204,17 +214,25 @@ export function humanoidBehavior(drone: any, ctx: BehaviorContext, out: Behavior
     if (!drone.cachedCoverPos || ticksSinceCache > COVER_CACHE_TICKS || coverCompromised) {
       const best = findBestCoverPositionZeroGC(drone, targetX, targetY, targetZ, ctx.room, intel);
       if (best) {
-        if (!drone.cachedCoverPos) drone.cachedCoverPos = { x: 0, y: 0, z: 0 };
         drone.cachedCoverPos.x = best.x;
         drone.cachedCoverPos.y = best.y;
         drone.cachedCoverPos.z = best.z;
-      } else {
-        drone.cachedCoverPos = null;
       }
       drone.coverCacheTick = ctx.room.serverTick;
     }
     return drone.cachedCoverPos;
   };
+
+  // 2.4 Damage Reaction: If recently hit and has target, override posture to TAKE_COVER
+  if (recentlyHit && hasTarget) {
+    const cover = getCover();
+    if (cover) {
+      drone.humanoidPhase = "TAKE_COVER";
+      computeGroundSteering(drone, cover.x, cover.z, out, { speed: conf.speed * 1.5 });
+      drone.humanoidPose = "crouch_sprint";
+      return;
+    }
+  }
 
   // State Machine Branching based on Posture
   if (groupPosture === "HOLD") {
@@ -226,19 +244,32 @@ export function humanoidBehavior(drone: any, ctx: BehaviorContext, out: Behavior
     drone.humanoidPose = "crouch_hold";
 
     if (hasTarget) {
-      const dx = tempPredictPos.x - drone.posX;
-      const dz = tempPredictPos.z - drone.posZ;
-      const dist = Math.sqrt(dx * dx + dz * dz) || 1;
-      out.forceHeadingX = dx / dist;
-      out.forceHeadingZ = dz / dist;
-      out.shouldFire = true;
-      drone.humanoidPose = "stand_fire";
+      const hdx = targetX - drone.posX;
+      const hdz = targetZ - drone.posZ;
+      const hDist = Math.sqrt(hdx * hdx + hdz * hdz) || 1;
+      if (hDist >= intel.engagementMin && hDist <= intel.engagementMax) {
+        out.forceHeadingX = hdx / hDist;
+        out.forceHeadingZ = hdz / hDist;
+        out.shouldFire = true;
+        drone.humanoidPose = "stand_fire";
+      } else {
+        drone.humanoidPose = "crouch_hold";
+      }
     }
   } else if (groupPosture === "RETREAT") {
     // Tactical Fallback
     out.nextState = DroneState.REPOSITIONING;
     drone.humanoidPose = "crouch_sprint";
-    if (hasTarget) {
+    const spawnZone = ZONES.SPAWN;
+    const path = astarPath(drone.zone, spawnZone);
+    if (path && path.length > 0) {
+      let targetZone = path[0];
+      if (path.length > 1 && path[0] === drone.zone) {
+        targetZone = path[1];
+      }
+      const wp = WAYPOINTS[targetZone as keyof typeof WAYPOINTS] || WAYPOINTS[ZONES.SPAWN];
+      computeGroundSteering(drone, wp.x, wp.z, out, { speed: conf.speed });
+    } else if (hasTarget) {
       const awayX = drone.posX - targetX;
       const awayZ = drone.posZ - targetZ;
       const awayDist = Math.sqrt(awayX * awayX + awayZ * awayZ) || 1;
@@ -252,11 +283,7 @@ export function humanoidBehavior(drone: any, ctx: BehaviorContext, out: Behavior
     // Suppress Posture
     out.nextState = DroneState.ATTACKING;
     if (hasTarget) {
-      if (ctx.room.serverTick % SUPPRESS_TOGGLE_INTERVAL === 0) {
-        drone.suppressToggle = !drone.suppressToggle;
-      }
-      const offsetX = drone.suppressToggle ? 1.5 : -1.5;
-      const sdx = (targetX + offsetX) - drone.posX;
+      const sdx = targetX - drone.posX;
       const sdz = targetZ - drone.posZ;
       const sDist = Math.sqrt(sdx * sdx + sdz * sdz) || 1;
 
@@ -272,6 +299,25 @@ export function humanoidBehavior(drone: any, ctx: BehaviorContext, out: Behavior
     }
   } else if (groupPosture === "FLANK") {
     // Flank Posture
+    const suppressors = ctx.countSquadMatesInPosture(drone, "SUPPRESS");
+    if (suppressors < 1) {
+      // No suppression active — cannot safely flank. Switch to HOLD behavior.
+      out.nextState = DroneState.ATTACKING;
+      out.steerX = 0;
+      out.steerZ = 0;
+      out.targetSpeed = 0;
+      drone.humanoidPose = "crouch_hold";
+      if (hasTarget) {
+        const dx = targetX - drone.posX;
+        const dz = targetZ - drone.posZ;
+        const dist = Math.sqrt(dx * dx + dz * dz) || 1;
+        out.forceHeadingX = dx / dist;
+        out.forceHeadingZ = dz / dist;
+        out.shouldFire = true;
+      }
+      return;
+    }
+
     out.nextState = DroneState.PURSUING;
     drone.humanoidPose = recentlyHit ? "crouch_sprint" : "stand_run";
 

@@ -15,23 +15,13 @@ export function rotaryShooterBehavior(drone: any, ctx: BehaviorContext, out: Beh
     const dz = target.z - drone.posZ;
     const dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
 
-    // Check LOS via collisionMap or rapierWorld raycast
-    let hasLOS = true;
-    if (dist > 0.1) {
-      const sensorPos = { x: drone.posX, y: drone.posY + 0.5, z: drone.posZ };
-      const dir = { x: dx / dist, y: dy / dist, z: dz / dist };
-      if (ctx.room.collisionMap) {
-        hasLOS = !ctx.room.collisionMap.rayIntersectsAny(sensorPos, dir, dist);
-      }
-    }
-
     if (dist < intel.engagementMin) {
       // RETREAT — steer directly away without inverting vectors
       out.steerX = -dx / dist;
       out.steerZ = -dz / dist;
       out.targetSpeed = conf.speed;
       out.nextState = DroneState.PURSUING;
-    } else if (dist >= intel.engagementMin && dist <= intel.engagementMax && hasLOS) {
+    } else if (dist >= intel.engagementMin && dist <= intel.engagementMax) {
       // HOLD AND FIRE — zero steering, hover
       out.steerX = 0;
       out.steerZ = 0;

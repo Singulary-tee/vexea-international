@@ -70,174 +70,64 @@ export interface TransformConfig {
   lHandRotZ: number;
 }
 
-const DEFAULT_CONFIGS: Record<string, TransformConfig> = {
-  "Player_one-optimized.glb": {
-    posX: 0.45,
-    posY: -1.0,
-    posZ: 0,
-    rotX: 0,
-    rotY: -0.35,
-    rotZ: 0,
-    scale: 1.0,
-    keyLightIntensity: 2.2,
-    rimLightIntensity: 1.5,
-    ambLightIntensity: 0.8,
-    wepPosX: -0.09,
-    wepPosY: -0.17,
-    wepPosZ: -0.47,
-    wepRotX: 2.95840734641021,
-    wepRotY: -0.161592653589793,
-    wepRotZ: 2.04840734641021,
-    rArmPosX: 0.02,
-    rArmPosY: 0.05,
-    rArmPosZ: 0.09,
-    rArmRotX: 0.678407346410207,
-    rArmRotY: -0.221592653589793,
-    rArmRotZ: 0.238407346410207,
-    rForeArmPosX: 0.02,
-    rForeArmPosY: 0.09,
-    rForeArmPosZ: 0,
-    rForeArmRotX: 0.918407346410207,
-    rForeArmRotY: -0.891592653589793,
-    rForeArmRotZ: 0.648407346410207,
-    rHandPosX: 0,
-    rHandPosY: 0,
-    rHandPosZ: -0.02,
-    rHandRotX: 0.648407346410207,
-    rHandRotY: 1.56840734641021,
-    rHandRotZ: 0,
-    lArmPosX: 0,
-    lArmPosY: 0,
-    lArmPosZ: 0,
-    lArmRotX: 0.838407346410207,
-    lArmRotY: 0.748407346410207,
-    lArmRotZ: -0.641592653589793,
-    lForeArmPosX: -0.01,
-    lForeArmPosY: 0,
-    lForeArmPosZ: -0.05,
-    lForeArmRotX: 0.788407346410207,
-    lForeArmRotY: -0.361592653589793,
-    lForeArmRotZ: 0.168407346410207,
-    lHandPosX: -0.7,
-    lHandPosY: 0.12,
-    lHandPosZ: 0,
-    lHandRotX: 0.198407346410207,
-    lHandRotY: -1.60159265358979,
-    lHandRotZ: -0.411592653589793
-  },
-  "player-on_optimised.glb": {
-    posX: 0.45,
-    posY: -1.0,
-    posZ: 0,
-    rotX: 0,
-    rotY: -0.35,
-    rotZ: 0,
-    scale: 1.0,
-    keyLightIntensity: 2.2,
-    rimLightIntensity: 1.5,
-    ambLightIntensity: 0.8,
-    wepPosX: -0.09,
-    wepPosY: -0.17,
-    wepPosZ: -0.47,
-    wepRotX: 2.95840734641021,
-    wepRotY: -0.161592653589793,
-    wepRotZ: 2.04840734641021,
-    rArmPosX: 0.02,
-    rArmPosY: 0.05,
-    rArmPosZ: 0.09,
-    rArmRotX: 0.678407346410207,
-    rArmRotY: -0.221592653589793,
-    rArmRotZ: 0.238407346410207,
-    rForeArmPosX: 0.02,
-    rForeArmPosY: 0.09,
-    rForeArmPosZ: 0,
-    rForeArmRotX: 0.918407346410207,
-    rForeArmRotY: -0.891592653589793,
-    rForeArmRotZ: 0.648407346410207,
-    rHandPosX: 0,
-    rHandPosY: 0,
-    rHandPosZ: -0.02,
-    rHandRotX: 0.648407346410207,
-    rHandRotY: 1.56840734641021,
-    rHandRotZ: 0,
-    lArmPosX: 0,
-    lArmPosY: 0,
-    lArmPosZ: 0,
-    lArmRotX: 0.838407346410207,
-    lArmRotY: 0.748407346410207,
-    lArmRotZ: -0.641592653589793,
-    lForeArmPosX: -0.01,
-    lForeArmPosY: 0,
-    lForeArmPosZ: -0.05,
-    lForeArmRotX: 0.788407346410207,
-    lForeArmRotY: -0.361592653589793,
-    lForeArmRotZ: 0.168407346410207,
-    lHandPosX: -0.7,
-    lHandPosY: 0.12,
-    lHandPosZ: 0,
-    lHandRotX: 0.198407346410207,
-    lHandRotY: -1.60159265358979,
-    lHandRotZ: -0.411592653589793
-  },
-  "default": {
-    posX: 0.45,
-    posY: -1.0,
-    posZ: 0,
-    rotX: 0,
-    rotY: -0.35,
-    rotZ: 0,
-    scale: 1.0,
-    keyLightIntensity: 2.2,
-    rimLightIntensity: 1.5,
-    ambLightIntensity: 0.8,
-    wepPosX: -0.09,
-    wepPosY: -0.17,
-    wepPosZ: -0.47,
-    wepRotX: 2.95840734641021,
-    wepRotY: -0.161592653589793,
-    wepRotZ: 2.04840734641021,
-    rArmPosX: 0.02,
-    rArmPosY: 0.05,
-    rArmPosZ: 0.09,
-    rArmRotX: 0.678407346410207,
-    rArmRotY: -0.221592653589793,
-    rArmRotZ: 0.238407346410207,
-    rForeArmPosX: 0.02,
-    rForeArmPosY: 0.09,
-    rForeArmPosZ: 0,
-    rForeArmRotX: 0.918407346410207,
-    rForeArmRotY: -0.891592653589793,
-    rForeArmRotZ: 0.648407346410207,
-    rHandPosX: 0,
-    rHandPosY: 0,
-    rHandPosZ: -0.02,
-    rHandRotX: 0.648407346410207,
-    rHandRotY: 1.56840734641021,
-    rHandRotZ: 0,
-    lArmPosX: 0,
-    lArmPosY: 0,
-    lArmPosZ: 0,
-    lArmRotX: 0.838407346410207,
-    lArmRotY: 0.748407346410207,
-    lArmRotZ: -0.641592653589793,
-    lForeArmPosX: -0.01,
-    lForeArmPosY: 0,
-    lForeArmPosZ: -0.05,
-    lForeArmRotX: 0.788407346410207,
-    lForeArmRotY: -0.361592653589793,
-    lForeArmRotZ: 0.168407346410207,
-    lHandPosX: -0.7,
-    lHandPosY: 0.12,
-    lHandPosZ: 0,
-    lHandRotX: 0.198407346410207,
-    lHandRotY: -1.60159265358979,
-    lHandRotZ: -0.411592653589793
-  }
-};;
+const DEFAULT_CONFIG: TransformConfig = {
+  posX: 0.45,
+  posY: -1.0,
+  posZ: 0,
+  rotX: 0,
+  rotY: -0.35,
+  rotZ: 0,
+  scale: 1.0,
+  keyLightIntensity: 2.2,
+  rimLightIntensity: 1.5,
+  ambLightIntensity: 0.8,
+  wepPosX: -0.09,
+  wepPosY: -0.17,
+  wepPosZ: -0.47,
+  wepRotX: 2.95840734641021,
+  wepRotY: -0.161592653589793,
+  wepRotZ: 2.04840734641021,
+  rArmPosX: 0.02,
+  rArmPosY: 0.05,
+  rArmPosZ: 0.09,
+  rArmRotX: 0.678407346410207,
+  rArmRotY: -0.221592653589793,
+  rArmRotZ: 0.238407346410207,
+  rForeArmPosX: 0.02,
+  rForeArmPosY: 0.09,
+  rForeArmPosZ: 0,
+  rForeArmRotX: 0.918407346410207,
+  rForeArmRotY: -0.891592653589793,
+  rForeArmRotZ: 0.648407346410207,
+  rHandPosX: 0,
+  rHandPosY: 0,
+  rHandPosZ: -0.02,
+  rHandRotX: 0.648407346410207,
+  rHandRotY: 1.56840734641021,
+  rHandRotZ: 0,
+  lArmPosX: 0,
+  lArmPosY: 0,
+  lArmPosZ: 0,
+  lArmRotX: 0.838407346410207,
+  lArmRotY: 0.748407346410207,
+  lArmRotZ: -0.641592653589793,
+  lForeArmPosX: -0.01,
+  lForeArmPosY: 0,
+  lForeArmPosZ: -0.05,
+  lForeArmRotX: 0.788407346410207,
+  lForeArmRotY: -0.361592653589793,
+  lForeArmRotZ: 0.168407346410207,
+  lHandPosX: -0.7,
+  lHandPosY: 0.12,
+  lHandPosZ: 0,
+  lHandRotX: 0.198407346410207,
+  lHandRotY: -1.60159265358979,
+  lHandRotZ: -0.411592653589793
+};
 
 let activeModel: THREE.Group | null = null;
 let activeGlbName = "";
-let currentConfig: TransformConfig = { ...DEFAULT_CONFIGS["default"] };
+let currentConfig: TransformConfig = { ...DEFAULT_CONFIG };
 
 // Active DOM element references for live updates
 let panelContainer: HTMLDivElement | null = null;
@@ -348,7 +238,8 @@ async function loadAndEquipWeapon(characterModel: THREE.Group) {
     await preloadAttachments();
 
     // 2. Load the optimized SCAR-L GLB model
-    const loader = createConfiguredGLTFLoader();
+    const activeRenderer = (window as any).renderer || (window as any).W?.renderer;
+    const loader = createConfiguredGLTFLoader(undefined, activeRenderer);
     const url = await getCachedOrFetchUrl("scar_l-optimized.glb", "Asset");
     const gltf = await loader.loadAsync(url);
     const weapon = SkeletonUtils.clone(gltf.scene) as THREE.Group;
@@ -427,7 +318,7 @@ StudioPreviewManager.onModelLoaded = (model: THREE.Group, glbName: string) => {
   updateTurntableButtonUI();
 
   // Use hand-tuned default config for deterministic spawn position
-  const config: TransformConfig = { ...(DEFAULT_CONFIGS[glbName] || DEFAULT_CONFIGS["default"]) };
+  const config: TransformConfig = { ...DEFAULT_CONFIG };
 
   updatePanelFields(config);
   applyConfigToScene(model, config);
@@ -902,7 +793,7 @@ export function toggleDevPanel() {
   resetBtn.addEventListener("click", () => {
     if (activeGlbName) {
       localStorage.removeItem("studio_placement_" + activeGlbName);
-      const fallback = { ...(DEFAULT_CONFIGS[activeGlbName] || DEFAULT_CONFIGS["default"]) };
+      const fallback = { ...DEFAULT_CONFIG };
       updatePanelFields(fallback);
       if (activeModel) {
         applyConfigToScene(activeModel, fallback);

@@ -489,7 +489,7 @@ function open3DSkinPreviewModal(title: string, skin: any, itemKey?: string): voi
   });
 
   modal.innerHTML = `
-    <div style="display:flex; justify-content:space-between; align-items:center; height:clamp(2.25rem, 8vh, 44px); flex-shrink:0;">
+    <div style="display:flex; justify-content:space-between; align-items:center; height:clamp(2.25rem, 8vh, 2.75rem); flex-shrink:0;">
       <div style="font-family:${DS.typography.fontFamily}; font-size:clamp(0.69rem, 2.5vw, 0.94rem); font-weight:bold; color:${DS.colors.text}; letter-spacing:1.5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; flex:1; margin-right:1vw;">
         3D INSPECTOR — ${title}
       </div>

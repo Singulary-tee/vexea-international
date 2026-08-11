@@ -804,8 +804,8 @@ const setup3DStage = async () => {
       forceWebGL: forceWebGL,
       alpha: true,
     });
-    await renderer.init();
     (window as any).renderer = renderer;
+    await renderer.init();
     initKTX2Support(renderer);
     (window as any).isWebGPU = !forceWebGL;
     console.log(`[Renderer] WebGPURenderer initialized successfully with ${forceWebGL ? 'WebGL' : 'WebGPU'} backend.`);
@@ -831,8 +831,8 @@ const setup3DStage = async () => {
           forceWebGL: true,
           alpha: true,
         });
-        await renderer.init();
         (window as any).renderer = renderer;
+        await renderer.init();
         initKTX2Support(renderer);
         (window as any).isWebGPU = false;
         console.log("[Renderer] WebGPURenderer initialized successfully with WebGL fallback backend (forceWebGL: true).");

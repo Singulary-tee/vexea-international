@@ -51,8 +51,8 @@ export const HUD_HTML = `
   position: absolute !important;
   top: 1.05vh !important;
   left: 0.75vw !important;
-  width: 44px !important;
-  height: 44px !important;
+  width: clamp(2.50rem, 5vh, 3.00rem) !important;
+  height: clamp(2.50rem, 5vh, 3.00rem) !important;
   border-radius: 50% !important;
   background: ${DS.utils.rgba('#000000', 0.3)} !important;
   border: none !important;
@@ -168,8 +168,8 @@ export const HUD_HTML = `
   right: 17.5vw !important;
   width: 5vw !important;
   height: 5vw !important;
-  min-width: 48px !important;
-  min-height: 48px !important;
+  min-width: 3rem !important;
+  min-height: 3rem !important;
   background: transparent !important;
   border: none !important; /* No outline */
   pointer-events: auto !important;

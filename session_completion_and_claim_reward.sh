@@ -130,9 +130,8 @@ function parseAndCheckGC(filePath) {
   }
 }
 
-// Walk files and run both audits
-walkDir(TARGET_DIR, (filePath) => {
-  // 1. Pixel/Layout Audits
+// Function to run pixel audit on a file
+function runPixelAudit(filePath) {
   const content = fs.readFileSync(filePath, 'utf8');
   const lines = content.split('\\n');
   const relativePath = path.relative(process.cwd(), filePath);
@@ -164,10 +163,22 @@ walkDir(TARGET_DIR, (filePath) => {
       }
     }
   });
+}
+
+// Walk files and run both audits
+walkDir(TARGET_DIR, (filePath) => {
+  // 1. Pixel/Layout Audits
+  runPixelAudit(filePath);
 
   // 2. Garbage Collection Audits
   parseAndCheckGC(filePath);
 });
+
+// Also scan the root hud_layout.json file if it exists
+const rootHud = path.join(process.cwd(), 'hud_layout.json');
+if (fs.existsSync(rootHud)) {
+  runPixelAudit(rootHud);
+}
 
 // Report Audit Results
 let failed = false;

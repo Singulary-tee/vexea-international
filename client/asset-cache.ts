@@ -364,6 +364,9 @@ export async function getCachedOrFetchUrl(
     const cachedBlob = await getCachedBlob(baseName);
     if (cachedBlob) {
       if (onProgress) onProgress(100);
+      if (blobUrlMap.has(baseName)) {
+        return blobUrlMap.get(baseName)!;
+      }
       const url = URL.createObjectURL(cachedBlob);
       blobUrlMap.set(baseName, url);
       return url;
@@ -497,6 +500,9 @@ export async function getCachedOrFetchUrl(
     await setCachedBlob(baseName, blob);
 
     if (onProgress) onProgress(100);
+    if (blobUrlMap.has(baseName)) {
+      return blobUrlMap.get(baseName)!;
+    }
     const url = URL.createObjectURL(blob);
     blobUrlMap.set(baseName, url);
     return url;
@@ -714,7 +720,11 @@ export function createConfiguredGLTFLoader(customManager?: THREE.LoadingManager,
 
     // Direct blob: object URLs (e.g. textures extracted from embedded GLB buffers) are passed directly
     if (resolvedUrl.startsWith("blob:")) {
-      return resolvedUrl;
+      const lower = resolvedUrl.toLowerCase();
+      const isRelativeLookup = lower.endsWith(".jpg") || lower.endsWith(".jpeg") || lower.endsWith(".png") || lower.endsWith(".webp") || lower.endsWith(".ktx2") || lower.endsWith(".dds") || lower.endsWith(".tga") || lower.endsWith(".bin");
+      if (!isRelativeLookup) {
+        return resolvedUrl;
+      }
     }
 
     // Prevent GLTFLoader from failing on sub-resource texture/bin lookups relative to blob: or relative URLs
