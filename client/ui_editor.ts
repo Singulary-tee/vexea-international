@@ -2,6 +2,8 @@ import { getAssetUrl } from "./asset-cache";
 import { DS } from "./design-system";
 import { StudioPreviewManager } from "./StudioPreviewManager";
 import { hideAll, showMainMenu } from "./screens/screen-manager";
+import { IS_DESKTOP, IS_MOBILE } from "./gates/platform.gate";
+import { IS_DEV, assertDev } from "../shared/gates/production.gate";
 
 export const initUIEditor = () => {
     const settingsModal = document.getElementById("settings-modal");
@@ -245,6 +247,7 @@ export const initUIEditor = () => {
         'btn-settings': 'Settings Button',
         'btn-mic': 'Microphone Button',
         'btn-chat': 'Chat Button',
+        'btn-fullscreen': 'Fullscreen Toggle',
         'joystick-boundary': 'Movement Stick',
         'btn-sprint': 'Sprint Button',
         'btn-fire-left': 'Fire (Left)',
@@ -264,13 +267,14 @@ export const initUIEditor = () => {
         'btn-dash': 'Dash Button',
         'auto-label': 'Fire Mode Label',
         'compass-placeholder': 'Compass Bar',
-        'center-crosshair': 'Crosshair'
+        'center-crosshair': 'Crosshair',
+        'hud-chat-log': 'Chat Log'
     };
 
     const circularIds = new Set([
         "btn-match-status", "joystick-boundary", "btn-sprint", "btn-fire-left", "btn-fire-right", 
         "btn-ads", "btn-reload", "btn-jump", "btn-dash", "btn-crouch", 
-        "btn-walkie", "btn-helmet", "btn-medkit"
+        "btn-walkie", "btn-helmet", "btn-medkit", "btn-fullscreen"
     ]);
 
     // Draggable logic for the editor bar
@@ -378,6 +382,7 @@ export const initUIEditor = () => {
         "btn-settings",
         "btn-mic",
         "btn-chat",
+        "btn-fullscreen",
         "joystick-boundary",
         "btn-sprint",
         "btn-fire-left",
@@ -399,7 +404,14 @@ export const initUIEditor = () => {
         "hud-chat-log"
     ];
 
-    let elementsToEdit = editableIds.map(id => document.getElementById(id)).filter(el => el !== null) as HTMLElement[];
+    let elementsToEdit = editableIds
+        .map(id => document.getElementById(id))
+        .filter(el => {
+            if (!el) return false;
+            if (IS_DESKTOP && el.classList.contains("platform-mobile")) return false;
+            if (IS_MOBILE && el.classList.contains("platform-desktop")) return false;
+            return true;
+        }) as HTMLElement[];
 
     const closeEditorBtn = editorBar.querySelector("#editor-close") as HTMLButtonElement;
     const selectedLabel = editorBar.querySelector("#editor-selected") as HTMLElement;
@@ -552,6 +564,13 @@ export const initUIEditor = () => {
     "width": "4.49vw",
     "height": "10.15vh"
   },
+  "btn-fullscreen": {
+    "left": "81.16vw",
+    "top": "26.04vh",
+    "scale": 1,
+    "width": "4.49vw",
+    "height": "10.15vh"
+  },
   "joystick-boundary": {
     "left": "11.72vw",
     "top": "61.20vh",
@@ -670,6 +689,13 @@ export const initUIEditor = () => {
     "scale": 0.85,
     "width": "2.27vw",
     "height": "4.08vh"
+  },
+  "hud-chat-log": {
+    "left": "1.50vw",
+    "top": "35.00vh",
+    "scale": 1,
+    "width": "35.00vw",
+    "height": "20.00vh"
   }
 };
         savedConfigRaw = JSON.stringify(defaultLayout);
@@ -760,6 +786,8 @@ export const initUIEditor = () => {
         e.preventDefault();
         e.stopPropagation();
 
+        try { target.setPointerCapture(e.pointerId); } catch (_) {}
+
         selectedElement = target;
         const friendly = FRIENDLY_NAMES[target.id] || target.id;
         selectedLabel.innerText = `Selected: ${friendly}`;
@@ -822,6 +850,8 @@ export const initUIEditor = () => {
             startTop = state.topPx;
         }
 
+        document.removeEventListener("pointermove", onPointerMove);
+        document.removeEventListener("pointerup", onPointerUp);
         document.addEventListener("pointermove", onPointerMove);
         document.addEventListener("pointerup", onPointerUp);
     };
@@ -872,6 +902,7 @@ export const initUIEditor = () => {
 
     const onPointerUp = (e: PointerEvent) => {
         if (!isEditing || !selectedElement) return;
+        try { selectedElement.releasePointerCapture(e.pointerId); } catch (_) {}
         document.removeEventListener("pointermove", onPointerMove);
         document.removeEventListener("pointerup", onPointerUp);
     };
@@ -1022,6 +1053,35 @@ export const initUIEditor = () => {
             canvasContainer.style.display = "none";
         }
         
+        // Ensure hud-chat-log exists so it can be edited even if HUD Editor is opened from main menu
+        if (!document.getElementById("hud-chat-log")) {
+            const chatLog = document.createElement("div");
+            chatLog.id = "hud-chat-log";
+            chatLog.className = "editable-hud-element";
+            Object.assign(chatLog.style, {
+                position: "absolute",
+                left: "1.5vw",
+                top: "35vh",
+                width: "35vw",
+                height: "20vh",
+                maxWidth: "23.75rem",
+                background: "rgba(0, 0, 0, 0.4)",
+                border: "1px solid rgba(255, 255, 255, 0.15)",
+                overflowY: "auto",
+                pointerEvents: "auto",
+                display: "flex",
+                flexDirection: "column",
+                gap: "4px",
+                padding: "0.50rem",
+                fontFamily: "monospace",
+                fontSize: "12px",
+                zIndex: "90",
+                opacity: "1"
+            });
+            chatLog.innerText = "[CHAT LOG PLACEHOLDER]";
+            hudContainer.appendChild(chatLog);
+        }
+
         // Rebuild editable elements dynamically to register those created during gameplay
         elementsToEdit = editableIds.map(id => document.getElementById(id)).filter(el => el !== null) as HTMLElement[];
 
@@ -1061,6 +1121,7 @@ export const initUIEditor = () => {
                 });
             }
 
+            el.removeEventListener("pointerdown", onPointerDown as any);
             el.addEventListener("pointerdown", onPointerDown as any);
             el.style.setProperty('pointer-events', 'auto', 'important');
             el.style.cursor = "move";
@@ -1140,7 +1201,12 @@ export const initUIEditor = () => {
         return config;
     };
 
+    if (exportBtn) {
+        exportBtn.style.display = IS_DEV ? "block" : "none";
+    }
+
     exportBtn.addEventListener("click", () => {
+        if (!assertDev("Export HUD Layout")) return;
         const config = buildLayoutConfig();
         const configStr = JSON.stringify(config, null, 2);
         localStorage.setItem("hud_layout_default", configStr); // Make exported config the new default

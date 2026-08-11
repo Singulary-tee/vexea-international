@@ -57,12 +57,14 @@ export class InputSystem {
       this.canvasContainer.addEventListener("click", (e) => {
         if (this.isUIElement(e.target) || this.isGameInputLocked()) return;
         if (!this.match || this.match.isLocalPlayerDead) return;
-        if (IS_DESKTOP && this.canvasContainer) {
-          try {
-             this.canvasContainer.requestPointerLock();
-          } catch(err) {}
+        if (IS_DESKTOP) {
+          if (this.canvasContainer) {
+            try {
+               this.canvasContainer.requestPointerLock();
+            } catch(err) {}
+          }
+          this.match.combat?.fireActiveShot(this.camera);
         }
-        this.match.combat?.fireActiveShot(this.camera);
       }, { signal });
 
       this.canvasContainer.addEventListener("contextmenu", (e) => e.preventDefault(), { signal });
@@ -104,12 +106,17 @@ export class InputSystem {
 
     inputManager.init();
     inputManager.registerHandler((action, state) => {
+      if (action === InputAction.FIRE) {
+        if (state) this.triggerFireStart();
+        else this.triggerFireEnd();
+      }
       if (state) {
         if (action === InputAction.RELOAD) this.requestReload();
         if (action === InputAction.SWAP_WEAPON_1) this.selectWeapon(1);
         if (action === InputAction.SWAP_WEAPON_2) this.selectWeapon(2);
         if (action === InputAction.UTILITY_1) this.useUtility('utility1');
         if (action === InputAction.UTILITY_2) this.useUtility('utility2');
+        if (action === InputAction.TOGGLE_FIRE_MODE) this.toggleFireMode();
       }
     });
 
@@ -219,7 +226,7 @@ export class InputSystem {
         joystickKnob.style.transform = `translate(${deltaX}px, ${deltaY}px)`;
         const normX = deltaX / maxRadius;
         const normY = -deltaY / maxRadius;
-        const sprint = normY > 0.8 && Math.abs(normX) < 0.5;
+        const sprint = normY > 0.95 && Math.abs(normX) < 0.5;
         inputManager.setJoystick(normX, normY, sprint);
 
         if (sprint) {
@@ -320,6 +327,17 @@ export class InputSystem {
     this.safeBindTouch("btn-walkie", () => { this.useUtility('utility1'); });
     this.safeBindTouch("btn-medkit", () => { this.useUtility('utility2'); });
 
+    const autoLabel = document.getElementById("auto-label");
+    if (autoLabel) {
+      autoLabel.style.pointerEvents = "auto";
+      autoLabel.addEventListener("pointerdown", (e) => {
+        if ((window as any).isEditMode) return;
+        if (this.isGameInputLocked()) return;
+        e.preventDefault(); e.stopPropagation();
+        this.toggleFireMode();
+      }, { signal: this.abortController.signal });
+    }
+
     const ws1 = document.getElementById("weapon-slot-1");
     if (ws1) {
       ws1.style.pointerEvents = "auto";
@@ -386,6 +404,15 @@ export class InputSystem {
     }
   }
 
+  public toggleFireMode() {
+    if (!this.match || this.match.isLocalPlayerDead) return;
+    this.match.rifleMode = this.match.rifleMode === "auto" ? "burst" : "auto";
+    const autoLabel = document.getElementById("auto-label");
+    if (autoLabel) {
+      autoLabel.innerText = this.match.rifleMode === "auto" ? "AUTO \u2192" : "BURST \u2192";
+    }
+  }
+
   private safeBindTouch(
     id: string,
     startHandler: (e: PointerEvent) => void,
@@ -449,7 +476,6 @@ export class InputSystem {
     const onStart = (e: PointerEvent) => {
       if ((window as any).isEditMode) return;
       if (this.isGameInputLocked()) return;
-      if (e.pointerType === "mouse") return;
       if (!this.match || this.match.isLocalPlayerDead) return;
       e.preventDefault(); e.stopPropagation();
       try { el.setPointerCapture(e.pointerId); } catch (_) {}
@@ -466,7 +492,6 @@ export class InputSystem {
     };
 
     const onMove = (e: PointerEvent) => {
-      if (e.pointerType === "mouse") return;
       if (shootPointerId !== e.pointerId) return;
       e.preventDefault(); e.stopPropagation();
 
@@ -484,7 +509,6 @@ export class InputSystem {
     };
 
     const onEnd = (e: PointerEvent) => {
-      if (e.pointerType === "mouse") return;
       if (shootPointerId !== e.pointerId) return;
       e.preventDefault(); e.stopPropagation();
       this.match.activePointers.delete(e.pointerId);

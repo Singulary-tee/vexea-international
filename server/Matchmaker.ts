@@ -10,6 +10,7 @@ export const MATCHMAKER_MAX_WAIT_SECONDS = 45;
 export interface QueuedPlayer {
   id: string;
   reqUid: string;
+  displayName?: string;
   channel: ChannelAdapter;
   joinedTimestamp: number;
   mapId: string;
@@ -45,6 +46,7 @@ export class Matchmaker {
     channel: ChannelAdapter,
     mapId: string = "map_1_facility",
     classId: ClassId = "ASSAULT",
+    displayName?: string,
   ): void {
     // Remove if already in queue to prevent duplicates
     this.removePlayerFromPool(playerId);
@@ -53,6 +55,7 @@ export class Matchmaker {
     const queuedPlayer: QueuedPlayer = {
       id: playerId,
       reqUid: reqUid || playerId,
+      displayName: displayName,
       channel,
       joinedTimestamp: Date.now(),
       mapId: mapId || "map_1_facility",
@@ -171,7 +174,7 @@ export class Matchmaker {
       }
 
       (p.channel as any).currentRoom = targetRoom;
-      const newPState = targetRoom.registerPlayer(p.reqUid || p.id, p.channel, null, p.classId);
+      const newPState = targetRoom.registerPlayer(p.reqUid || p.id, p.channel, null, p.classId, p.displayName);
 
       // Notify connection handler that match has formed
       const onMatchFormed = (p.channel as any).onMatchFormed;

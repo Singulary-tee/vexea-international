@@ -132,45 +132,35 @@ export class HUDSystem {
   public updateUtilities(state: PlayerUtilityState) {
     if (!state) return;
 
-    // Utility 1
+    // Utility 1 (Walkie / Grenade)
+    const u1Btn = document.getElementById("btn-walkie");
     const u1Badge = document.getElementById("util-1-badge");
-    const u1Cooldown = document.getElementById("util-1-cooldown");
-    if (u1Badge && state.utility1) {
-      if (IS_MOBILE) {
-        u1Badge.style.display = "none";
-      } else {
+    if (state.utility1) {
+      const isOnCooldown = state.utility1.cooldownRemaining > 0 || state.utility1.charges === 0;
+      if (u1Btn) {
+        u1Btn.style.filter = isOnCooldown ? "grayscale(1)" : "none";
+        u1Btn.style.opacity = isOnCooldown ? "0.4" : "1";
+      }
+      if (u1Badge && !IS_MOBILE) {
         u1Badge.style.display = "flex";
         u1Badge.innerText = "G";
-        u1Badge.style.opacity = state.utility1.charges > 0 ? "1" : "0.4";
-      }
-    }
-    if (u1Cooldown && state.utility1) {
-      if (state.utility1.cooldownRemaining > 0 && state.utility1.charges === 0) {
-        u1Cooldown.style.display = "flex";
-        u1Cooldown.innerText = `${Math.ceil(state.utility1.cooldownRemaining)}s`;
-      } else {
-        u1Cooldown.style.display = "none";
+        u1Badge.style.opacity = isOnCooldown ? "0.4" : "1";
       }
     }
 
-    // Utility 2
+    // Utility 2 (Medkit)
+    const u2Btn = document.getElementById("btn-medkit");
     const u2Badge = document.getElementById("util-2-badge");
-    const u2Cooldown = document.getElementById("util-2-cooldown");
-    if (u2Badge && state.utility2) {
-      if (IS_MOBILE) {
-        u2Badge.style.display = "none";
-      } else {
+    if (state.utility2) {
+      const isOnCooldown = state.utility2.cooldownRemaining > 0 || state.utility2.charges === 0;
+      if (u2Btn) {
+        u2Btn.style.filter = isOnCooldown ? "grayscale(1)" : "none";
+        u2Btn.style.opacity = isOnCooldown ? "0.4" : "1";
+      }
+      if (u2Badge && !IS_MOBILE) {
         u2Badge.style.display = "flex";
         u2Badge.innerText = "F";
-        u2Badge.style.opacity = state.utility2.charges > 0 ? "1" : "0.4";
-      }
-    }
-    if (u2Cooldown && state.utility2) {
-      if (state.utility2.cooldownRemaining > 0 && state.utility2.charges === 0) {
-        u2Cooldown.style.display = "flex";
-        u2Cooldown.innerText = `${Math.ceil(state.utility2.cooldownRemaining)}s`;
-      } else {
-        u2Cooldown.style.display = "none";
+        u2Badge.style.opacity = isOnCooldown ? "0.4" : "1";
       }
     }
   }

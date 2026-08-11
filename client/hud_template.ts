@@ -181,6 +181,7 @@ export const HUD_HTML = `
 #btn-settings { top: 1vh !important; }
 #btn-mic { top: 6vh !important; }
 #btn-chat { top: 11vh !important; }
+#btn-fullscreen { top: 16vh !important; }
 @media (max-width: 44.63rem) {
   .btn-sidekick {
     right: calc(0.75vw + 6.25rem + 0.63rem) !important;
@@ -257,6 +258,7 @@ export const HUD_HTML = `
   min-width: 3.13rem !important;
   min-height: 3.13rem !important;
   pointer-events: auto !important;
+  z-index: 100 !important;
   border-radius: 50% !important;
   background: transparent !important;
   border: 1px solid white !important;
@@ -672,8 +674,13 @@ m386 -565 c56 -61 57 -107 4 -174 -80 -102 -259 -48 -259 78 0 156 149 212
 </g>
 </svg>
   </button>
+  <button id="btn-fullscreen" class="btn-sidekick text-white" title="Toggle Fullscreen">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 1.38rem; height: 1.38rem;">
+      <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  </button>
 
-  <div id="joystick-boundary">
+  <div id="joystick-boundary" class="platform-mobile">
     <div style="position: absolute; top: 4px; left: 50%; transform: translateX(-50%); width: 0.50rem; height: 0.38rem; background: white; clip-path: polygon(50% 0%, 0% 100%, 100% 100%);"></div>
     <div style="position: absolute; bottom: 4px; left: 50%; transform: translateX(-50%); width: 0.50rem; height: 0.38rem; background: white; clip-path: polygon(50% 100%, 0% 0%, 100% 0%);"></div>
     <div style="position: absolute; left: 4px; top: 50%; transform: translateY(-50%); width: 0.38rem; height: 0.50rem; background: white; clip-path: polygon(0% 50%, 100% 0%, 100% 100%);"></div>
@@ -681,7 +688,7 @@ m386 -565 c56 -61 57 -107 4 -174 -80 -102 -259 -48 -259 78 0 156 149 212
     <div id="joystick-knob"></div>
   </div>
   
-  <button id="btn-fire-left" class="btn-action">
+  <button id="btn-fire-left" class="btn-action platform-mobile">
     <svg version="1.0" xmlns="http://www.w3.org/2000/svg"
  viewBox="0 0 165.000000 165.000000"
  preserveAspectRatio="xMidYMid meet">
@@ -700,7 +707,7 @@ fill="${DS.colors.text}" stroke="none">
 </svg>
   </button>
 
-  <button id="btn-sprint" class="btn-action" style="position: absolute; left: 7.14vw; top: 16.56vh; width: 5.4vw; height: 5.4vw; min-width: 3.13rem; min-height: 3.13rem; display: none;">
+  <button id="btn-sprint" class="btn-action platform-mobile" style="position: absolute; left: 7.14vw; top: 16.56vh; width: 5.4vw; height: 5.4vw; min-width: 3.13rem; min-height: 3.13rem; display: none;">
     <svg version="1.0" xmlns="http://www.w3.org/2000/svg"
      viewBox="0 0 147.000000 147.000000"
      preserveAspectRatio="xMidYMid meet">
@@ -723,10 +730,9 @@ fill="${DS.colors.text}" stroke="none">
     </svg>
   </button>
 
-  <div id="auto-label">AUTO &rarr;</div>
+  <button id="auto-label" style="background: transparent; border: none; color: inherit; font: inherit; cursor: pointer; pointer-events: auto;">AUTO &rarr;</button>
   <button id="btn-walkie" class="btn-util" style="position: absolute; left: 26vw; bottom: 4vh;">
-    <div id="util-1-badge" style="position: absolute; top: -0.38rem; right: -0.38rem; width: 1.13rem; height: 1.13rem; background: rgba(10, 10, 12, 0.85); color: #FFFFFF; font-size: ${DS.typography.sizes.small}; font-weight: 700; padding: 0; border-radius: 0px; border: 1px solid rgba(255,255,255,0.3); font-family: monospace; text-shadow: 0 1px 2px #000; display: flex; align-items: center; justify-content: center;">G</div>
-    <div id="util-1-cooldown" style="position: absolute; inset: 0; background: rgba(10, 10, 12, 0.75); display: none; align-items: center; justify-content: center; color: #FFFFFF; font-weight: bold; font-size: ${DS.typography.sizes.body}; border-radius: 0px; font-family: monospace;"></div>
+    <div id="util-1-badge" class="platform-desktop" style="position: absolute; top: -0.38rem; right: -0.38rem; width: 1.13rem; height: 1.13rem; background: rgba(10, 10, 12, 0.85); color: #FFFFFF; font-size: ${DS.typography.sizes.small}; font-weight: 700; padding: 0; border-radius: 0px; border: 1px solid rgba(255,255,255,0.3); font-family: monospace; text-shadow: 0 1px 2px #000; display: flex; align-items: center; justify-content: center;">G</div>
     <svg version="1.0" xmlns="http://www.w3.org/2000/svg"
  viewBox="0 0 74.000000 163.000000"
  preserveAspectRatio="xMidYMid meet">
@@ -818,8 +824,7 @@ fill="currentColor" stroke="none">
     </svg>
   </div>
   <button id="btn-medkit" class="btn-util" style="position: absolute; right: 26vw; bottom: 4vh;">
-    <div id="util-2-badge" style="position: absolute; top: -0.38rem; right: -0.38rem; width: 1.13rem; height: 1.13rem; background: rgba(10, 10, 12, 0.85); color: #FFFFFF; font-size: ${DS.typography.sizes.small}; font-weight: 700; padding: 0; border-radius: 0px; border: 1px solid rgba(255,255,255,0.3); font-family: monospace; text-shadow: 0 1px 2px #000; display: flex; align-items: center; justify-content: center;">F</div>
-    <div id="util-2-cooldown" style="position: absolute; inset: 0; background: rgba(10, 10, 12, 0.75); display: none; align-items: center; justify-content: center; color: #FFFFFF; font-weight: bold; font-size: ${DS.typography.sizes.body}; border-radius: 0px; font-family: monospace;"></div>
+    <div id="util-2-badge" class="platform-desktop" style="position: absolute; top: -0.38rem; right: -0.38rem; width: 1.13rem; height: 1.13rem; background: rgba(10, 10, 12, 0.85); color: #FFFFFF; font-size: ${DS.typography.sizes.small}; font-weight: 700; padding: 0; border-radius: 0px; border: 1px solid rgba(255,255,255,0.3); font-family: monospace; text-shadow: 0 1px 2px #000; display: flex; align-items: center; justify-content: center;">F</div>
     <svg version="1.0" xmlns="http://www.w3.org/2000/svg"
  viewBox="0 0 128.000000 117.000000"
  preserveAspectRatio="xMidYMid meet">
@@ -911,7 +916,7 @@ m77 -82 c32 -31 36 -68 9 -83 -20 -10 -51 -4 -51 11 0 4 7 6 15 3 19 -8 19 4
     </div>
   </div>
 
-  <button id="btn-fire-right" class="btn-action">
+  <button id="btn-fire-right" class="btn-action platform-mobile">
     <svg version="1.0" xmlns="http://www.w3.org/2000/svg"
  viewBox="0 0 165.000000 165.000000"
  preserveAspectRatio="xMidYMid meet">
@@ -929,7 +934,7 @@ fill="${DS.colors.text}" stroke="none">
 </g>
 </svg>
   </button>
-  <button id="btn-ads" class="btn-action">
+  <button id="btn-ads" class="btn-action platform-mobile">
     <svg version="1.0" xmlns="http://www.w3.org/2000/svg"
  viewBox="0 0 123.000000 125.000000"
  preserveAspectRatio="xMidYMid meet">
@@ -952,10 +957,10 @@ l-25 16 0 204 c0 163 -3 204 -13 204 -8 0 -17 -3 -21 -7z"/>
 </g>
 </svg>
   </button>
-  <button id="btn-reload" class="btn-action">
+  <button id="btn-reload" class="btn-action platform-mobile">
     <svg version="1.0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 138.000000 138.000000" preserveAspectRatio="xMidYMid meet"><g transform="translate(0.000000,138.000000) scale(0.100000,-0.100000)" fill="${DS.colors.text}" stroke="none"><path d="M650 808 c0 -11 86 -160 140 -245 16 -24 35 -30 45 -13 7 11 -15 49-109 193 -47 71 -76 96 -76 65z"/><path d="M747 805 c-7 -18 9 -29 43 -29 18 -1 26 -7 28 -24 4 -28 29 -40 45-22 9 9 2 20 -32 51 -46 41 -75 49 -84 24z m30 -12 c-4 -3 -10 -3 -14 0 -3 40 7 7 7 7 0 10 -3 7 -7z m73 -53 c0 -5 -5 -10 -11 -10 -5 0 -7 5 -4 10 3 6 810 11 10 2 0 4 -4 4 -10z"/><path d="M580 771 c0 -23 150 -273 168 -279 20 -6 14 44 -10 82 -89 140 -142216 -150 216 -4 0 -8 -8 -8 -19z"/><path d="M510 738 c0 -22 153 -289 164 -285 21 7 18 49 -7 85 -13 20 -48 76-78 124 -49 79 -79 108 -79 76z"/><path d="M491 537 c-17 -17 -14 -22 44 -67 44 -34 58 -40 69 -30 23 18 8 43-21 35 -30 -7 -53 10 -53 40 0 26 -22 39 -39 22z m24 -17 c3 -5 1 -10 -4 -10-6 0 -11 5 -11 10 0 6 2 10 4 10 3 0 8 -4 11 -10z"/></g></svg>
   </button>
-  <button id="btn-jump" class="btn-action">
+  <button id="btn-jump" class="btn-action platform-mobile">
     <svg version="1.0" xmlns="http://www.w3.org/2000/svg"
  viewBox="0 0 109.000000 122.000000"
  preserveAspectRatio="xMidYMid meet">
@@ -967,7 +972,7 @@ fill="${DS.colors.text}" stroke="none">
 </g>
 </svg>
   </button>
-  <button id="btn-crouch" class="btn-action">
+  <button id="btn-crouch" class="btn-action platform-mobile">
     <svg version="1.0" xmlns="http://www.w3.org/2000/svg"
  viewBox="0 0 152.000000 152.000000"
  preserveAspectRatio="xMidYMid meet">

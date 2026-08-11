@@ -169,12 +169,6 @@ export class CompassSystem {
           else if (angleDeg === 315) label = "NW";
 
           ctx.fillText(label, x, tickHeight + 2);
-        } else if (isMedium) {
-          ctx.fillStyle = DS.utils.rgba(DS.colors.text, 0.4);
-          ctx.font = `8px ${DS.typography.fontFamilySecondary}`;
-          ctx.textAlign = "center";
-          ctx.textBaseline = "top";
-          ctx.fillText(String(angleDeg), x, tickHeight + 2);
         }
       }
     }
@@ -220,10 +214,12 @@ export class CompassSystem {
         this.drawIcon(ctx, target.icon || "default", x, h - 8, color);
 
         // Compute display label with distance if worldPos is tracked
-        let label = target.name || "";
+        let label = "";
         if (target.worldPos) {
           const dist = Math.round(this.match.playerPos.distanceTo(target.worldPos));
-          label += ` [${dist}m]`;
+          label = `${dist}m`;
+        } else if (target.name) {
+          label = target.name.length > 8 ? target.name.slice(0, 8) : target.name;
         }
 
         if (label) {

@@ -21,7 +21,7 @@ export function registerSocialHandlers(
         for (const [id, player] of room.players.entries()) {
           player.channel.emit("reliable_event", {
             type: "CHAT_MESSAGE",
-            sender: p.id,
+            sender: p.displayName || p.id,
             message: trimmed,
           });
         }
@@ -36,7 +36,7 @@ export function registerSocialHandlers(
         for (const [id, player] of room.players.entries()) {
           player.channel.emit("reliable_event", {
             type: "QUICK_COMM",
-            sender: p.id,
+            sender: p.displayName || p.id,
             optionId: optionId,
           });
         }
@@ -58,7 +58,7 @@ export function registerSocialHandlers(
       for (const [id, player] of room.players.entries()) {
         player.channel.emit("reliable_event", {
           type: "CHAT_MESSAGE",
-          sender: p.id,
+          sender: p.displayName || p.id,
           message: trimmed,
         });
       }
@@ -74,7 +74,7 @@ export function registerSocialHandlers(
       for (const [id, player] of room.players.entries()) {
         player.channel.emit("reliable_event", {
           type: "QUICK_COMM",
-          sender: p.id,
+          sender: p.displayName || p.id,
           optionId: optionId,
         });
       }

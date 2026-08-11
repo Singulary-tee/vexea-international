@@ -16,6 +16,7 @@ export class ChatHUDSystem {
   private boundOnToggleChat: ((e: Event) => void) | null = null;
   private boundOnSendChat: ((e: Event) => void) | null = null;
   private boundOnSettingsChanged: ((e: Event) => void) | null = null;
+  private boundOnPointerDownOutside: ((e: PointerEvent) => void) | null = null;
 
   constructor(match: MatchController) {
     this.match = match;
@@ -36,9 +37,9 @@ export class ChatHUDSystem {
     }
     this.logEl.style.opacity = "1";
     this.logEl.style.pointerEvents = "auto";
-    if (this.isInputActive) return;
+    if (this.isInputActive || (window as any).isEditMode) return;
     this.fadeTimeout = setTimeout(() => {
-      if (this.logEl && !this.isInputActive) {
+      if (this.logEl && !this.isInputActive && !(window as any).isEditMode) {
         this.logEl.style.opacity = "0";
         this.logEl.style.pointerEvents = "none";
       }
@@ -197,6 +198,23 @@ export class ChatHUDSystem {
       this.applySettings();
     };
     document.addEventListener("VEXEA_SETTINGS_CHANGED", this.boundOnSettingsChanged);
+
+    // 5. Click/Pointer down outside chat input to deactivate
+    this.boundOnPointerDownOutside = (e: any) => {
+      if (!this.isInputActive) return;
+      const target = (e.touches && e.touches[0] ? e.touches[0].target : e.target) as Node | null;
+      if (!target) return;
+
+      const inInput = this.inputContainer && this.inputContainer.contains(target);
+      const inLog = this.logEl && this.logEl.contains(target);
+      const inBtn = this.chatBtn && this.chatBtn.contains(target);
+
+      if (!inInput && !inLog && !inBtn) {
+        this.deactivateInput();
+      }
+    };
+    document.addEventListener("pointerdown", this.boundOnPointerDownOutside, { capture: true });
+    document.addEventListener("touchstart", this.boundOnPointerDownOutside, { capture: true });
   }
 
   public activateInput() {
@@ -383,6 +401,11 @@ export class ChatHUDSystem {
     if (this.boundOnSettingsChanged) {
       document.removeEventListener("VEXEA_SETTINGS_CHANGED", this.boundOnSettingsChanged);
       this.boundOnSettingsChanged = null;
+    }
+
+    if (this.boundOnPointerDownOutside) {
+      document.removeEventListener("pointerdown", this.boundOnPointerDownOutside);
+      this.boundOnPointerDownOutside = null;
     }
 
     if (this.logEl) {

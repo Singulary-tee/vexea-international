@@ -257,6 +257,7 @@ const initClient = async () => {
 
   // Setup HUD Interaction listeners
   document.getElementById("btn-settings")?.addEventListener("click", () => {
+    if ((window as any).isEditMode || isUIInteractionLocked()) return;
     audioManager.play("click");
     openSettings();
   });
@@ -265,6 +266,7 @@ const initClient = async () => {
   if (micBtn) {
     let micActive = false;
     micBtn.addEventListener("click", () => {
+      if ((window as any).isEditMode || isUIInteractionLocked()) return;
       audioManager.play("click");
       micActive = !micActive;
       if (micActive) {
@@ -280,6 +282,7 @@ const initClient = async () => {
   const chatBtn = document.getElementById("btn-chat");
   if (chatBtn) {
     chatBtn.addEventListener("click", () => {
+      if ((window as any).isEditMode || isUIInteractionLocked()) return;
       audioManager.play("click");
       openSettings();
       setTimeout(() => {
@@ -290,6 +293,7 @@ const initClient = async () => {
   }
 
   const isUIInteractionLocked = () => {
+    if ((window as any).isEditMode) return true;
     if (ScreenGate.isScreenLocked()) return true;
 
     const splash = document.getElementById("splash-screen");

@@ -13,6 +13,7 @@ export enum InputAction {
   SWAP_WEAPON_2 = "SWAP_WEAPON_2",
   UTILITY_1 = "UTILITY_1",
   UTILITY_2 = "UTILITY_2",
+  TOGGLE_FIRE_MODE = "TOGGLE_FIRE_MODE",
 }
 
 type InputHandler = (action: InputAction, state: boolean) => void;
@@ -57,6 +58,8 @@ class InputManager {
     'G': InputAction.UTILITY_1,
     'f': InputAction.UTILITY_2,
     'F': InputAction.UTILITY_2,
+    'b': InputAction.TOGGLE_FIRE_MODE,
+    'B': InputAction.TOGGLE_FIRE_MODE,
     '3': InputAction.UTILITY_1,
     '4': InputAction.UTILITY_2,
   };

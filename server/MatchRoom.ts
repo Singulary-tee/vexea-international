@@ -102,6 +102,7 @@ export const MAX_PROJECTILES = 200;
 
 export interface PlayerState {
   id: string;
+  displayName?: string;
   channel: ChannelAdapter;
   kcc: RAPIER.KinematicCharacterController | null;
   body: RAPIER.RigidBody | null;
@@ -763,13 +764,15 @@ export class MatchRoom {
     channel: ChannelAdapter,
     stats: any,
     playerClass?: ClassId,
+    displayName?: string
   ): PlayerState {
-    console.log(`[SERVER registerPlayer] playerId: "${playerId}", mapId: "${this.mapId}", class: "${playerClass || 'ASSAULT'}"`);
+    console.log(`[SERVER registerPlayer] playerId: "${playerId}", displayName: "${displayName || playerId}", mapId: "${this.mapId}", class: "${playerClass || 'ASSAULT'}"`);
 
     // Handle Reconnection: If player already exists, rebind channel and return state
     if (this.players.has(playerId)) {
       const existing = this.players.get(playerId)!;
       existing.channel = channel;
+      if (displayName) existing.displayName = displayName;
       if (playerClass && CLASSES[playerClass]) {
         this.applyPlayerClassLoadout(existing, playerClass);
       }
@@ -801,6 +804,7 @@ export class MatchRoom {
 
     const pState: PlayerState = {
       id: playerId,
+      displayName: displayName || playerId,
       channel,
       kcc: null,
       body: null,

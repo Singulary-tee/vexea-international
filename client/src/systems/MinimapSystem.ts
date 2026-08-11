@@ -1,6 +1,6 @@
 import * as THREE from "three";
 import { MatchController } from "../../MatchController";
-import { DroneState } from "../../../shared/constants";
+import { DroneState, ZONE_BOUNDS, WAYPOINTS } from "../../../shared/constants";
 import { PanZoomSurface } from "../ui/PanZoomSurface";
 import { DS } from "../../design-system";
 
@@ -317,6 +317,43 @@ export class MinimapSystem {
     }
     
     ctx.restore(); // Restore DPR stack
+
+    // Update dynamic minimap location label
+    this.updateMinimapLabel(px, pz);
+  }
+
+  private updateMinimapLabel(px: number, pz: number) {
+    const labelEl = document.getElementById("minimap-label");
+    if (!labelEl) return;
+
+    let currentZone = "";
+    if (ZONE_BOUNDS) {
+      for (const [zoneKey, bounds] of Object.entries(ZONE_BOUNDS)) {
+        if (!bounds) continue;
+        const dx = Math.abs(px - bounds.center.x);
+        const dz = Math.abs(pz - bounds.center.z);
+        if (dx <= bounds.halfSize.x && dz <= bounds.halfSize.z) {
+          currentZone = zoneKey.replace("zone_", "").toUpperCase();
+          break;
+        }
+      }
+    }
+
+    if (!currentZone && WAYPOINTS) {
+      let minDist = Infinity;
+      for (const [zoneKey, wp] of Object.entries(WAYPOINTS)) {
+        if (!wp) continue;
+        const distSq = (px - wp.x) ** 2 + (pz - wp.z) ** 2;
+        if (distSq < minDist) {
+          minDist = distSq;
+          currentZone = zoneKey.replace("zone_", "").toUpperCase();
+        }
+      }
+    }
+
+    if (currentZone) {
+      labelEl.innerText = currentZone;
+    }
   }
 
   public dispose() {
