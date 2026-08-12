@@ -206,9 +206,9 @@ export function processFirebaseDataForAdmin(data: any): any {
   return copy;
 }
 
-export async function setDoc(docRef: any, data: any) {
+export async function setDoc(docRef: any, data: any, options?: any) {
   const cleanData = processFirebaseDataForAdmin(data);
-  return docRef.set(cleanData);
+  return docRef.set(cleanData, options);
 }
 
 export async function deleteDoc(docRef: any) {
@@ -314,7 +314,7 @@ const io = createTransport();
 app.use(express.json({ limit: "10mb" }));
 
 // Register Express API Routes
-registerApiRoutes(app, db, doc, getDoc, setDoc, updateDoc, runTransaction, increment);
+registerApiRoutes(app);
 
 io.onConnection((channel: ChannelAdapter) => {
   globalChannels.push(channel);

@@ -12,7 +12,7 @@ export class HitscanSystem {
     scene: THREE.Scene,
     direction: THREE.Vector3,
     maxFalloffDist: number
-  ) {
+  ): { entityType: string; object: THREE.Object3D; distance: number } | null {
     this.raycaster.set(camera.position, direction);
     this.raycaster.camera = camera;
 
@@ -56,9 +56,17 @@ export class HitscanSystem {
       // VFX batches and objects are ignored
       if (hit.object.name.includes("VFX")) continue;
 
+      let entityType = "environment";
+      if (isPlayer) entityType = "player";
+      else if (isDrone) entityType = "drone";
+
       // If we hit a drone or player, we just stop the ray (let the server handle the hit confirmation)
       if (isDrone || isPlayer) {
-        break; // Ray is blocked by entity, so no environment decal is made
+        return {
+          entityType,
+          object: hit.object,
+          distance: hit.distance
+        };
       }
 
       // If we reach here, it's environment geometry!
@@ -75,8 +83,13 @@ export class HitscanSystem {
         spawnEnvironmentDecalAndDust(impact.x, impact.y, impact.z, normal.x, normal.y, normal.z);
         spawnImpactSparks(impact.x, impact.y, impact.z, 10, normal.x, normal.y, normal.z);
       }
-      break; // Only process the first valid hit
+      return {
+        entityType: "environment",
+        object: hit.object,
+        distance: hit.distance
+      };
     }
+    return null;
   }
 }
 

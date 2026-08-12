@@ -182,7 +182,17 @@ export function triggerImpactPointLight(x: number, y: number, z: number, intensi
 }
 
 export function spawnImpactSparks(x: number, y: number, z: number, count: number, nx: number = 0, ny: number = 1, nz: number = 0) {
-  if (!sparkBatch || !sparkActive || !sparkInstIds || count <= 0) return;
+  const win = window as any;
+  const shouldLog = !win._lastVfxLog || Date.now() - win._lastVfxLog > 100;
+  if (shouldLog) {
+    console.time('[PERF] vfx-spawn');
+    win._lastVfxLog = Date.now();
+  }
+
+  if (!sparkBatch || !sparkActive || !sparkInstIds || count <= 0) {
+    if (shouldLog) console.timeEnd('[PERF] vfx-spawn');
+    return;
+  }
 
   _hitNormal.set(nx, ny, nz).normalize();
   const normalQuat = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), _hitNormal);
@@ -217,6 +227,10 @@ export function spawnImpactSparks(x: number, y: number, z: number, count: number
       sparkBatch.setVisibleAt(sparkInstIds[i], true);
       activated++;
     }
+  }
+
+  if (shouldLog) {
+    console.timeEnd('[PERF] vfx-spawn');
   }
 }
 

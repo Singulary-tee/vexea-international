@@ -11,17 +11,9 @@ import {
   verifyAdReward,
   calculateLevelMetrics
 } from "../../shared/verification/verifier";
+import { db, doc, getDoc, setDoc, updateDoc, runTransaction, increment } from "../index";
 
-export function registerApiRoutes(
-  app: Express,
-  db: any,
-  doc: any,
-  getDoc: any,
-  setDoc: any,
-  updateDoc: any,
-  runTransaction: any,
-  increment: any
-): void {
+export function registerApiRoutes(app: Express): void {
   app.get("/api/health", (req, res) => {
     res.status(200).send("OK");
   });

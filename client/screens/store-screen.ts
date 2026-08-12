@@ -3,8 +3,28 @@ import catalogItems from "../../shared/catalog.json";
 import { CatalogItem } from "../../shared/verification/types";
 import { audioManager } from "../audio";
 import { StudioPreviewManager, AVAILABLE_SKINS } from "../StudioPreviewManager";
+import { auth } from "../firebase";
 
 let activeCategoryFilter: 'ALL' | 'cosmetic' | 'blueprint' | 'booster' | 'bundle' = 'ALL';
+
+function getPlayerId(): string {
+  if (auth?.currentUser?.uid) {
+    return auth.currentUser.uid;
+  }
+  if ((window as any).vexPlayerUid && (window as any).vexPlayerUid !== "guest") {
+    return (window as any).vexPlayerUid;
+  }
+  try {
+    let guestId = localStorage.getItem('vex_guest_uid');
+    if (!guestId) {
+      guestId = `guest_${Math.random().toString(36).substring(2, 11)}_${Date.now()}`;
+      localStorage.setItem('vex_guest_uid', guestId);
+    }
+    return guestId;
+  } catch (e) {
+    return `guest_${Math.random().toString(36).substring(2, 11)}_${Date.now()}`;
+  }
+}
 
 export function renderStoreScreen(container: HTMLElement, registeredUserData: any): void {
   container.innerHTML = '';
@@ -379,7 +399,7 @@ async function handleStorePurchase(itemId: string, userData: any, container: HTM
   const currentCredits = userData?.credits !== undefined ? userData.credits : 500;
   const currentEnergy = userData?.energy !== undefined ? userData.energy : 10;
   const unlockedItems = userData?.unlockedItems || [];
-  const playerId = (window as any).vexPlayerUid || "guest";
+  const playerId = getPlayerId();
 
   try {
     const response = await fetch('/api/economy/purchase', {

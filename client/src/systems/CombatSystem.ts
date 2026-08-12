@@ -55,6 +55,8 @@ export class CombatSystem {
     if (this.match.activeWeapon === 1) this.match.lastPrimaryShotT = now;
     else this.match.lastSecondaryShotT = now;
 
+    console.time('[PERF] fire-pipeline');
+
     // 4. CONSUMES AMMO
     if (!GlobalState.infiniteAmmo) {
       if (this.match.activeWeapon === 1) this.match.ammo1--;
@@ -115,11 +117,19 @@ export class CombatSystem {
     spawnTracer(this.weaponMuzzlePos, this.weaponFireDir);
     triggerFlash(this.weaponMuzzlePos, 1.0, true, null, this.match);
 
-    hitscanSystem.performClientHitscan(camera, this.match.scene, this.weaponFireDir, currentWeaponStats.falloff.minDamageRange);
+    console.time('[PERF] raycast');
+    const hit = hitscanSystem.performClientHitscan(camera, this.match.scene, this.weaponFireDir, currentWeaponStats.falloff.minDamageRange);
+    console.timeEnd('[PERF] raycast');
+
+    if (hit) {
+      console.log(`[HIT] entityType=${hit.entityType} name=${hit.object?.name || 'unknown'} distance=${hit.distance?.toFixed(2) || '?'}`);
+    }
     
     this.match.pendingFire = false; // reset pending fire flag
 
     const _elapsed = performance.now() - _t0_shoot;
     if (_elapsed > 5) (window as any).__lastEventSpike = { label: 'SHOOT', ms: _elapsed, t: performance.now() };
+
+    console.timeEnd('[PERF] fire-pipeline');
   }
 }

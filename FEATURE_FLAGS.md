@@ -50,6 +50,13 @@ VEXEA uses **ConfigCat** as the primary OpenFeature provider across three SDK ke
 | `security_exploit_logging` | SERVER | BOOLEAN | `true` | Toggles security exploit attempt logging to Sentry. |
 | **Shared Flags** | | | | |
 | `store_dynamic_offers` | SHARED | BOOLEAN | `true` | Enables store offer rotations (Server/Client/Verification sync). |
+| `match_energy_cost` | SHARED | NUMBER | `2` | Energy cost per match entry. |
+| `energy_regen_minutes` | SHARED | NUMBER | `10` | Minutes required to regenerate 1 energy unit. |
+| `energy_max_free` | SHARED | NUMBER | `10` | Maximum free storable energy capacity. |
+| `ad_reward_energy` | SHARED | NUMBER | `3` | Energy rewarded for watching an ad. |
+| `ad_daily_cap` | SHARED | NUMBER | `5` | Maximum daily ad reward claims allowed per player. |
+| `new_player_starter_credits` | SHARED | NUMBER | `500` | Starting credit balance for new players. |
+| `new_player_starter_energy` | SHARED | NUMBER | `10` | Starting energy balance for new players. |
 | `faction_war_active` | SHARED | BOOLEAN | `true` | Toggles the active Faction Warfare season events. |
 | `bp_season_id` | SHARED | STRING | `"SEASON_01"` | Active Battle Pass season identifier. |
 | `bp_tier_count` | SHARED | NUMBER | `50` | Total number of tiers in the battle pass. |

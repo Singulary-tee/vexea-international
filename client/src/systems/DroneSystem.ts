@@ -116,6 +116,16 @@ export class DroneSystem {
     match.droneJitterMap.forEach((buffer, id) => {
       if (buffer.count === 0) return;
       const latest = buffer.getLatest();
+      const drone = latest;
+      if ((drone as any).hp === undefined) (drone as any).hp = 100;
+
+      // Track last known HP per drone ID
+      if (!(this as any)._lastHpMap) (this as any)._lastHpMap = new Map();
+      const lastHp = (this as any)._lastHpMap.get(id);
+      if (lastHp !== undefined && lastHp !== (drone as any).hp) {
+        console.log(`[DRONE HP CHANGE] id=${id} type=${drone.type} ${lastHp} -> ${(drone as any).hp}`);
+      }
+      (this as any)._lastHpMap.set(id, (drone as any).hp);
       
       if (latest.state === DroneState.DEAD) return;
 
