@@ -10,9 +10,9 @@
     *   **Server:** Authoritative state, static collisions, hitscan validation.
     *   **Client:** Used **ONLY** for player kinematic character controller and static map geometry. **Drones are NOT simulated in client-side Rapier.**
 *   **Assets:** Meshy -> GLB format with baked PBR materials. 50MB total asset budget.
-*   **Hosting/Server:** Single DigitalOcean Droplet, running Node.js with PM2. Single region MVP.
-*   **Monetization:** Google AdSense for Games (H5 Games Ads). Firestore battle pass state.
-*   **Deployment:** GitHub -> GitHub Actions -> SSH -> Droplet.
+*   **Hosting/Server:** smarterasp.net hosting. Single region MVP.
+*   **Monetization & Economy:** Server-authoritative dual-currency economy system (Credits + Energy), defining structured store items (cosmetics, blueprints, boosters, bundles) with server-authoritative validation (`/api/economy/*` endpoints). Google AdSense for Games (H5 Games Ads) is currently under evaluation as an ad solution candidate (not finalized), with daily ad rewards and caps validated via the server. Firestore tracks battle pass state.
+*   **Deployment:** Deployment to smarterasp.net hosting environment.
 *   **Frontend Constraints:** Vanilla JS + HTML overlay. **No React.**
 
 ---
@@ -26,9 +26,8 @@
 ---
 
 ## 3. Security, Authentication & Database
-*   **Authentication:** Firebase Anonymous Auth.
+*   **Authentication:** Guest-first authentication by default (Firebase Anonymous Auth), with an optional profile-link flow allowing the player to link to Google Sign-In or email/password, preserving their existing data.
 *   **Persistent State (Firestore):** Post-match batch writing only.
-    *   *Match Lock Anti-Exploit:* At match start, write a `MatchInProgress` document containing player IDs. At match end, an atomic transaction updates stats and deletes `MatchInProgress`. A scheduled Google Cloud Function sweeps stale docs (>2 hours) and explicitly records a forfeit/death penalty for combat loggers/disconnects.
 *   **Anti-Cheat (Visibility Culling):**
     *   DTLS encryption does not protect against RAM scanning/browser hooks parsing WebRTC Data Channels.
     *   **Defense:** Server-Side Visibility Culling. The server never sends coordinates for drones outside the player's line-of-sight and audio detection radius.
@@ -38,6 +37,7 @@
 
 ## 4. The Geckos Serialization & Networking Stack
 *   **CRITICAL MANDATE:** You are not allowed to delete Geckos.io under any circumstances.
+*   **Status Note:** The system is currently running on the Socket.IO/JSON/postMessage fallback path (matching `TRANSPORT_MODE` hardcoded to `'socketio'` in `shared/transport.config.ts`), kept active as a hedge pending confirmation that the smarterasp.net hosting environment supports the target UDP/SharedArrayBuffer transport. Geckos.io remains the primary target transport, and Geckos.io-based systems must not be removed or deprioritized in implementation.
 *   **Protocol:** Geckos.io (WebRTC Data Channels) for authoritative UDP-like client-server communication.
 *   **Network vs. Physics Loops:**
     *   *Physics Tick:* 60Hz (16.66ms) using Node `setInterval` (Rapier, A* validation, hitscans).

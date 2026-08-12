@@ -8,7 +8,7 @@
 
 VEXEA is an AI defence company whose LLM systems have gone rogue. The rogue AIs are too dangerous to shut down publicly. VEXEA has contracted two private companies — **Vibe Co.** and **Slop Inc.** — to infiltrate VEXEA facilities and silence the rogue systems quietly.
 
-Players are contractors working for either Vibe Co. or Slop Inc. The enemy is VEXEA's autonomous drone army, directed in real-time by a rogue LLM commander.
+The game is a multiplayer PvE experience where 5–10 players work as contractors for either Vibe Co. or Slop Inc. The enemy is VEXEA's autonomous drone army, directed in real-time by a rogue LLM commander.
 
 ---
 
@@ -211,9 +211,9 @@ Camera health: TBD via playtesting. Should survive a few rifle shots — destroy
 ## 7. Match Structure
 
 - Win condition: Any player reaches zone_core and completes the objective
-- Loss condition: All players eliminated
+- Loss condition: Team wipe (all players eliminated) or match timer timeout depending on mode
 - Match timer: TBD via playtesting
-- Player count: 1–N (asymmetric PvE, N TBD)
+- Player count: 5–10 human players (STANDARD mode)
 
 ---
 

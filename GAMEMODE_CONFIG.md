@@ -360,3 +360,15 @@ No gameplay system, damage pipeline, scoring system, or LLM commander code chang
 
 ## 9. Drone Physics tuning
 * Wheeled Drone speed constant: 8.0, proposed turn rate: 0.04.
+
+---
+
+## 10. Drone Role and Behavior Descriptions
+
+*   **Robot Dog** — Nimble and agile unit. Does not hold ground or defend a fixed position; its role is mobility, not static defense.
+*   **Wheeled Drone** — Tank-durability chassis featuring the highest survivability among ground units, but with a slow chassis turn rate. It is equipped with an independent 360° turret decoupled from chassis orientation, making it the most effective drone for holding and covering a position despite its slow turning.
+*   **Recon Drone** — Evasive and "ratty" character. Prioritizes avoiding destruction and gathering intelligence over engaging, and tends to disengage or flee rather than commit to a fight.
+*   **Rotary Shooter (quadcopter)** — Harassment unit. Designed to apply sustained light pressure rather than representing a decisive threat on its own.
+*   **Bomber** — Single-use unit. Locks onto and charges a target before detonating.
+*   **Fixed Wing** — Strategic aerial support unit. Does not act autonomously or engage on its own initiative, only initiating its carpet-bombing runs when directly called in by the LLM commander.
+*   **Humanoid** — Elite unit. Represents the most capable and dangerous drone type in VEXEA's arsenal, reserved strictly for higher-stakes engagements.

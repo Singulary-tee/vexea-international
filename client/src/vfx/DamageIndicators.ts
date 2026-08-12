@@ -73,7 +73,7 @@ export class DamageIndicators {
         el.style.marginLeft = "-30px";
         el.style.marginTop = "-30px";
         el.style.pointerEvents = "none";
-        el.innerHTML = `<img src="/ui_svgs/damage_indicator.svg" alt="" aria-hidden="true" draggable="false" style="display:block;width:100%;height:100%;object-fit:contain;">`;
+        el.innerHTML = `<svg viewBox="0 0 100 100" style="width:100%;height:100%;"><polygon points="50,10 40,40 60,40" fill="#ff3344" opacity="0.8"/></svg>`;
         this.container.appendChild(el);
       }
 

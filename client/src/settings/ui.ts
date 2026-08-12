@@ -1112,10 +1112,10 @@ function renderHudTab(container: HTMLElement, s: VexeaSettingsData, onClose: () 
     rowCross.appendChild(cLabelWrap);
 
     const crosshairStyles = [
-        { id: 'Standard Cross', label: 'CROSS', asset: 'crosshair_cross' },
-        { id: 'Dot', label: 'DOT', asset: 'crosshair_dot' },
-        { id: 'Circle', label: 'CIRCLE', asset: 'crosshair_circle' },
-        { id: 'T-Shape', label: 'T-SHAPE', asset: 'crosshair_t' }
+        { id: 'Standard Cross', label: 'CROSS', svg: `<svg width="24" height="24" viewBox="0 0 24 24"><line x1="12" y1="2" x2="12" y2="8" stroke="currentColor" stroke-width="2"/><line x1="12" y1="16" x2="12" y2="22" stroke="currentColor" stroke-width="2"/><line x1="2" y1="12" x2="8" y2="12" stroke="currentColor" stroke-width="2"/><line x1="16" y1="12" x2="22" y2="12" stroke="currentColor" stroke-width="2"/></svg>` },
+        { id: 'Dot', label: 'DOT', svg: `<svg width="24" height="24" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3" fill="currentColor"/></svg>` },
+        { id: 'Circle', label: 'CIRCLE', svg: `<svg width="24" height="24" viewBox="0 0 24 24"><circle cx="12" cy="12" r="7" fill="none" stroke="currentColor" stroke-width="1.5"/><circle cx="12" cy="12" r="2" fill="currentColor"/></svg>` },
+        { id: 'T-Shape', label: 'T-SHAPE', svg: `<svg width="24" height="24" viewBox="0 0 24 24"><line x1="12" y1="16" x2="12" y2="22" stroke="currentColor" stroke-width="2"/><line x1="2" y1="12" x2="8" y2="12" stroke="currentColor" stroke-width="2"/><line x1="16" y1="12" x2="22" y2="12" stroke="currentColor" stroke-width="2"/></svg>` }
     ];
 
     const cardsRow = document.createElement('div');
@@ -1127,7 +1127,7 @@ function renderHudTab(container: HTMLElement, s: VexeaSettingsData, onClose: () 
         card.className = `reticle-card ${s.crosshairStyle === style.id ? 'active' : ''}`;
         card.style.color = s.crosshairStyle === style.id ? DS.colors.accent : '#a1a1aa';
         card.innerHTML = `
-            <img class="settings-file-icon" src="/ui_svgs/${style.asset}.svg" alt="" aria-hidden="true" draggable="false" style="width:24px; height:24px; object-fit:contain;">
+            ${style.svg}
             <span style="font-family:monospace; font-size: ${DS.typography.sizes.tiny}; font-weight:bold;">${style.label}</span>
         `;
         bind(card, 'click', () => {
@@ -1273,11 +1273,19 @@ function renderHudTab(container: HTMLElement, s: VexeaSettingsData, onClose: () 
         overflow: 'hidden'
     });
 
-    // Procedural grid: CSS background, not an inline SVG asset.
-    previewBox.style.backgroundImage = 'linear-gradient(rgba(255,255,255,0.12) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.12) 1px, transparent 1px)';
-    previewBox.style.backgroundSize = '20px 20px';
+    // Dark grid background
     previewBox.innerHTML = `
+        <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg" style="position:absolute; inset:0; opacity:0.12;">
+            <defs>
+                <pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse">
+                    <path d="M 20 0 L 0 0 0 20" fill="none" stroke="#FFFFFF" stroke-width="0.5"/>
+                </pattern>
+            </defs>
+            <rect width="100%" height="100%" fill="url(#grid)" />
+        </svg>
+        <!-- Dummy enemy silhouette -->
         <div style="position:absolute; width:2.50rem; height:5.00rem; border:1px solid rgba(239,68,68,0.3); background:rgba(239,68,68,0.06); pointer-events:none;"></div>
+        <!-- Reticle Preview Host -->
         <div id="reticle-svg-host" style="position:relative; z-index:2;"></div>
     `;
 
@@ -1307,16 +1315,35 @@ function renderHudTab(container: HTMLElement, s: VexeaSettingsData, onClose: () 
         const size = s.crosshairSize;
         const gap = s.crosshairGap || 4;
         const color = s.crosshairColor.startsWith('#') ? s.crosshairColor : (swatches.find(sw => sw.name.toLowerCase() === s.crosshairColor.toLowerCase())?.color || '#FFFFFF');
-        const assetByStyle: Record<string, string> = {
-            'Standard Cross': 'crosshair_cross',
-            'Dot': 'crosshair_dot',
-            'Circle': 'crosshair_circle',
-            'T-Shape': 'crosshair_t'
-        };
-        const asset = assetByStyle[s.crosshairStyle] || 'crosshair_cross';
-        // The external SVG supplies the silhouette; CSS controls accessible tint and scale.
-        // The gap remains a state variable used by the in-game procedural reticle renderer.
-        host.innerHTML = `<span class="settings-reticle-mask" style="display:block;width:${size}px;height:${size}px;background:${color};-webkit-mask:url('/ui_svgs/${asset}.svg') center/contain no-repeat;mask:url('/ui_svgs/${asset}.svg') center/contain no-repeat;--vexea-reticle-gap:${gap}px;"></span>`;
+        const halfSize = size / 2;
+
+        let reticleSvg = '';
+        if (s.crosshairStyle === 'Dot') {
+            reticleSvg = `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
+                <circle cx="${halfSize}" cy="${halfSize}" r="${Math.max(2, size / 8)}" fill="${color}"/>
+            </svg>`;
+        } else if (s.crosshairStyle === 'Circle') {
+            reticleSvg = `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
+                <circle cx="${halfSize}" cy="${halfSize}" r="${Math.max(4, halfSize - 2)}" fill="none" stroke="${color}" stroke-width="2"/>
+                <circle cx="${halfSize}" cy="${halfSize}" r="2" fill="${color}"/>
+            </svg>`;
+        } else if (s.crosshairStyle === 'T-Shape') {
+            reticleSvg = `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
+                <line x1="${halfSize}" y1="${halfSize + gap}" x2="${halfSize}" y2="${size}" stroke="${color}" stroke-width="2"/>
+                <line x1="0" y1="${halfSize}" x2="${halfSize - gap}" y2="${halfSize}" stroke="${color}" stroke-width="2"/>
+                <line x1="${halfSize + gap}" y1="${halfSize}" x2="${size}" y2="${halfSize}" stroke="${color}" stroke-width="2"/>
+            </svg>`;
+        } else {
+            // Standard Cross
+            reticleSvg = `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
+                <line x1="${halfSize}" y1="0" x2="${halfSize}" y2="${halfSize - gap}" stroke="${color}" stroke-width="2"/>
+                <line x1="${halfSize}" y1="${halfSize + gap}" x2="${halfSize}" y2="${size}" stroke="${color}" stroke-width="2"/>
+                <line x1="0" y1="${halfSize}" x2="${halfSize - gap}" y2="${halfSize}" stroke="${color}" stroke-width="2"/>
+                <line x1="${halfSize + gap}" y1="${halfSize}" x2="${size}" y2="${halfSize}" stroke="${color}" stroke-width="2"/>
+            </svg>`;
+        }
+
+        host.innerHTML = reticleSvg;
 
         if (readout) {
             readout.innerHTML = `
