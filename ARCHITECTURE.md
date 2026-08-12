@@ -37,7 +37,7 @@
 
 ## 4. The Geckos Serialization & Networking Stack
 *   **CRITICAL MANDATE:** You are not allowed to delete Geckos.io under any circumstances.
-*   **Status Note:** The system is currently running on the Socket.IO/JSON/postMessage fallback path (matching `TRANSPORT_MODE` hardcoded to `'socketio'` in `shared/transport.config.ts`), kept active as a hedge pending confirmation that the smarterasp.net hosting environment supports the target UDP/SharedArrayBuffer transport. Geckos.io remains the primary target transport, and Geckos.io-based systems must not be removed or deprioritized in implementation.
+*   **Status Note:** The system is currently running on the Socket.IO/JSON/postMessage fallback path (matching `TRANSPORT_MODE` hardcoded to `'socketio'` in `shared/transport.config.ts`), kept active due to (1) the AI Studio preview sandbox constraint (CORS, sandboxing, and Cross-Origin Isolation policies blocking Geckos.io/WebRTC and SharedArrayBuffer in the iframe environment), and (2) as a hedge pending confirmation that the smarterasp.net hosting environment supports the target UDP/SharedArrayBuffer transport. Geckos.io remains the primary target transport, and Geckos.io-based systems must not be removed or deprioritized in implementation.
 *   **Protocol:** Geckos.io (WebRTC Data Channels) for authoritative UDP-like client-server communication.
 *   **Network vs. Physics Loops:**
     *   *Physics Tick:* 60Hz (16.66ms) using Node `setInterval` (Rapier, A* validation, hitscans).

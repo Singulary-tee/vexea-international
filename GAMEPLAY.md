@@ -174,19 +174,19 @@ Fixed Wing is hard-capped at 1 deployment per match regardless of AP availabilit
 **Wheeled Drone**
 - HP: 80
 - Damage: 12 per shot, automatic, moderate accuracy
-- Speed: Medium
+- Speed: Slow chassis turn rate
 - Hitbox: Medium
 - Spawn group size: 2–3 units
-- Behavior: Backbone of ground army. Pathfinds aggressively toward player zone. Most common ground threat. Dangerous in numbers.
+- Behavior: Tank-durability chassis featuring the highest survivability among ground units. Most effective at holding and covering a key position using an independent 360° turret decoupled from chassis orientation.
 - VEXEA mark: Chassis
 
 **Robot Dog**
 - HP: 150
 - Damage: 18 per shot, burst fire, high accuracy
-- Speed: Slow but relentless — never stops pathfinding
+- Speed: Nimble and agile
 - Hitbox: Medium, lower profile than humanoid
 - Spawn group size: 1–2 units
-- Behavior: Zone denial rather than aggressive push. Holds positions with LOS on players. Effective in corridors. Players must sustain fire from both weapons to eliminate. Countered by flanking or Demolitions EMP breaking its reporting.
+- Behavior: Nimble and agile unit. Does not hold ground or defend a fixed position; its role is mobility, not static defense. It utilizes non-holding aggressive pursuit, circle-strafing, and constant movement to flush out and disrupt player positioning.
 - VEXEA mark: Chassis
 
 **Humanoid**
