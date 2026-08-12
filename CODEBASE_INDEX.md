@@ -380,6 +380,15 @@ This file is the authoritative index of all directories and source files within 
     *   `client/screens/armory-screen.ts`: Mapped each weapon and all eight class utility slots to physical equipment silhouettes; added class identity to the loadout content surface, leaving category navigation text-only.
     *   `client/screens/main-menu.ts`: Added gamemode glyphs to selectable gamemode content cards rather than top navigation labels.
     *   `client/index.css`: Added reduced-motion-safe, state-only animation hooks for combat controls; the VEXEA eye logo remains unanimated.
+
+### Cycle 2026-08-12-03: Replace SVG Icon Set with AI-Generated-to-Traced Silhouettes
+*   **Target Files:** `client/public/ui_svgs/class_assault.svg`, `client/public/ui_svgs/class_medic.svg`, `client/public/ui_svgs/class_recon.svg`, `client/public/ui_svgs/class_demolitions.svg`, `client/public/ui_svgs/utility_flashbang.svg`, `client/public/ui_svgs/utility_grenade.svg`, `client/public/ui_svgs/utility_c4.svg`, `client/public/ui_svgs/utility_mine.svg`, `client/public/ui_svgs/utility_jammer.svg`, `client/public/ui_svgs/utility_revive.svg`, `client/public/ui_svgs/faction_vibeco.svg`, `client/public/ui_svgs/faction_slopinc.svg`, `client/public/ui_svgs/gamemode_infiltration.svg`, `client/public/ui_svgs/gamemode_hardcore.svg`, `client/public/ui_svgs/gamemode_arena.svg`, `client/public/ui_svgs/coin.svg`, `client/public/ui_svgs/energy.svg`, `CODEBASE_INDEX.md`
+*   **Status:** Verified & Finalized
+*   **Modifications:**
+    *   Adopted the user-approved AI-generation-plus-vector-trace asset pipeline: icons are sourced from AI-generated white-silhouette-on-black mockups (the same provenance as the existing HUD icons), extracted with connected-component clustering, and traced with Potrace into white-filled transparent-background SVGs with tight viewboxes. Replaces all seventeen hand-authored replacement icons that failed the visual-quality review; no source files were modified, so no UI wiring changes are required.
+    *   `client/public/ui_svgs/`: Seventeen files replaced in place — the flashbang now carries nine visibly staggered perforation vents, the grenade retains its spoon and ring, the energy mark is two cloned bolts with a clear intersection, and the C4, mine, jammer, revive, and both faction/gamemode glyphs use the real physical or conceptual object shapes.
+*   **Verification:** `tsc --noEmit` clean; Vite production build completed; decoder binaries restored after the build hook; Chromium contact-sheet render of all seventeen assets reviewed.
+
     *   `client/src/vfx/LLMTrackingEffect.ts`: Repointed the two existing eye component references to the single public asset location without changing their tracking behavior.
     *   Removed the legacy root `ui_svgs/` duplicate source, the nested `ui_svgs/vexea/` duplicate directory, and five unreferenced legacy assets.
 *   **Verification:** `tsc --noEmit` passed. Production `vite build` passed. A Chromium contact sheet rendered all 51 source assets; explicit client SVG references resolve with no missing files.
