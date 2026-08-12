@@ -5,6 +5,8 @@ import {
   VerifyPurchaseResult,
   VerifyClaimInput,
   VerifyClaimResult,
+  VerifyAdRewardInput,
+  VerifyAdRewardResult,
   LevelMetrics,
   CatalogItem,
   VerifyBPClaimInput,
@@ -80,15 +82,15 @@ export function verifyPostMatchRewards(input: VerifyPostMatchInput): VerifyPostM
     };
   }
 
-  // Server-computed rewards
-  const killXp = input.kills * 25;
-  const winXp = input.isWin ? 200 : 50;
-  const damageXp = Math.floor(input.damageDealt * 0.05);
-  const totalXpEarned = killXp + winXp + damageXp;
+  // Server-computed rewards (New reduced rates)
+  const killXp = input.kills * 10;
+  const winXp = input.isWin ? 75 : 0;
+  const damageXp = Math.floor(input.damageDealt * 0.02);
+  const totalXpEarned = 25 + winXp + killXp + damageXp;
 
-  const baseCredits = 10;
-  const winCredits = input.isWin ? 50 : 0;
-  const killCredits = input.kills * 5;
+  const baseCredits = 5;
+  const winCredits = input.isWin ? 15 : 0;
+  const killCredits = input.kills * 2;
   const totalCreditsEarned = baseCredits + winCredits + killCredits;
 
   return {
@@ -105,11 +107,14 @@ export function verifyPurchase(
   input: VerifyPurchaseInput,
   catalogItem: CatalogItem
 ): VerifyPurchaseResult {
+  const currentEnergy = input.currentEnergy ?? 0;
+
   if (!input.playerId) {
     return {
       isApproved: false,
       itemCost: 0,
       remainingCredits: input.currentCredits,
+      remainingEnergy: currentEnergy,
       error: { code: 'INVALID_PLAYER_ID', message: 'Player ID is required for verification.' }
     };
   }
@@ -119,15 +124,20 @@ export function verifyPurchase(
       isApproved: false,
       itemCost: 0,
       remainingCredits: input.currentCredits,
+      remainingEnergy: currentEnergy,
       error: { code: 'ITEM_NOT_FOUND', message: 'Requested item does not exist in catalog.' }
     };
   }
 
+  const isEnergyPurchase = catalogItem.currency === 'energy';
+  const itemCost = isEnergyPurchase ? catalogItem.priceEnergy : catalogItem.priceCredits;
+
   if (input.unlockedItems && input.unlockedItems.includes(catalogItem.id)) {
     return {
       isApproved: false,
-      itemCost: catalogItem.priceCredits,
+      itemCost,
       remainingCredits: input.currentCredits,
+      remainingEnergy: currentEnergy,
       error: { code: 'ITEM_ALREADY_UNLOCKED', message: 'Item is already present in player unlocked inventory.' }
     };
   }
@@ -135,8 +145,9 @@ export function verifyPurchase(
   if (input.currentLevel < catalogItem.requiredLevel) {
     return {
       isApproved: false,
-      itemCost: catalogItem.priceCredits,
+      itemCost,
       remainingCredits: input.currentCredits,
+      remainingEnergy: currentEnergy,
       error: {
         code: 'REQUIRED_LEVEL_NOT_MET',
         message: `Player level (${input.currentLevel}) is below required level (${catalogItem.requiredLevel}).`
@@ -144,25 +155,84 @@ export function verifyPurchase(
     };
   }
 
-  if (input.currentCredits < catalogItem.priceCredits) {
-    return {
-      isApproved: false,
-      itemCost: catalogItem.priceCredits,
-      remainingCredits: input.currentCredits,
-      error: {
-        code: 'INSUFFICIENT_CREDITS',
-        message: `Current credits (${input.currentCredits}) are insufficient for item price (${catalogItem.priceCredits}).`
-      }
-    };
+  if (isEnergyPurchase) {
+    if (currentEnergy < catalogItem.priceEnergy) {
+      return {
+        isApproved: false,
+        itemCost: catalogItem.priceEnergy,
+        remainingCredits: input.currentCredits,
+        remainingEnergy: currentEnergy,
+        error: {
+          code: 'INSUFFICIENT_ENERGY',
+          message: `Current energy (${currentEnergy}) is insufficient for item price (${catalogItem.priceEnergy}).`
+        }
+      };
+    }
+  } else {
+    if (input.currentCredits < catalogItem.priceCredits) {
+      return {
+        isApproved: false,
+        itemCost: catalogItem.priceCredits,
+        remainingCredits: input.currentCredits,
+        remainingEnergy: currentEnergy,
+        error: {
+          code: 'INSUFFICIENT_CREDITS',
+          message: `Current credits (${input.currentCredits}) are insufficient for item price (${catalogItem.priceCredits}).`
+        }
+      };
+    }
   }
 
-  const remainingCredits = input.currentCredits - catalogItem.priceCredits;
+  const remainingCredits = isEnergyPurchase ? input.currentCredits : input.currentCredits - catalogItem.priceCredits;
+  const remainingEnergy = isEnergyPurchase ? currentEnergy - catalogItem.priceEnergy : currentEnergy;
 
   return {
     isApproved: true,
-    itemCost: catalogItem.priceCredits,
+    itemCost,
     remainingCredits,
+    remainingEnergy,
     unlockedItemId: catalogItem.id
+  };
+}
+
+/**
+ * Verifies ad reward claims for premium energy.
+ */
+export function verifyAdReward(input: VerifyAdRewardInput): VerifyAdRewardResult {
+  if (!input.playerId) {
+    return {
+      isApproved: false,
+      newEnergy: input.currentEnergy ?? 0,
+      adClaimsToday: input.adClaimsToday ?? 0,
+      error: { code: 'INVALID_PLAYER_ID', message: 'Player ID is required for verification.' }
+    };
+  }
+
+  const lastDate = new Date(input.lastAdClaimDate || 0);
+  const nowDate = new Date();
+  const isSameDay =
+    lastDate.getUTCFullYear() === nowDate.getUTCFullYear() &&
+    lastDate.getUTCMonth() === nowDate.getUTCMonth() &&
+    lastDate.getUTCDate() === nowDate.getUTCDate();
+
+  const effectiveAdClaimsToday = isSameDay ? (input.adClaimsToday ?? 0) : 0;
+
+  if (effectiveAdClaimsToday >= 5) {
+    return {
+      isApproved: false,
+      newEnergy: input.currentEnergy ?? 0,
+      adClaimsToday: effectiveAdClaimsToday,
+      error: { code: 'AD_DAILY_CAP_REACHED', message: 'Daily ad reward cap reached.' }
+    };
+  }
+
+  const newEnergy = (input.currentEnergy ?? 0) + 3;
+  const newAdClaimsToday = effectiveAdClaimsToday + 1;
+
+  return {
+    isApproved: true,
+    newEnergy,
+    adClaimsToday: newAdClaimsToday
   };
 }
 

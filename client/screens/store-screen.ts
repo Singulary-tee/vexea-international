@@ -1,28 +1,13 @@
 import { DS } from "../design-system";
-import catalogDataList from "../data/catalog.json";
-import offersDataList from "../data/offers.json";
-import { getAuth } from "firebase/auth";
-import { getFirestore, doc, updateDoc, arrayUnion } from "firebase/firestore";
+import catalogItems from "../../shared/catalog.json";
+import { CatalogItem } from "../../shared/verification/types";
 import { audioManager } from "../audio";
 import { StudioPreviewManager, AVAILABLE_SKINS } from "../StudioPreviewManager";
-import { clientFlagService } from "../flags/flag-service";
-import { FeatureFlagKey } from "../../shared/feature-flags";
-import { verifyPurchase } from "../../shared/verification/verifier";
 
-let activeCategoryFilter: 'ALL' | 'cosmetic' | 'blueprint' = 'ALL';
+let activeCategoryFilter: 'ALL' | 'cosmetic' | 'blueprint' | 'booster' | 'bundle' = 'ALL';
 
 export function renderStoreScreen(container: HTMLElement, registeredUserData: any): void {
   container.innerHTML = '';
-
-  const processedOffers = offersDataList.map(offer => ({
-    ...offer,
-    priceCredits: offer.priceCredits
-  }));
-
-  const processedCatalog = catalogDataList.map(item => ({
-    ...item,
-    priceCredits: item.priceCredits
-  }));
 
   const wrap = document.createElement('div');
   Object.assign(wrap.style, {
@@ -71,12 +56,7 @@ export function renderStoreScreen(container: HTMLElement, registeredUserData: an
   });
   leftCol.appendChild(featuredLabel);
 
-  const featuredOffer = processedOffers[0] || {
-    id: "test_skin",
-    title: "TEST COATING SPECIAL DEAL",
-    priceCredits: 100,
-    description: "Cyan-themed weapon finish and high-tech vector testing suit."
-  };
+  const featuredOffer = (catalogItems as CatalogItem[]).find(i => i.featured) || (catalogItems as CatalogItem[])[0];
 
   const featuredCard = document.createElement('div');
   Object.assign(featuredCard.style, {
@@ -106,11 +86,16 @@ export function renderStoreScreen(container: HTMLElement, registeredUserData: an
   });
   featuredCard.appendChild(glowBar);
 
+  const discountBadge = featuredOffer.discountPercentage ? `${featuredOffer.discountPercentage}% OFF` : 'FEATURED';
+  const priceDisplay = featuredOffer.currency === 'energy'
+    ? `${featuredOffer.priceEnergy} ENERGY`
+    : `${featuredOffer.priceCredits} CR`;
+
   featuredCard.innerHTML += `
     <div style="display:flex; flex-direction:column; gap:0.5vh; min-height:0;">
       <div style="display:flex; justify-content:space-between; align-items:center;">
         <span style="font-family:${DS.typography.fontFamily}; font-size:clamp(0.50rem, 1vh, 0.69rem); color:${DS.colors.accent}; font-weight:bold; letter-spacing:0.1vw;">FEATURED DEAL</span>
-        <span style="font-family:${DS.typography.fontFamily}; font-size:clamp(0.50rem, 1vh, 0.63rem); color:#00FF88; font-weight:bold; letter-spacing:0.05vw; background:rgba(0,255,136,0.06); padding:0.2vh 0.5vw; border:1px solid rgba(0,255,136,0.15);">30% OFF</span>
+        <span style="font-family:${DS.typography.fontFamily}; font-size:clamp(0.50rem, 1vh, 0.63rem); color:#00FF88; font-weight:bold; letter-spacing:0.05vw; background:rgba(0,255,136,0.06); padding:0.2vh 0.5vw; border:1px solid rgba(0,255,136,0.15);">${discountBadge}</span>
       </div>
       <div style="font-family:${DS.typography.fontFamily}; font-size:clamp(0.81rem, 2vh, 1.00rem); font-weight:bold; color:${DS.colors.text}; letter-spacing:0.1vw; line-height:1.1; margin-top:0.2vh;">
         ${featuredOffer.title.toUpperCase()}
@@ -122,12 +107,12 @@ export function renderStoreScreen(container: HTMLElement, registeredUserData: an
 
     <!-- Inside Specifications Bulletins -->
     <div style="display:flex; flex-direction:column; gap:0.5vh; background:rgba(255,255,255,0.01); border:1px solid rgba(255,255,255,0.03); padding:0.8vh 1vw; border-radius:0px;">
-      <div style="font-family:${DS.typography.fontFamily}; font-size: ${DS.typography.sizes.tiny}; color:${DS.colors.textMuted}; font-weight:bold; letter-spacing:0.05vw;">INCLUDED SPECS:</div>
+      <div style="font-family:${DS.typography.fontFamily}; font-size: ${DS.typography.sizes.tiny}; color:${DS.colors.textMuted}; font-weight:bold; letter-spacing:0.05vw;">SPECIFICATIONS:</div>
       <div style="font-family:${DS.typography.fontFamily}; font-size:clamp(0.50rem, 1.1vh, 0.75rem); color:${DS.colors.text}; font-weight:bold; display:flex; align-items:center; gap:0.5vw;">
-        <span style="color:${DS.colors.accent};">•</span> VX-88 TEST COATING ASSEMBLY
+        <span style="color:${DS.colors.accent};">•</span> CATEGORY: ${featuredOffer.category.toUpperCase()}
       </div>
       <div style="font-family:${DS.typography.fontFamily}; font-size:clamp(0.50rem, 1.1vh, 0.75rem); color:${DS.colors.text}; font-weight:bold; display:flex; align-items:center; gap:0.5vw;">
-        <span style="color:${DS.colors.accent};">•</span> PRE-TUNED INTEGRATION MATRIX
+        <span style="color:${DS.colors.accent};">•</span> FACTION: ${featuredOffer.faction || 'ANY'}
       </div>
     </div>
   `;
@@ -162,7 +147,7 @@ export function renderStoreScreen(container: HTMLElement, registeredUserData: an
   };
 
   const featBuyBtn = document.createElement('button');
-  featBuyBtn.textContent = `ACQUIRE DEAL — ${featuredOffer.priceCredits} CR`;
+  featBuyBtn.textContent = `ACQUIRE DEAL — ${priceDisplay}`;
   Object.assign(featBuyBtn.style, {
     flex: '2.2',
     padding: '0.50rem',
@@ -179,7 +164,7 @@ export function renderStoreScreen(container: HTMLElement, registeredUserData: an
   });
 
   featBuyBtn.onclick = async () => {
-    await handleStorePurchase(featuredOffer.priceCredits, 'test_skin', featuredOffer.title, registeredUserData, container);
+    await handleStorePurchase(featuredOffer.id, registeredUserData, container);
   };
 
   featActionRow.appendChild(featPreviewBtn);
@@ -204,7 +189,7 @@ export function renderStoreScreen(container: HTMLElement, registeredUserData: an
   const filterRow = document.createElement('div');
   Object.assign(filterRow.style, {
     display: 'flex',
-    gap: '10px',
+    gap: '8px',
     alignItems: 'center',
     flexShrink: '0'
   });
@@ -221,10 +206,12 @@ export function renderStoreScreen(container: HTMLElement, registeredUserData: an
   });
   filterRow.appendChild(filterLabel);
 
-  const categories: { id: 'ALL' | 'cosmetic' | 'blueprint'; label: string }[] = [
+  const categories: { id: 'ALL' | 'cosmetic' | 'blueprint' | 'booster' | 'bundle'; label: string }[] = [
     { id: 'ALL', label: 'ALL' },
     { id: 'cosmetic', label: 'COSMETIC' },
-    { id: 'blueprint', label: 'BLUEPRINT' }
+    { id: 'blueprint', label: 'BLUEPRINT' },
+    { id: 'booster', label: 'BOOSTER' },
+    { id: 'bundle', label: 'BUNDLE' }
   ];
 
   categories.forEach(cat => {
@@ -256,7 +243,7 @@ export function renderStoreScreen(container: HTMLElement, registeredUserData: an
 
   rightCol.appendChild(filterRow);
 
-  // Store Catalog Grid (Fits perfectly without overflow or scrollbars)
+  // Store Catalog Grid
   const gridContainer = document.createElement('div');
   Object.assign(gridContainer.style, {
     display: 'grid',
@@ -268,12 +255,12 @@ export function renderStoreScreen(container: HTMLElement, registeredUserData: an
     overflow: 'hidden'
   });
 
-  const filteredCatalog = processedCatalog.filter((item: any) => {
+  const filteredCatalog = (catalogItems as CatalogItem[]).filter((item) => {
     if (activeCategoryFilter !== 'ALL' && item.category !== activeCategoryFilter) return false;
     return true;
-  }).slice(0, 4); // Display top 4 items perfectly fitted in 2x2 grid
+  }).slice(0, 4);
 
-  filteredCatalog.forEach((item: any) => {
+  filteredCatalog.forEach((item) => {
     const card = document.createElement('div');
     card.className = 'mm-glass';
     Object.assign(card.style, {
@@ -286,6 +273,10 @@ export function renderStoreScreen(container: HTMLElement, registeredUserData: an
       borderRadius: '0px',
       gap: '0.3vh'
     });
+
+    const itemPriceDisplay = item.currency === 'energy'
+      ? `${item.priceEnergy} ENERGY`
+      : `${item.priceCredits} CR`;
 
     card.innerHTML = `
       <div style="display:flex; flex-direction:column; gap:0.3vh;">
@@ -334,7 +325,6 @@ export function renderStoreScreen(container: HTMLElement, registeredUserData: an
         itemKey = 'rifle';
       }
 
-      // Dynamically resolve correct skin configuration
       let skinId = 'STANDARD';
       if (idLower.includes('test_skin') || idLower.includes('test') || titleLower.includes('test')) {
         skinId = 'test_skin';
@@ -345,7 +335,7 @@ export function renderStoreScreen(container: HTMLElement, registeredUserData: an
     };
 
     const buyBtn = document.createElement('button');
-    buyBtn.textContent = `${item.priceCredits} CR`;
+    buyBtn.textContent = itemPriceDisplay;
     Object.assign(buyBtn.style, {
       flex: '1',
       padding: '0.31rem',
@@ -362,7 +352,7 @@ export function renderStoreScreen(container: HTMLElement, registeredUserData: an
     });
 
     buyBtn.onclick = async () => {
-      await handleStorePurchase(item.priceCredits, item.id, item.title, registeredUserData, container);
+      await handleStorePurchase(item.id, registeredUserData, container);
     };
 
     btnRow.appendChild(previewBtn);
@@ -379,77 +369,58 @@ export function renderStoreScreen(container: HTMLElement, registeredUserData: an
   container.appendChild(wrap);
 }
 
-async function handleStorePurchase(price: number, itemId: string, itemTitle: string, userData: any, container: HTMLElement): Promise<void> {
-  const currentCredits = userData?.credits !== undefined ? userData.credits : 1000;
-  const currentLevel = userData?.battlePass || 1;
-  const unlockedItems = userData?.unlockedItems || [];
-  const auth = getAuth();
-
-  const verificationResult = verifyPurchase(
-    {
-      playerId: auth.currentUser?.uid || "guest",
-      itemId: itemId,
-      currentCredits,
-      currentLevel,
-      unlockedItems
-    },
-    {
-      id: itemId,
-      title: itemTitle,
-      category: "cosmetic",
-      priceCredits: price,
-      requiredLevel: 1,
-      description: itemTitle
-    }
-  );
-
-  if (!verificationResult.isApproved) {
-    alert(`PURCHASE REJECTED: ${verificationResult.error?.message || "Invalid transaction."}`);
+async function handleStorePurchase(itemId: string, userData: any, container: HTMLElement): Promise<void> {
+  const catalogItem = (catalogItems as CatalogItem[]).find(i => i.id === itemId);
+  if (!catalogItem) {
+    alert("Item not found in catalog.");
     return;
   }
 
-  const newCredits = verificationResult.remainingCredits;
+  const currentCredits = userData?.credits !== undefined ? userData.credits : 500;
+  const currentEnergy = userData?.energy !== undefined ? userData.energy : 10;
+  const unlockedItems = userData?.unlockedItems || [];
+  const playerId = (window as any).vexPlayerUid || "guest";
 
-  // Save ownership in LocalStorage
   try {
-    const owned = JSON.parse(localStorage.getItem('vex_owned_skins') || '[]');
-    if (!owned.includes(itemId)) {
-      owned.push(itemId);
-      localStorage.setItem('vex_owned_skins', JSON.stringify(owned));
-    }
-  } catch (e) {
-    console.warn("Local storage ownership write failed:", e);
-  }
+    const response = await fetch('/api/economy/purchase', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        playerId,
+        itemId: catalogItem.id,
+        currentCredits,
+        currentEnergy,
+        unlockedItems
+      })
+    });
 
-  if (auth.currentUser) {
-    try {
-      const db = getFirestore();
-      await updateDoc(doc(db, 'Users', auth.currentUser.uid), {
-        credits: newCredits,
-        unlockedItems: arrayUnion(itemId)
-      });
+    const data = await response.json();
+
+    if (response.ok && data.success) {
       if (userData) {
-        userData.credits = newCredits;
-        if (!userData.unlockedItems) userData.unlockedItems = [];
-        if (!userData.unlockedItems.includes(itemId)) {
-          userData.unlockedItems.push(itemId);
+        userData.credits = data.newCredits;
+        userData.energy = data.newEnergy;
+        userData.unlockedItems = data.unlockedItems;
+      }
+      try {
+        const owned = JSON.parse(localStorage.getItem('vex_owned_skins') || '[]');
+        if (!owned.includes(catalogItem.id)) {
+          owned.push(catalogItem.id);
+          localStorage.setItem('vex_owned_skins', JSON.stringify(owned));
         }
+      } catch (e) {
+        console.warn("Local storage ownership write failed:", e);
       }
+
       audioManager.play('click');
-      alert(`PURCHASE SUCCESSFUL: ${itemTitle} for ${price} CR!`);
+      alert(`PURCHASE SUCCESSFUL: ${catalogItem.title}!`);
       renderStoreScreen(container, userData);
-    } catch (e) {
-      console.warn("Purchase transaction failed:", e);
+    } else {
+      alert(`PURCHASE REJECTED: ${data.error?.message || "Transaction failed."}`);
     }
-  } else {
-    if (userData) {
-      if (!userData.unlockedItems) userData.unlockedItems = [];
-      if (!userData.unlockedItems.includes(itemId)) {
-        userData.unlockedItems.push(itemId);
-      }
-    }
-    alert(`PURCHASED ${itemTitle}!`);
-    renderStoreScreen(container, userData);
+  } catch (err: any) {
+    console.error("Store purchase error:", err);
+    alert("PURCHASE ERROR: Could not connect to server economy service.");
   }
 }
 

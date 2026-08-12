@@ -15,6 +15,7 @@ import { CameraEffectsSystem } from "./src/camera/CameraEffects";
 import { CompassSystem } from "./src/systems/CompassSystem";
 import { LLMObjectiveSystem } from "./src/systems/LLMObjectiveSystem";
 import { ChatHUDSystem } from "./src/systems/ChatHUDSystem";
+import { DamageIndicators } from "./src/vfx/DamageIndicators";
 
 
 export interface NetworkDroneState {
@@ -133,6 +134,7 @@ export class MatchController {
   public reconnection: ReconnectionSystem | null = null;
   public cameraEffects: CameraEffectsSystem | null = null;
   public llmObjective: LLMObjectiveSystem | null = null;
+  public damageIndicators: DamageIndicators | null = null;
 
 
   // Match State
@@ -242,6 +244,7 @@ export class MatchController {
     this.reconnection = new ReconnectionSystem(this);
     this.llmObjective = new LLMObjectiveSystem(this);
     this.llmObjective.init();
+    this.damageIndicators = new DamageIndicators();
 
     this.reconnection.init();
   }

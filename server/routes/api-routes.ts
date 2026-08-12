@@ -1,7 +1,16 @@
 import { Express } from "express";
 import { matchManager } from "../MatchManager";
-import { serverEconomyService } from "../data/economy-service";
+import { serverEconomyService, getCatalogItems } from "../data/economy-service";
 import { DroneState } from "../../shared/constants";
+import catalogItems from "../../shared/catalog.json";
+import { CatalogItem } from "../../shared/verification/types";
+import {
+  verifyPurchase,
+  verifyClaim,
+  verifyPostMatchRewards,
+  verifyAdReward,
+  calculateLevelMetrics
+} from "../../shared/verification/verifier";
 
 export function registerApiRoutes(
   app: Express,
@@ -125,12 +134,315 @@ export function registerApiRoutes(
 
   app.get("/api/economy/store", async (req, res) => {
     try {
+      const items = getCatalogItems();
       const discountActive = String(req.query.discount || "false") === "true";
       const creditMultiplier = parseFloat(String(req.query.multiplier || "1.0"));
       const offers = serverEconomyService.getOffers(discountActive, creditMultiplier);
-      res.json({ success: true, offers });
+      res.json({ success: true, catalog: items, offers });
     } catch (err: any) {
       res.status(500).json({ success: false, error: err.message || err });
+    }
+  });
+
+  app.post("/api/economy/init-player", async (req, res) => {
+    try {
+      const { playerId } = req.body;
+      if (!playerId) {
+        return res.status(400).json({ success: false, error: "playerId is required." });
+      }
+      const userRef = doc(db, "Users", playerId);
+      const userSnap = await getDoc(userRef);
+      if (!userSnap.exists()) {
+        const starterPack = {
+          credits: 500,
+          energy: 10,
+          unlockedItems: [],
+          totalXp: 0,
+          adClaimsToday: 0,
+          lastAdClaimDate: 0
+        };
+        await setDoc(userRef, starterPack, { merge: true });
+        return res.json({ success: true, created: true, data: starterPack });
+      }
+      const existingData = userSnap.data();
+      const patchedData = {
+        credits: existingData.credits ?? 500,
+        energy: existingData.energy ?? 10,
+        unlockedItems: existingData.unlockedItems ?? [],
+        totalXp: existingData.totalXp ?? 0,
+        adClaimsToday: existingData.adClaimsToday ?? 0,
+        lastAdClaimDate: existingData.lastAdClaimDate ?? 0
+      };
+      return res.json({ success: true, created: false, data: patchedData });
+    } catch (err: any) {
+      return res.status(500).json({ success: false, error: err.message || err });
+    }
+  });
+
+  app.post("/api/economy/purchase", async (req, res) => {
+    try {
+      const { playerId, itemId, currentCredits, currentEnergy, unlockedItems } = req.body;
+      if (!playerId || !itemId) {
+        return res.status(400).json({
+          success: false,
+          error: { code: 'INVALID_INPUT', message: 'playerId and itemId are required.' }
+        });
+      }
+
+      const catalogItem = (catalogItems as CatalogItem[]).find((i) => i.id === itemId);
+      if (!catalogItem) {
+        return res.status(404).json({
+          success: false,
+          error: { code: 'ITEM_NOT_FOUND', message: 'Item not found in catalog.' }
+        });
+      }
+
+      const userRef = doc(db, "Users", playerId);
+      const userSnap = await getDoc(userRef);
+      const playerData = userSnap.exists() ? userSnap.data() : {};
+
+      const pCredits = currentCredits ?? playerData.credits ?? 500;
+      const pEnergy = currentEnergy ?? playerData.energy ?? 10;
+      const pUnlocked = unlockedItems ?? playerData.unlockedItems ?? [];
+      const pLevel = playerData.battlePass || 1;
+
+      const result = verifyPurchase(
+        {
+          playerId,
+          itemId,
+          currentCredits: pCredits,
+          currentEnergy: pEnergy,
+          currentLevel: pLevel,
+          unlockedItems: pUnlocked
+        },
+        catalogItem
+      );
+
+      if (!result.isApproved) {
+        return res.status(400).json({ success: false, error: result.error });
+      }
+
+      const updatedUnlocked = pUnlocked.includes(itemId) ? pUnlocked : [...pUnlocked, itemId];
+
+      if (userSnap.exists()) {
+        await updateDoc(userRef, {
+          credits: result.remainingCredits,
+          energy: result.remainingEnergy,
+          unlockedItems: updatedUnlocked
+        });
+      } else {
+        await setDoc(userRef, {
+          credits: result.remainingCredits,
+          energy: result.remainingEnergy,
+          unlockedItems: updatedUnlocked,
+          totalXp: 0,
+          adClaimsToday: 0,
+          lastAdClaimDate: 0
+        });
+      }
+
+      return res.json({
+        success: true,
+        newCredits: result.remainingCredits,
+        newEnergy: result.remainingEnergy,
+        unlockedItems: updatedUnlocked
+      });
+    } catch (err: any) {
+      return res.status(500).json({
+        success: false,
+        error: { code: 'SERVER_ERROR', message: err.message || String(err) }
+      });
+    }
+  });
+
+  app.post("/api/economy/claim-daily", async (req, res) => {
+    try {
+      const { playerId, currentCredits, currentEnergy, lastClaimTimestamp } = req.body;
+      if (!playerId) {
+        return res.status(400).json({
+          success: false,
+          error: { code: 'INVALID_INPUT', message: 'playerId is required.' }
+        });
+      }
+
+      const userRef = doc(db, "Users", playerId);
+      const userSnap = await getDoc(userRef);
+      const playerData = userSnap.exists() ? userSnap.data() : {};
+
+      const pCredits = currentCredits ?? playerData.credits ?? 500;
+      const pEnergy = currentEnergy ?? playerData.energy ?? 10;
+      const pLastClaim = lastClaimTimestamp ?? playerData.dailyRefreshedAt ?? 0;
+
+      const result = verifyClaim({
+        playerId,
+        claimType: "DAILY_LOGIN",
+        currentCredits: pCredits,
+        currentEnergy: pEnergy,
+        lastClaimTimestamp: pLastClaim
+      });
+
+      if (!result.isApproved) {
+        return res.status(400).json({ success: false, error: result.error });
+      }
+
+      const now = Date.now();
+      if (userSnap.exists()) {
+        await updateDoc(userRef, {
+          credits: result.newCredits,
+          energy: result.newEnergy,
+          dailyRefreshedAt: now
+        });
+      } else {
+        await setDoc(userRef, {
+          credits: result.newCredits,
+          energy: result.newEnergy,
+          dailyRefreshedAt: now,
+          unlockedItems: [],
+          totalXp: 0,
+          adClaimsToday: 0,
+          lastAdClaimDate: 0
+        });
+      }
+
+      return res.json({
+        success: true,
+        newCredits: result.newCredits,
+        newEnergy: result.newEnergy
+      });
+    } catch (err: any) {
+      return res.status(500).json({
+        success: false,
+        error: { code: 'SERVER_ERROR', message: err.message || String(err) }
+      });
+    }
+  });
+
+  app.post("/api/economy/match-rewards", async (req, res) => {
+    try {
+      const { playerId, matchDurationSec, kills, deaths, damageDealt, objectiveTimeHeld, isWin, gameMode } = req.body;
+      if (!playerId) {
+        return res.status(400).json({
+          success: false,
+          error: { code: 'INVALID_INPUT', message: 'playerId is required.' }
+        });
+      }
+
+      const result = verifyPostMatchRewards({
+        playerId,
+        matchDurationSec: matchDurationSec || 0,
+        kills: kills || 0,
+        deaths: deaths || 0,
+        damageDealt: damageDealt || 0,
+        objectiveTimeHeld: objectiveTimeHeld || 0,
+        isWin: !!isWin,
+        gameMode: gameMode || 'INFILTRATION'
+      });
+
+      if (!result.isApproved) {
+        return res.status(400).json({ success: false, error: result.error });
+      }
+
+      const userRef = doc(db, "Users", playerId);
+      const userSnap = await getDoc(userRef);
+      const playerData = userSnap.exists() ? userSnap.data() : {};
+
+      const currentTotalXp = playerData.totalXp ?? 0;
+      const currentCredits = playerData.credits ?? 500;
+      const newTotalXp = currentTotalXp + result.xpEarned;
+      const newCredits = currentCredits + result.creditsEarned;
+      const newLevel = calculateLevelMetrics(newTotalXp).level;
+
+      if (userSnap.exists()) {
+        await updateDoc(userRef, {
+          credits: newCredits,
+          xp: increment(result.xpEarned),
+          totalXp: newTotalXp,
+          battlePass: newLevel
+        });
+      } else {
+        await setDoc(userRef, {
+          credits: newCredits,
+          energy: 10,
+          unlockedItems: [],
+          totalXp: newTotalXp,
+          xp: result.xpEarned,
+          battlePass: newLevel,
+          adClaimsToday: 0,
+          lastAdClaimDate: 0
+        });
+      }
+
+      return res.json({
+        success: true,
+        creditsEarned: result.creditsEarned,
+        xpEarned: result.xpEarned,
+        newLevel
+      });
+    } catch (err: any) {
+      return res.status(500).json({
+        success: false,
+        error: { code: 'SERVER_ERROR', message: err.message || String(err) }
+      });
+    }
+  });
+
+  app.post("/api/economy/ad-reward", async (req, res) => {
+    try {
+      const { playerId, currentEnergy, adClaimsToday, lastAdClaimDate } = req.body;
+      if (!playerId) {
+        return res.status(400).json({
+          success: false,
+          error: { code: 'INVALID_INPUT', message: 'playerId is required.' }
+        });
+      }
+
+      const userRef = doc(db, "Users", playerId);
+      const userSnap = await getDoc(userRef);
+      const playerData = userSnap.exists() ? userSnap.data() : {};
+
+      const pEnergy = currentEnergy ?? playerData.energy ?? 10;
+      const pAdClaimsToday = adClaimsToday ?? playerData.adClaimsToday ?? 0;
+      const pLastAdClaimDate = lastAdClaimDate ?? playerData.lastAdClaimDate ?? 0;
+
+      const result = verifyAdReward({
+        playerId,
+        currentEnergy: pEnergy,
+        adClaimsToday: pAdClaimsToday,
+        lastAdClaimDate: pLastAdClaimDate
+      });
+
+      if (!result.isApproved) {
+        return res.status(400).json({ success: false, error: result.error });
+      }
+
+      const now = Date.now();
+      if (userSnap.exists()) {
+        await updateDoc(userRef, {
+          energy: result.newEnergy,
+          adClaimsToday: result.adClaimsToday,
+          lastAdClaimDate: now
+        });
+      } else {
+        await setDoc(userRef, {
+          credits: 500,
+          energy: result.newEnergy,
+          unlockedItems: [],
+          totalXp: 0,
+          adClaimsToday: result.adClaimsToday,
+          lastAdClaimDate: now
+        });
+      }
+
+      return res.json({
+        success: true,
+        newEnergy: result.newEnergy,
+        adClaimsToday: result.adClaimsToday
+      });
+    } catch (err: any) {
+      return res.status(500).json({
+        success: false,
+        error: { code: 'SERVER_ERROR', message: err.message || String(err) }
+      });
     }
   });
 

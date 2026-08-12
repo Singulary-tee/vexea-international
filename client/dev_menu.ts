@@ -14,6 +14,9 @@ import { CAMERA_EFFECTS_CONFIG } from "./src/camera/constants";
 import { isClientSentryInitialized, getSentryDSN } from "./sentry";
 import { clientFlagService } from "./flags/flag-service";
 import { FeatureFlagKey } from "../shared/feature-flags";
+import { llmTrackingVisualSystem } from "./src/vfx/LLMTrackingEffect";
+import { triggerExplosion } from "./src/vfx/large";
+import { triggerFlash as triggerVFXFlash } from "./src/vfx/VFXOrchestrator";
 
 let isMenuOpen = false;
 let activePanel = "CONSOLE";
@@ -25,6 +28,75 @@ let inboundIdx = 0;
 let outboundIdx = 0;
 let logs: string[] = [];
 let devLlmDisabled = false;
+
+// Effects Countdown State
+const activeCountdowns = new Map<string, number>();
+let countdownInterval: any = null;
+
+function triggerWithCountdown(effectId: string, label: string, onExecute: () => void) {
+    if (activeCountdowns.has(effectId)) return;
+    
+    activeCountdowns.set(effectId, 3);
+    
+    const updateLabel = () => {
+        const btn = document.getElementById(`btn-effect-${effectId}`);
+        const count = activeCountdowns.get(effectId);
+        if (btn) {
+            btn.innerText = count !== undefined && count > 0 ? `[${count}] ${label}` : label;
+            btn.style.background = count !== undefined && count > 0 ? DS.colors.danger : DS.colors.surface;
+        }
+    };
+
+    updateLabel();
+
+    if (!countdownInterval) {
+        countdownInterval = setInterval(() => {
+            let stillActive = false;
+            activeCountdowns.forEach((count, id) => {
+                if (count > 1) {
+                    activeCountdowns.set(id, count - 1);
+                    stillActive = true;
+                } else {
+                    activeCountdowns.delete(id);
+                    // Find the trigger by ID and execute
+                    if (id === 'llm-tracking') llmTrackingVisualSystem.trigger();
+                    if (id === 'damage') {
+                         const match = getMatch();
+                         if (match?.damageIndicators) {
+                             const randomPos = new THREE.Vector3(
+                                 (Math.random() - 0.5) * 10,
+                                 0,
+                                 (Math.random() - 0.5) * 10
+                             ).add(match.playerPos || new THREE.Vector3());
+                             match.damageIndicators.addDamageOrigin("dev_test", randomPos);
+                         }
+                    }
+                    if (id === 'dust') {
+                        const match = getMatch();
+                        if (match) triggerExplosion(match.playerPos || new THREE.Vector3(), 5.0);
+                    }
+                    if (id === 'ui-flash') {
+                        const match = getMatch();
+                        if (match?.hud) match.hud.triggerUIFlash("255, 51, 68", 0.2);
+                    }
+                    if (id === 'whiteout') {
+                        const match = getMatch();
+                        if (match?.hud) (match.hud as any).triggerWhiteoutFlash(1.0, 1.0);
+                    }
+                }
+            });
+            
+            // Update all button labels
+            const effectsTab = activePanel === "EFFECTS";
+            if (effectsTab) renderPanel();
+
+            if (!stillActive && activeCountdowns.size === 0) {
+                clearInterval(countdownInterval);
+                countdownInterval = null;
+            }
+        }, 1000);
+    }
+}
 
 export interface LLMInterviewMessage {
     question: string;
@@ -783,7 +855,7 @@ export function initDevMenu(channel: any, jitterMap: any) {
     overlay.style.cssText = `display:none;position:absolute;inset:0;background:rgba(10,10,12,0.95);backdrop-filter:blur(0.38rem);z-index:999998;pointer-events:auto;color:${DS.colors.success};font-family:${DS.typography.fontFamilyMono};padding:${DS.spacing.md};flex-direction:column;`;
     
     // PURELY FOR IN-MATCH DEVELOPMENT. NOT FOR ANYTHING PRE-MATCH.
-    const tabs = ["VIS DIAG", "GAME CONTROL", "PHYSICS", "CHEATS", "WEPS", "CAM_FX", "CONSOLE", "LLM FEED", "AI NAV", "PERF", "NETWORK", "ZONES", "ENTITIES", "COLLISIONS"];
+    const tabs = ["VIS DIAG", "EFFECTS", "GAME CONTROL", "PHYSICS", "CHEATS", "WEPS", "CAM_FX", "CONSOLE", "LLM FEED", "AI NAV", "PERF", "NETWORK", "ZONES", "ENTITIES", "COLLISIONS"];
     const header = document.createElement("div");
     header.style.cssText = "display:flex;gap:0.63rem;margin-bottom:0.63rem;overflow-x:auto;";
     tabs.forEach(t => {
@@ -840,7 +912,48 @@ function renderPanel() {
     const c = document.getElementById("dev-content");
     if (!c) return;
     
-    if (activePanel === "GAME CONTROL") {
+    if (activePanel === "EFFECTS") {
+        c.innerHTML = `
+            <h2 style="color:${DS.colors.accent}; margin-top:0;">AUTHORED EFFECTS TRIGGER BOARD</h2>
+            <p style="color:${DS.colors.textMuted}; margin-bottom: 1.25rem;">All effects trigger after a 3-second countdown to allow closing the dev menu.</p>
+            
+            <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:1.25rem;">
+                <div style="background:#1a1a1a; padding:1rem; border-radius:4px; border:1px solid #333;">
+                    <h3 style="margin-top:0; color:${DS.colors.success}; font-size:14px;">HUD & UI EFFECTS</h3>
+                    <div style="display:flex; flex-direction:column; gap:8px;">
+                        <button id="btn-effect-llm-tracking" style="padding:12px; background:${activeCountdowns.has('llm-tracking') ? DS.colors.danger : DS.colors.surface}; color:white; border:none; cursor:pointer; font-weight:bold; font-family:${DS.typography.fontFamilyMono}; text-align:left;">
+                            ${activeCountdowns.has('llm-tracking') ? `[${activeCountdowns.get('llm-tracking')}] LLM TRACKING` : "LLM TRACKING (SVG)"}
+                        </button>
+                        <button id="btn-effect-ui-flash" style="padding:12px; background:${activeCountdowns.has('ui-flash') ? DS.colors.danger : DS.colors.surface}; color:white; border:none; cursor:pointer; font-weight:bold; font-family:${DS.typography.fontFamilyMono}; text-align:left;">
+                            ${activeCountdowns.has('ui-flash') ? `[${activeCountdowns.get('ui-flash')}] UI FLASH (RED)` : "UI DAMAGE FLASH"}
+                        </button>
+                        <button id="btn-effect-whiteout" style="padding:12px; background:${activeCountdowns.has('whiteout') ? DS.colors.danger : DS.colors.surface}; color:white; border:none; cursor:pointer; font-weight:bold; font-family:${DS.typography.fontFamilyMono}; text-align:left;">
+                            ${activeCountdowns.has('whiteout') ? `[${activeCountdowns.get('whiteout')}] WHITEOUT` : "FULL WHITEOUT FLASH"}
+                        </button>
+                    </div>
+                </div>
+
+                <div style="background:#1a1a1a; padding:1rem; border-radius:4px; border:1px solid #333;">
+                    <h3 style="margin-top:0; color:${DS.colors.success}; font-size:14px;">COMBAT & VFX</h3>
+                    <div style="display:flex; flex-direction:column; gap:8px;">
+                        <button id="btn-effect-damage" style="padding:12px; background:${activeCountdowns.has('damage') ? DS.colors.danger : DS.colors.surface}; color:white; border:none; cursor:pointer; font-weight:bold; font-family:${DS.typography.fontFamilyMono}; text-align:left;">
+                            ${activeCountdowns.has('damage') ? `[${activeCountdowns.get('damage')}] DAMAGE IND` : "DAMAGE INDICATOR"}
+                        </button>
+                        <button id="btn-effect-dust" style="padding:12px; background:${activeCountdowns.has('dust') ? DS.colors.danger : DS.colors.surface}; color:white; border:none; cursor:pointer; font-weight:bold; font-family:${DS.typography.fontFamilyMono}; text-align:left;">
+                            ${activeCountdowns.has('dust') ? `[${activeCountdowns.get('dust')}] EXPLOSION` : "EXPLOSION DUST (VFX)"}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        document.getElementById("btn-effect-llm-tracking")?.addEventListener("click", () => triggerWithCountdown("llm-tracking", "LLM TRACKING (SVG)", () => {}));
+        document.getElementById("btn-effect-ui-flash")?.addEventListener("click", () => triggerWithCountdown("ui-flash", "UI DAMAGE FLASH", () => {}));
+        document.getElementById("btn-effect-whiteout")?.addEventListener("click", () => triggerWithCountdown("whiteout", "FULL WHITEOUT FLASH", () => {}));
+        document.getElementById("btn-effect-damage")?.addEventListener("click", () => triggerWithCountdown("damage", "DAMAGE INDICATOR", () => {}));
+        document.getElementById("btn-effect-dust")?.addEventListener("click", () => triggerWithCountdown("dust", "EXPLOSION DUST (VFX)", () => {}));
+    }
+    else if (activePanel === "GAME CONTROL") {
         c.innerHTML = `
             <h3>Player Class</h3>
             <div id="dev-loadout-buttons" style="display:flex; gap:0.63rem; flex-wrap:wrap; margin-bottom: 1.25rem;">

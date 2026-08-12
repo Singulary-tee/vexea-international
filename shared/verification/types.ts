@@ -17,16 +17,22 @@ export interface APIErrorDetails {
 }
 
 /**
- * Catalog Item Schema representing purchaseable cosmetics and blueprints.
+ * Catalog Item Schema representing purchaseable cosmetics, blueprints, boosters, and bundles.
  */
 export interface CatalogItem {
   readonly id: ItemId;
   readonly title: string;
-  readonly category: 'cosmetic' | 'blueprint' | 'weapon_skin';
-  readonly faction?: string;
+  readonly category: 'cosmetic' | 'blueprint' | 'booster' | 'bundle';
+  readonly faction?: 'ANY' | 'apex' | 'vanguard' | 'nexus' | string;
   readonly priceCredits: number;
+  readonly priceEnergy: number;
+  readonly currency: 'credits' | 'energy';
   readonly requiredLevel: number;
   readonly description: string;
+  readonly featured?: boolean;
+  readonly discountPercentage?: number;
+  readonly icon?: string;
+  readonly contains?: readonly string[];
 }
 
 /**
@@ -61,6 +67,7 @@ export interface VerifyPurchaseInput {
   readonly playerId: PlayerId;
   readonly itemId: ItemId;
   readonly currentCredits: number;
+  readonly currentEnergy?: number;
   readonly currentLevel: number;
   readonly unlockedItems?: readonly ItemId[];
 }
@@ -72,7 +79,28 @@ export interface VerifyPurchaseResult {
   readonly isApproved: boolean;
   readonly itemCost: number;
   readonly remainingCredits: number;
+  readonly remainingEnergy: number;
   readonly unlockedItemId?: ItemId;
+  readonly error?: APIErrorDetails;
+}
+
+/**
+ * Input contract for verifying ad reward claims.
+ */
+export interface VerifyAdRewardInput {
+  readonly playerId: PlayerId;
+  readonly currentEnergy: number;
+  readonly adClaimsToday: number;
+  readonly lastAdClaimDate: number;
+}
+
+/**
+ * Output result contract for ad reward claim requests.
+ */
+export interface VerifyAdRewardResult {
+  readonly isApproved: boolean;
+  readonly newEnergy: number;
+  readonly adClaimsToday: number;
   readonly error?: APIErrorDetails;
 }
 

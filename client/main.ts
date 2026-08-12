@@ -1088,6 +1088,7 @@ const animateFrame = async () => {
     lastTime = now;
 
     if (match.diagnosis) match.diagnosis.update();
+    if (match.damageIndicators) match.damageIndicators.update(match.playerPos, match.playerYaw);
 
     if (match.simulation) {
       match.simulation.step(dt);

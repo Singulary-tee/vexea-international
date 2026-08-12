@@ -10,8 +10,7 @@ import { SharedFeatureFlagKey } from "../../shared/feature-flags";
 import { getDevMap, getDefaultMap, getMapById, MAP_REGISTRY } from "../../shared/maps/map-registry";
 import { hasCachedBlob, getCachedOrFetchUrl, ensureAssetsDownloaded, getAssetUrl } from "../asset-cache";
 import { EXTENDED_SOUNDS, EXTENDED_TEXTURES } from "./splash";
-import offersData from "../data/offers.json";
-import catalogData from "../data/catalog.json";
+import catalogData from "../../shared/catalog.json";
 import challengesDataList from "../data/challenges.json";
 import { verifyPurchase, verifyClaim, calculateLevelMetrics } from "../../shared/verification/verifier";
 import { CatalogItem } from "../../shared/verification/types";
@@ -136,7 +135,7 @@ export function initMainMenu() {
               displayName: (user.displayName || user.email?.split('@')[0] || 'OPERATIVE').toUpperCase(),
               photoURL: user.photoURL || null,
               email: user.email || null,
-              faction: 'VIBE CO.', credits: 100, energy: 100, score: 0, kills: 0, battlePass: 1,
+              faction: 'VIBE CO.', credits: 500, energy: 10, score: 0, kills: 0, battlePass: 1, unlockedItems: [], totalXp: 0, adClaimsToday: 0, lastAdClaimDate: 0,
               createdAt: serverTimestamp(), dailyRefreshedAt: serverTimestamp(),
               totalMatches: 0, totalWins: 0, totalDroneEliminations: 0, totalDeaths: 0
             };
@@ -2535,7 +2534,7 @@ function createUnifiedAuthOverlay(db: any, auth: any, defaultTab: 'GUEST' | 'AUT
             const docData = {
               displayName: codename,
               faction: selectedFaction,
-              credits: 100, energy: 100,
+              credits: 500, energy: 10, unlockedItems: [], totalXp: 0, adClaimsToday: 0, lastAdClaimDate: 0,
               createdAt: serverTimestamp(), dailyRefreshedAt: serverTimestamp(),
               totalMatches: 0, totalWins: 0, totalDroneEliminations: 0, totalDeaths: 0,
               score: 0, kills: 0, battlePass: 1

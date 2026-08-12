@@ -276,6 +276,7 @@ This file is the authoritative index of all directories and source files within 
         *   **`LoadingScreen.ts`**: Renders structural loading indicators.
         *   **`PanZoomSurface.ts`**: Interactive map controller support.
     *   **`vfx/` (Visual Effects)**
+        *   **`LLMTrackingEffect.ts`**: Governs the 4-phase LLM tracking HUD notification, SVG refraction filters, and staccato scanning animations.
         *   **`VFXOrchestrator.ts`**: Controls pooled particle effects, sparks, and impact dust.
         *   **`constants.ts`**: Constants for particle sizes and decays.
         *   **`firing.ts`**: Controls muzzle flashes and glowing tracers.
@@ -353,6 +354,21 @@ This file is the authoritative index of all directories and source files within 
 
 *   **`tests/`**
     *   *Purpose:* Comprehensive suite of unit and integration tests using Vitest. Covers `MatchManager`, `MatchRoom`, `Physics`, `Collision`, `Economy`, `LLMCommander`, and `DroneIntel` logic to ensure architectural stability.
+
+### Cycle 2026-08-12-01: VEXEA Monetization Overhaul Phase 1 — Dual-Currency System & Server-Authoritative Economy
+*   **Target Files:** `shared/catalog.json`, `shared/verification/types.ts`, `shared/verification/verifier.ts`, `server/data/economy-service.ts`, `server/routes/api-routes.ts`, `client/screens/store-screen.ts`, `shared/feature-flags.ts`, `client/screens/main-menu.ts`, `CODEBASE_INDEX.md`
+*   **Status:** Verified & Finalized
+*   **Modifications:**
+    *   `shared/catalog.json`: Created single source of truth catalog defining 8 structured store items across cosmetic, blueprint, booster, and bundle categories with credit and energy dual-currency pricing.
+    *   `client/data/offers.json` & `client/data/catalog.json`: Deleted redundant/deprecated client catalog files.
+    *   `shared/verification/types.ts`: Updated `CatalogItem` schema, `VerifyPurchaseInput` (added `currentEnergy`), `VerifyPurchaseResult` (added `remainingEnergy`), and created `VerifyAdRewardInput` & `VerifyAdRewardResult`.
+    *   `shared/verification/verifier.ts`: Updated `verifyPurchase` with dual currency support, added `verifyAdReward` with daily cap validation, and reduced post-match reward rates (5 base CR, 15 win CR, 2 CR/kill).
+    *   `server/data/economy-service.ts`: Updated `ServerEconomyService` to read from `shared/catalog.json`, exported `getCatalogItems()` and `getFeaturedItems()`.
+    *   `server/routes/api-routes.ts`: Added `/api/economy/purchase`, `/api/economy/claim-daily`, `/api/economy/match-rewards`, `/api/economy/ad-reward`, and `/api/economy/init-player` server-authoritative endpoints, and updated `/api/economy/store`.
+    *   `client/screens/store-screen.ts`: Refactored `handleStorePurchase` to eliminate client-side verification bypass/Firestore write vulnerability, routing all purchases through the server `/api/economy/purchase` API.
+    *   `shared/feature-flags.ts`: Added monetization feature flags (`MATCH_ENERGY_COST`, `ENERGY_REGEN_MINUTES`, `ENERGY_MAX_FREE`, `AD_REWARD_ENERGY`, `AD_DAILY_CAP`, `NEW_PLAYER_STARTER_CREDITS`, `NEW_PLAYER_STARTER_ENERGY`).
+    *   `client/screens/main-menu.ts`: Updated imports to point to `shared/catalog.json` and updated default player profile creation to starter pack defaults (`500 CR`, `10 Energy`).
+*   **Verification:** Verified via `compile_applet` and `lint_applet` (`tsc --noEmit`). Build succeeded with 0 errors.
 
 ---
 
@@ -475,6 +491,18 @@ Every file change in the VEXEA codebase must follow this strict two-step protoco
     *   `client/screens/splash.ts`: Awaited `populateBlobUrlMap()` at the start of `preloadAll()` to ensure the in-memory `blobUrlMap` is warm before iterating over preloaded asset files.
     *   `CODEBASE_INDEX.md`: Updated cycle audit log.
 *   **Verification:** Verified clean linting via `lint_applet` and full build compilation via `compile_applet`.
+
+### Cycle 2026-08-12-01: Remove BriefingRenderer <3 Match Gate
+* **Target Files:** `server/player-data/BriefingRenderer.ts`
+* **Status:** Verified & Finalized
+* **Modifications:** Replaced hard `< 3 matches` gate with graduated tiers: FIRST ENGAGEMENT (0 matches), Early Telemetry (1–2 matches), Full Briefing (3+ matches).
+* **Verification:** Verified compilation and that `renderMatchBriefing()` consumes tiered output without modification.
+
+### Cycle 2026-08-12-02: Centralize LLM Tracking Effect into VFX Folder & Update Codebase Index
+* **Target Files:** `client/src/vfx/LLMTrackingEffect.ts`, `client/dev_menu.ts`, `CODEBASE_INDEX.md`
+* **Status:** Verified & Finalized
+* **Modifications:** Relocated `LLMTrackingVisualSystem` from `client/src/systems/` to `client/src/vfx/LLMTrackingEffect.ts` to centralize visual effects, updated dev menu imports, and updated `CODEBASE_INDEX.md`.
+* **Verification:** Verified zero build/lint errors via `lint_applet` and `compile_applet`.
 
 
 

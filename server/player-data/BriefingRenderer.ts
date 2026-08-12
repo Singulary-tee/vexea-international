@@ -12,8 +12,13 @@ export class BriefingRenderer {
   ): string {
     const label = displayName || playerId;
 
-    if (!profile || profile.totalMatches < 3) {
-      return `OPERATIVE ${label}: Insufficient combat telemetry (< 3 matches logged). Treat as unclassified threat.`;
+    if (!profile || profile.totalMatches === 0) {
+      return `OPERATIVE ${label}: FIRST ENGAGEMENT. No historical telemetry. Treat as untested asset — high predictability assumed.`;
+    }
+
+    if (profile.totalMatches >= 1 && profile.totalMatches < 3) {
+      const preferredRole = profile.preferredRole || "UNKNOWN";
+      return `OPERATIVE ${label}: ${profile.totalMatches} engagement(s) logged. Preferred role: ${preferredRole}. Insufficient data for pattern analysis.`;
     }
 
     const preferredRole = profile.preferredRole || "UNKNOWN";

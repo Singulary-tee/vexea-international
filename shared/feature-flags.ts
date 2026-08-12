@@ -6,6 +6,13 @@
 export enum SharedFeatureFlagKey {
   // Store & Economy Flags
   STORE_DYNAMIC_OFFERS = 'store_dynamic_offers',
+  MATCH_ENERGY_COST = 'match_energy_cost',
+  ENERGY_REGEN_MINUTES = 'energy_regen_minutes',
+  ENERGY_MAX_FREE = 'energy_max_free',
+  AD_REWARD_ENERGY = 'ad_reward_energy',
+  AD_DAILY_CAP = 'ad_daily_cap',
+  NEW_PLAYER_STARTER_CREDITS = 'new_player_starter_credits',
+  NEW_PLAYER_STARTER_ENERGY = 'new_player_starter_energy',
 
   // Faction Warfare & Territory Flags
   FACTION_WAR_ACTIVE = 'faction_war_active',
@@ -34,6 +41,13 @@ export type FeatureFlagValue = boolean | string | number | Record<string, unknow
 
 export interface SharedFeatureFlagSchema {
   [SharedFeatureFlagKey.STORE_DYNAMIC_OFFERS]: boolean;
+  [SharedFeatureFlagKey.MATCH_ENERGY_COST]: number;
+  [SharedFeatureFlagKey.ENERGY_REGEN_MINUTES]: number;
+  [SharedFeatureFlagKey.ENERGY_MAX_FREE]: number;
+  [SharedFeatureFlagKey.AD_REWARD_ENERGY]: number;
+  [SharedFeatureFlagKey.AD_DAILY_CAP]: number;
+  [SharedFeatureFlagKey.NEW_PLAYER_STARTER_CREDITS]: number;
+  [SharedFeatureFlagKey.NEW_PLAYER_STARTER_ENERGY]: number;
   [SharedFeatureFlagKey.FACTION_WAR_ACTIVE]: boolean;
   [SharedFeatureFlagKey.BP_SEASON_ID]: string;
   [SharedFeatureFlagKey.BP_TIER_COUNT]: number;
@@ -45,6 +59,13 @@ export interface SharedFeatureFlagSchema {
 
 export const DEFAULT_SHARED_FEATURE_FLAGS: SharedFeatureFlagSchema = {
   [SharedFeatureFlagKey.STORE_DYNAMIC_OFFERS]: true,
+  [SharedFeatureFlagKey.MATCH_ENERGY_COST]: 2,
+  [SharedFeatureFlagKey.ENERGY_REGEN_MINUTES]: 10,
+  [SharedFeatureFlagKey.ENERGY_MAX_FREE]: 10,
+  [SharedFeatureFlagKey.AD_REWARD_ENERGY]: 3,
+  [SharedFeatureFlagKey.AD_DAILY_CAP]: 5,
+  [SharedFeatureFlagKey.NEW_PLAYER_STARTER_CREDITS]: 500,
+  [SharedFeatureFlagKey.NEW_PLAYER_STARTER_ENERGY]: 10,
   [SharedFeatureFlagKey.FACTION_WAR_ACTIVE]: true,
   [SharedFeatureFlagKey.BP_SEASON_ID]: 'SEASON_01',
   [SharedFeatureFlagKey.BP_TIER_COUNT]: 50,

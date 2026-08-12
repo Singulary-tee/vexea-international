@@ -1,14 +1,20 @@
+import catalogData from "../../shared/catalog.json";
+import { CatalogItem } from "../../shared/verification/types";
+
 export interface StoreOffer {
   id: string;
   title: string;
   description: string;
   priceCredits: number;
+  priceEnergy: number;
+  currency: "credits" | "energy";
   originalPriceCredits: number;
   discountPercentage: number;
-  category: 'skins' | 'blueprints' | 'boosters' | 'bundles';
+  category: "cosmetic" | "blueprint" | "booster" | "bundle";
   icon: string;
   featured: boolean;
   itemType: string;
+  contains?: readonly string[];
 }
 
 export interface FactionSector {
@@ -19,6 +25,14 @@ export interface FactionSector {
   activeBattles: number;
   resourceYield: number;
   defenseLevel: number;
+}
+
+export function getCatalogItems(): CatalogItem[] {
+  return catalogData as CatalogItem[];
+}
+
+export function getFeaturedItems(): CatalogItem[] {
+  return (catalogData as CatalogItem[]).filter((item) => item.featured === true);
 }
 
 export class ServerEconomyService {
@@ -35,56 +49,21 @@ export class ServerEconomyService {
 
   public getOffers(discountActive: boolean, creditMultiplier: number): StoreOffer[] {
     const mult = creditMultiplier || 1.0;
-    return [
-      {
-        id: 'offer_quantum_chassis',
-        title: 'Quantum Drone Chassis',
-        description: 'Elite titanium-alloy chassis skin with dynamic energy glowing trim.',
-        priceCredits: Math.round(1200 * mult),
-        originalPriceCredits: 1500,
-        discountPercentage: discountActive ? 35 : 20,
-        category: 'skins',
-        icon: '🛡️',
-        featured: true,
-        itemType: 'chassis_skin_quantum',
-      },
-      {
-        id: 'offer_neural_link_mk2',
-        title: 'Neural Link Mk. II Blueprint',
-        description: 'Advanced telemetry interface reducing AI command latency by 15%.',
-        priceCredits: Math.round(2400 * mult),
-        originalPriceCredits: 3000,
-        discountPercentage: discountActive ? 30 : 20,
-        category: 'blueprints',
-        icon: '🧠',
-        featured: true,
-        itemType: 'blueprint_neural_mk2',
-      },
-      {
-        id: 'offer_credit_booster',
-        title: '7-Day XP & Credit Booster',
-        description: 'Double credit earnings and sector influence yield across all active matches.',
-        priceCredits: Math.round(800 * mult),
-        originalPriceCredits: 1000,
-        discountPercentage: discountActive ? 40 : 20,
-        category: 'boosters',
-        icon: '⚡',
-        featured: false,
-        itemType: 'booster_7d',
-      },
-      {
-        id: 'offer_vanguard_pack',
-        title: 'Apex Vanguard Operative Bundle',
-        description: 'Includes 3 legendary skins, custom audio pack, and exclusive faction insignia.',
-        priceCredits: Math.round(4500 * mult),
-        originalPriceCredits: 6000,
-        discountPercentage: discountActive ? 45 : 25,
-        category: 'bundles',
-        icon: '🎁',
-        featured: true,
-        itemType: 'bundle_apex_vanguard',
-      },
-    ];
+    return getCatalogItems().map((item) => ({
+      id: item.id,
+      title: item.title,
+      description: item.description,
+      priceCredits: Math.round(item.priceCredits * mult),
+      priceEnergy: item.priceEnergy,
+      currency: item.currency,
+      originalPriceCredits: item.priceCredits,
+      discountPercentage: discountActive ? (item.discountPercentage || 20) : 0,
+      category: item.category,
+      icon: item.icon || "📦",
+      featured: !!item.featured,
+      itemType: item.id,
+      contains: item.contains
+    }));
   }
 
   public getFactionSectors(warMultiplier: number): FactionSector[] {
@@ -131,3 +110,4 @@ export class ServerEconomyService {
 }
 
 export const serverEconomyService = ServerEconomyService.getInstance();
+
