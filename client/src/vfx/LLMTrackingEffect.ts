@@ -70,7 +70,7 @@ export class LLMTrackingEffect {
 
     // Outer Eye
     this.eyeOuter = document.createElement("img");
-    this.eyeOuter.src = "/ui_svgs/vexea/eye_outer.svg";
+    this.eyeOuter.src = "/ui_svgs/eye_outer.svg";
     Object.assign(this.eyeOuter.style, {
       position: "absolute",
       width: "80px",
@@ -81,7 +81,7 @@ export class LLMTrackingEffect {
 
     // Pupil/Focus Glyph (Four-pointed star)
     this.eyePupil = document.createElement("img");
-    this.eyePupil.src = "/ui_svgs/vexea/eye_pupil.svg";
+    this.eyePupil.src = "/ui_svgs/eye_pupil.svg";
     Object.assign(this.eyePupil.style, {
       position: "absolute",
       width: "30px",

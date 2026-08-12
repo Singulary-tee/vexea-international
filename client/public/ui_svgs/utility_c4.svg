@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="156" height="104" viewBox="0 0 156 104" preserveAspectRatio="xMidYMid meet">
+  <defs>
+    <mask id="charge-wrap" maskUnits="userSpaceOnUse" x="0" y="0" width="156" height="104">
+      <rect width="156" height="104" fill="#ffffff"/>
+      <path d="M47 22v60M85 22v60M20 50h80" stroke="#000000" stroke-width="4" fill="none"/>
+      <path d="M28 36h12M57 64h16M91 35h9" stroke="#000000" stroke-width="3" stroke-linecap="round"/>
+    </mask>
+  </defs>
+  <g fill="#ffffff">
+    <!-- wrapped M112-style charge with recessed tape channels -->
+    <path mask="url(#charge-wrap)" d="M18 24l10-8h75l10 8v56l-10 8H28l-10-8V24Z"/>
+    <path d="M21 25h89l6 5v7H15v-7l6-5Z"/>
+    <path d="M21 79h89l6-5v-7H15v7l6 5Z"/>
+    <!-- twin blasting caps seated into the top face -->
+    <path d="M67 9h10l3 7-3 9H67l-3-9 3-7ZM85 9h10l3 7-3 9H85l-3-9 3-7Z"/>
+    <!-- taped lead exiting toward a compact detonator plug -->
+    <path d="M112 45h15l7 7v14l-7 7h-15l-5-7V52l5-7Z"/>
+    <path d="M132 54h11l7 6-7 6h-11l-4-6 4-6Z"/>
+    <path d="M145 52c8-8 14-1 10 5-3 4 1 8 5 6v8c-9 2-15-8-9-14 2-2 0-4-3-1l-3-4Z"/>
+  </g>
+</svg>

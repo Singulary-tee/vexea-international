@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="132" height="120" viewBox="0 0 132 120" preserveAspectRatio="xMidYMid meet">
+  <defs>
+    <path id="vexea-energy-bolt" d="M5 22h29L25 39h32L43 57h14L24 92l7-24H7l12-17H5l12-29H5Z"/>
+  </defs>
+  <!-- Two identical side-by-side bolts offset by half their width; the shared filled overlap makes one connected mark. -->
+  <g fill="#ffffff">
+    <use href="#vexea-energy-bolt" x="24" y="4"/>
+    <use href="#vexea-energy-bolt" x="50" y="4"/>
+  </g>
+</svg>

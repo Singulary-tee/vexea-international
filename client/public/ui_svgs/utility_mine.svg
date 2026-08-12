@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="156" height="106" viewBox="0 0 156 106" preserveAspectRatio="xMidYMid meet">
+  <defs>
+    <mask id="mine-plate" maskUnits="userSpaceOnUse" x="0" y="0" width="156" height="106">
+      <rect width="156" height="106" fill="#ffffff"/>
+      <path d="M40 56c19 8 57 8 76 0M28 76c25 9 75 9 100 0" fill="none" stroke="#000000" stroke-width="4" stroke-linecap="round"/>
+      <path d="M65 46c7-6 19-6 26 0M68 51c5-3 15-3 20 0" fill="none" stroke="#000000" stroke-width="3" stroke-linecap="round"/>
+    </mask>
+  </defs>
+  <g fill="#ffffff">
+    <!-- retractable rim lugs -->
+    <path d="M23 63l14-7 7 8-9 13-14-2 2-12ZM133 63l-14-7-7 8 9 13 14-2-2-12Z"/>
+    <!-- machined low-profile body and raised pressure plate -->
+    <path mask="url(#mine-plate)" d="M25 59c6-20 27-31 53-31s47 11 53 31l7 22c-9 13-30 20-60 20s-51-7-60-20l7-22Z"/>
+    <path d="M46 44c8-13 20-19 32-19s24 6 32 19l-8 13H54l-8-13Z"/>
+    <path d="M61 25c3-9 9-14 17-14s14 5 17 14l-5 10H66l-5-10Z"/>
+    <path d="M68 12h20l4 7-4 7H68l-4-7 4-7Z"/>
+    <path d="M24 78c9 15 30 22 54 22s45-7 54-22l-5 10c-10 11-28 17-49 17s-39-6-49-17l-5-10Z"/>
+  </g>
+</svg>

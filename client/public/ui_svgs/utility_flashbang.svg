@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="74" height="163" viewBox="0 0 74 163" preserveAspectRatio="xMidYMid meet">
+  <defs>
+    <mask id="flashbang-staggered-vents" maskUnits="userSpaceOnUse" x="0" y="0" width="74" height="163">
+      <rect width="74" height="163" fill="#ffffff"/>
+      <!-- Nine manufactured perforations: lightly softened corners, intentionally staggered around the canister. -->
+      <rect x="25.6" y="65.2" width="4.3" height="8.1" rx="0.9" fill="#000000"/>
+      <rect x="36.2" y="60.8" width="5.0" height="9.1" rx="1.1" fill="#000000"/>
+      <rect x="44.3" y="69.4" width="4.2" height="7.8" rx="0.9" fill="#000000"/>
+      <rect x="27.6" y="82.3" width="4.1" height="7.9" rx="0.9" fill="#000000"/>
+      <rect x="35.3" y="79.2" width="5.1" height="9.2" rx="1.1" fill="#000000"/>
+      <rect x="44.8" y="87.1" width="4.3" height="8.0" rx="0.9" fill="#000000"/>
+      <rect x="24.8" y="99.2" width="4.3" height="7.9" rx="0.9" fill="#000000"/>
+      <rect x="38.0" y="97.0" width="4.8" height="9.0" rx="1.1" fill="#000000"/>
+      <rect x="43.5" y="105.5" width="4.2" height="7.8" rx="0.9" fill="#000000"/>
+    </mask>
+  </defs>
+  <g fill="#ffffff">
+    <path d="M30 15h17l4 8-3 8H27l-4-8 7-8Z"/>
+    <path d="M44 19h17l4 5-4 5H44l-3-5 3-5Z"/>
+    <path d="M57 18c6-8 12-4 11 2-1 4-4 6-8 7l-2-4c3-1 4-2 4-4 0-2-2-2-4 1l-1-2Z"/>
+    <path d="M27 29h22l5 5-2 10H22l-2-10 7-5Z"/>
+    <path d="M22 39h32l3 8-4 7H21l-4-7 5-8Z"/>
+    <path mask="url(#flashbang-staggered-vents)" d="M23 49h29l3 9v61l-5 11H24l-5-11V58l4-9Z"/>
+    <path d="M22 120h30l3 9-4 7H23l-4-7 3-9Z"/>
+    <path d="M24 137h26l3 7-3 6H24l-3-6 3-7Z"/>
+  </g>
+</svg>

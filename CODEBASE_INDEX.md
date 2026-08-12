@@ -213,6 +213,7 @@ This file is the authoritative index of all directories and source files within 
 *   **`public/` (Engine Assets & Decoders)**
     *   **`basis/`**: WebAssembly transcoder modules for Basis Universal texture compression.
     *   **`draco/`**: WebAssembly decoder modules for Draco geometric mesh compression.
+    *   **`ui_svgs/`**: The sole Vite-served production SVG source. Holds the 51 filled-silhouette, HUD, equipment, class, faction, gamemode, currency, crosshair, accessibility, and support assets consumed through `/ui_svgs/*.svg`; no UI icon markup is duplicated inline.
     *   **`inverted_plus.svg`**: Specialized crosshair asset.
 *   **`weapons_model.ts`**
     *   *Purpose:* Handles first-person weapon meshes, reload animations, and procedural recoil offsets.
@@ -343,10 +344,10 @@ This file is the authoritative index of all directories and source files within 
 
 ---
 
-### 1.5 UI Assets (`/ui_svgs`)
+### 1.5 UI Assets (`/client/public/ui_svgs`)
 
-*   **`ui_svgs/`**
-    *   *Purpose:* Collection of production-ready SVG icons for the HUD and menu interfaces (aim, reload, sprint, medkit, weapons, etc.).
+*   **`client/public/ui_svgs/`**
+    *   *Purpose:* The single production source for external SVG assets. Static HUD/menu/armory/faction/support icons are consumed by URL rather than inline markup; only procedural visualizations and technical filter definitions remain inline.
 
 ---
 
@@ -369,6 +370,19 @@ This file is the authoritative index of all directories and source files within 
     *   `shared/feature-flags.ts`: Added monetization feature flags (`MATCH_ENERGY_COST`, `ENERGY_REGEN_MINUTES`, `ENERGY_MAX_FREE`, `AD_REWARD_ENERGY`, `AD_DAILY_CAP`, `NEW_PLAYER_STARTER_CREDITS`, `NEW_PLAYER_STARTER_ENERGY`).
     *   `client/screens/main-menu.ts`: Updated imports to point to `shared/catalog.json` and updated default player profile creation to starter pack defaults (`500 CR`, `10 Energy`).
 *   **Verification:** Verified via `compile_applet` and `lint_applet` (`tsc --noEmit`). Build succeeded with 0 errors.
+
+### Cycle 2026-08-12-02: Centralize VEXEA SVG Assets, Identity Glyphs, and State Motion
+*   **Target Files:** `client/public/ui_svgs/`, `client/hud_template.ts`, `client/hud_snippets.ts`, `client/index.css`, `client/screens/armory-screen.ts`, `client/screens/faction-screen.ts`, `client/screens/main-menu.ts`, `client/src/settings/ui.ts`, `client/src/vfx/DamageIndicators.ts`, `client/src/vfx/LLMTrackingEffect.ts`, `CODEBASE_INDEX.md`
+*   **Status:** Verified & Finalized
+*   **Modifications:**
+    *   `client/public/ui_svgs/`: Established the 51-file Vite-served single source of truth; introduced custom filled-silhouette utility, class, faction, gamemode, and currency assets. The reviewed flashbang has nine deliberately non-aligned softened square vents; energy is one connected overlapping two-bolt silhouette.
+    *   `client/hud_template.ts`, `client/hud_snippets.ts`, `client/screens/main-menu.ts`, `client/screens/faction-screen.ts`, `client/src/settings/ui.ts`, and `client/src/vfx/DamageIndicators.ts`: Replaced static inline SVG icon markup with file-backed `/ui_svgs/*.svg` assets. Inline SVG remains only for procedural game graphics, charts, territory/map visualizations, and technical filters.
+    *   `client/screens/armory-screen.ts`: Mapped each weapon and all eight class utility slots to physical equipment silhouettes; added class identity to the loadout content surface, leaving category navigation text-only.
+    *   `client/screens/main-menu.ts`: Added gamemode glyphs to selectable gamemode content cards rather than top navigation labels.
+    *   `client/index.css`: Added reduced-motion-safe, state-only animation hooks for combat controls; the VEXEA eye logo remains unanimated.
+    *   `client/src/vfx/LLMTrackingEffect.ts`: Repointed the two existing eye component references to the single public asset location without changing their tracking behavior.
+    *   Removed the legacy root `ui_svgs/` duplicate source, the nested `ui_svgs/vexea/` duplicate directory, and five unreferenced legacy assets.
+*   **Verification:** `tsc --noEmit` passed. Production `vite build` passed. A Chromium contact sheet rendered all 51 source assets; explicit client SVG references resolve with no missing files.
 
 ---
 

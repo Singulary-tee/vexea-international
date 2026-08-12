@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="104" height="160" viewBox="0 0 104 160" preserveAspectRatio="xMidYMid meet">
+  <defs>
+    <mask id="mk2-segments" maskUnits="userSpaceOnUse" x="0" y="0" width="104" height="160">
+      <rect width="104" height="160" fill="#ffffff"/>
+      <path d="M30 78c15 4 29 4 44 0M24 102c18 5 38 5 56 0M31 126c13 4 29 4 42 0" fill="none" stroke="#000000" stroke-width="4" stroke-linecap="round"/>
+      <path d="M45 58c-4 17-4 65 0 88M59 58c4 17 4 65 0 88" fill="none" stroke="#000000" stroke-width="3.5" stroke-linecap="round"/>
+    </mask>
+  </defs>
+  <g fill="#ffffff">
+    <!-- safety lever, fuse neck, and pull ring -->
+    <path d="M42 12h19l4 8-4 8H40l-4-7 6-9Z"/>
+    <path d="M56 15h19l6 6-5 7H56l-4-6 4-7Z"/>
+    <path d="M74 14c8-10 17-4 15 4-1 6-6 8-12 9l-2-6c4-1 6-3 6-5 0-3-3-3-6 2l-1-4Z"/>
+    <path d="M38 29h28l5 8-4 13H37l-4-13 5-8Z"/>
+    <!-- pineapple body with recessed segment channels -->
+    <path mask="url(#mk2-segments)" d="M36 49c-13 12-19 34-16 59 3 27 15 43 32 45 17-2 29-18 32-45 3-25-3-47-16-59H36Z"/>
+    <path d="M31 145c6 8 13 11 21 11s15-3 21-11l-3-8H34l-3 8Z"/>
+  </g>
+</svg>

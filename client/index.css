@@ -114,3 +114,20 @@ html, body {
   margin-bottom: 6px;
   border-left: 2px solid rgba(255, 69, 0, 0.4);
 }
+
+/* FILE-BACKED SVG MOTION CONTRACT: no idle loops; direct input/state only. */
+.ui-svg-icon { display: block; object-fit: contain; pointer-events: none; user-select: none; }
+#btn-reload:active .ui-svg-icon { animation: vexea-icon-reload 320ms cubic-bezier(.2,.85,.35,1) both; }
+#btn-fire-left:active .ui-svg-icon, #btn-fire-right:active .ui-svg-icon { animation: vexea-icon-fire 120ms ease-out both; }
+#btn-medkit:active .ui-svg-icon, #health-plus-sq-wrap.is-healing .ui-svg-icon { animation: vexea-icon-heal 480ms cubic-bezier(.2,.85,.35,1) both; }
+#btn-walkie:active .ui-svg-icon { animation: vexea-icon-comms 260ms ease-out both; }
+#btn-sprint:active .ui-svg-icon { animation: vexea-icon-sprint 180ms ease-out both; }
+.btn-util:focus-visible .ui-svg-icon, .btn-action:focus-visible .ui-svg-icon { outline: 1px solid currentColor; outline-offset: 3px; }
+@keyframes vexea-icon-reload { from { transform: rotate(0deg); } 72% { transform: rotate(245deg); } to { transform: rotate(360deg); } }
+@keyframes vexea-icon-fire { from { transform: translateX(0) scale(1); } 45% { transform: translateX(-7%) scale(.9); } to { transform: translateX(0) scale(1); } }
+@keyframes vexea-icon-heal { 0% { transform: scale(1); opacity:1; } 45% { transform: scale(1.16); opacity:.68; } 100% { transform: scale(1); opacity:1; } }
+@keyframes vexea-icon-comms { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
+@keyframes vexea-icon-sprint { from { transform: translateX(0); } 50% { transform: translateX(8%); } to { transform: translateX(0); } }
+@media (prefers-reduced-motion: reduce) {
+  .ui-svg-icon, #btn-reload:active .ui-svg-icon, #btn-fire-left:active .ui-svg-icon, #btn-fire-right:active .ui-svg-icon, #btn-medkit:active .ui-svg-icon, #health-plus-sq-wrap.is-healing .ui-svg-icon, #btn-walkie:active .ui-svg-icon, #btn-sprint:active .ui-svg-icon { animation: none !important; }
+}

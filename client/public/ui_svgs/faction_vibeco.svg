@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="142" height="118" viewBox="0 0 142 118" preserveAspectRatio="xMidYMid meet">
+  <g fill="#ffffff">
+    <path d="M13 20h45l13 15 13-15h45l-32 34 32 44H84L71 81 58 98H13l32-44L13 20Z"/>
+    <path fill="#000000" d="M38 34h15l18 22 18-22h15L78 65l-7 10-7-10-26-31Z"/>
+    <path d="M65 46h12v14h14v12H77v14H65V72H51V60h14V46Z"/>
+  </g>
+</svg>
