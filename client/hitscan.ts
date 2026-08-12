@@ -1,5 +1,6 @@
 import * as THREE from "three";
 import { spawnEnvironmentDecalAndDust, spawnImpactSparks } from "./src/vfx/VFXOrchestrator";
+import { DroneType, DRONE_CONFIGS } from "../shared/constants";
 
 export class HitscanSystem {
   private raycaster = new THREE.Raycaster();
@@ -17,13 +18,35 @@ export class HitscanSystem {
     this.raycaster.camera = camera;
 
     this.targets.length = 0;
-    scene.children.forEach(child => {
+    for (let i = 0; i < scene.children.length; i++) {
+      const child = scene.children[i];
+
       // Skip local player weapon models, laser lines, lights, dynamic particle/VFX systems, and floating HUD elements
-      if (child.name === "WeaponsContainer" || child.name === "WeaponsGroup" || child.name === "DynamicMuzzle") return;
-      if (child.name.includes("VFX") || child.name.includes("Light") || child.name.includes("Helper")) return;
-      if (child.name === "floatingUI" || child.type === "Sprite" || child.type === "LineSegments" || child.type === "PointLight" || child.type === "DirectionalLight") return;
+      if (child.name === "WeaponsContainer" || child.name === "WeaponsGroup" || child.name === "DynamicMuzzle") continue;
+      if (child.name.includes("VFX") || child.name.includes("Light") || child.name.includes("Helper")) continue;
+      if (child.name === "floatingUI" || child.type === "Sprite" || child.type === "LineSegments" || child.type === "PointLight" || child.type === "DirectionalLight") continue;
+
+      // NEW: Bounding sphere cull for standalone models with deep skeleton hierarchies
+      // If the model's bounding sphere misses the ray entirely, don't add it to targets.
+      // This avoids expensive recursive SkinnedMesh traversal on misses.
+      let cullRadius = 0;
+      if (child.name === "HumanoidDrone") {
+        cullRadius = DRONE_CONFIGS[DroneType.HUMANOID].visualRadius || 1.0;
+      } else if (child.name === "RobotDogDrone") {
+        cullRadius = DRONE_CONFIGS[DroneType.ROBOT_DOG].visualRadius || 0.8;
+      } else if (child.name === "FixedWingDrone") {
+        cullRadius = DRONE_CONFIGS[DroneType.FIXED_WING].visualRadius || 2.0;
+      } else if (child.name === "RemotePlayer" || child.name === "RemotePlayerFallback") {
+        cullRadius = 0.65; // covers player capsule: sqrt(0.4² + 0.5²)
+      }
+
+      if (cullRadius > 0) {
+        const distToRay = this.raycaster.ray.distanceToPoint(child.position);
+        if (distToRay > cullRadius) continue; // bounding sphere misses ray — skip entirely
+      }
+
       this.targets.push(child);
-    });
+    }
 
     const intersects = this.raycaster.intersectObjects(this.targets, true);
 
