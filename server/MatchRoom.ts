@@ -83,6 +83,7 @@ import * as path from "path";
 import {
   db,
   doc,
+  getDoc,
   collection,
   query,
   where,
@@ -2729,26 +2730,66 @@ export class MatchRoom {
     }
   }
 
-  public triggerStartMatch() {
-    if (!this.matchActive) {
-      this.matchActive = true;
-      this.serverTick = 0;
-      this.matchStartTime = Date.now();
-      this.apiCallCount = 0;
-      this.llmTokensUsedThisMatch = 0;
-      this.commanderAP = ACTIVE_GAMEMODE.llmApStartPool;
-      this.fixedWingDeploymentsThisMatch = 0;
-      this.outstandingOrders.clear();
-      console.log(
-        `[VEXEA SERVER] Match active! Triggering Loops in Room: ${this.roomId}`,
-      );
+  public async triggerStartMatch() {
+    if (this.matchActive) return;
 
-      this.startSimulationLoops();
-      this.broadcastReliableEvent({ type: "match_ready", mapId: this.mapId });
+    const matchEnergyCost = DEFAULT_SHARED_FEATURE_FLAGS[SharedFeatureFlagKey.MATCH_ENERGY_COST] ?? 2;
 
-      for (const p of this.players.values()) {
-        p.channel.emit("match_ready", { mapId: this.mapId });
+    // Check energy for human players in room before starting match
+    let sufficientEnergy = true;
+    for (const player of this.players.values()) {
+      if (player.isBot) continue;
+
+      let playerEnergy = (player as any).energy;
+      if (playerEnergy === undefined) {
+        try {
+          const userRef = doc(db, "Users", player.id);
+          const userDoc = await getDoc(userRef);
+          if (userDoc && userDoc.exists()) {
+            const data = userDoc.data();
+            playerEnergy = data?.energy !== undefined ? data.energy : DEFAULT_SHARED_FEATURE_FLAGS[SharedFeatureFlagKey.NEW_PLAYER_STARTER_ENERGY];
+          } else {
+            playerEnergy = DEFAULT_SHARED_FEATURE_FLAGS[SharedFeatureFlagKey.NEW_PLAYER_STARTER_ENERGY];
+          }
+        } catch (err) {
+          console.error(`[MatchRoom] Error reading energy for player ${player.id}:`, err);
+          playerEnergy = DEFAULT_SHARED_FEATURE_FLAGS[SharedFeatureFlagKey.NEW_PLAYER_STARTER_ENERGY];
+        }
       }
+
+      if (playerEnergy < matchEnergyCost) {
+        sufficientEnergy = false;
+        break;
+      }
+    }
+
+    if (!sufficientEnergy) {
+      console.warn(`[MatchRoom] Cannot start match in Room ${this.roomId}: insufficient energy (< ${matchEnergyCost})`);
+      this.broadcastReliableEvent({
+        type: "INSUFFICIENT_ENERGY",
+        requiredCost: matchEnergyCost,
+        cost: matchEnergyCost,
+      });
+      return;
+    }
+
+    this.matchActive = true;
+    this.serverTick = 0;
+    this.matchStartTime = Date.now();
+    this.apiCallCount = 0;
+    this.llmTokensUsedThisMatch = 0;
+    this.commanderAP = ACTIVE_GAMEMODE.llmApStartPool;
+    this.fixedWingDeploymentsThisMatch = 0;
+    this.outstandingOrders.clear();
+    console.log(
+      `[VEXEA SERVER] Match active! Triggering Loops in Room: ${this.roomId}`,
+    );
+
+    this.startSimulationLoops();
+    this.broadcastReliableEvent({ type: "match_ready", mapId: this.mapId });
+
+    for (const p of this.players.values()) {
+      p.channel.emit("match_ready", { mapId: this.mapId });
     }
   }
 
