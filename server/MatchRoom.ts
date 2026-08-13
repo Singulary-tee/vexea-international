@@ -14,6 +14,7 @@ import { GroupTacticalState, Posture } from "./ai/GroupTacticalState";
 import { GoogleGenAI, Type } from "@google/genai";
 import RAPIER from "@dimforge/rapier3d-compat";
 import { ACTIVE_GAMEMODE } from "../shared/gamemode-configs.js";
+import { DEFAULT_SHARED_FEATURE_FLAGS, SharedFeatureFlagKey } from "../shared/feature-flags";
 import {
   HEADER_SIZE,
   DRONE_STRUCT_SIZE,
@@ -97,11 +98,13 @@ import {
 import { Sentry, recordServerTickDuration, recordServerActiveDrones, recordServerConnectedPlayers, recordSecurityExploit, recordDroneColliderInit } from "./sentry";
 import { archiveMatchEvent } from "./player-data/MatchEventCollector";
 import { PlayerProfileStore } from "./player-data/PlayerProfileStore";
+import { MatchAbuseStore } from "./player-data/MatchAbuseStore";
 
 export const MAX_PROJECTILES = 200;
 
 export interface PlayerState {
   id: string;
+  reqUid?: string;
   displayName?: string;
   channel: ChannelAdapter;
   kcc: RAPIER.KinematicCharacterController | null;
@@ -109,6 +112,8 @@ export interface PlayerState {
   collider: RAPIER.Collider | null;
   isReady?: boolean;
   isBot?: boolean;
+  abandonedMatch?: boolean;
+  disconnectTimer?: any;
 
   inputMask: number;
   fire: number;
@@ -313,6 +318,7 @@ import { PhysicsWorldManager } from "./physics/PhysicsWorldManager";
 export class MatchRoom {
   public roomId: string;
   public players: Map<string, PlayerState> = new Map();
+  private abandonedPlayerIds: Set<string> = new Set();
   private colliderToEntityMap: Map<number, { type: "player"; obj: PlayerState } | { type: "drone"; obj: ServerDrone }> = new Map();
   public drones: ServerDrone[] = [];
   public nextDroneId = 1;
@@ -764,14 +770,16 @@ export class MatchRoom {
     channel: ChannelAdapter,
     stats: any,
     playerClass?: ClassId,
-    displayName?: string
+    displayName?: string,
+    reqUid?: string
   ): PlayerState {
     console.log(`[SERVER registerPlayer] playerId: "${playerId}", displayName: "${displayName || playerId}", mapId: "${this.mapId}", class: "${playerClass || 'ASSAULT'}"`);
 
     // Handle Reconnection: If player already exists, rebind channel and return state
     if (this.players.has(playerId)) {
       const existing = this.players.get(playerId)!;
-      existing.channel = channel;
+      this.handlePlayerReconnect(playerId, channel);
+      if (reqUid) existing.reqUid = reqUid;
       if (displayName) existing.displayName = displayName;
       if (playerClass && CLASSES[playerClass]) {
         this.applyPlayerClassLoadout(existing, playerClass);
@@ -804,6 +812,7 @@ export class MatchRoom {
 
     const pState: PlayerState = {
       id: playerId,
+      reqUid: reqUid || playerId,
       displayName: displayName || playerId,
       channel,
       kcc: null,
@@ -1028,9 +1037,67 @@ export class MatchRoom {
     this.devPhysicsStepOnceRequested = true;
   }
 
+  public handlePlayerDisconnect(playerId: string) {
+    const p = this.players.get(playerId);
+    if (!p) return;
+
+    if (p.disconnectTimer) {
+      clearTimeout(p.disconnectTimer);
+    }
+
+    console.log(`[MATCH] Starting 75-second grace period for player ${playerId}`);
+    p.disconnectTimer = setTimeout(async () => {
+      const pCheck = this.players.get(playerId);
+      if (pCheck && (!pCheck.channel || !pCheck.channel.connected)) {
+        console.log(`[MATCH] Disconnect grace period (75s) expired for ${playerId}. Triggering match abandonment.`);
+        await this.handlePlayerAbandonment(playerId);
+      }
+    }, 75000);
+  }
+
+  public handlePlayerReconnect(playerId: string, newChannel: ChannelAdapter) {
+    const p = this.players.get(playerId);
+    if (p) {
+      if (p.disconnectTimer) {
+        clearTimeout(p.disconnectTimer);
+        p.disconnectTimer = undefined;
+        console.log(`[MATCH] Player ${playerId} reconnected during 75s grace period.`);
+      }
+      p.channel = newChannel;
+    }
+  }
+
+  public async handlePlayerAbandonment(playerId: string) {
+    const p = this.players.get(playerId);
+    if (!p) {
+      this.abandonedPlayerIds.add(playerId);
+      return;
+    }
+
+    if (p.disconnectTimer) {
+      clearTimeout(p.disconnectTimer);
+      p.disconnectTimer = undefined;
+    }
+
+    p.abandonedMatch = true;
+    this.abandonedPlayerIds.add(playerId);
+    const uid = p.reqUid || p.id;
+
+    if (!p.isBot) {
+      console.log(`[MatchRoom] Recording abandonment offense for player ${uid}...`);
+      await MatchAbuseStore.recordOffense(uid);
+    }
+
+    this.removePlayer(playerId);
+  }
+
   public removePlayer(playerId: string) {
     const p = this.players.get(playerId);
     if (p) {
+      if (p.disconnectTimer) {
+        clearTimeout(p.disconnectTimer);
+        p.disconnectTimer = undefined;
+      }
       this.outOfBoundsEnforcer.resetPlayer(playerId);
       if (p.collider) {
         this.colliderToEntityMap.delete(p.collider.handle);
@@ -2529,93 +2596,65 @@ export class MatchRoom {
     });
   }
 
-  private processMatchEndTransaction(
+  private async processMatchEndTransaction(
     playerId: string,
     playerStats: any,
     result: "win" | "loss",
     adMultiplier: number,
   ) {
+    if (this.abandonedPlayerIds.has(playerId)) {
+      console.log(`[MatchRoom] Rewards withheld for abandoned match: ${playerId}`);
+      return;
+    }
+    const p = this.players.get(playerId);
+    if (p && p.abandonedMatch) {
+      console.log(`[MatchRoom] Rewards withheld for abandoned match: ${playerId}`);
+      return;
+    }
+
     const isWin = result === "win";
-    runTransaction(db, async (transaction) => {
-      const userRef = doc(db, "Users", playerId);
-      const userDoc = await transaction.get(userRef);
 
-      const droneKills = playerStats.droneEliminations || 0;
-      const deaths = playerStats.deaths || 0;
-      const scoreIndividual = playerStats.scoreIndividual || 0;
-      const objectiveTime = playerStats.objectiveTimeHeld || 0;
-      const revives = playerStats.revivesPerformed || 0;
+    // Economy values read from feature flags as instructed
+    const matchEnergyCost = DEFAULT_SHARED_FEATURE_FLAGS[SharedFeatureFlagKey.MATCH_ENERGY_COST]; // should be 2
+    const creditsEarned = 5 + (isWin ? 15 : 0); // NEW reduced rates
+    const starterCredits = DEFAULT_SHARED_FEATURE_FLAGS[SharedFeatureFlagKey.NEW_PLAYER_STARTER_CREDITS];
+    const starterEnergy = DEFAULT_SHARED_FEATURE_FLAGS[SharedFeatureFlagKey.NEW_PLAYER_STARTER_ENERGY];
 
-      let bpRankChange = adMultiplier * (scoreIndividual > 0 ? 1 : 0);
-      let awardedScore = scoreIndividual * adMultiplier;
+    // Build the MatchEndPayload from player stats (Point 3)
+    const payload = {
+      playerId,
+      matchDurationSec: ACTIVE_GAMEMODE.matchDuration,
+      kills: playerStats.droneEliminations || 0,
+      deaths: playerStats.deaths || 0,
+      damageDealt: playerStats.damageDealt || 0,
+      objectiveTimeHeld: playerStats.objectiveTimeHeld || 0,
+      revives: playerStats.revivesPerformed || 0,
+      scoreIndividual: playerStats.scoreIndividual || 0,
+      isWin,
+      gameMode: ACTIVE_GAMEMODE.id || "INFILTRATION",
+      adMultiplier
+    };
 
-      const creditsEarned = 10 + (isWin ? 50 : 0);
+    try {
+      const port = process.env.PORT || 3000;
+      const response = await fetch(`http://127.0.0.1:${port}/api/economy/match-rewards`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(payload)
+      });
 
-      if (!userDoc.exists()) {
-        const totalMatches = 1;
-        const totalWins = isWin ? 1 : 0;
-        const winRate = (totalWins / totalMatches) * 100;
-
-        transaction.set(userRef, {
-          displayName: "GUEST",
-          faction: "Vibe Co.",
-          credits: 100 + creditsEarned,
-          energy: 100 - 10,
-          createdAt: new Date(),
-          dailyRefreshedAt: new Date(),
-          
-          score: awardedScore,
-          lifetimeXP: awardedScore,
-          kills: droneKills,
-          battlePass: bpRankChange + 1,
-
-          totalMatches,
-          totalWins,
-          totalDroneEliminations: droneKills,
-          totalDeaths: deaths,
-          totalObjectiveTimeHeld: objectiveTime,
-          totalRevivesPerformed: revives,
-          highestIndividualScore: scoreIndividual,
-          winRate: parseFloat(winRate.toFixed(1))
-        });
+      if (!response.ok) {
+        const text = await response.text();
+        console.error(`[MatchRoom] API call to match-rewards failed for ${playerId}: ${response.status} ${text}`);
       } else {
-        const data = userDoc.data() || {};
-        
-        const currentMatches = (data.totalMatches || 0) + 1;
-        const currentWins = (data.totalWins || 0) + (isWin ? 1 : 0);
-        const winRate = (currentWins / currentMatches) * 100;
-
-        const currentHigh = data.highestIndividualScore || 0;
-        const newHigh = Math.max(currentHigh, scoreIndividual);
-
-        const currentCredits = data.credits !== undefined ? data.credits : 100;
-        const currentEnergy = data.energy !== undefined ? data.energy : 100;
-
-        transaction.update(userRef, {
-          score: increment(awardedScore),
-          lifetimeXP: increment(awardedScore),
-          kills: increment(droneKills),
-          battlePass: increment(bpRankChange),
-
-          credits: Math.max(0, currentCredits + creditsEarned),
-          energy: Math.max(0, currentEnergy - 10),
-
-          totalMatches: currentMatches,
-          totalWins: currentWins,
-          totalDroneEliminations: increment(droneKills),
-          totalDeaths: increment(deaths),
-          totalObjectiveTimeHeld: increment(objectiveTime),
-          totalRevivesPerformed: increment(revives),
-          highestIndividualScore: newHigh,
-          winRate: parseFloat(winRate.toFixed(1))
-        });
+        const data = await response.json();
+        console.log(`[MatchRoom] Successfully updated rewards via API for ${playerId}:`, data);
       }
-
-      const matchRef = doc(db, "MatchInProgress", playerId);
-      transaction.delete(matchRef);
-    }).catch((err) => {
-      console.error("[VEXEA SERVER] Error in processMatchEndTransaction:", err);
-    });
+    } catch (err) {
+      console.error(`[MatchRoom] Error calling match-rewards API for ${playerId}:`, err);
+    }
   }
 
   private packWorldNetworkData(): ArrayBuffer {

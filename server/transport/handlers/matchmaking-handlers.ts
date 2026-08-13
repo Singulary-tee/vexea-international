@@ -74,13 +74,13 @@ export function registerMatchmakingHandlers(
     }
   });
 
-  channel.on("PLAYER_QUIT", () => {
+  channel.on("PLAYER_QUIT", async () => {
     matchmaker.removePlayerFromPool(playerId);
     const p = getPlayer();
     const room = getRoom();
     if (p && room) {
-      console.log(`Player quit mission manually: ${p.id}`);
-      room.removePlayer(p.id);
+      console.log(`Player quit mission manually (explicit abandon): ${p.id}`);
+      await room.handlePlayerAbandonment(p.id);
     }
     try {
       channel.emit("disconnect", {});

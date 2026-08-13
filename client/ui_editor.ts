@@ -69,12 +69,21 @@ export const initUIEditor = () => {
     editorBar.style.scrollbarColor = `${DS.colors.success} ${DS.colors.surface}`;
 
     const dragHandle = document.createElement("div");
-    dragHandle.style.height = "0.50rem";
-    dragHandle.style.width = "2.50rem";
+    dragHandle.style.height = "2.25rem";
+    dragHandle.style.width = "100%";
     dragHandle.style.margin = "0 auto 1.00rem auto";
-    dragHandle.style.background = DS.utils.rgba(DS.colors.textSecondary, 0.3);
-    dragHandle.style.borderRadius = "4px";
+    dragHandle.style.background = DS.colors.surface;
+    dragHandle.style.border = `1px solid ${DS.colors.border}`;
+    dragHandle.style.borderRadius = "0px";
     dragHandle.style.cursor = "grab";
+    dragHandle.style.display = "flex";
+    dragHandle.style.alignItems = "center";
+    dragHandle.style.justifyContent = "center";
+    dragHandle.style.fontSize = DS.typography.sizes.tiny;
+    dragHandle.style.fontFamily = DS.typography.fontFamilyMono;
+    dragHandle.style.color = DS.colors.textSecondary;
+    dragHandle.style.fontWeight = DS.typography.weightBold;
+    dragHandle.innerText = "DRAG TO MOVE PANEL";
     dragHandle.id = "editor-drag-handle";
     editorBar.appendChild(dragHandle);
 

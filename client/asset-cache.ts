@@ -13,7 +13,22 @@ import { KTX2Loader } from "three/addons/loaders/KTX2Loader.js";
 import { getSettings } from "./settings";
 import { DS } from "./design-system";
 import { ASSET_STRUCTURE } from "../shared/asset-structure";
-import { AUDIO_PATHS } from "./audio-manifest";
+import { AUDIO_MANIFEST } from "./audio-manifest";
+
+export function getCacheKey(filename: string, category?: string): string {
+  const isSound = category === "Sound" || 
+                  filename.startsWith("Audio/") || 
+                  filename.endsWith(".opus") ||
+                  AUDIO_MANIFEST.some(e => e.key === filename);
+  if (isSound) {
+    const cleanName = filename.substring(filename.lastIndexOf("/") + 1).replace(/\.opus$/, '').replace(/\.mp3$/, '');
+    const entry = AUDIO_MANIFEST.find(e => e.key === filename || e.key === cleanName || e.path.endsWith(filename));
+    if (entry) {
+      return entry.path;
+    }
+  }
+  return filename.substring(filename.lastIndexOf("/") + 1);
+}
 
 const DB_NAME = "VexeaLocalCache";
 const STORE_NAME = "files";
@@ -52,12 +67,13 @@ function initDB(): Promise<IDBDatabase> {
 /**
  * Retrieves a cached block from IndexedDB.
  */
-async function getCachedBlob(filename: string): Promise<Blob | null> {
+async function getCachedBlob(filename: string, category?: string): Promise<Blob | null> {
   const db = await initDB();
+  const cacheKey = getCacheKey(filename, category);
   return new Promise((resolve) => {
     const transaction = db.transaction(STORE_NAME, "readonly");
     const store = transaction.objectStore(STORE_NAME);
-    const request = store.get(filename);
+    const request = store.get(cacheKey);
 
     request.onsuccess = () => {
       if (request.result) {
@@ -76,14 +92,13 @@ async function getCachedBlob(filename: string): Promise<Blob | null> {
 /**
  * Checks if a file is already cached.
  */
-export async function hasCachedBlob(filename: string): Promise<boolean> {
+export async function hasCachedBlob(filename: string, category?: string): Promise<boolean> {
   const db = await initDB();
-  // Extract baseName for robust lookup
-  const baseName = filename.substring(filename.lastIndexOf("/") + 1);
+  const cacheKey = getCacheKey(filename, category);
   return new Promise((resolve) => {
     const transaction = db.transaction(STORE_NAME, "readonly");
     const store = transaction.objectStore(STORE_NAME);
-    const request = store.get(baseName);
+    const request = store.get(cacheKey);
 
     request.onsuccess = () => {
       if (request.result) {
@@ -100,13 +115,13 @@ export async function hasCachedBlob(filename: string): Promise<boolean> {
 /**
  * Stores a blob directly in IndexedDB.
  */
-async function setCachedBlob(filename: string, blob: Blob): Promise<void> {
+async function setCachedBlob(filename: string, blob: Blob, category?: string): Promise<void> {
   const db = await initDB();
-  const baseName = filename.substring(filename.lastIndexOf("/") + 1);
+  const cacheKey = getCacheKey(filename, category);
   return new Promise((resolve) => {
     const transaction = db.transaction(STORE_NAME, "readwrite");
     const store = transaction.objectStore(STORE_NAME);
-    const request = store.put({ filename: baseName, blob, timestamp: Date.now() });
+    const request = store.put({ filename: cacheKey, blob, timestamp: Date.now() });
 
     request.onsuccess = () => resolve();
     request.onerror = () => resolve(); // fail silently, memory-only fallback is clean anyway
@@ -334,7 +349,7 @@ export const MAP_1_ASSETS = [
   "StreetLightPoles.glb"
 ];
 
-export const REQUIRED_SOUNDS = [...AUDIO_PATHS];
+export const REQUIRED_SOUNDS = AUDIO_MANIFEST.map(e => e.path);
 
 export function getRequiredFilesForMap(mapId: string): { name: string; cat: "Asset" | "Sound" | "Image" }[] {
   if (mapId === 'map_1_facility') {
@@ -414,29 +429,27 @@ export async function getCachedOrFetchUrl(
   }
 
   try {
-    // 1. Clean filename from any subfolders for release pulling and map to real name
-    const requestedName = filename.substring(filename.lastIndexOf("/") + 1);
-    const baseName = mapRequestedFileToReal(requestedName);
+    const cacheKey = getCacheKey(filename, category);
 
-    const existingBlobUrl = blobUrlMap.get(baseName);
+    const existingBlobUrl = blobUrlMap.get(cacheKey);
     if (existingBlobUrl) {
       if (onProgress) onProgress(100);
       return existingBlobUrl;
     }
 
     // 2. Check Local Cache first
-    const cachedBlob = await getCachedBlob(baseName);
+    const cachedBlob = await getCachedBlob(filename, category);
     if (cachedBlob) {
       if (onProgress) onProgress(100);
-      if (blobUrlMap.has(baseName)) {
-        return blobUrlMap.get(baseName)!;
+      if (blobUrlMap.has(cacheKey)) {
+        return blobUrlMap.get(cacheKey)!;
       }
       const url = URL.createObjectURL(cachedBlob);
-      blobUrlMap.set(baseName, url);
+      blobUrlMap.set(cacheKey, url);
       return url;
     }
 
-    // 3. Download from appropriate GitHub Release CDN
+    // 3. Download from appropriate CDN/R2
     const r2Map: Record<string, string> = {
       ...Object.keys(ASSET_STRUCTURE).reduce((acc, key) => {
         acc[key] = `Models/Entities/${key}`;
@@ -444,9 +457,6 @@ export async function getCachedOrFetchUrl(
       }, {} as Record<string, string>),
       "main_menu_1.webm": "Video/Backgrounds/main_menu_1.webm",
       "lobby_1.webm": "Video/Backgrounds/lobby_1.webm",
-      "click.opus": "Audio/Sfx/click.opus",
-      "vexea_theme.opus": "Audio/Music/vexea_theme.opus",
-      "iron_march.opus": "Audio/Music/iron_march.opus",
       "armory_1.webp": "Images/Backgrounds/armory_1.webp",
       "faction_1.webp": "Images/Backgrounds/faction_1.webp",
       "stats_1.webp": "Images/Backgrounds/stats_1.webp",
@@ -474,14 +484,10 @@ export async function getCachedOrFetchUrl(
     };
 
     let downloadUrl = "";
-    if (category === "Sound") {
-      const audioPath = AUDIO_PATHS.find((path) => path === filename || path.endsWith(`/${baseName}`));
-      if (!audioPath) {
-        throw new Error(`[Cache] Unknown canonical R2 audio path: ${filename}`);
-      }
-      downloadUrl = `https://vexea-r2-asset-guard.alte.workers.dev/${audioPath}`;
-    } else if (r2Map[baseName]) {
-      downloadUrl = `https://vexea-r2-asset-guard.alte.workers.dev/${r2Map[baseName]}`;
+    if (category === "Sound" || filename.startsWith("Audio/") || filename.endsWith(".opus")) {
+      downloadUrl = `https://vexea-r2-asset-guard.alte.workers.dev/${cacheKey}`;
+    } else if (r2Map[cacheKey]) {
+      downloadUrl = `https://vexea-r2-asset-guard.alte.workers.dev/${r2Map[cacheKey]}`;
     } else {
       const baseUrl =
         category === "Asset"
@@ -489,7 +495,7 @@ export async function getCachedOrFetchUrl(
           : category === "Video"
           ? "https://github.com/Singulary-tee/vexea/releases/download/Video"
           : "https://github.com/Singulary-tee/vexea/releases/download/Images";
-      downloadUrl = `${baseUrl}/${baseName}`;
+      downloadUrl = `${baseUrl}/${cacheKey}`;
     }
       
     const s = getSettings();
@@ -507,7 +513,7 @@ export async function getCachedOrFetchUrl(
       // Production builds outside of AI Studio must fetch directly from CDN without server proxy
       response = await fetch(downloadUrl);
       if (!response.ok) {
-        throw new Error(`[Cache] CDN fetch failed for ${baseName}: status ${response.status} ${response.statusText}`);
+        throw new Error(`[Cache] CDN fetch failed for ${cacheKey}: status ${response.status} ${response.statusText}`);
       }
     } else {
       try {
@@ -516,11 +522,11 @@ export async function getCachedOrFetchUrl(
           throw new Error(`Direct CDN fetch failed: status ${response.status}`);
         }
       } catch (directErr) {
-        console.warn(`[Cache] Direct CDN fetch failed for ${baseName}, attempting proxy fallback:`, directErr);
+        console.warn(`[Cache] Direct CDN fetch failed for ${cacheKey}, attempting proxy fallback:`, directErr);
         response = await fetch(proxyUrl);
         if (!response.ok) {
           const errorText = await response.text().catch(() => "");
-          throw new Error(`[Cache] CDN fetch failed for ${baseName} via proxy fallback: ${response.status} ${response.statusText} - ${errorText}`);
+          throw new Error(`[Cache] CDN fetch failed for ${cacheKey} via proxy fallback: ${response.status} ${response.statusText} - ${errorText}`);
         }
       }
     }
@@ -556,23 +562,23 @@ export async function getCachedOrFetchUrl(
 
     const mime =
       category === "Sound"
-        ? (baseName.toLowerCase().endsWith(".opus") ? "audio/ogg" : "audio/mp3")
+        ? "audio/ogg"
         : category === "Video"
-        ? (baseName.toLowerCase().endsWith(".webm") ? "video/webm" : "video/mp4")
+        ? (cacheKey.toLowerCase().endsWith(".webm") ? "video/webm" : "video/mp4")
         : category === "Image"
-        ? (baseName.toLowerCase().endsWith(".webp") ? "image/webp" : baseName.toLowerCase().endsWith(".jpg") || baseName.toLowerCase().endsWith(".jpeg") ? "image/jpeg" : "image/png")
+        ? (cacheKey.toLowerCase().endsWith(".webp") ? "image/webp" : cacheKey.toLowerCase().endsWith(".jpg") || cacheKey.toLowerCase().endsWith(".jpeg") ? "image/jpeg" : "image/png")
         : "application/octet-stream";
     const blob = new Blob([fullBuffer], { type: mime });
 
     // Cache it asynchronously
-    await setCachedBlob(baseName, blob);
+    await setCachedBlob(filename, blob, category);
 
     if (onProgress) onProgress(100);
-    if (blobUrlMap.has(baseName)) {
-      return blobUrlMap.get(baseName)!;
+    if (blobUrlMap.has(cacheKey)) {
+      return blobUrlMap.get(cacheKey)!;
     }
     const url = URL.createObjectURL(blob);
-    blobUrlMap.set(baseName, url);
+    blobUrlMap.set(cacheKey, url);
     return url;
   } catch (error) {
     console.error(`[Cache] Fallback redirect activated for ${filename} due to:`, error);
@@ -584,12 +590,12 @@ export async function getCachedOrFetchUrl(
 /**
  * Returns the cached local blob URL if present in blobUrlMap, falling back to "/" paths.
  */
-export function getAssetUrl(filename: string): string {
-  const base = filename.substring(filename.lastIndexOf("/") + 1);
-  if (blobUrlMap.has(base)) {
-    return blobUrlMap.get(base)!;
+export function getAssetUrl(filename: string, category?: string): string {
+  const cacheKey = getCacheKey(filename, category);
+  if (blobUrlMap.has(cacheKey)) {
+    return blobUrlMap.get(cacheKey)!;
   }
-  return "/" + base;
+  return "/" + cacheKey;
 }
 
 export function warmImageDOMCache(filenames: string[]): void {

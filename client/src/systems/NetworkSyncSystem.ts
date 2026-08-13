@@ -385,9 +385,9 @@ export class NetworkSyncSystem {
       // Trigger spatial audio for drone firing
       const camera = (window as any).camera;
       const am = (window as any).audioManager;
-      if (am && am.playDroneFirePositional && camera) {
-        am.playDroneFirePositional(
-          type,
+      if (am && am.playPositional && camera) {
+        am.playPositional(
+          "rifle_fire",
           _droneMuzzlePos.x,
           _droneMuzzlePos.y,
           _droneMuzzlePos.z,
@@ -413,19 +413,16 @@ export class NetworkSyncSystem {
       if (msg.posX !== undefined && msg.posY !== undefined && msg.posZ !== undefined) {
         _droneDeathPos.set(msg.posX, msg.posY, msg.posZ);
         if (am && am.playPositional && camera) {
-          if (am.playDroneDeathPositional) {
-            am.playDroneDeathPositional(
-              msg.posX,
-              msg.posY,
-              msg.posZ,
-              camera.position.x,
-              camera.position.y,
-              camera.position.z,
-              150
-            );
-          } else {
-            am.play("bomber_explosion");
-          }
+          am.playPositional(
+            "bomber_explosion",
+            msg.posX,
+            msg.posY,
+            msg.posZ,
+            camera.position.x,
+            camera.position.y,
+            camera.position.z,
+            150
+          );
         } else if (am && am.play) {
           am.play("bomber_explosion");
         }
@@ -499,10 +496,6 @@ export class NetworkSyncSystem {
     if (msg.type === "GATE_DAMAGE" || msg.type === "PLAYER_HIT") {
       if (msg.hp !== undefined) match.playerHP = msg.hp;
       if (msg.currentHp !== undefined) match.playerHP = msg.currentHp;
-      const rawDamage = Number(msg.rawDamage ?? msg.damage ?? 0);
-      if (rawDamage > 0 && (window as any).audioManager?.play) {
-        (window as any).audioManager.play(rawDamage >= 35 ? "damage_heavy" : "damage_light");
-      }
       if (match.hud) {
         match.hud.triggerUIFlash("255, 0, 0", 0.5);
         match.hud.updateHUD();
@@ -524,46 +517,12 @@ export class NetworkSyncSystem {
     }
 
     if (msg.type === "UTILITY_ACTIVATED") {
-      // Activation sounds are local-only until remote player transforms are available
-      // at the exact throw origin. Resolved effects below use positional playback.
-      if (msg.playerId === match.localPlayerId && (window as any).audioManager?.play) {
-        const activationKey: Record<string, string> = {
-          Grenade: "grenade_throw",
-          Flashbang: "flashbang_throw",
-          "Revive Tool": "revive_start",
-          "Signal Jammer": "jammer_deploy",
-          "Proximity Mine": "mine_deploy",
-        };
-        const key = activationKey[msg.utilityId];
-        if (key) (window as any).audioManager.play(key);
-      }
+      // VISUAL STUB - Trigger server-confirmed utility activation animation / sound
+      // Console or animation stub for confirmed utility usage
     }
 
     if (msg.type === "UTILITY_EFFECT") {
-      const am = (window as any).audioManager;
-      const camera = (window as any).camera;
-      const effectKey: Record<string, string> = {
-        Grenade: "grenade_explosion",
-        "Proximity Mine": "mine_trigger",
-        C4: msg.action === "detonate" ? "c4_detonate" : "c4_place",
-        "Revive Tool": "revive_complete",
-      };
-      const key = effectKey[msg.utilityId];
-      if (key && msg.origin && am?.playPositional && camera) {
-        am.playPositional(
-          key,
-          msg.origin.x,
-          msg.origin.y,
-          msg.origin.z,
-          camera.position.x,
-          camera.position.y,
-          camera.position.z,
-          msg.radius ? Math.max(40, msg.radius * 8) : 120
-        );
-      } else if (key && am?.play) {
-        am.play(key);
-      }
-
+      // VISUAL STUB - Trigger explosion / impact VFX at resolved origin
       if (msg.utilityId === "Grenade" && msg.origin) {
         _droneDeathPos.set(msg.origin.x, msg.origin.y, msg.origin.z);
         if (typeof (window as any).triggerExplosion === "function") {
@@ -573,22 +532,7 @@ export class NetworkSyncSystem {
     }
 
     if (msg.type === "FLASHBANG_DETONATED") {
-      const am = (window as any).audioManager;
-      const camera = (window as any).camera;
-      if (am?.playPositional && camera && msg.origin) {
-        am.playPositional(
-          "flashbang_detonate",
-          msg.origin.x,
-          msg.origin.y,
-          msg.origin.z,
-          camera.position.x,
-          camera.position.y,
-          camera.position.z,
-          Math.max(40, (msg.radius ?? 12) * 8)
-        );
-      } else if (am?.play) {
-        am.play("flashbang_detonate");
-      }
+      // VISUAL STUB - Flashbang burst visual at origin
     }
 
     if (msg.type === "FLASHBANG_HIT") {

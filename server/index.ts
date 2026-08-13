@@ -384,15 +384,8 @@ io.onConnection((channel: ChannelAdapter) => {
     const p = getPlayer();
     if (p && room) {
       const pid = p.id;
-      console.log(`Disconnection registered: ${pid}. Waiting 10s for reconnection...`);
-
-      setTimeout(() => {
-        const pCheck = room.players.get(pid);
-        if (pCheck && !pCheck.channel.connected) {
-          console.log(`[MATCH] Reconnection timeout expired for player ${pid}. Removing.`);
-          room.removePlayer(pid);
-        }
-      }, 10000);
+      console.log(`Disconnection registered: ${pid}. Starting 75s grace period via room.`);
+      room.handlePlayerDisconnect(pid);
     }
     const idx = globalChannels.indexOf(channel);
     if (idx !== -1) globalChannels.splice(idx, 1);

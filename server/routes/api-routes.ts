@@ -12,6 +12,7 @@ import {
   calculateLevelMetrics
 } from "../../shared/verification/verifier";
 import { db, doc, getDoc, setDoc, updateDoc, runTransaction, increment } from "../index";
+import { DEFAULT_SHARED_FEATURE_FLAGS, SharedFeatureFlagKey } from "../../shared/feature-flags";
 
 export function registerApiRoutes(app: Express): void {
   app.get("/api/health", (req, res) => {
@@ -311,13 +312,31 @@ export function registerApiRoutes(app: Express): void {
 
   app.post("/api/economy/match-rewards", async (req, res) => {
     try {
-      const { playerId, matchDurationSec, kills, deaths, damageDealt, objectiveTimeHeld, isWin, gameMode } = req.body;
+      const {
+        playerId,
+        matchDurationSec,
+        kills,
+        deaths,
+        damageDealt,
+        objectiveTimeHeld,
+        revives,
+        scoreIndividual,
+        isWin,
+        gameMode,
+        adMultiplier
+      } = req.body;
+
       if (!playerId) {
         return res.status(400).json({
           success: false,
           error: { code: 'INVALID_INPUT', message: 'playerId is required.' }
         });
       }
+
+      // Feature flag values
+      const matchEnergyCost = DEFAULT_SHARED_FEATURE_FLAGS[SharedFeatureFlagKey.MATCH_ENERGY_COST]; // should be 2
+      const starterCredits = DEFAULT_SHARED_FEATURE_FLAGS[SharedFeatureFlagKey.NEW_PLAYER_STARTER_CREDITS];
+      const starterEnergy = DEFAULT_SHARED_FEATURE_FLAGS[SharedFeatureFlagKey.NEW_PLAYER_STARTER_ENERGY];
 
       const result = verifyPostMatchRewards({
         playerId,
@@ -334,43 +353,96 @@ export function registerApiRoutes(app: Express): void {
         return res.status(400).json({ success: false, error: result.error });
       }
 
+      const mult = adMultiplier || 1;
+      const droneKills = kills || 0;
+      const pDeaths = deaths || 0;
+      const pScoreIndividual = scoreIndividual || 0;
+      const objectiveTime = objectiveTimeHeld || 0;
+      const pRevives = revives || 0;
+
+      let bpRankChange = mult * (pScoreIndividual > 0 ? 1 : 0);
+      let awardedScore = pScoreIndividual * mult;
+
+      // Use the exact NEW reduced rate formula as instructed: creditsEarned = 5 + (isWin ? 15 : 0)
+      const creditsEarned = 5 + (isWin ? 15 : 0);
+
       const userRef = doc(db, "Users", playerId);
-      const userSnap = await getDoc(userRef);
-      const playerData = userSnap.exists() ? userSnap.data() : {};
+      
+      await runTransaction(db, async (transaction) => {
+        const userDoc = await transaction.get(userRef);
 
-      const currentTotalXp = playerData.totalXp ?? 0;
-      const currentCredits = playerData.credits ?? 500;
-      const newTotalXp = currentTotalXp + result.xpEarned;
-      const newCredits = currentCredits + result.creditsEarned;
-      const newLevel = calculateLevelMetrics(newTotalXp).level;
+        if (!userDoc.exists()) {
+          const totalMatches = 1;
+          const totalWins = isWin ? 1 : 0;
+          const winRate = (totalWins / totalMatches) * 100;
 
-      if (userSnap.exists()) {
-        await updateDoc(userRef, {
-          credits: newCredits,
-          xp: increment(result.xpEarned),
-          totalXp: newTotalXp,
-          battlePass: newLevel
-        });
-      } else {
-        await setDoc(userRef, {
-          credits: newCredits,
-          energy: 10,
-          unlockedItems: [],
-          totalXp: newTotalXp,
-          xp: result.xpEarned,
-          battlePass: newLevel,
-          adClaimsToday: 0,
-          lastAdClaimDate: 0
-        });
-      }
+          transaction.set(userRef, {
+            displayName: "GUEST",
+            faction: "Vibe Co.",
+            credits: starterCredits + creditsEarned,
+            energy: Math.max(0, starterEnergy - matchEnergyCost),
+            createdAt: new Date(),
+            dailyRefreshedAt: new Date(),
+            
+            score: awardedScore,
+            lifetimeXP: awardedScore,
+            kills: droneKills,
+            battlePass: bpRankChange + 1,
+
+            totalMatches,
+            totalWins,
+            totalDroneEliminations: droneKills,
+            totalDeaths: pDeaths,
+            totalObjectiveTimeHeld: objectiveTime,
+            totalRevivesPerformed: pRevives,
+            highestIndividualScore: pScoreIndividual,
+            winRate: parseFloat(winRate.toFixed(1))
+          });
+        } else {
+          const data = userDoc.data() || {};
+          
+          const currentMatches = (data.totalMatches || 0) + 1;
+          const currentWins = (data.totalWins || 0) + (isWin ? 1 : 0);
+          const winRate = (currentWins / currentMatches) * 100;
+
+          const currentHigh = data.highestIndividualScore || 0;
+          const newHigh = Math.max(currentHigh, pScoreIndividual);
+
+          const currentCredits = data.credits !== undefined ? data.credits : starterCredits;
+          const currentEnergy = data.energy !== undefined ? data.energy : starterEnergy;
+
+          transaction.update(userRef, {
+            score: increment(awardedScore),
+            lifetimeXP: increment(awardedScore),
+            kills: increment(droneKills),
+            battlePass: increment(bpRankChange),
+
+            credits: Math.max(0, currentCredits + creditsEarned),
+            energy: Math.max(0, currentEnergy - matchEnergyCost),
+
+            totalMatches: currentMatches,
+            totalWins: currentWins,
+            totalDroneEliminations: increment(droneKills),
+            totalDeaths: increment(pDeaths),
+            totalObjectiveTimeHeld: increment(objectiveTime),
+            totalRevivesPerformed: increment(pRevives),
+            highestIndividualScore: newHigh,
+            winRate: parseFloat(winRate.toFixed(1))
+          });
+        }
+
+        const matchRef = doc(db, "MatchInProgress", playerId);
+        transaction.delete(matchRef);
+      });
 
       return res.json({
         success: true,
-        creditsEarned: result.creditsEarned,
-        xpEarned: result.xpEarned,
-        newLevel
+        creditsEarned,
+        xpEarned: awardedScore,
+        newLevel: bpRankChange
       });
     } catch (err: any) {
+      console.error("[API] Error in /api/economy/match-rewards:", err);
       return res.status(500).json({
         success: false,
         error: { code: 'SERVER_ERROR', message: err.message || String(err) }

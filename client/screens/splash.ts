@@ -2,12 +2,9 @@ import * as screenManager from "./screen-manager";
 import { getCachedOrFetchUrl, getAssetUrl, populateBlobUrlMap } from "../asset-cache";
 import { IS_DESKTOP } from "../gates/platform.gate";
 import { DS } from "../design-system";
-import { AUDIO_PATHS } from "../audio-manifest";
+import { AUDIO_MANIFEST } from "../audio-manifest";
 
-const SOUNDS_TO_PRELOAD = [
-  'Audio/Sfx/click.opus',
-  'Audio/Music/vexea_theme.opus'
-];
+const SOUNDS_TO_PRELOAD = AUDIO_MANIFEST.filter(e => e.key === 'click' || e.key === 'vexea_theme').map(e => e.path);
 
 const TEXTURES_TO_PRELOAD: string[] = [
 ];
@@ -48,8 +45,8 @@ const VIDEOS_TO_PRELOAD: string[] = [
   'lobby_1.webm'
 ];
 
-// The rest of the game assets. Audio paths are canonical R2 object keys.
-export const EXTENDED_SOUNDS = [...AUDIO_PATHS];
+// The rest of the game assets
+export const EXTENDED_SOUNDS = AUDIO_MANIFEST.filter(e => e.key !== 'click' && e.key !== 'vexea_theme').map(e => e.path);
 
 export const EXTENDED_TEXTURES: string[] = [];
 

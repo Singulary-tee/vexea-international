@@ -21,3 +21,29 @@ export function initPlatformGate() {
     document.body.classList.remove("platform-desktop");
   }
 }
+
+export function isUIElement(target: EventTarget | null): boolean {
+  if (!target) return false;
+  let el = target as HTMLElement;
+  while (el) {
+    if (el.tagName === 'BUTTON' || el.tagName === 'INPUT' || el.tagName === 'SELECT' || el.tagName === 'A') {
+      return true;
+    }
+    if (
+      el.id === 'dev-overlay' || 
+      el.id === 'minimap-container' || 
+      el.classList?.contains('fullscreen-minimap') || 
+      el.id === 'vexea-settings-overlay' ||
+      el.id === 'match-status-modal' ||
+      el.id === 'btn-match-status' ||
+      el.id === 'ui-editor-bar' ||
+      el.id === 'splash-screen' ||
+      el.id === 'portrait-lock' ||
+      el.classList?.contains('loading-overlay')
+    ) {
+      return true;
+    }
+    el = el.parentElement as HTMLElement;
+  }
+  return false;
+}

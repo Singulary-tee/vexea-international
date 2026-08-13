@@ -1,3 +1,5 @@
+import { isUIElement } from "./platform-gate";
+
 export enum InputAction {
   MOVE_FORWARD = "MOVE_FORWARD",
   MOVE_BACKWARD = "MOVE_BACKWARD",
@@ -147,12 +149,12 @@ class InputManager {
   }
 
   private onMouseDown(e: MouseEvent) {
-    if (e.button === 0) this.setAction(InputAction.FIRE, true);
+    if (e.button === 0 && !isUIElement(e.target)) this.setAction(InputAction.FIRE, true);
     if (e.button === 2) this.setAction(InputAction.ADS, true);
   }
 
   private onMouseUp(e: MouseEvent) {
-    if (e.button === 0) this.setAction(InputAction.FIRE, false);
+    if (e.button === 0 && (!isUIElement(e.target) || this.isFiring)) this.setAction(InputAction.FIRE, false);
     if (e.button === 2) this.setAction(InputAction.ADS, false);
   }
 

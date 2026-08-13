@@ -6,8 +6,3 @@ coverage/
 *.log
 .env*
 !.env.example
-
-# Audio build inputs and staged upload payloads are reproducible local artifacts;
-# canonical distributable audio is stored in Cloudflare R2.
-audio_sources/
-audio_staging/

@@ -1,237 +1,327 @@
-import * as THREE from 'three';
 import { Howl, Howler } from 'howler';
-import { getCachedOrFetchUrl } from './asset-cache';
-import { AUDIO_MANIFEST, AudioCategory, AudioKey, getAudioEntry } from './audio-manifest';
-
-const SOUND_CATEGORIES: Record<string, AudioCategory> = Object.fromEntries(
-    AUDIO_MANIFEST.map((entry) => [entry.key, entry.category])
-);
-
-const _listenerForward = new THREE.Vector3();
-const _listenerRight = new THREE.Vector3();
-const _worldUp = new THREE.Vector3(0, 1, 0);
-
-type FootstepSurface = 'gravel' | 'ground' | 'hard' | 'metal' | 'wood';
+import * as THREE from 'three';
+import { getCachedOrFetchUrl } from "./asset-cache";
+import { AUDIO_MANIFEST, getManifestEntry, AudioKey } from "./audio-manifest";
 
 class AudioManager {
     private assetsLoaded = 0;
     private totalAssets = 0;
-
+    
+    // SFX Howl instances
     public sounds: Record<string, Howl> = {};
-
-    private menuMusicSequence: AudioKey[] = ['vexea_theme', 'iron_march', 'factory_ambience'];
+    
+    // Music sequence state
+    private menuMusicSequence: string[] = ['vexea_theme', 'iron_march', 'factory_ambience'];
     private currentMusicIndex = 0;
     private currentMusicHowl: Howl | null = null;
-
+    
+    // State
     private isMatchPlaying = false;
-    private activeFootstepKey: string | null = null;
-    private footstepSurface: FootstepSurface = 'hard';
-    private footstepVariants: Record<string, number> = {};
+    
+    // Footstep state
+    private footstepTimer = 0;
 
-    private volumeFor(category: AudioCategory, settings: any): number {
-        if (!settings) return 1;
-        if (category === 'music') return settings.music ? settings.musicVolume : 0;
-        if (category === 'ui') return settings.uiSounds ? settings.uiVolume : 0;
-        return settings.sfxVolume;
-    }
+    // Continuous spatial loops/emitters registry
+    private activeEmitters = new Map<string, { howl: Howl; soundId: number; key: string; position: THREE.Vector3 }>();
 
-    private applyVolume(key: string, howl: Howl): void {
-        const settings = (window as any).vexeaSettings;
-        howl.volume(this.volumeFor(SOUND_CATEGORIES[key] || 'sfx', settings));
-    }
+    // Pre-allocated vectors to prevent GC churn in tick/render loops
+    private tempPos = new THREE.Vector3();
+    private tempForward = new THREE.Vector3();
+    private tempUp = new THREE.Vector3();
 
     public updateVolumes(s: any) {
         for (const key in this.sounds) {
             if (Object.prototype.hasOwnProperty.call(this.sounds, key)) {
-                this.sounds[key].volume(this.volumeFor(SOUND_CATEGORIES[key] || 'sfx', s));
+                const howl = this.sounds[key];
+                const entry = getManifestEntry(key);
+                const category = entry ? entry.category : 'sfx';
+                let vol = 1.0;
+                if (category === 'music') {
+                    vol = s.music ? s.musicVolume : 0;
+                } else if (category === 'ui') {
+                    vol = s.uiSounds ? s.uiVolume : 0;
+                } else if (category === 'ambient') {
+                    vol = s.music ? s.musicVolume * 0.5 : 0;
+                } else {
+                    vol = s.sfxVolume;
+                }
+                howl.volume(vol);
             }
         }
     }
 
     public async loadAll(): Promise<void> {
         this.totalAssets = AUDIO_MANIFEST.length;
-        this.assetsLoaded = 0;
 
         const loadPromises = AUDIO_MANIFEST.map(async (entry) => {
             const cachedUrl = await getCachedOrFetchUrl(entry.path, 'Sound');
-            let settled = false;
-            const settle = () => {
-                if (!settled) {
-                    settled = true;
-                    this.assetsLoaded++;
-                }
-            };
+            const ext = entry.path.substring(entry.path.lastIndexOf('.') + 1);
+            const formats = ext === 'opus' ? ['opus', 'ogg'] : [ext];
 
             return new Promise<void>((resolve) => {
                 const howl = new Howl({
                     src: [cachedUrl],
-                    // R2 stores the canonical files as Opus in an Ogg-compatible container.
-                    format: ['opus', 'ogg'],
+                    format: formats,
                     preload: true,
-                    loop: Boolean('loop' in entry && entry.loop),
-                    onplayerror: function() {
-                        howl.once('unlock', function() {
-                            howl.play();
-                        });
+                    loop: entry.loop ?? false,
+                    onplayerror: () => {
+                        if (!entry.loop) {
+                            howl.once('unlock', () => {
+                                howl.play();
+                            });
+                        }
                     },
                     onload: () => {
-                        settle();
+                        this.assetsLoaded++;
                         resolve();
                     },
-                    onloaderror: (_id, err) => {
-                        settle();
-                        console.warn(`[Audio] Failed to load ${entry.key} from ${entry.path}`, err);
+                    onloaderror: (id, err) => {
+                        console.warn(`[Audio] Failed to load audio: ${entry.path}`, err);
                         resolve();
                     }
                 });
+
                 this.sounds[entry.key] = howl;
-                this.applyVolume(entry.key, howl);
+
+                const s = (window as any).vexeaSettings;
+                if (s) {
+                    const category = entry.category;
+                    let vol = 1.0;
+                    if (category === 'music') {
+                        vol = s.music ? s.musicVolume : 0;
+                    } else if (category === 'ui') {
+                        vol = s.uiSounds ? s.uiVolume : 0;
+                    } else if (category === 'ambient') {
+                        vol = s.music ? s.musicVolume * 0.5 : 0;
+                    } else {
+                        vol = s.sfxVolume;
+                    }
+                    howl.volume(vol);
+                }
             });
         });
 
         await Promise.all(loadPromises);
     }
-
+    
     public play(name: string) {
         const sound = this.sounds[name];
-        if (!sound) {
-            console.warn(`Audio ${name} not found`);
-            return;
+        if (sound) {
+            const entry = getManifestEntry(name);
+            const category = entry ? entry.category : 'sfx';
+            if (category === 'sfx' || category === 'ui') {
+                const pitch = 0.93 + Math.random() * 0.14; // Range 0.93 to 1.07
+                sound.rate(pitch);
+            } else {
+                sound.rate(1.0);
+            }
+            sound.play();
+        } else {
+            console.warn(`[Audio] Sound ${name} not found`);
         }
-
-        const category = SOUND_CATEGORIES[name] || 'sfx';
-        sound.rate(category === 'music' ? 1.0 : 0.93 + Math.random() * 0.14);
-        sound.play();
     }
 
-    /**
-     * Plays a sound with distance attenuation and listener-relative stereo pan.
-     * Howler's stereo pan is derived from the active camera's right vector, so
-     * rotating the listener changes left/right placement instead of using fixed
-     * world-axis panning.
-     */
+    public updateListener(camera: THREE.Camera): void {
+        camera.getWorldPosition(this.tempPos);
+
+        this.tempForward.set(0, 0, -1);
+        this.tempForward.applyQuaternion(camera.quaternion).normalize();
+
+        this.tempUp.set(0, 1, 0);
+        this.tempUp.applyQuaternion(camera.quaternion).normalize();
+
+        // Update listener position & orientation
+        Howler.pos(this.tempPos.x, this.tempPos.y, this.tempPos.z);
+        Howler.orientation(this.tempForward.x, this.tempForward.y, this.tempForward.z, this.tempUp.x, this.tempUp.y, this.tempUp.z);
+    }
+
     public playPositional(
-        name: string,
-        sourceX: number,
-        sourceY: number,
-        sourceZ: number,
-        listenerX: number,
-        listenerY: number,
-        listenerZ: number,
+        key: string,
+        sourceOrX: THREE.Vector3 | number,
+        optionsOrY?: any,
+        z?: number,
+        listenerX?: number,
+        listenerY?: number,
+        listenerZ?: number,
         maxDistance = 120
     ): number | null {
-        const sound = this.sounds[name];
-        if (!sound) return null;
+        const sound = this.sounds[key];
+        if (!sound) {
+            console.warn(`[Audio] Positional sound ${key} not found`);
+            return null;
+        }
 
-        const settings = (window as any).vexeaSettings;
-        const category = SOUND_CATEGORIES[name] || 'sfx';
-        const baseVol = this.volumeFor(category, settings);
+        const s = (window as any).vexeaSettings || { sfxVolume: 1.0, spatialAudio: true };
+        const entry = getManifestEntry(key);
+        const category = entry ? entry.category : 'sfx';
+        let baseVol = 1.0;
+        if (category === 'music') {
+            baseVol = s.music ? s.musicVolume : 0;
+        } else if (category === 'ui') {
+            baseVol = s.uiSounds ? s.uiVolume : 0;
+        } else if (category === 'ambient') {
+            baseVol = s.music ? s.musicVolume * 0.5 : 0;
+        } else {
+            baseVol = s.sfxVolume;
+        }
+
         if (baseVol <= 0) return null;
 
-        const dx = sourceX - listenerX;
-        const dy = sourceY - listenerY;
-        const dz = sourceZ - listenerZ;
-        const distSq = dx * dx + dy * dy + dz * dz;
-
-        if (settings?.spatialAudio !== false) {
-            const maxDistSq = maxDistance * maxDistance;
-            if (distSq >= maxDistSq) return null;
-        }
-
-        let effectiveVol = baseVol;
-        if (!settings || settings.spatialAudio !== false) {
-            const dist = Math.sqrt(distSq);
-            const factor = Math.max(0, 1 - dist / maxDistance);
-            effectiveVol = baseVol * factor * factor;
-        }
-        if (effectiveVol <= 0.001) return null;
-
-        const camera = (window as any).camera;
-        let pan = 0;
-        if (camera?.getWorldDirection) {
-            camera.getWorldDirection(_listenerForward).normalize();
-            _listenerRight.crossVectors(_listenerForward, _worldUp).normalize();
-            const length = Math.sqrt(distSq);
-            if (length > 0.001) {
-                pan = THREE.MathUtils.clamp(
-                    (dx * _listenerRight.x + dy * _listenerRight.y + dz * _listenerRight.z) / length,
-                    -1,
-                    1
-                );
-            }
-        } else if (distSq > 0.001) {
-            pan = THREE.MathUtils.clamp(dx / Math.sqrt(distSq), -1, 1);
-        }
-
-        sound.rate(category === 'music' ? 1.0 : 0.93 + Math.random() * 0.14);
-        const soundId = sound.play();
-        const spatialHowler = Howler as any;
-        const useWebAudioPanner = settings?.spatialAudio !== false
-            && typeof (sound as any).pos === 'function'
-            && typeof spatialHowler.pos === 'function';
-
-        if (useWebAudioPanner) {
-            // Keep the global listener aligned to the active Three.js camera and
-            // let the Web Audio PannerNode calculate direction and attenuation.
-            spatialHowler.pos(listenerX, listenerY, listenerZ);
-            if (camera?.getWorldDirection && typeof spatialHowler.orientation === 'function') {
-                camera.getWorldDirection(_listenerForward).normalize();
-                spatialHowler.orientation(
-                    _listenerForward.x,
-                    _listenerForward.y,
-                    _listenerForward.z,
-                    _worldUp.x,
-                    _worldUp.y,
-                    _worldUp.z
-                );
-            }
-            (sound as any).pannerAttr({
-                panningModel: 'HRTF',
-                distanceModel: 'linear',
-                refDistance: 1,
-                maxDistance,
-                rolloffFactor: 1,
-            }, soundId);
-            (sound as any).pos(sourceX, sourceY, sourceZ, soundId);
-            sound.volume(baseVol, soundId);
+        if (category === 'sfx' || category === 'ui') {
+            const pitch = 0.93 + Math.random() * 0.14;
+            sound.rate(pitch);
         } else {
-            // Fallback for environments without the Howler spatial plugin.
-            sound.volume(effectiveVol, soundId);
-            sound.stereo(pan, soundId);
+            sound.rate(1.0);
         }
+
+        const soundId = sound.play();
+        if (soundId === undefined) return null;
+
+        if (sourceOrX instanceof THREE.Vector3) {
+            const source = sourceOrX;
+            const options = optionsOrY;
+
+            if (s.spatialAudio !== false) {
+                sound.pos(source.x, source.y, source.z, soundId);
+                sound.pannerAttr({
+                    panningModel: 'HRTF',
+                    refDistance: options?.refDistance ?? 1,
+                    maxDistance: options?.maxDistance ?? 120,
+                    rolloffFactor: options?.rolloffFactor ?? 1,
+                    distanceModel: 'inverse'
+                }, soundId);
+                sound.volume(baseVol, soundId);
+            } else {
+                sound.volume(baseVol, soundId);
+            }
+        } else {
+            const sourceX = sourceOrX;
+            const sourceY = optionsOrY as number;
+            const sourceZ = z as number;
+
+            if (s.spatialAudio !== false && listenerX !== undefined && listenerY !== undefined && listenerZ !== undefined) {
+                sound.pos(sourceX, sourceY, sourceZ, soundId);
+                sound.pannerAttr({
+                    panningModel: 'HRTF',
+                    refDistance: 1,
+                    maxDistance: maxDistance,
+                    rolloffFactor: 1,
+                    distanceModel: 'inverse'
+                }, soundId);
+                sound.volume(baseVol, soundId);
+            } else {
+                sound.volume(baseVol, soundId);
+            }
+        }
+
         return soundId;
     }
 
+    public startEmitter(entityId: string, key: string, source: THREE.Vector3, options?: any): void {
+        this.stopEmitter(entityId);
+
+        const sound = this.sounds[key];
+        if (!sound) {
+            console.warn(`[Audio] Emitter sound ${key} not found`);
+            return;
+        }
+
+        const s = (window as any).vexeaSettings || { sfxVolume: 1.0, spatialAudio: true };
+        const entry = getManifestEntry(key);
+        const category = entry ? entry.category : 'sfx';
+        let baseVol = 1.0;
+        if (category === 'music') {
+            baseVol = s.music ? s.musicVolume : 0;
+        } else if (category === 'ui') {
+            baseVol = s.uiSounds ? s.uiVolume : 0;
+        } else if (category === 'ambient') {
+            baseVol = s.music ? s.musicVolume * 0.5 : 0;
+        } else {
+            baseVol = s.sfxVolume;
+        }
+
+        if (baseVol <= 0) return;
+
+        const shouldLoop = options?.loop !== false;
+        sound.loop(shouldLoop);
+
+        const soundId = sound.play();
+        if (soundId === undefined) return;
+
+        sound.volume(baseVol, soundId);
+
+        if (s.spatialAudio !== false) {
+            sound.pos(source.x, source.y, source.z, soundId);
+            sound.pannerAttr({
+                panningModel: 'HRTF',
+                refDistance: options?.refDistance ?? 1,
+                maxDistance: options?.maxDistance ?? 120,
+                rolloffFactor: options?.rolloffFactor ?? 1,
+                distanceModel: 'inverse'
+            }, soundId);
+        }
+
+        const posCopy = new THREE.Vector3().copy(source);
+        this.activeEmitters.set(entityId, {
+            howl: sound,
+            soundId,
+            key: key,
+            position: posCopy
+        });
+    }
+
+    public updateEmitter(entityId: string, source: THREE.Vector3): void {
+        const emitter = this.activeEmitters.get(entityId);
+        if (emitter) {
+            emitter.position.copy(source);
+            const s = (window as any).vexeaSettings || { spatialAudio: true };
+            if (s.spatialAudio !== false) {
+                emitter.howl.pos(source.x, source.y, source.z, emitter.soundId);
+            }
+        }
+    }
+
+    public stopEmitter(entityId: string): void {
+        const emitter = this.activeEmitters.get(entityId);
+        if (emitter) {
+            emitter.howl.stop(emitter.soundId);
+            this.activeEmitters.delete(entityId);
+        }
+    }
+    
     public setMatchState(inMatch: boolean) {
         this.isMatchPlaying = inMatch;
         if (inMatch) {
             this.stopMenuMusic();
         } else {
-            this.stopActiveFootstep();
-            if (!this.currentMusicHowl || !this.currentMusicHowl.playing()) {
+            if (this.currentMusicHowl && this.currentMusicHowl.playing()) {
+                // Keep playing
+            } else {
                 this.playNextMenuMusic();
             }
         }
     }
-
+    
     public playNextMenuMusic() {
         if (this.isMatchPlaying) return;
-
+        
         if (this.currentMusicHowl) {
             this.currentMusicHowl.stop();
             this.currentMusicHowl.off('end');
         }
-
+        
         const nextTrackName = this.menuMusicSequence[this.currentMusicIndex];
         this.currentMusicIndex = (this.currentMusicIndex + 1) % this.menuMusicSequence.length;
-
-        this.currentMusicHowl = this.sounds[nextTrackName] || null;
+        
+        this.currentMusicHowl = this.sounds[nextTrackName];
         if (this.currentMusicHowl) {
             this.currentMusicHowl.play();
-            this.currentMusicHowl.once('end', () => this.playNextMenuMusic());
+            this.currentMusicHowl.once('end', () => {
+                this.playNextMenuMusic();
+            });
         }
     }
-
+    
     public stopMenuMusic() {
         if (this.currentMusicHowl) {
             this.currentMusicHowl.stop();
@@ -241,128 +331,60 @@ class AudioManager {
     }
 
     public playWeaponFire(activeWeapon: number) {
-        this.play(activeWeapon === 1 ? 'rifle_fire' : 'pistol_fire');
-    }
-
-    public playWeaponReload(_activeWeapon: number) {
-        this.stop('reload');
-        this.play('reload');
-    }
-
-    public stopWeaponReload() {
-        this.stop('reload');
-    }
-
-    public playEmptyClick() {
-        this.play('empty_click');
-    }
-
-    private droneFireKey(droneType: number): AudioKey {
-        // DroneType: rotary shooter 0, bomber 1, recon 2, fixed-wing 3,
-        // wheeled 4, robot dog 5, humanoid 6. Quadruped shares humanoid fire.
-        return droneType === 4
-            ? 'ugv_turret_fire'
-            : droneType === 6 || droneType === 5
-            ? 'humanoid_gun_fire'
-            : 'quadcopter_rifle_fire';
-    }
-
-    public playDroneFire(droneType: number) {
-        this.play(this.droneFireKey(droneType));
-    }
-
-    public playDroneFirePositional(
-        droneType: number,
-        sourceX: number,
-        sourceY: number,
-        sourceZ: number,
-        listenerX: number,
-        listenerY: number,
-        listenerZ: number,
-        maxDistance = 150
-    ) {
-        return this.playPositional(
-            this.droneFireKey(droneType),
-            sourceX,
-            sourceY,
-            sourceZ,
-            listenerX,
-            listenerY,
-            listenerZ,
-            maxDistance
-        );
-    }
-
-    public playDroneDeath() {
-        this.play('bomber_explosion');
-    }
-
-    public playDroneDeathPositional(
-        sourceX: number,
-        sourceY: number,
-        sourceZ: number,
-        listenerX: number,
-        listenerY: number,
-        listenerZ: number,
-        maxDistance = 150
-    ) {
-        return this.playPositional('bomber_explosion', sourceX, sourceY, sourceZ, listenerX, listenerY, listenerZ, maxDistance);
-    }
-
-    public setFootstepSurface(surface: FootstepSurface) {
-        this.footstepSurface = surface;
-    }
-
-    private nextFootstepKey(isRunning: boolean): string {
-        const base = `${isRunning ? 'run' : 'walk'}_${this.footstepSurface}`;
-        const next = (this.footstepVariants[base] || 0) % 2 + 1;
-        this.footstepVariants[base] = next;
-        return `${base}_0${next}`;
-    }
-
-    private stopActiveFootstep() {
-        if (this.activeFootstepKey) {
-            this.sounds[this.activeFootstepKey]?.stop();
-            this.activeFootstepKey = null;
+        if (activeWeapon === 1) {
+            this.play('rifle_fire');
+        } else if (activeWeapon === 2) {
+            this.play('pistol_fire');
+        } else {
+            this.play('smg_fire');
         }
     }
 
-    public updateFootsteps(_dt: number, speed: number, _position: THREE.Vector3, isGrounded: boolean) {
+    public playWeaponReload(activeWeapon: number) {
+        this.stopWeaponReload();
+        if (activeWeapon === 1) {
+            this.play('rifle_reload');
+        } else if (activeWeapon === 2) {
+            this.play('pistol_reload');
+        } else {
+            this.play('reload');
+        }
+    }
+    
+    public stopWeaponReload() {
+        this.stop('reload');
+        this.stop('pistol_reload');
+        this.stop('rifle_reload');
+    }
+
+    public stop(key: string) {
+        if (this.sounds[key]) {
+            this.sounds[key].stop();
+        }
+    }
+
+    public updateFootsteps(dt: number, speed: number, position: THREE.Vector3, isGrounded: boolean) {
         if (!isGrounded || speed < 0.1) {
-            this.stopActiveFootstep();
+            this.footstepTimer = 0;
             return;
         }
 
         const isRunning = speed > 6.0;
-        const base = `${isRunning ? 'run' : 'walk'}_${this.footstepSurface}`;
-        const activeBase = this.activeFootstepKey?.replace(/_\d\d$/, '');
-        const targetKey = activeBase === base && this.activeFootstepKey
-            ? this.activeFootstepKey
-            : this.nextFootstepKey(isRunning);
+        const interval = isRunning ? 0.33 : 0.52;
 
-        if (this.activeFootstepKey !== targetKey) {
-            this.stopActiveFootstep();
-            this.activeFootstepKey = targetKey;
+        this.footstepTimer += dt;
+        if (this.footstepTimer >= interval) {
+            this.footstepTimer = 0;
+
+            const mat = 'hard'; // default surface material (concrete)
+            const prefix = isRunning ? 'run' : 'walk';
+            const stepNum = Math.random() < 0.5 ? '01' : '02';
+            const soundKey = `${prefix}_${mat}_${stepNum}`;
+
+            this.playPositional(soundKey, position);
         }
-
-        const targetSound = this.sounds[targetKey];
-        if (targetSound && !targetSound.playing()) {
-            targetSound.rate(0.95 + Math.random() * 0.1);
-            targetSound.play();
-        }
-    }
-
-    public stop(key: string) {
-        this.sounds[key]?.stop();
-    }
-
-    public getAudioPath(key: string): string | undefined {
-        return getAudioEntry(key)?.path;
     }
 }
 
 export const audioManager = new AudioManager();
 (window as any).audioManager = audioManager;
-// Preserve the existing settings module's global controller expectation while
-// loading Howler through Vite rather than relying on a missing CDN global.
-(window as any).Howler = Howler;

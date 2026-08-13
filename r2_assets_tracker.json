@@ -205,25 +205,5 @@
       "source": "CloudflareR2",
       "path": "Models/Weapons/scar_l-optimized.glb"
     }
-  ],
-  "sounds": [
-    {
-      "name": "click.opus",
-      "category": "Sound",
-      "source": "CloudflareR2",
-      "path": "Audio/Sfx/click.opus"
-    },
-    {
-      "name": "vexea_theme.opus",
-      "category": "Sound",
-      "source": "CloudflareR2",
-      "path": "Audio/Music/vexea_theme.opus"
-    },
-    {
-      "name": "iron_march.opus",
-      "category": "Sound",
-      "source": "CloudflareR2",
-      "path": "Audio/Music/iron_march.opus"
-    }
   ]
 }

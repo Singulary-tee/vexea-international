@@ -3,6 +3,7 @@ import { ClassId, CLASSES } from "../shared/classes";
 import matchManager from "./MatchManager";
 import { MatchRoom } from "./MatchRoom";
 import { ACTIVE_GAMEMODE } from "../shared/gamemode-configs";
+import { MatchAbuseStore } from "./player-data/MatchAbuseStore";
 
 // PLACEHOLDER - not specified, needs playtesting
 export const MATCHMAKER_MAX_WAIT_SECONDS = 45;
@@ -40,21 +41,32 @@ export class Matchmaker {
     }, 1000);
   }
 
-  public addPlayerToPool(
+  public async addPlayerToPool(
     playerId: string,
     reqUid: string,
     channel: ChannelAdapter,
     mapId: string = "map_1_facility",
     classId: ClassId = "ASSAULT",
     displayName?: string,
-  ): void {
+  ): Promise<void> {
+    const uid = reqUid || playerId;
+    const isLocked = await MatchAbuseStore.isLockedOut(uid);
+    if (isLocked) {
+      console.log(`[MATCHMAKER] Rejecting player ${playerId} (${uid}) from pool: Account locked out or banned due to match abandonment.`);
+      channel.emit("reliable_event", {
+        type: "MATCHMAKING_ERROR",
+        message: "Account locked out due to match abandonment penalties.",
+      });
+      return;
+    }
+
     // Remove if already in queue to prevent duplicates
     this.removePlayerFromPool(playerId);
 
     const validClassId: ClassId = CLASSES[classId] ? classId : "ASSAULT";
     const queuedPlayer: QueuedPlayer = {
       id: playerId,
-      reqUid: reqUid || playerId,
+      reqUid: uid,
       displayName: displayName,
       channel,
       joinedTimestamp: Date.now(),
