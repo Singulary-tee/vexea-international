@@ -19,6 +19,8 @@ function openLobbyInvitePopup(lobbyId: string) {
   const myName = currentUser?.displayName || (window as any).registeredUserData?.displayName || "Agent";
 
   const overlay = document.createElement('div');
+  overlay.setAttribute('data-ui-surface', 'true');
+  overlay.classList.add('ui-surface');
   Object.assign(overlay.style, {
     position: 'fixed',
     inset: '0',
@@ -138,6 +140,8 @@ export function initLobby() {
   if (!el) {
     el = document.createElement('div');
     el.id = 'lobby-screen';
+    el.setAttribute('data-ui-surface', 'true');
+    el.classList.add('ui-surface');
     Object.assign(el.style, {
       position: 'fixed',
       inset: '0',

@@ -298,6 +298,8 @@ export function initMainMenu() {
 
   el = document.createElement('div');
   el.id = 'main-menu-screen';
+  el.setAttribute('data-ui-surface', 'true');
+  el.classList.add('ui-surface');
   Object.assign(el.style, {
     position: 'fixed', inset: '0', zIndex: '900', display: 'none',
     backgroundColor: DS.colors.background,

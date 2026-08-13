@@ -24,26 +24,19 @@ export function initPlatformGate() {
 
 export function isUIElement(target: EventTarget | null): boolean {
   if (!target) return false;
-  let el = target as HTMLElement;
+  let el = (target instanceof Element ? target : (target as Node).parentElement) as HTMLElement | null;
   while (el) {
-    if (el.tagName === 'BUTTON' || el.tagName === 'INPUT' || el.tagName === 'SELECT' || el.tagName === 'A') {
+    const tag = el.tagName;
+    if (tag === 'BUTTON' || tag === 'INPUT' || tag === 'SELECT' || tag === 'A' || tag === 'TEXTAREA' || tag === 'LABEL') {
       return true;
     }
     if (
-      el.id === 'dev-overlay' || 
-      el.id === 'minimap-container' || 
-      el.classList?.contains('fullscreen-minimap') || 
-      el.id === 'vexea-settings-overlay' ||
-      el.id === 'match-status-modal' ||
-      el.id === 'btn-match-status' ||
-      el.id === 'ui-editor-bar' ||
-      el.id === 'splash-screen' ||
-      el.id === 'portrait-lock' ||
-      el.classList?.contains('loading-overlay')
+      el.hasAttribute?.('data-ui-surface') ||
+      el.classList?.contains('ui-surface')
     ) {
       return true;
     }
-    el = el.parentElement as HTMLElement;
+    el = el.parentElement;
   }
   return false;
 }

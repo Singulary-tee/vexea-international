@@ -845,6 +845,8 @@ export function initDevMenu(channel: any, jitterMap: any) {
     // Construct DOM
     const btn = document.createElement("button");
     btn.id = "dev-menu-btn";
+    btn.setAttribute('data-ui-surface', 'true');
+    btn.classList.add('ui-surface');
     btn.innerText = "DEV";
     btn.style.cssText = `position:absolute;top:0.63rem;left:0.63rem;z-index:999999;background:#f0f;color:${DS.colors.text};font-weight:bold;padding:${DS.spacing.sm} 0.63rem;border:none;cursor:pointer;pointer-events:auto;`;
     btn.onclick = () => toggleDevMenu();
@@ -852,6 +854,8 @@ export function initDevMenu(channel: any, jitterMap: any) {
 
     const overlay = document.createElement("div");
     overlay.id = "dev-overlay";
+    overlay.setAttribute('data-ui-surface', 'true');
+    overlay.classList.add('ui-surface');
     overlay.style.cssText = `display:none;position:absolute;inset:0;background:rgba(10,10,12,0.95);backdrop-filter:blur(0.38rem);z-index:999998;pointer-events:auto;color:${DS.colors.success};font-family:${DS.typography.fontFamilyMono};padding:${DS.spacing.md};flex-direction:column;`;
     
     // PURELY FOR IN-MATCH DEVELOPMENT. NOT FOR ANYTHING PRE-MATCH.

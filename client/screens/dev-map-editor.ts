@@ -10,6 +10,8 @@ export function initDevMapEditor() {
         el.id = 'dev-map-editor-screen';
         document.body.appendChild(el);
     }
+    el.setAttribute('data-ui-surface', 'true');
+    el.classList.add('ui-surface');
     
     // Clear and build DOM
     el.innerHTML = '';

@@ -18,6 +18,8 @@ export function showMatchmakingOverlay(options: MatchmakingOverlayOptions): void
   // Full-screen backdrop modal blocker
   const backdrop = document.createElement("div");
   backdrop.id = "matchmaking-overlay";
+  backdrop.setAttribute("data-ui-surface", "true");
+  backdrop.classList.add("ui-surface");
   Object.assign(backdrop.style, {
     position: "fixed",
     inset: "0",
@@ -176,6 +178,8 @@ export function showPreMatchCountdownOverlay(countdownSeconds: number): void {
   if (!el) {
     el = document.createElement("div");
     el.id = "pre-match-countdown-overlay";
+    el.setAttribute("data-ui-surface", "true");
+    el.classList.add("ui-surface");
     Object.assign(el.style, {
       position: "fixed",
       top: "12%",

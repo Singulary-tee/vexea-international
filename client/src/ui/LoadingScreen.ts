@@ -17,7 +17,8 @@ export class LoadingScreen {
 
   constructor() {
     this.overlay = document.createElement("div");
-    this.overlay.className = "fullscreen-overlay loading-overlay";
+    this.overlay.className = "fullscreen-overlay loading-overlay ui-surface";
+    this.overlay.setAttribute("data-ui-surface", "true");
     this.overlay.style.position = "fixed";
     this.overlay.style.inset = "0";
     this.overlay.style.width = "100%";

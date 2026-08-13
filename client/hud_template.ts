@@ -5,7 +5,7 @@ export const HUD_HTML = `
     <div id="vexea-view" class="absolute inset-0 w-full h-full overflow-hidden bg-transparent select-none text-white touch-none" style="font-family: ${DS.typography.fontFamilySecondary} !important; font-weight: ${DS.typography.weightMedium} !important;">
       
       <!-- Death Overlay -->
-      <div id="death-overlay" style="display: none; position: absolute; inset: 0; z-index: 1000; background: ${DS.shadows.overlay}; flex-direction: column; align-items: center; justify-content: center; pointer-events: none; color: white; font-family: ${DS.typography.fontFamilySecondary}, sans-serif; user-select: none;">
+      <div id="death-overlay" data-ui-surface="true" class="ui-surface" style="display: none; position: absolute; inset: 0; z-index: 1000; background: ${DS.shadows.overlay}; flex-direction: column; align-items: center; justify-content: center; pointer-events: none; color: white; font-family: ${DS.typography.fontFamilySecondary}, sans-serif; user-select: none;">
         <div style="background: rgba(255,255,255,0.04); border: ${DS.borders.thin} rgba(255,255,255,0.08); backdrop-filter: ${DS.glass.blur}; padding: 2rem 3rem; border-radius: ${DS.borders.radius.none}; display: flex; flex-direction: column; align-items: center; justify-content: center;">
           <div style="font-size: 1.2rem; letter-spacing: ${DS.typography.letterSpacing.wide}; color: rgba(255,255,255,0.4); text-transform: uppercase;">CONTRACTOR DOWN</div>
           <div id="death-countdown" style="font-size: 5rem; color: ${DS.colors.accent}; line-height: 1.2;">5</div>
@@ -520,8 +520,8 @@ export const HUD_HTML = `
 .cross-line { position: absolute !important; background: white !important; }
 </style>
 
-<div id="hud-container">
-  <div id="look-zone-right"></div>
+<div id="hud-container" data-ui-surface="true" class="ui-surface">
+  <div id="look-zone-right" class="platform-mobile"></div>
   
   <button id="btn-match-status" title="Match Status & Ping Diagnostics">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:1.38rem; height:1.38rem;">

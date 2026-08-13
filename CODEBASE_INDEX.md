@@ -221,7 +221,7 @@ This file is the authoritative index of all directories and source files within 
     *   **`challenges.json`**: Daily and weekly operational challenge definitions, targets, and rewards.
     *   **`offers.json`**: Store special promotions, featured bundles, and limited-time offer parameters.
 *   **`gates/` (Client Environment & Screen Gates)**
-    *   **`platform.gate.ts`**: Mobile vs desktop device detector (`IS_MOBILE`, `IS_DESKTOP`, `initPlatformGate`) applying platform CSS classes to `document.body`.
+    *   **`platform.gate.ts`**: Mobile vs desktop device detector (`IS_MOBILE`, `IS_DESKTOP`, `initPlatformGate`) applying platform CSS classes to `document.body`. Also exports marker-based DOM traversal input boundary detector `isUIElement()` checking form controls and `data-ui-surface` / `.ui-surface` nodes.
     *   **`screen.gate.ts`**: Centralized screen lock manager (`ScreenGate`) enforcing rotation overlay locks, loading locks, splash locks, UI editor locks, and gameplay input suppression.
 *   **`screens/` (Client View Screens)**
     *   **`armory-screen.ts`**: Weapon loadout customization, attachment selection, weapon skin selection, and 3D preview.
@@ -252,7 +252,7 @@ This file is the authoritative index of all directories and source files within 
     *   **`settings/`**
         *   **`state.ts`**: Manages reactive state stores for user settings, preferences, and audio/graphics configurations.
         *   **`types.ts`**: TypeScript interface definitions and configuration types for the settings subsystem.
-        *   **`ui.ts`**: Renders the settings UI panel, sliders, toggles, and configuration menus.
+        *   **`ui.ts`**: Renders the settings UI panel, sliders, toggles, configuration menus, and quit confirmation modal with duplicate modal guards.
     *   **`systems/`**
         *   **`ChatHUDSystem.ts`**: Manages in-match text chat overlay, message formatting, input locking, and sanitization.
         *   **`ClassLoadoutPersistence.ts`**: Handles caching and synchronization of player class loadout selections with persistent storage.

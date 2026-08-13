@@ -29,7 +29,12 @@ export function initPostMatch() {
   if (!postMatchScreenEl) {
     postMatchScreenEl = document.createElement("div");
     postMatchScreenEl.id = "post-match-screen";
+    postMatchScreenEl.setAttribute("data-ui-surface", "true");
+    postMatchScreenEl.classList.add("ui-surface");
     document.body.appendChild(postMatchScreenEl);
+  } else {
+    postMatchScreenEl.setAttribute("data-ui-surface", "true");
+    postMatchScreenEl.classList.add("ui-surface");
   }
 
   // Set sharp layout styles adhering strictly to DS Item 1 & Item 3

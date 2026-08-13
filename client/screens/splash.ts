@@ -59,6 +59,8 @@ export function initSplash() {
     el.id = 'splash-screen';
     document.body.appendChild(el);
   }
+  el.setAttribute('data-ui-surface', 'true');
+  el.classList.add('ui-surface');
 
   Object.assign(el.style, {
     position: 'fixed',

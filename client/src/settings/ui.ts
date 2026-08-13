@@ -40,6 +40,8 @@ export function openSettingsUI(
     // Create main overlay container (100vw x 100vh locked, orthogonal 0px radius)
     overlayEl = document.createElement('div');
     overlayEl.id = 'vexea-settings-overlay';
+    overlayEl.setAttribute('data-ui-surface', 'true');
+    overlayEl.classList.add('ui-surface');
     Object.assign(overlayEl.style, {
         position: 'fixed',
         inset: '0',
@@ -375,6 +377,8 @@ export function openSettingsUI(
 
 export function closeSettingsUI(onClose: () => void) {
     if (!overlayEl) return;
+    const quitModal = document.getElementById('quit-confirm-modal');
+    if (quitModal) quitModal.remove();
     boundListeners.forEach(l => {
         l.el.removeEventListener(l.type, l.fn);
     });
@@ -458,8 +462,14 @@ function renderMatchTab(container: HTMLElement, s: VexeaSettingsData, onClose: (
     container.appendChild(quitBtn);
 
     quitBtn.addEventListener('click', () => {
+        // Guard against duplicate quit confirmation modals
+        if (document.getElementById('quit-confirm-modal')) return;
+
         // Abandon mission confirmation modal
         const modal = document.createElement('div');
+        modal.id = 'quit-confirm-modal';
+        modal.setAttribute('data-ui-surface', 'true');
+        modal.classList.add('ui-surface');
         Object.assign(modal.style, {
             position: 'fixed',
             inset: '0',

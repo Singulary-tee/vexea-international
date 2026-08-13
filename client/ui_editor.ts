@@ -46,6 +46,8 @@ export const initUIEditor = () => {
     // Floating UI Editor Window
     const editorBar = document.createElement("div");
     editorBar.id = "ui-editor-bar";
+    editorBar.setAttribute("data-ui-surface", "true");
+    editorBar.classList.add("ui-surface");
     editorBar.style.position = "absolute";
     editorBar.style.top = "5%";
     editorBar.style.left = "5%";

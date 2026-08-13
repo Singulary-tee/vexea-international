@@ -20,6 +20,8 @@ export function initBattlePass() {
 
   el = document.createElement('div');
   el.id = 'battle-pass-screen';
+  el.setAttribute('data-ui-surface', 'true');
+  el.classList.add('ui-surface');
   Object.assign(el.style, {
     position: 'fixed',
     inset: '0',

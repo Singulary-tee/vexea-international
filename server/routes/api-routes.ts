@@ -361,10 +361,10 @@ export function registerApiRoutes(app: Express): void {
       const pRevives = revives || 0;
 
       let bpRankChange = mult * (pScoreIndividual > 0 ? 1 : 0);
-      let awardedScore = pScoreIndividual * mult;
 
-      // Use the exact NEW reduced rate formula as instructed: creditsEarned = 5 + (isWin ? 15 : 0)
-      const creditsEarned = 5 + (isWin ? 15 : 0);
+      // Use verifier output for rewards (applying adMultiplier if applicable)
+      const creditsEarned = Math.round(result.creditsEarned * mult);
+      const xpEarned = Math.round(result.xpEarned * mult);
 
       const userRef = doc(db, "Users", playerId);
       
@@ -384,8 +384,8 @@ export function registerApiRoutes(app: Express): void {
             createdAt: new Date(),
             dailyRefreshedAt: new Date(),
             
-            score: awardedScore,
-            lifetimeXP: awardedScore,
+            score: xpEarned,
+            lifetimeXP: xpEarned,
             kills: droneKills,
             battlePass: bpRankChange + 1,
 
@@ -412,8 +412,8 @@ export function registerApiRoutes(app: Express): void {
           const currentEnergy = data.energy !== undefined ? data.energy : starterEnergy;
 
           transaction.update(userRef, {
-            score: increment(awardedScore),
-            lifetimeXP: increment(awardedScore),
+            score: increment(xpEarned),
+            lifetimeXP: increment(xpEarned),
             kills: increment(droneKills),
             battlePass: increment(bpRankChange),
 
@@ -438,7 +438,7 @@ export function registerApiRoutes(app: Express): void {
       return res.json({
         success: true,
         creditsEarned,
-        xpEarned: awardedScore,
+        xpEarned,
         newLevel: bpRankChange
       });
     } catch (err: any) {

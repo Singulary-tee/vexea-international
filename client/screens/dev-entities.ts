@@ -843,6 +843,8 @@ export async function initDevEntities() {
         screen.id = "dev-entities-screen";
         document.body.appendChild(screen);
     }
+    screen.setAttribute("data-ui-surface", "true");
+    screen.classList.add("ui-surface");
     screen.innerHTML = "";
     
     Object.assign(screen.style, {
