@@ -944,7 +944,7 @@ function renderAudioTab(container: HTMLElement, s: VexeaSettingsData) {
 
     const sliders = [
         { id: 'masterVolume', label: 'Master Output Volume', sound: 'click' },
-        { id: 'sfxVolume', label: 'Sound Effects (SFX)', sound: 'hit_confirmed' },
+        { id: 'sfxVolume', label: 'Sound Effects (SFX)', sound: 'hit_confirm' },
         { id: 'musicVolume', label: 'Music & Ambience', sound: 'vexea_theme' },
         { id: 'uiVolume', label: 'Interface Feedback (UI)', sound: 'click' },
         { id: 'voiceVolume', label: 'Voice Radio Transmissions', sound: 'click' }
@@ -1017,7 +1017,7 @@ function renderAudioTab(container: HTMLElement, s: VexeaSettingsData) {
     sampleBtnsWrap.style.gap = '8px';
 
     const testSamples = [
-        { label: 'AUDITION HIT CONFIRM', sound: 'hit_confirmed' },
+        { label: 'AUDITION HIT CONFIRM', sound: 'hit_confirm' },
         { label: 'AUDITION WEAPON FIRE (M4 RIFLE)', sound: 'rifle_fire' },
         { label: 'AUDITION INTERFACE CONFIRM BEEP', sound: 'click' },
         { label: 'AUDITION THEME SOUNDTRACK STINGER', sound: 'vexea_theme' }

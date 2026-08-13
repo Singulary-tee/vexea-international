@@ -39,7 +39,7 @@ export class CombatSystem {
       if (now - lastShotTime > 250) {
         if (this.match.activeWeapon === 1) this.match.lastPrimaryShotT = now;
         else this.match.lastSecondaryShotT = now;
-        audioManager.play("click");
+        audioManager.playEmptyClick();
       }
       return;
     }

@@ -35,6 +35,9 @@ export class InputSystem {
   private camera: THREE.PerspectiveCamera;
   private canvasContainer: HTMLElement | null;
   private abortController = new AbortController();
+  private lastCrouchingState = false;
+  private lastGroundedState = false;
+  private hasGroundedSample = false;
 
   constructor(private match: MatchController, camera: THREE.PerspectiveCamera) {
     this.camera = camera;
@@ -75,6 +78,7 @@ export class InputSystem {
       if (isSwitchingWeapon()) return;
       if (e.button === 2) {
         e.preventDefault();
+        if (!this.match.isADS) audioManager.play('ads');
         this.match.isADS = true;
       }
     }, { signal });
@@ -317,7 +321,10 @@ export class InputSystem {
         if (isSwitchingWeapon()) return;
         if (!this.match) return;
         this.match.isADS = !this.match.isADS;
-        if (this.match.isADS) adsBtn.classList.add("bg-white", "opacity-80");
+        if (this.match.isADS) {
+          audioManager.play('ads');
+          adsBtn.classList.add("bg-white", "opacity-80");
+        }
         else adsBtn.classList.remove("bg-white", "opacity-80");
       });
     }
@@ -590,8 +597,11 @@ export class InputSystem {
       }
     } else {
       let curveT = 0.0;
+      const crouchActive = Boolean(keys.Crouch || inputManager.isCrouching);
+      if (crouchActive && !this.lastCrouchingState) audioManager.play('crouch');
+      this.lastCrouchingState = crouchActive;
       const isMoving = keys.w || keys.a || keys.s || keys.d || GlobalState.__forceWalk;
-      const isSprinting = isMoving && keys.Shift && !keys.Crouch;
+      const isSprinting = isMoving && keys.Shift && !crouchActive;
 
       if (this.match.cameraEffects) {
         curveT = this.match.cameraEffects.updateSpeedBlend(dt, isMoving, isSprinting);
@@ -599,17 +609,18 @@ export class InputSystem {
         curveT = isSprinting ? 1.0 : 0.0;
       }
 
-      const baseWalkSpeed = keys.Crouch ? PLAYER_CROUCH_SPEED : PLAYER_BASE_SPEED;
+      const baseWalkSpeed = crouchActive ? PLAYER_CROUCH_SPEED : PLAYER_BASE_SPEED;
       const maxSprintSpeed = PLAYER_BASE_SPEED * PLAYER_SPRINT_MULTIPLIER;
       targetSpeed = baseWalkSpeed + (maxSprintSpeed - baseWalkSpeed) * curveT;
       targetSpeed *= (GlobalState.speedMultiplier || 1.0);
 
-      let targetCamY = keys.Crouch ? PLAYER_EYE_LEVEL_CROUCH : PLAYER_EYE_LEVEL;
+      let targetCamY = crouchActive ? PLAYER_EYE_LEVEL_CROUCH : PLAYER_EYE_LEVEL;
       this.match.localCrouchY += (targetCamY - this.match.localCrouchY) * 10.0 * dt;
 
       if (keys.Space && this.match.localGrounded) {
         this.match.localVy = PLAYER_JUMP_VELOCITY;
         this.match.localGrounded = false;
+        audioManager.play('jump');
       }
 
       if (!this.match.localGrounded) {
@@ -641,7 +652,7 @@ export class InputSystem {
       }
     }
 
-    const currentHalfHeight = inputManager.isCrouching ? PLAYER_CAPSULE_HALF_HEIGHT_CROUCH : PLAYER_CAPSULE_HALF_HEIGHT;
+    const currentHalfHeight = (keys.Crouch || inputManager.isCrouching) ? PLAYER_CAPSULE_HALF_HEIGHT_CROUCH : PLAYER_CAPSULE_HALF_HEIGHT;
     this.camera.position.set(
       this.match.playerPos.x,
       (this.match.playerPos.y - currentHalfHeight) + this.match.localCrouchY,
@@ -673,6 +684,11 @@ export class InputSystem {
     }
 
     const currentSpeed = len > 0 ? targetSpeed : 0;
+    if (this.hasGroundedSample && this.match.localGrounded && !this.lastGroundedState) {
+      audioManager.play('land');
+    }
+    this.lastGroundedState = this.match.localGrounded;
+    this.hasGroundedSample = true;
     audioManager.updateFootsteps(dt, currentSpeed, this.match.playerPos, this.match.localGrounded);
   }
 

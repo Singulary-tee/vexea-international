@@ -425,59 +425,5 @@
       "category": "Image",
       "source": "CloudflareR2"
     }
-  ],
-  "sounds": [
-    {
-      "name": "bass_scratch.mp3",
-      "category": "Audio"
-    },
-    {
-      "name": "click.opus",
-      "category": "Audio"
-    },
-    {
-      "name": "concrete_run.mp3",
-      "category": "Audio"
-    },
-    {
-      "name": "concrete_walk.mp3",
-      "category": "Audio"
-    },
-    {
-      "name": "error.mp3",
-      "category": "Audio"
-    },
-    {
-      "name": "iron_march.opus",
-      "category": "Audio"
-    },
-    {
-      "name": "metal_ricochet.mp3",
-      "category": "Audio"
-    },
-    {
-      "name": "pistol_fire.mp3",
-      "category": "Audio"
-    },
-    {
-      "name": "pistol_reload.mp3",
-      "category": "Audio"
-    },
-    {
-      "name": "rifle_fire.mp3",
-      "category": "Audio"
-    },
-    {
-      "name": "rifle_reload.mp3",
-      "category": "Audio"
-    },
-    {
-      "name": "vexea_theme.opus",
-      "category": "Audio"
-    },
-    {
-      "name": "wood_walk.mp3",
-      "category": "Audio"
-    }
   ]
 }

@@ -1,149 +1,115 @@
-import { Howl, Howler } from 'howler';
 import * as THREE from 'three';
-import { getCachedOrFetchUrl } from "./asset-cache";
+import { Howl, Howler } from 'howler';
+import { getCachedOrFetchUrl } from './asset-cache';
+import { AUDIO_MANIFEST, AudioCategory, AudioKey, getAudioEntry } from './audio-manifest';
 
-const SOUND_CATEGORIES: Record<string, 'music' | 'sfx' | 'ui'> = {
-    vexea_theme: 'music',
-    bass_scratch: 'music',
-    iron_march: 'music',
-    click: 'ui',
-    error: 'ui',
-    metal_ricochet: 'sfx',
-    wood_walk: 'sfx',
-    concrete_run: 'sfx',
-    concrete_walk: 'sfx',
-    rifle_reload: 'sfx',
-    pistol_reload: 'sfx',
-    pistol_fire: 'sfx',
-    rifle_fire: 'sfx',
-    hit_confirmed: 'sfx',
-    drone_death: 'sfx'
-};
+const SOUND_CATEGORIES: Record<string, AudioCategory> = Object.fromEntries(
+    AUDIO_MANIFEST.map((entry) => [entry.key, entry.category])
+);
+
+const _listenerForward = new THREE.Vector3();
+const _listenerRight = new THREE.Vector3();
+const _worldUp = new THREE.Vector3(0, 1, 0);
+
+type FootstepSurface = 'gravel' | 'ground' | 'hard' | 'metal' | 'wood';
 
 class AudioManager {
     private assetsLoaded = 0;
     private totalAssets = 0;
-    
-    // SFX
+
     public sounds: Record<string, Howl> = {};
-    
-    // Music sequence state
-    private menuMusicSequence: string[] = ['vexea_theme', 'iron_march'];
+
+    private menuMusicSequence: AudioKey[] = ['vexea_theme', 'iron_march', 'factory_ambience'];
     private currentMusicIndex = 0;
     private currentMusicHowl: Howl | null = null;
-    
-    // State
+
     private isMatchPlaying = false;
-    
-    // Footstep state
     private activeFootstepKey: string | null = null;
+    private footstepSurface: FootstepSurface = 'hard';
+    private footstepVariants: Record<string, number> = {};
+
+    private volumeFor(category: AudioCategory, settings: any): number {
+        if (!settings) return 1;
+        if (category === 'music') return settings.music ? settings.musicVolume : 0;
+        if (category === 'ui') return settings.uiSounds ? settings.uiVolume : 0;
+        return settings.sfxVolume;
+    }
+
+    private applyVolume(key: string, howl: Howl): void {
+        const settings = (window as any).vexeaSettings;
+        howl.volume(this.volumeFor(SOUND_CATEGORIES[key] || 'sfx', settings));
+    }
 
     public updateVolumes(s: any) {
         for (const key in this.sounds) {
             if (Object.prototype.hasOwnProperty.call(this.sounds, key)) {
-                const howl = this.sounds[key];
-                const category = SOUND_CATEGORIES[key] || 'sfx';
-                let vol = 1.0;
-                if (category === 'music') {
-                    vol = s.music ? s.musicVolume : 0;
-                } else if (category === 'ui') {
-                    vol = s.uiSounds ? s.uiVolume : 0;
-                } else if (category === 'sfx') {
-                    vol = s.sfxVolume;
-                }
-                howl.volume(vol);
+                this.sounds[key].volume(this.volumeFor(SOUND_CATEGORIES[key] || 'sfx', s));
             }
         }
     }
 
     public async loadAll(): Promise<void> {
-        const audioFiles = {
-            // Music
-            vexea_theme: 'vexea_theme.opus',
-            bass_scratch: 'bass_scratch.mp3',
-            iron_march: 'iron_march.opus',
-            // SFX menu
-            click: 'click.opus',
-            error: 'error.mp3',
-            // Footsteps / Materials
-            metal_ricochet: 'metal_ricochet.mp3',
-            wood_walk: 'wood_walk.mp3',
-            concrete_run: 'concrete_run.mp3',
-            concrete_walk: 'concrete_walk.mp3',
-            // Weapons
-            rifle_reload: 'rifle_reload.mp3',
-            pistol_reload: 'pistol_reload.mp3',
-            pistol_fire: 'pistol_fire.mp3',
-            rifle_fire: 'rifle_fire.mp3',
-            hit_confirmed: 'metal_ricochet.mp3',
-            drone_death: 'metal_ricochet.mp3'
-        };
+        this.totalAssets = AUDIO_MANIFEST.length;
+        this.assetsLoaded = 0;
 
-        this.totalAssets = Object.keys(audioFiles).length;
+        const loadPromises = AUDIO_MANIFEST.map(async (entry) => {
+            const cachedUrl = await getCachedOrFetchUrl(entry.path, 'Sound');
+            let settled = false;
+            const settle = () => {
+                if (!settled) {
+                    settled = true;
+                    this.assetsLoaded++;
+                }
+            };
 
-        const loadPromises = Object.entries(audioFiles).map(async ([key, filename]) => {
-            const isFootstep = ['concrete_walk', 'concrete_run', 'wood_walk'].includes(key);
-            const cachedUrl = await getCachedOrFetchUrl(filename, 'Sound');
-            const ext = filename.substring(filename.lastIndexOf('.') + 1);
-            const formats = ext === 'opus' ? ['opus', 'ogg'] : [ext];
-            return new Promise<void>((resolve, reject) => {
+            return new Promise<void>((resolve) => {
                 const howl = new Howl({
                     src: [cachedUrl],
-                    format: formats,
+                    // R2 stores the canonical files as Opus in an Ogg-compatible container.
+                    format: ['opus', 'ogg'],
                     preload: true,
-                    loop: isFootstep,
+                    loop: Boolean('loop' in entry && entry.loop),
                     onplayerror: function() {
-                        if (!isFootstep) {
-                            howl.once('unlock', function() {
-                                howl.play();
-                            });
-                        }
+                        howl.once('unlock', function() {
+                            howl.play();
+                        });
                     },
                     onload: () => {
-                        this.assetsLoaded++;
+                        settle();
                         resolve();
                     },
-                    onloaderror: (id, err) => {
-                        console.warn(`Failed to load audio: ${filename}`, err);
+                    onloaderror: (_id, err) => {
+                        settle();
+                        console.warn(`[Audio] Failed to load ${entry.key} from ${entry.path}`, err);
                         resolve();
                     }
                 });
-                this.sounds[key] = howl;
-                const s = (window as any).vexeaSettings;
-                if (s) {
-                    const category = SOUND_CATEGORIES[key] || 'sfx';
-                    let vol = 1.0;
-                    if (category === 'music') {
-                        vol = s.music ? s.musicVolume : 0;
-                    } else if (category === 'ui') {
-                        vol = s.uiSounds ? s.uiVolume : 0;
-                    } else if (category === 'sfx') {
-                        vol = s.sfxVolume;
-                    }
-                    howl.volume(vol);
-                }
+                this.sounds[entry.key] = howl;
+                this.applyVolume(entry.key, howl);
             });
         });
 
         await Promise.all(loadPromises);
     }
-    
+
     public play(name: string) {
-        if (this.sounds[name]) {
-            const category = SOUND_CATEGORIES[name] || 'sfx';
-            if (category === 'sfx' || category === 'ui') {
-                // Apply a small random pitch variation to break monotony
-                const pitch = 0.93 + Math.random() * 0.14; // Range 0.93 to 1.07
-                this.sounds[name].rate(pitch);
-            } else {
-                this.sounds[name].rate(1.0); // Keep theme music at default speed
-            }
-            this.sounds[name].play();
-        } else {
+        const sound = this.sounds[name];
+        if (!sound) {
             console.warn(`Audio ${name} not found`);
+            return;
         }
+
+        const category = SOUND_CATEGORIES[name] || 'sfx';
+        sound.rate(category === 'music' ? 1.0 : 0.93 + Math.random() * 0.14);
+        sound.play();
     }
 
+    /**
+     * Plays a sound with distance attenuation and listener-relative stereo pan.
+     * Howler's stereo pan is derived from the active camera's right vector, so
+     * rotating the listener changes left/right placement instead of using fixed
+     * world-axis panning.
+     */
     public playPositional(
         name: string,
         sourceX: number,
@@ -154,97 +120,118 @@ class AudioManager {
         listenerZ: number,
         maxDistance = 120
     ): number | null {
-        if (!this.sounds[name]) {
-            return null;
-        }
+        const sound = this.sounds[name];
+        if (!sound) return null;
 
-        const s = (window as any).vexeaSettings;
+        const settings = (window as any).vexeaSettings;
         const category = SOUND_CATEGORIES[name] || 'sfx';
-        let baseVol = 1.0;
-        if (s) {
-            if (category === 'music') {
-                baseVol = s.music ? s.musicVolume : 0;
-            } else if (category === 'ui') {
-                baseVol = s.uiSounds ? s.uiVolume : 0;
-            } else if (category === 'sfx') {
-                baseVol = s.sfxVolume;
-            }
-        }
-
+        const baseVol = this.volumeFor(category, settings);
         if (baseVol <= 0) return null;
 
-        let effectiveVol = baseVol;
+        const dx = sourceX - listenerX;
+        const dy = sourceY - listenerY;
+        const dz = sourceZ - listenerZ;
+        const distSq = dx * dx + dy * dy + dz * dz;
 
-        // If spatialAudio setting is enabled (default true), calculate quadratic distance attenuation
-        if (!s || s.spatialAudio !== false) {
-            const dx = sourceX - listenerX;
-            const dy = sourceY - listenerY;
-            const dz = sourceZ - listenerZ;
-            const distSq = dx * dx + dy * dy + dz * dz;
+        if (settings?.spatialAudio !== false) {
             const maxDistSq = maxDistance * maxDistance;
+            if (distSq >= maxDistSq) return null;
+        }
 
-            if (distSq >= maxDistSq) {
-                return null; // Out of max hearing range
-            }
-
+        let effectiveVol = baseVol;
+        if (!settings || settings.spatialAudio !== false) {
             const dist = Math.sqrt(distSq);
             const factor = Math.max(0, 1 - dist / maxDistance);
-            const attenuation = factor * factor; // Quadratic inverse distance rolloff
-            effectiveVol = baseVol * attenuation;
+            effectiveVol = baseVol * factor * factor;
         }
-
         if (effectiveVol <= 0.001) return null;
 
-        const sound = this.sounds[name];
-        if (category === 'sfx' || category === 'ui') {
-            const pitch = 0.93 + Math.random() * 0.14;
-            sound.rate(pitch);
-        } else {
-            sound.rate(1.0);
+        const camera = (window as any).camera;
+        let pan = 0;
+        if (camera?.getWorldDirection) {
+            camera.getWorldDirection(_listenerForward).normalize();
+            _listenerRight.crossVectors(_listenerForward, _worldUp).normalize();
+            const length = Math.sqrt(distSq);
+            if (length > 0.001) {
+                pan = THREE.MathUtils.clamp(
+                    (dx * _listenerRight.x + dy * _listenerRight.y + dz * _listenerRight.z) / length,
+                    -1,
+                    1
+                );
+            }
+        } else if (distSq > 0.001) {
+            pan = THREE.MathUtils.clamp(dx / Math.sqrt(distSq), -1, 1);
         }
 
+        sound.rate(category === 'music' ? 1.0 : 0.93 + Math.random() * 0.14);
         const soundId = sound.play();
-        if (soundId !== undefined) {
+        const spatialHowler = Howler as any;
+        const useWebAudioPanner = settings?.spatialAudio !== false
+            && typeof (sound as any).pos === 'function'
+            && typeof spatialHowler.pos === 'function';
+
+        if (useWebAudioPanner) {
+            // Keep the global listener aligned to the active Three.js camera and
+            // let the Web Audio PannerNode calculate direction and attenuation.
+            spatialHowler.pos(listenerX, listenerY, listenerZ);
+            if (camera?.getWorldDirection && typeof spatialHowler.orientation === 'function') {
+                camera.getWorldDirection(_listenerForward).normalize();
+                spatialHowler.orientation(
+                    _listenerForward.x,
+                    _listenerForward.y,
+                    _listenerForward.z,
+                    _worldUp.x,
+                    _worldUp.y,
+                    _worldUp.z
+                );
+            }
+            (sound as any).pannerAttr({
+                panningModel: 'HRTF',
+                distanceModel: 'linear',
+                refDistance: 1,
+                maxDistance,
+                rolloffFactor: 1,
+            }, soundId);
+            (sound as any).pos(sourceX, sourceY, sourceZ, soundId);
+            sound.volume(baseVol, soundId);
+        } else {
+            // Fallback for environments without the Howler spatial plugin.
             sound.volume(effectiveVol, soundId);
+            sound.stereo(pan, soundId);
         }
         return soundId;
     }
-    
+
     public setMatchState(inMatch: boolean) {
         this.isMatchPlaying = inMatch;
         if (inMatch) {
             this.stopMenuMusic();
         } else {
-            if (this.activeFootstepKey) {
-                this.sounds[this.activeFootstepKey]?.stop();
-                this.activeFootstepKey = null;
-            }
+            this.stopActiveFootstep();
             if (!this.currentMusicHowl || !this.currentMusicHowl.playing()) {
                 this.playNextMenuMusic();
             }
         }
     }
-    
+
     public playNextMenuMusic() {
         if (this.isMatchPlaying) return;
-        
+
         if (this.currentMusicHowl) {
             this.currentMusicHowl.stop();
             this.currentMusicHowl.off('end');
         }
-        
+
         const nextTrackName = this.menuMusicSequence[this.currentMusicIndex];
         this.currentMusicIndex = (this.currentMusicIndex + 1) % this.menuMusicSequence.length;
-        
-        this.currentMusicHowl = this.sounds[nextTrackName];
+
+        this.currentMusicHowl = this.sounds[nextTrackName] || null;
         if (this.currentMusicHowl) {
             this.currentMusicHowl.play();
-            this.currentMusicHowl.once('end', () => {
-                this.playNextMenuMusic();
-            });
+            this.currentMusicHowl.once('end', () => this.playNextMenuMusic());
         }
     }
-    
+
     public stopMenuMusic() {
         if (this.currentMusicHowl) {
             this.currentMusicHowl.stop();
@@ -254,77 +241,128 @@ class AudioManager {
     }
 
     public playWeaponFire(activeWeapon: number) {
-        if (activeWeapon === 1) {
-            this.play('rifle_fire');
-        } else {
-            this.play('pistol_fire');
-        }
+        this.play(activeWeapon === 1 ? 'rifle_fire' : 'pistol_fire');
     }
 
-    public playWeaponReload(activeWeapon: number) {
-        this.stop('rifle_reload');
-        this.stop('pistol_reload');
-        if (activeWeapon === 1) {
-            this.play('rifle_reload');
-        } else {
-            this.play('pistol_reload');
-        }
+    public playWeaponReload(_activeWeapon: number) {
+        this.stop('reload');
+        this.play('reload');
     }
-    
+
     public stopWeaponReload() {
-        this.stop('rifle_reload');
-        this.stop('pistol_reload');
+        this.stop('reload');
     }
 
-    public stop(key: string) {
-        if (this.sounds[key]) {
-            this.sounds[key].stop();
+    public playEmptyClick() {
+        this.play('empty_click');
+    }
+
+    private droneFireKey(droneType: number): AudioKey {
+        // DroneType: rotary shooter 0, bomber 1, recon 2, fixed-wing 3,
+        // wheeled 4, robot dog 5, humanoid 6. Quadruped shares humanoid fire.
+        return droneType === 4
+            ? 'ugv_turret_fire'
+            : droneType === 6 || droneType === 5
+            ? 'humanoid_gun_fire'
+            : 'quadcopter_rifle_fire';
+    }
+
+    public playDroneFire(droneType: number) {
+        this.play(this.droneFireKey(droneType));
+    }
+
+    public playDroneFirePositional(
+        droneType: number,
+        sourceX: number,
+        sourceY: number,
+        sourceZ: number,
+        listenerX: number,
+        listenerY: number,
+        listenerZ: number,
+        maxDistance = 150
+    ) {
+        return this.playPositional(
+            this.droneFireKey(droneType),
+            sourceX,
+            sourceY,
+            sourceZ,
+            listenerX,
+            listenerY,
+            listenerZ,
+            maxDistance
+        );
+    }
+
+    public playDroneDeath() {
+        this.play('bomber_explosion');
+    }
+
+    public playDroneDeathPositional(
+        sourceX: number,
+        sourceY: number,
+        sourceZ: number,
+        listenerX: number,
+        listenerY: number,
+        listenerZ: number,
+        maxDistance = 150
+    ) {
+        return this.playPositional('bomber_explosion', sourceX, sourceY, sourceZ, listenerX, listenerY, listenerZ, maxDistance);
+    }
+
+    public setFootstepSurface(surface: FootstepSurface) {
+        this.footstepSurface = surface;
+    }
+
+    private nextFootstepKey(isRunning: boolean): string {
+        const base = `${isRunning ? 'run' : 'walk'}_${this.footstepSurface}`;
+        const next = (this.footstepVariants[base] || 0) % 2 + 1;
+        this.footstepVariants[base] = next;
+        return `${base}_0${next}`;
+    }
+
+    private stopActiveFootstep() {
+        if (this.activeFootstepKey) {
+            this.sounds[this.activeFootstepKey]?.stop();
+            this.activeFootstepKey = null;
         }
     }
 
-    public updateFootsteps(dt: number, speed: number, position: THREE.Vector3, isGrounded: boolean) {
+    public updateFootsteps(_dt: number, speed: number, _position: THREE.Vector3, isGrounded: boolean) {
         if (!isGrounded || speed < 0.1) {
-            if (this.activeFootstepKey) {
-                this.sounds[this.activeFootstepKey]?.stop();
-                this.activeFootstepKey = null;
-            }
+            this.stopActiveFootstep();
             return;
         }
 
         const isRunning = speed > 6.0;
-        let targetKey = 'concrete_walk';
-
-        // In a real-time multiplayer environment, floor material properties are ideally part of the zone/navmesh definitions 
-        // from the server, or defined via simple bounding zones client-side.
-        // For now, removing the continuous scene-graph raycast and defaulting to concrete to respect zero-GC/performance rules.
-        let matType = 'concrete'; 
-
-        if (matType === 'wood') {
-            targetKey = 'wood_walk';
-        } else {
-            targetKey = isRunning ? 'concrete_run' : 'concrete_walk';
-        }
+        const base = `${isRunning ? 'run' : 'walk'}_${this.footstepSurface}`;
+        const activeBase = this.activeFootstepKey?.replace(/_\d\d$/, '');
+        const targetKey = activeBase === base && this.activeFootstepKey
+            ? this.activeFootstepKey
+            : this.nextFootstepKey(isRunning);
 
         if (this.activeFootstepKey !== targetKey) {
-            // Stop previous active sound if any
-            if (this.activeFootstepKey) {
-                this.sounds[this.activeFootstepKey]?.stop();
-            }
+            this.stopActiveFootstep();
             this.activeFootstepKey = targetKey;
-            const targetSound = this.sounds[targetKey];
-            if (targetSound && !targetSound.playing()) {
-                targetSound.rate(0.95 + Math.random() * 0.1); // Add small random pitch variation
-                targetSound.play();
-            }
-        } else {
-            const targetSound = this.sounds[targetKey];
-            if (targetSound && !targetSound.playing()) {
-                targetSound.rate(0.95 + Math.random() * 0.1); // Add small random pitch variation
-                targetSound.play();
-            }
         }
+
+        const targetSound = this.sounds[targetKey];
+        if (targetSound && !targetSound.playing()) {
+            targetSound.rate(0.95 + Math.random() * 0.1);
+            targetSound.play();
+        }
+    }
+
+    public stop(key: string) {
+        this.sounds[key]?.stop();
+    }
+
+    public getAudioPath(key: string): string | undefined {
+        return getAudioEntry(key)?.path;
     }
 }
 
 export const audioManager = new AudioManager();
 (window as any).audioManager = audioManager;
+// Preserve the existing settings module's global controller expectation while
+// loading Howler through Vite rather than relying on a missing CDN global.
+(window as any).Howler = Howler;

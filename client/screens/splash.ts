@@ -2,9 +2,11 @@ import * as screenManager from "./screen-manager";
 import { getCachedOrFetchUrl, getAssetUrl, populateBlobUrlMap } from "../asset-cache";
 import { IS_DESKTOP } from "../gates/platform.gate";
 import { DS } from "../design-system";
+import { AUDIO_PATHS } from "../audio-manifest";
 
 const SOUNDS_TO_PRELOAD = [
-  'click.opus', 'vexea_theme.opus'
+  'Audio/Sfx/click.opus',
+  'Audio/Music/vexea_theme.opus'
 ];
 
 const TEXTURES_TO_PRELOAD: string[] = [
@@ -46,13 +48,8 @@ const VIDEOS_TO_PRELOAD: string[] = [
   'lobby_1.webm'
 ];
 
-// The rest of the game assets
-export const EXTENDED_SOUNDS = [
-  'bass_scratch.mp3', 'concrete_run.mp3', 'concrete_walk.mp3',
-  'error.mp3', 'iron_march.opus', 'metal_ricochet.mp3', 'pistol_fire.mp3',
-  'pistol_reload.mp3', 'rifle_fire.mp3', 'rifle_reload.mp3',
-  'wood_walk.mp3'
-];
+// The rest of the game assets. Audio paths are canonical R2 object keys.
+export const EXTENDED_SOUNDS = [...AUDIO_PATHS];
 
 export const EXTENDED_TEXTURES: string[] = [];
 

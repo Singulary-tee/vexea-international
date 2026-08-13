@@ -13,6 +13,7 @@ import { KTX2Loader } from "three/addons/loaders/KTX2Loader.js";
 import { getSettings } from "./settings";
 import { DS } from "./design-system";
 import { ASSET_STRUCTURE } from "../shared/asset-structure";
+import { AUDIO_PATHS } from "./audio-manifest";
 
 const DB_NAME = "VexeaLocalCache";
 const STORE_NAME = "files";
@@ -333,21 +334,7 @@ export const MAP_1_ASSETS = [
   "StreetLightPoles.glb"
 ];
 
-export const REQUIRED_SOUNDS = [
-  "vexea_theme.opus",
-  "bass_scratch.mp3",
-  "iron_march.opus",
-  "click.opus",
-  "error.mp3",
-  "metal_ricochet.mp3",
-  "wood_walk.mp3",
-  "concrete_run.mp3",
-  "concrete_walk.mp3",
-  "rifle_reload.mp3",
-  "pistol_reload.mp3",
-  "pistol_fire.mp3",
-  "rifle_fire.mp3"
-];
+export const REQUIRED_SOUNDS = [...AUDIO_PATHS];
 
 export function getRequiredFilesForMap(mapId: string): { name: string; cat: "Asset" | "Sound" | "Image" }[] {
   if (mapId === 'map_1_facility') {
@@ -487,7 +474,13 @@ export async function getCachedOrFetchUrl(
     };
 
     let downloadUrl = "";
-    if (r2Map[baseName]) {
+    if (category === "Sound") {
+      const audioPath = AUDIO_PATHS.find((path) => path === filename || path.endsWith(`/${baseName}`));
+      if (!audioPath) {
+        throw new Error(`[Cache] Unknown canonical R2 audio path: ${filename}`);
+      }
+      downloadUrl = `https://vexea-r2-asset-guard.alte.workers.dev/${audioPath}`;
+    } else if (r2Map[baseName]) {
       downloadUrl = `https://vexea-r2-asset-guard.alte.workers.dev/${r2Map[baseName]}`;
     } else {
       const baseUrl =
@@ -495,9 +488,7 @@ export async function getCachedOrFetchUrl(
           ? "https://github.com/Singulary-tee/vexea/releases/download/Asset"
           : category === "Video"
           ? "https://github.com/Singulary-tee/vexea/releases/download/Video"
-          : category === "Image"
-          ? "https://github.com/Singulary-tee/vexea/releases/download/Images"
-          : "https://github.com/Singulary-tee/vexea/releases/download/Sound";
+          : "https://github.com/Singulary-tee/vexea/releases/download/Images";
       downloadUrl = `${baseUrl}/${baseName}`;
     }
       
