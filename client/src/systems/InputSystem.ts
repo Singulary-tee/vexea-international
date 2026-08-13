@@ -332,6 +332,7 @@ export class InputSystem {
       autoLabel.addEventListener("pointerdown", (e) => {
         if ((window as any).isEditMode) return;
         if (this.isGameInputLocked()) return;
+        if (e.pointerType === "mouse") return;
         e.preventDefault(); e.stopPropagation();
         this.toggleFireMode();
       }, { signal: this.abortController.signal });
@@ -343,6 +344,7 @@ export class InputSystem {
       ws1.addEventListener("pointerdown", (e) => {
         if ((window as any).isEditMode) return;
         if (this.isGameInputLocked()) return;
+        if (e.pointerType === "mouse") return;
         e.preventDefault(); e.stopPropagation();
         this.selectWeapon(1);
       }, { signal: this.abortController.signal });
@@ -353,6 +355,7 @@ export class InputSystem {
       ws2.addEventListener("pointerdown", (e) => {
         if ((window as any).isEditMode) return;
         if (this.isGameInputLocked()) return;
+        if (e.pointerType === "mouse") return;
         e.preventDefault(); e.stopPropagation();
         this.selectWeapon(2);
       }, { signal: this.abortController.signal });
@@ -476,6 +479,7 @@ export class InputSystem {
       if ((window as any).isEditMode) return;
       if (this.isGameInputLocked()) return;
       if (!this.match || this.match.isLocalPlayerDead) return;
+      if (e.pointerType === "mouse") return;
       e.preventDefault(); e.stopPropagation();
       try { el.setPointerCapture(e.pointerId); } catch (_) {}
       this.match.activePointers.set(e.pointerId, { type: "shoot", id });
@@ -491,6 +495,7 @@ export class InputSystem {
     };
 
     const onMove = (e: PointerEvent) => {
+      if (e.pointerType === "mouse") return;
       if (shootPointerId !== e.pointerId) return;
       e.preventDefault(); e.stopPropagation();
 
@@ -508,6 +513,7 @@ export class InputSystem {
     };
 
     const onEnd = (e: PointerEvent) => {
+      if (e.pointerType === "mouse") return;
       if (shootPointerId !== e.pointerId) return;
       e.preventDefault(); e.stopPropagation();
       this.match.activePointers.delete(e.pointerId);

@@ -264,7 +264,7 @@ This file is the authoritative index of all directories and source files within 
         *   **`DroneSystem.ts`**: Manages local models, instancing, and material updates for active drones.
         *   **`DynamicResolutionSystem.ts`**: Automatic pixel ratio scaling subsystem maintaining frame rates within performance budgets.
         *   **`HUDSystem.ts`**: Injects real-time status telemetry into the HTML HUD (HP, Ammo, score, countdown timer, and active hold progress).
-        *   **`InputSystem.ts`**: Processes inputs, sets rotation values, and triggers the `InputSynchronizer` stream.
+        *   **`InputSystem.ts`**: Processes mouse, touch, and joystick inputs, handles touch drag-shoot aiming/firing with pointerType guards, sets rotation values, and triggers the `InputSynchronizer` stream.
         *   **`LLMObjectiveSystem.ts`**: Handles interaction with the rogue LLM Core objective terminal in zone_core (384, 384), proximity detection, hold keybind / mobile pop-up button, progress timer, and server event streaming.
         *   **`MinimapSystem.ts`**: Manages the 2D visual radar map tracking captured zone boundaries and detected targets.
         *   **`NetworkSyncSystem.ts`**: Unpacks global binary server payloads, interpolates remote entities, and tracks historic rewinds.
