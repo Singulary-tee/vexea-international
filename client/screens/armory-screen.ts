@@ -108,8 +108,13 @@ export function renderArmoryScreen(container: HTMLElement, registeredUserData?: 
 
   categories.forEach(cat => {
     const tabBtn = document.createElement('button');
-    tabBtn.textContent = cat.label;
     const isActive = cat.id === activeCategory;
+    tabBtn.innerHTML = `
+      <div style="display:flex; align-items:center; justify-content:center; gap:3px;">
+        <img src="/ui_svgs/class_${cat.id.toLowerCase()}.svg" style="width:0.88rem; height:0.88rem; filter: brightness(0) invert(1); opacity: ${isActive ? '1' : '0.4'};" alt="${cat.label}" />
+        <span>${cat.label}</span>
+      </div>
+    `;
     Object.assign(tabBtn.style, {
       flex: '1',
       padding: '3px 1px',
@@ -138,24 +143,37 @@ export function renderArmoryScreen(container: HTMLElement, registeredUserData?: 
   const currentList = CATALOG_LOADOUTS[activeCategory] || [];
   const selectedItem = currentList[selectedItemIdx] || currentList[0];
 
-function getSlotIconSvg(weaponKey: string, category: string): string {
-  const key = weaponKey.toLowerCase();
-  const cat = category.toLowerCase();
-  
-  if (key === 'rifle' || cat.includes('rifle')) {
-    return `<svg version="1.0" xmlns="http://www.w3.org/2000/svg" width="1.13rem" height="1.13rem" viewBox="0 0 183 107" preserveAspectRatio="xMidYMid meet" style="opacity: 0.85;"><g transform="translate(0.000000,107.000000) scale(0.100000,-0.100000)" fill="currentColor" stroke="none"><path d="M748 918 l-3 -43 -60 -8 c-33 -5 -114 -11 -180 -13 -66 -2 -130 -6 -142 -9 -13 -3 -34 -23 -48 -45 l-25 -40 -73 0 c-108 0 -111 -3 -98 -129 6 -57 11 -129 11 -161 0 -64 16 -81 54 -57 12 8 33 17 48 20 17 5 30 17 38 39 6 18 30 85 52 148 22 63 49 123 60 133 17 15 43 17 188 17 130 0 169 -3 173 -13 3 -8 -8 -43 -23 -78 -16 -36 -35 -86 -42 -113 -16 -59 -17 -58 134 -121 108 -46 109 -46 208 -43 71 2 100 0 100 -9 0 -6 -20 -59 -45 -119 -25 -59 -45 -113 -45 -119 0 -11 67 -45 89 -45 7 0 51 97 115 253 8 20 22 40 29 43 8 3 17 19 21 35 9 45 74 180 93 195 12 9 52 13 126 14 100 0 109 2 114 20 3 12 14 20 27 21 70 3 71 4 74 32 3 26 1 27 -41 27 -50 0 -57 9 -57 68 0 19 -7 43 -16 53 -9 10 -19 33 -23 51 -4 19 -14 34 -24 36 -14 3 -17 -4 -17 -42 l0 -46 -348 0 c-193 0 -352 4 -357 9 -6 5 -19 11 -30 13 -13 2 -22 13 -25 32 -8 47 -28 43 -32 -6z m570 -74 c20 -6 23 -12 20 -48 l-3 -41 -57 -3 -58 -3 0 45 c0 34 4 46 18 49 27 7 55 7 80 1z m-309 -83 c11 -7 12 -17 5 -43 -10 -33 -10 -33 -71 -33 -34 0 -64 3 -68 7 -9 9 4 68 15 68 5 0 10 -10 12 -22 2 -12 8 -23 15 -25 7 -3 9 3 6 17 -4 13 0 26 8 31 18 11 60 11 78 0z m-750 -103 c-1 -36 -33 -121 -46 -126 -10 -3 -13 16 -13 72 l0 76 30 0 c25 0 30 -4 29 -22z m692 2 c46 0 47 -6 17 -81 -24 -62 -73 -119 -100 -119 -17 0 -78 26 -78 34 0 4 46 136 55 159 6 15 15 18 38 13 16 -3 47 -6 68 -6z"/></g></svg>`;
+function getSlotIconSvg(item: LoadoutSlotItem): string {
+  const id = (item.id || '').toLowerCase();
+  const name = (item.name || '').toLowerCase();
+  const key = (item.weaponKey || '').toLowerCase();
+  const cat = (item.category || '').toLowerCase();
+
+  let src = '/ui_svgs/utility_grenade.svg';
+
+  if (key === 'rifle' || cat.includes('rifle') || name.includes('rifle')) {
+    src = '/ui_svgs/rifle.svg';
+  } else if (key === 'pistol' || cat.includes('sidearm') || cat.includes('pistol') || name.includes('pistol')) {
+    src = '/ui_svgs/pistol.svg';
+  } else if (name.includes('flash') || id.includes('flash')) {
+    src = '/ui_svgs/utility_flashbang.svg';
+  } else if (name.includes('frag') || name.includes('grenade') || id.includes('frag')) {
+    src = '/ui_svgs/utility_grenade.svg';
+  } else if (name.includes('medkit') || cat.includes('medkit') || id.includes('medkit')) {
+    src = '/ui_svgs/medkit.svg';
+  } else if (name.includes('revive') || id.includes('revive')) {
+    src = '/ui_svgs/utility_revive.svg';
+  } else if (name.includes('disrupt') || name.includes('jam') || id.includes('disrupt')) {
+    src = '/ui_svgs/utility_jammer.svg';
+  } else if (name.includes('radio') || name.includes('comms') || id.includes('radio')) {
+    src = '/ui_svgs/radio.svg';
+  } else if (name.includes('c4') || id.includes('c4')) {
+    src = '/ui_svgs/utility_c4.svg';
+  } else if (name.includes('emp') || name.includes('mine') || id.includes('mine')) {
+    src = '/ui_svgs/utility_mine.svg';
   }
-  if (key === 'pistol' || cat.includes('sidearm') || cat.includes('pistol')) {
-    return `<svg version="1.0" xmlns="http://www.w3.org/2000/svg" width="1.13rem" height="1.13rem" viewBox="0 0 145 105" preserveAspectRatio="xMidYMid meet" style="opacity: 0.85;"><g transform="translate(0.000000,105.000000) scale(0.100000,-0.100000)" fill="currentColor" stroke="none"><path d="M293 920 c-3 -11 -11 -20 -19 -20 -8 0 -22 -28 -34 -67 -24 -79 -52 -113 -91 -113 -58 0 -46 -25 31 -63 85 -42 87 -84 14 -278 -56 -148 -67 -224 -35 -253 18 -16 38 -19 140 -20 73 -1 124 3 131 10 5 5 24 66 40 134 17 68 39 143 50 168 l20 44 52 -8 c72 -11 195 -5 235 11 40 17 51 38 59 111 4 33 12 62 18 66 6 4 80 8 164 8 84 0 173 5 198 11 l44 11 0 55 c0 38 4 55 15 59 18 7 22 104 4 104 -7 0 -22 11 -35 25 -26 29 -42 32 -50 10 -5 -13 -65 -15 -454 -15 -389 0 -449 2 -454 15 -8 22 -37 18 -43 -5z m342 -334 c10 -40 54 -96 76 -96 7 0 3 10 -10 24 -22 24 -44 92 -35 108 3 4 40 8 83 8 92 0 104 -9 99 -71 -5 -65 -37 -84 -141 -84 -45 0 -94 3 -108 7 -49 14 -62 93 -23 133 25 25 48 14 59 -29z"/></g></svg>`;
-  }
-  if (key === 'medkit' || cat.includes('support') || cat.includes('medkit') || cat.includes('health')) {
-    return `<svg version="1.0" xmlns="http://www.w3.org/2000/svg" width="1.13rem" height="1.13rem" viewBox="0 0 128 117" preserveAspectRatio="xMidYMid meet" style="opacity: 0.85;"><g transform="translate(0.000000,117.000000) scale(0.100000,-0.100000)" fill="currentColor" stroke="none"><path d="M470 1030 c-15 -15 -20 -33 -20 -79 l0 -59 -141 -4 -141 -3 -29 -33 -29 -32 0 -319 0 -319 28 -30 c23 -24 40 -32 87 -37 50 -7 555 2 563 9 1 2 -5 19 -13 39 -46 109 19 260 130 302 59 23 156 17 213 -13 23 -12 45 -22 48 -22 3 0 4 90 2 200 l-3 200 -28 27 c-27 27 -31 28 -165 33 l-137 5 -3 55 c-2 39 -9 61 -24 78 -20 21 -29 22 -170 22 -135 0 -150 -2 -168 -20z m304 -46 c3 -9 6 -33 6 -55 l0 -39 -140 0 -140 0 0 48 c0 27 3 52 7 55 3 4 64 7 134 7 106 0 128 -3 133 -16z m-216 -279 c20 -9 47 -25 59 -37 l22 -21 35 31 c43 38 81 46 131 30 84 -28 110 -125 56 -209 -34 -53 -203 -219 -222 -219 -8 0 -61 46 -118 101 -132 130 -162 190 -127 257 19 36 48 61 82 72 41 12 40 12 82 -5z"/><path d="M943 441 c-127 -32 -185 -202 -107 -313 79 -112 249 -112 328 0 64 91 35 232 -58 287 -47 28 -114 38 -163 26z m95 -113 l3 -48 50 0 50 0 -3 -37 c-3 -38 -4 -38 -50 -41 l-47 -3 -3 -42 c-3 -41 -4 -42 -40 -45 l-38 -3 0 45 0 45 -47 3 c-48 3 -48 3 -51 41 l-3 37 50 0 51 0 0 51 0 50 38 -3 c37 -3 37 -3 40 -50z"/></g></svg>`;
-  }
-  if (key === 'radio' || cat.includes('comms') || cat.includes('electronic') || cat.includes('radio')) {
-    return `<svg version="1.0" xmlns="http://www.w3.org/2000/svg" width="1.13rem" height="1.13rem" viewBox="0 0 74 163" preserveAspectRatio="xMidYMid meet" style="opacity: 0.85;"><g transform="translate(0.000000,163.000000) scale(0.100000,-0.100000)" fill="currentColor" stroke="none"><path d="M234 1512 c-7 -4 -13 -67 -17 -172 -3 -91 -8 -212 -12 -270 -6 -104 -6 -105 -43 -143 l-37 -38 -3 -198 c-3 -196 -3 -198 22 -246 24 -44 26 -58 26 -180 0 -111 3 -135 17 -146 12 -11 57 -14 190 -14 161 0 176 1 189 19 10 15 14 53 14 150 0 125 1 131 28 170 26 38 27 43 30 204 2 90 1 180 -3 198 -3 19 -23 54 -45 79 -26 30 -37 51 -33 64 8 33 -5 71 -25 71 -28 0 -42 -21 -42 -62 0 -37 -1 -38 -35 -38 l-35 0 0 50 c0 49 -1 50 -30 50 -29 0 -30 -1 -30 -50 l0 -50 -39 0 -40 0 -5 135 c-4 74 -8 197 -12 273 -5 137 -9 157 -30 144z m314 -694 c16 -16 16 -180 0 -196 -17 -17 -329 -17 -346 0 -16 16 -16 180 0 196 17 17 329 17 346 0z m2 -277 c17 -33 12 -89 -10 -111 -18 -18 -33 -20 -163 -20 -173 0 -187 6 -187 79 0 26 5 52 12 59 8 8 61 12 175 12 150 0 163 -1 173 -19z"/><path d="M233 504 c-3 -9 -2 -24 4 -33 9 -14 30 -16 139 -14 70 2 132 7 137 12 5 5 7 17 5 27 -3 17 -16 19 -141 22 -121 2 -138 1 -144 -14z"/></g></svg>`;
-  }
-  // Default to fire/grenade
-  return `<svg version="1.0" xmlns="http://www.w3.org/2000/svg" width="1.13rem" height="1.13rem" viewBox="0 0 165 165" preserveAspectRatio="xMidYMid meet" style="opacity: 0.85;"><g transform="translate(0.000000,165.000000) scale(0.100000,-0.100000)" fill="currentColor" stroke="none"><path d="M1387 1536 c-43 -19 -108 -52 -145 -74 -76 -46 -232 -160 -232 -170 0 -4 51 -59 114 -121 102 -102 117 -113 132 -101 33 28 173 251 205 327 17 43 34 99 37 126 6 59 -3 60 -111 13z"/><path d="M925 1220 l-29 -31 122 -122 122 -122 30 30 30 30 -123 123 -123 122 -29 -30z"/><path d="M536 838 l-306 -312 127 -128 c70 -71 133 -128 140 -128 13 0 605 620 601 630 -2 3 -60 60 -129 128 l-126 123 -307 -313z"/><path d="M141 445 c-17 -20 -31 -42 -31 -49 0 -38 209 -246 247 -246 10 0 36 14 57 31 l38 32 -133 133 c-74 74 -137 134 -140 134 -4 0 -21 -16 -38 -35z"/></g></svg>`;
+
+  return `<img src="${src}" style="width: 1.13rem; height: 1.13rem; filter: brightness(0) invert(1); opacity: 0.85; object-fit: contain;" alt="${item.name}" />`;
 }
 
   // Equipment List Container (horizontal slots with icons)
@@ -207,7 +225,7 @@ function getSlotIconSvg(weaponKey: string, category: string): string {
 
     itemCard.innerHTML = `
       <div style="display: flex; align-items: center; justify-content: center; width: 1.13rem; height: 1.13rem; color: ${isSelected ? '#FF4500' : '#888888'};">
-        ${getSlotIconSvg(item.weaponKey, item.category)}
+        ${getSlotIconSvg(item)}
       </div>
       <div style="font-family:${DS.typography.fontFamily}; font-size: ${DS.typography.sizes.tiny}; font-weight: bold; letter-spacing: 0.5px; color: ${isSelected ? '#FFFFFF' : '#666666'}; line-height: 1;">
         ${slotLabel}

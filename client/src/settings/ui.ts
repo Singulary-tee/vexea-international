@@ -499,16 +499,37 @@ function renderControlsTab(container: HTMLElement, s: VexeaSettingsData) {
         // Fullscreen Toggle
         const rowFS = createRow('Fullscreen Mode', 'Toggle high-performance windowed fullscreen display.');
         const fsBtn = document.createElement('button');
-        fsBtn.innerText = 'TOGGLE FULLSCREEN';
         fsBtn.className = 'action-btn';
         fsBtn.style.minWidth = '10.00rem';
-        bind(fsBtn, 'click', () => {
-            if (!document.fullscreenElement) {
-                document.documentElement.requestFullscreen().catch(() => {});
+
+        const updateSettingsFSLabel = () => {
+            if (document.fullscreenElement || (document as any).webkitFullscreenElement) {
+                fsBtn.innerText = 'EXIT FULLSCREEN';
             } else {
-                if (document.exitFullscreen) document.exitFullscreen();
+                fsBtn.innerText = 'TOGGLE FULLSCREEN';
+            }
+        };
+        updateSettingsFSLabel();
+
+        bind(fsBtn, 'click', () => {
+            try {
+                if (!document.fullscreenElement && !(document as any).webkitFullscreenElement) {
+                    const docEl = document.documentElement as any;
+                    if (docEl.requestFullscreen) docEl.requestFullscreen();
+                    else if (docEl.webkitRequestFullscreen) docEl.webkitRequestFullscreen();
+                } else {
+                    const doc = document as any;
+                    if (doc.exitFullscreen) doc.exitFullscreen();
+                    else if (doc.webkitExitFullscreen) doc.webkitExitFullscreen();
+                }
+            } catch (err) {
+                console.warn("Settings Fullscreen toggle failed:", err);
             }
         });
+
+        document.addEventListener('fullscreenchange', updateSettingsFSLabel);
+        document.addEventListener('webkitfullscreenchange', updateSettingsFSLabel);
+
         rowFS.appendChild(fsBtn);
         card.appendChild(rowFS);
 
@@ -1112,10 +1133,10 @@ function renderHudTab(container: HTMLElement, s: VexeaSettingsData, onClose: () 
     rowCross.appendChild(cLabelWrap);
 
     const crosshairStyles = [
-        { id: 'Standard Cross', label: 'CROSS', svg: `<svg width="24" height="24" viewBox="0 0 24 24"><line x1="12" y1="2" x2="12" y2="8" stroke="currentColor" stroke-width="2"/><line x1="12" y1="16" x2="12" y2="22" stroke="currentColor" stroke-width="2"/><line x1="2" y1="12" x2="8" y2="12" stroke="currentColor" stroke-width="2"/><line x1="16" y1="12" x2="22" y2="12" stroke="currentColor" stroke-width="2"/></svg>` },
-        { id: 'Dot', label: 'DOT', svg: `<svg width="24" height="24" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3" fill="currentColor"/></svg>` },
-        { id: 'Circle', label: 'CIRCLE', svg: `<svg width="24" height="24" viewBox="0 0 24 24"><circle cx="12" cy="12" r="7" fill="none" stroke="currentColor" stroke-width="1.5"/><circle cx="12" cy="12" r="2" fill="currentColor"/></svg>` },
-        { id: 'T-Shape', label: 'T-SHAPE', svg: `<svg width="24" height="24" viewBox="0 0 24 24"><line x1="12" y1="16" x2="12" y2="22" stroke="currentColor" stroke-width="2"/><line x1="2" y1="12" x2="8" y2="12" stroke="currentColor" stroke-width="2"/><line x1="16" y1="12" x2="22" y2="12" stroke="currentColor" stroke-width="2"/></svg>` }
+        { id: 'Standard Cross', label: 'CROSS', svg: `<img src="/ui_svgs/crosshair_cross.svg" style="width:24px; height:24px; filter:brightness(0) invert(1);" alt="Cross" />` },
+        { id: 'Dot', label: 'DOT', svg: `<img src="/ui_svgs/crosshair_dot.svg" style="width:24px; height:24px; filter:brightness(0) invert(1);" alt="Dot" />` },
+        { id: 'Circle', label: 'CIRCLE', svg: `<img src="/ui_svgs/crosshair_circle.svg" style="width:24px; height:24px; filter:brightness(0) invert(1);" alt="Circle" />` },
+        { id: 'T-Shape', label: 'T-SHAPE', svg: `<img src="/ui_svgs/crosshair_t.svg" style="width:24px; height:24px; filter:brightness(0) invert(1);" alt="T-Shape" />` }
     ];
 
     const cardsRow = document.createElement('div');

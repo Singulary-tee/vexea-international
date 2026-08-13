@@ -124,10 +124,7 @@ export function renderFactionScreen(container: HTMLElement, registeredUserData: 
     <div style="display:flex; flex-direction:column; gap:0.8vh; min-height:0;">
       <div style="display:flex; justify-content:space-between; align-items:center;">
         <div style="display:flex; align-items:center; gap:1vw;">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="${DS.colors.factions.vibe.primary}" stroke-width="2">
-            <polygon points="12,2 22,8.5 22,15.5 12,22 2,15.5 2,8.5"/>
-            <circle cx="12" cy="12" r="3" fill="${DS.colors.factions.vibe.primary}"/>
-          </svg>
+          <img src="/ui_svgs/faction_vibeco.svg" style="width: 1.38rem; height: 1.38rem; filter: brightness(0) invert(1);" alt="Vibe Co." />
           <div style="font-family:${DS.typography.fontFamily}; font-size:clamp(0.75rem, 1.8vh, 1.00rem); font-weight:bold; color:${DS.colors.factions.vibe.primary}; letter-spacing:0.1vw;">
             VIBE CO.
           </div>
@@ -211,9 +208,7 @@ export function renderFactionScreen(container: HTMLElement, registeredUserData: 
     <div style="display:flex; flex-direction:column; gap:0.8vh; min-height:0;">
       <div style="display:flex; justify-content:space-between; align-items:center;">
         <div style="display:flex; align-items:center; gap:1vw;">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="${DS.colors.accent}" stroke-width="2">
-            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
-          </svg>
+          <img src="/ui_svgs/faction_slopinc.svg" style="width: 1.38rem; height: 1.38rem; filter: brightness(0) invert(1);" alt="Slop Inc." />
           <div style="font-family:${DS.typography.fontFamily}; font-size:clamp(0.75rem, 1.8vh, 1.00rem); font-weight:bold; color:${DS.colors.accent}; letter-spacing:0.1vw;">
             SLOP INC.
           </div>

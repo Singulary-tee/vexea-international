@@ -63,7 +63,6 @@ export class InputSystem {
                this.canvasContainer.requestPointerLock();
             } catch(err) {}
           }
-          this.match.combat?.fireActiveShot(this.camera);
         }
       }, { signal });
 

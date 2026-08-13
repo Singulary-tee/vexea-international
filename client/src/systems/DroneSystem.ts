@@ -1,6 +1,6 @@
 import * as THREE from "three/webgpu";
 import { MatchController } from "../../MatchController";
-import { DroneState, DroneType, DRONE_CONFIGS } from "../../../shared/constants";
+import { DroneState, DroneType, DRONE_CONFIGS, PLAYER_RADIUS, PLAYER_TOTAL_HEIGHT } from "../../../shared/constants";
 import * as SkeletonUtils from "three/addons/utils/SkeletonUtils.js";
 import { createProceduralState, updateProceduralState, applyNodeRotation } from "./DroneProcedural";
 import { fixSkinnedMeshBones } from "../../StudioPreviewManager";
@@ -225,6 +225,24 @@ export class DroneSystem {
                  }
               } else if (typeId === DroneType.HUMANOID && (window as any).humanoidModel) {
                  fw = SkeletonUtils.clone((window as any).humanoidModel) as THREE.Group;
+
+                 // Disable expensive SkinnedMesh raycasting
+                 fw.traverse((child: any) => {
+                   if (child.isSkinnedMesh) {
+                     child.raycast = () => {}; // no-op: skip CPU vertex skinning
+                   }
+                 });
+
+                 // Add invisible collision box for hit detection
+                 // BoxGeometry is centered at origin; humanoid model origin is at feet (y=0)
+                 // Translate geometry so box extends from y=0 to y=1.8
+                 const hitBoxGeom = new THREE.BoxGeometry(1.0, 1.8, 0.6);
+                 hitBoxGeom.translate(0, 0.9, 0);
+                 const hitBox = new THREE.Mesh(hitBoxGeom, new THREE.MeshBasicMaterial());
+                 hitBox.visible = false;
+                 hitBox.name = "HumanoidHitBox";
+                 fw.add(hitBox);
+
                  fw.name = "HumanoidDrone";
                  (fw as any).isDrone = true;
                  this.match.scene.add(fw);
@@ -538,6 +556,22 @@ export class DroneSystem {
           
           // Rebind cloned skinned mesh elements to cloned bone instances
           fixSkinnedMeshBones(group, (window as any).playerModel);
+
+          // Disable expensive SkinnedMesh raycasting
+          group.traverse((child: any) => {
+            if (child.isSkinnedMesh) {
+              child.raycast = () => {}; // no-op: skip CPU vertex skinning
+            }
+          });
+
+          // Add invisible collision box for hit detection
+          // Player origin at feet; translate so box covers full height
+          const hitBoxGeom = new THREE.BoxGeometry(PLAYER_RADIUS * 2, PLAYER_TOTAL_HEIGHT, PLAYER_RADIUS * 2);
+          hitBoxGeom.translate(0, PLAYER_TOTAL_HEIGHT / 2, 0);
+          const hitBox = new THREE.Mesh(hitBoxGeom, new THREE.MeshBasicMaterial());
+          hitBox.visible = false;
+          hitBox.name = "PlayerHitBox";
+          group.add(hitBox);
 
           group.name = "RemotePlayer";
           match.scene.add(group);

@@ -52,7 +52,7 @@ export class HitscanSystem {
 
     for (let i = 0; i < intersects.length; i++) {
       const hit = intersects[i];
-      if (!hit.object.visible) continue;
+      if (!hit.object.visible && !hit.object.name.endsWith("HitBox")) continue;
 
       // Ignore weapons container entirely, block if RemotePlayer
       let currItems: THREE.Object3D | null = hit.object;

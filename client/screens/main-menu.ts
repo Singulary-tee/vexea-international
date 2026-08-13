@@ -593,11 +593,9 @@ export function initMainMenu() {
   pFullscreen.title = 'Toggle Fullscreen';
 
   const updateFullscreenIcon = () => {
-    if (document.fullscreenElement || (document as any).webkitFullscreenElement) {
-      pFullscreen.innerHTML = `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 14h6v6m10-6h-6v6M4 10h6V4m10 6h-6V4"/></svg>`;
-    } else {
-      pFullscreen.innerHTML = `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>`;
-    }
+    const isFS = !!(document.fullscreenElement || (document as any).webkitFullscreenElement);
+    const iconSrc = isFS ? "/ui_svgs/fullscreen_exit.svg" : "/ui_svgs/fullscreen.svg";
+    pFullscreen.innerHTML = `<img src="${iconSrc}" style="width: 1.13rem; height: 1.13rem; filter: brightness(0) invert(1);" alt="Fullscreen" />`;
   };
   updateFullscreenIcon();
 
@@ -623,7 +621,7 @@ export function initMainMenu() {
   document.addEventListener('fullscreenchange', updateFullscreenIcon);
   document.addEventListener('webkitfullscreenchange', updateFullscreenIcon);
   const pFeedback = document.createElement('div');
-  pFeedback.innerHTML = `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>`;
+  pFeedback.innerHTML = `<img src="/ui_svgs/messages.svg" style="width: 1.13rem; height: 1.13rem; filter: brightness(0) invert(1);" alt="Messages" />`;
   pFeedback.style.color = DS.colors.textMuted;
   pFeedback.style.cursor = 'pointer';
   pFeedback.style.display = 'flex';
@@ -637,7 +635,7 @@ export function initMainMenu() {
 
   // Add Friends / Party icon right after Feedback
   const pAddFriends = document.createElement('div');
-  pAddFriends.innerHTML = `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>`;
+  pAddFriends.innerHTML = `<img src="/ui_svgs/add_friend.svg" style="width: 1.13rem; height: 1.13rem; filter: brightness(0) invert(1);" alt="Add Friend" />`;
   pAddFriends.style.color = DS.colors.textMuted;
   pAddFriends.style.cursor = 'pointer';
   pAddFriends.style.display = 'flex';
@@ -652,7 +650,7 @@ export function initMainMenu() {
   utilityBox.appendChild(pFeedback);
 
   const pGear = document.createElement('div');
-  pGear.innerHTML = `<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.06-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c-0.04-0.24-0.24-0.41-0.48-0.41h-3.84c-0.24,0-0.43,0.17-0.47,0.41L9.25,5.35C8.66,5.59,8.12,5.92,7.63,6.29L5.24,5.33c-0.22-0.08-0.47,0-0.59,0.22L2.73,8.87C2.62,9.08,2.66,9.34,2.86,9.48l2.03,1.58C4.84,11.36,4.8,11.69,4.8,12s0.02,0.64,0.06,0.94l-2.03,1.58c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.7,1.62,0.94l0.36,2.54c0.05,0.24,0.24,0.41,0.48,0.41h3.84c0.24,0,0.43-0.17,0.47-0.41l0.36-2.54c0.59-0.24,1.13-0.56,1.62-0.94l2.39,0.96c0.22,0.08,0.47,0,0.59-0.22l1.92-3.32c0.12-0.22,0.07-0.49-0.12-0.61L19.14,12.94z M12,15.6c-1.98,0-3.6-1.62-3.6-3.6s1.62-3.6,3.6-3.6s3.6,1.62,3.6,3.6S13.98,15.6,12,15.6z"/></svg>`;
+  pGear.innerHTML = `<img src="/ui_svgs/settings.svg" style="width: 1.0rem; height: 1.0rem; filter: brightness(0) invert(1);" alt="Settings" />`;
   pGear.style.color = DS.colors.textMuted;
   pGear.style.cursor = 'pointer';
   pGear.title = 'Settings';
@@ -1274,8 +1272,8 @@ function updateProfileBox() {
     };
   }
 
-  const coinSvg = `<svg viewBox="0 0 24 24" width="14" height="14" fill="${DS.colors.accent}" style="vertical-align: middle; display: inline-block;"><path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm0 18a8 8 0 1 1 8-8 8 8 0 0 1-8 8zm1-13h-2v1.17a3 3 0 0 0-1 5.66V13a3 3 0 0 0 2 2.83V17h2v-1.17a3 3 0 0 0 1-5.66V9a3 3 0 0 0-2-2.83z"/></svg>`;
-  const boltSvg = `<svg viewBox="0 0 24 24" width="14" height="14" fill="${DS.colors.accent}" style="vertical-align: middle; display: inline-block;"><path d="M11 21l1.5-7H7l6-12-1.5 7H17l-6 12z"/></svg>`;
+  const coinSvg = `<img src="/ui_svgs/coin.svg" style="width: 14px; height: 14px; filter: brightness(0) invert(1); vertical-align: middle; display: inline-block;" alt="Coin" />`;
+  const boltSvg = `<img src="/ui_svgs/energy.svg" style="width: 14px; height: 14px; filter: brightness(0) invert(1); vertical-align: middle; display: inline-block;" alt="Energy" />`;
 
   const crDisplay = document.getElementById('profile-cr-display');
   const avatarImg = document.getElementById('profile-avatar-img') as HTMLImageElement | null;
@@ -1694,6 +1692,25 @@ function renderRightPanel() {
             letterSpacing: '0.8px'
           });
 
+          const modeHeader = document.createElement('div');
+          Object.assign(modeHeader.style, {
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px'
+          });
+
+          const modeIcon = document.createElement('img');
+          modeIcon.src = `/ui_svgs/gamemode_${mode.id.toLowerCase()}.svg`;
+          modeIcon.alt = mode.label;
+          Object.assign(modeIcon.style, {
+            width: '1.0rem',
+            height: '1.0rem',
+            filter: 'brightness(0) invert(1)'
+          });
+
+          modeHeader.appendChild(modeIcon);
+          modeHeader.appendChild(nameEl);
+
           const descEl = document.createElement('div');
           descEl.textContent = mode.desc.toUpperCase();
           Object.assign(descEl.style, {
@@ -1703,7 +1720,7 @@ function renderRightPanel() {
             letterSpacing: '0.5px'
           });
 
-          textGroup.appendChild(nameEl);
+          textGroup.appendChild(modeHeader);
           textGroup.appendChild(descEl);
           card.appendChild(textGroup);
 

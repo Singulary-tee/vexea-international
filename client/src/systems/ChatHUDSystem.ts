@@ -29,6 +29,17 @@ export class ChatHUDSystem {
     this.showChatTemporarily();
   }
 
+  public forceShowForEdit() {
+    if (this.fadeTimeout) {
+      clearTimeout(this.fadeTimeout);
+      this.fadeTimeout = null;
+    }
+    if (this.logEl) {
+      this.logEl.style.opacity = "1";
+      this.logEl.style.pointerEvents = "auto";
+    }
+  }
+
   private showChatTemporarily() {
     if (!this.logEl) return;
     if (this.fadeTimeout) {

@@ -3,6 +3,19 @@ import { ACTIVE_GAMEMODE } from "../../../shared/gamemode-configs";
 import { PlayerUtilityState } from "../../../shared/utilities";
 import { IS_MOBILE } from "../../gates/platform.gate";
 
+export function getUtilitySvgPath(utilityName: string): string {
+  const name = (utilityName || '').toLowerCase();
+  if (name.includes('grenade') || name.includes('frag')) return '/ui_svgs/utility_grenade.svg';
+  if (name.includes('flash')) return '/ui_svgs/utility_flashbang.svg';
+  if (name.includes('med') || name.includes('kit') || name.includes('health') || name.includes('support')) return '/ui_svgs/medkit.svg';
+  if (name.includes('revive')) return '/ui_svgs/utility_revive.svg';
+  if (name.includes('radio') || name.includes('walkie') || name.includes('comm')) return '/ui_svgs/radio.svg';
+  if (name.includes('jam') || name.includes('disrupt') || name.includes('signal')) return '/ui_svgs/utility_jammer.svg';
+  if (name.includes('c4') || name.includes('emp') || name.includes('bomb')) return '/ui_svgs/utility_c4.svg';
+  if (name.includes('mine') || name.includes('prox') || name.includes('trap')) return '/ui_svgs/utility_mine.svg';
+  return '/ui_svgs/utility_grenade.svg';
+}
+
 export class HUDSystem {
   private match: MatchController;
 
@@ -12,7 +25,40 @@ export class HUDSystem {
 
   public init() {
     this.setupMatchStatusModal();
+    this.setupFullscreenButton();
     this.updateHUD();
+  }
+
+  private setupFullscreenButton() {
+    const fsBtn = document.getElementById("btn-fullscreen");
+    if (!fsBtn) return;
+
+    const updateFullscreenIcon = () => {
+      const isFS = !!(document.fullscreenElement || (document as any).webkitFullscreenElement);
+      const iconSrc = isFS ? "/ui_svgs/fullscreen_exit.svg" : "/ui_svgs/fullscreen.svg";
+      fsBtn.innerHTML = `<img src="${iconSrc}" style="width: 1.38rem; height: 1.38rem; filter: brightness(0) invert(1);" alt="Fullscreen" />`;
+    };
+    updateFullscreenIcon();
+
+    fsBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      try {
+        if (!document.fullscreenElement && !(document as any).webkitFullscreenElement) {
+          const docEl = document.documentElement as any;
+          if (docEl.requestFullscreen) docEl.requestFullscreen();
+          else if (docEl.webkitRequestFullscreen) docEl.webkitRequestFullscreen();
+        } else {
+          const doc = document as any;
+          if (doc.exitFullscreen) doc.exitFullscreen();
+          else if (doc.webkitExitFullscreen) doc.webkitExitFullscreen();
+        }
+      } catch (err) {
+        console.warn("HUD Fullscreen toggle failed:", err);
+      }
+    });
+
+    document.addEventListener("fullscreenchange", updateFullscreenIcon);
+    document.addEventListener("webkitfullscreenchange", updateFullscreenIcon);
   }
 
   private setupMatchStatusModal() {
@@ -136,12 +182,21 @@ export class HUDSystem {
     const u1Btn = document.getElementById("btn-walkie");
     const u1Badge = document.getElementById("util-1-badge");
     if (state.utility1) {
-      const isOnCooldown = state.utility1.cooldownRemaining > 0 || state.utility1.charges === 0;
       if (u1Btn) {
+        const u1Img = u1Btn.querySelector("img") as HTMLImageElement;
+        if (u1Img) {
+          const u1Obj = state.utility1 as any;
+          const svgPath = u1Obj.icon || getUtilitySvgPath(u1Obj.name || u1Obj.id || '');
+          if (svgPath && u1Img.getAttribute('src') !== svgPath) {
+            u1Img.src = svgPath;
+          }
+        }
+        const isOnCooldown = state.utility1.cooldownRemaining > 0 || state.utility1.charges === 0;
         u1Btn.style.filter = isOnCooldown ? "grayscale(1)" : "none";
         u1Btn.style.opacity = isOnCooldown ? "0.4" : "1";
       }
       if (u1Badge && !IS_MOBILE) {
+        const isOnCooldown = state.utility1.cooldownRemaining > 0 || state.utility1.charges === 0;
         u1Badge.style.display = "flex";
         u1Badge.innerText = "G";
         u1Badge.style.opacity = isOnCooldown ? "0.4" : "1";
@@ -152,12 +207,21 @@ export class HUDSystem {
     const u2Btn = document.getElementById("btn-medkit");
     const u2Badge = document.getElementById("util-2-badge");
     if (state.utility2) {
-      const isOnCooldown = state.utility2.cooldownRemaining > 0 || state.utility2.charges === 0;
       if (u2Btn) {
+        const u2Img = u2Btn.querySelector("img") as HTMLImageElement;
+        if (u2Img) {
+          const u2Obj = state.utility2 as any;
+          const svgPath = u2Obj.icon || getUtilitySvgPath(u2Obj.name || u2Obj.id || '');
+          if (svgPath && u2Img.getAttribute('src') !== svgPath) {
+            u2Img.src = svgPath;
+          }
+        }
+        const isOnCooldown = state.utility2.cooldownRemaining > 0 || state.utility2.charges === 0;
         u2Btn.style.filter = isOnCooldown ? "grayscale(1)" : "none";
         u2Btn.style.opacity = isOnCooldown ? "0.4" : "1";
       }
       if (u2Badge && !IS_MOBILE) {
+        const isOnCooldown = state.utility2.cooldownRemaining > 0 || state.utility2.charges === 0;
         u2Badge.style.display = "flex";
         u2Badge.innerText = "F";
         u2Badge.style.opacity = isOnCooldown ? "0.4" : "1";

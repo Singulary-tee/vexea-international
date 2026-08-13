@@ -4,6 +4,7 @@ import { StudioPreviewManager } from "./StudioPreviewManager";
 import { hideAll, showMainMenu } from "./screens/screen-manager";
 import { IS_DESKTOP, IS_MOBILE } from "./gates/platform.gate";
 import { IS_DEV, assertDev } from "../shared/gates/production.gate";
+import { getMatch } from "./MatchController";
 
 export const initUIEditor = () => {
     const settingsModal = document.getElementById("settings-modal");
@@ -23,7 +24,7 @@ export const initUIEditor = () => {
         widthPx?: number;
         heightPx?: number;
     }
-    const elementStates = new Map<HTMLElement, ElementState>();
+    const elementStates = new Map<string, ElementState>();
     
     // Grid alignment and snapping variables
     let gridSnapSize = 5;
@@ -744,7 +745,7 @@ export const initUIEditor = () => {
                         return num;
                     };
 
-                    elementStates.set(el, { 
+                    elementStates.set(el.id, { 
                         leftPx: parsePosPx(saved.left, false, false), 
                         topPx: parsePosPx(saved.top, false, true), 
                         scale: saved.scale || 1,
@@ -760,7 +761,7 @@ export const initUIEditor = () => {
         const rect1 = { left: x, top: y, right: x + w, bottom: y + h };
         for (const other of elementsToEdit) {
             if (other === el || other.style.display === 'none') continue;
-            const otherState = elementStates.get(other);
+            const otherState = elementStates.get(other.id);
             if (!otherState) continue;
             const otherW = otherState.widthPx || other.getBoundingClientRect().width;
             const otherH = otherState.heightPx || other.getBoundingClientRect().height;
@@ -792,7 +793,7 @@ export const initUIEditor = () => {
         const friendly = FRIENDLY_NAMES[target.id] || target.id;
         selectedLabel.innerText = `Selected: ${friendly}`;
         
-        const state = elementStates.get(target);
+        const state = elementStates.get(target.id);
         if (state) {
             leftSlider.disabled = false;
             leftNum.disabled = false;
@@ -863,7 +864,7 @@ export const initUIEditor = () => {
         const dx = e.clientX - startX;
         const dy = e.clientY - startY;
         
-        const state = elementStates.get(selectedElement);
+        const state = elementStates.get(selectedElement.id);
         if (state) {
             let targetLeftPx = startLeft + dx;
             let targetTopPx = startTop + dy;
@@ -924,7 +925,7 @@ export const initUIEditor = () => {
     // Bind element position & properties controllers
     bindSliderAndNumber(leftSlider, leftNum, (val) => {
         if (!selectedElement) return;
-        const state = elementStates.get(selectedElement);
+        const state = elementStates.get(selectedElement.id);
         if (state) {
             state.leftPx = (val / 100) * window.innerWidth;
             selectedElement.style.setProperty('left', `${val.toFixed(2)}vw`, 'important');
@@ -939,7 +940,7 @@ export const initUIEditor = () => {
 
     bindSliderAndNumber(topSlider, topNum, (val) => {
         if (!selectedElement) return;
-        const state = elementStates.get(selectedElement);
+        const state = elementStates.get(selectedElement.id);
         if (state) {
             state.topPx = (val / 100) * window.innerHeight;
             selectedElement.style.setProperty('top', `${val.toFixed(2)}vh`, 'important');
@@ -954,7 +955,7 @@ export const initUIEditor = () => {
 
     bindSliderAndNumber(scaleSlider, scaleNum, (val) => {
         if (!selectedElement) return;
-        const state = elementStates.get(selectedElement);
+        const state = elementStates.get(selectedElement.id);
         if (state && circularIds.has(selectedElement.id)) {
             state.scale = val;
             selectedElement.style.setProperty('transform', `scale(${val})`, 'important');
@@ -964,7 +965,7 @@ export const initUIEditor = () => {
 
     bindSliderAndNumber(widthSlider, widthNum, (val) => {
         if (!selectedElement) return;
-        const state = elementStates.get(selectedElement);
+        const state = elementStates.get(selectedElement.id);
         if (state && !circularIds.has(selectedElement.id)) {
             state.widthPx = (val / 100) * window.innerWidth;
             selectedElement.style.setProperty('width', `${val.toFixed(2)}vw`, 'important');
@@ -979,7 +980,7 @@ export const initUIEditor = () => {
 
     bindSliderAndNumber(heightSlider, heightNum, (val) => {
         if (!selectedElement) return;
-        const state = elementStates.get(selectedElement);
+        const state = elementStates.get(selectedElement.id);
         if (state && !circularIds.has(selectedElement.id)) {
             state.heightPx = (val / 100) * window.innerHeight;
             selectedElement.style.setProperty('height', `${val.toFixed(2)}vh`, 'important');
@@ -1047,6 +1048,23 @@ export const initUIEditor = () => {
         bgImage.style.display = "block";
         (window as any).isEditMode = true; // Flag for main.ts 
         document.body.classList.add("ui-editor-active");
+
+        // UI Editor uses hardcoded utilities for editing representation
+        const u1Img = document.querySelector("#btn-walkie img") as HTMLImageElement;
+        if (u1Img) u1Img.src = "/ui_svgs/radio.svg";
+        const u2Img = document.querySelector("#btn-medkit img") as HTMLImageElement;
+        if (u2Img) u2Img.src = "/ui_svgs/medkit.svg";
+        
+        const match = getMatch();
+        if (match && match.chatHUD) {
+            match.chatHUD.forceShowForEdit();
+        } else {
+            const chatLog = document.getElementById("hud-chat-log");
+            if (chatLog) {
+                chatLog.style.opacity = "1";
+                chatLog.style.pointerEvents = "auto";
+            }
+        }
         
         const canvasContainer = document.getElementById("canvas-container");
         if (canvasContainer) {
@@ -1091,7 +1109,7 @@ export const initUIEditor = () => {
         updateRefImage();
 
         elementsToEdit.forEach(el => {
-            if (!elementStates.has(el)) {
+            if (!elementStates.has(el.id)) {
                 // Initialize clean pixel positions the first time we enter edit mode
                 const rect = el.getBoundingClientRect();
                 const parentRect = hudContainer.getBoundingClientRect();
@@ -1112,7 +1130,7 @@ export const initUIEditor = () => {
                     el.style.setProperty('transform', 'none', 'important');
                 }
                 
-                elementStates.set(el, { 
+                elementStates.set(el.id, { 
                     leftPx: left, 
                     topPx: top, 
                     scale: 1,
@@ -1172,7 +1190,7 @@ export const initUIEditor = () => {
     const buildLayoutConfig = () => {
         const config: Record<string, any> = {};
         elementsToEdit.forEach(el => {
-            const state = elementStates.get(el);
+            const state = elementStates.get(el.id);
             let leftVal = el.style.left;
             let topVal = el.style.top;
             let widthVal = state && state.widthPx ? `${state.widthPx}px` : undefined;
@@ -1242,7 +1260,7 @@ export const initUIEditor = () => {
     window.addEventListener('resize', () => {
         if (!isEditing) return;
         elementsToEdit.forEach(el => {
-            const state = elementStates.get(el);
+            const state = elementStates.get(el.id);
             if (state) {
                 const rect = el.getBoundingClientRect();
                 const parentRect = hudContainer.getBoundingClientRect();

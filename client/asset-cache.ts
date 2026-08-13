@@ -193,12 +193,89 @@ export const blobUrlMap = new Map<string, string>();
 
 let activePopulatePromise: Promise<void> | null = null;
 
+export const ALL_UI_SVGS: string[] = [
+  "/ui_svgs/utility_grenade.svg",
+  "/ui_svgs/utility_flashbang.svg",
+  "/ui_svgs/utility_revive.svg",
+  "/ui_svgs/utility_jammer.svg",
+  "/ui_svgs/utility_c4.svg",
+  "/ui_svgs/utility_mine.svg",
+  "/ui_svgs/medkit.svg",
+  "/ui_svgs/radio.svg",
+  "/ui_svgs/class_assault.svg",
+  "/ui_svgs/class_demolitions.svg",
+  "/ui_svgs/class_medic.svg",
+  "/ui_svgs/class_recon.svg",
+  "/ui_svgs/faction_slopinc.svg",
+  "/ui_svgs/faction_vibeco.svg",
+  "/ui_svgs/gamemode_arena.svg",
+  "/ui_svgs/gamemode_hardcore.svg",
+  "/ui_svgs/gamemode_infiltration.svg",
+  "/ui_svgs/fullscreen.svg",
+  "/ui_svgs/fullscreen_exit.svg",
+  "/ui_svgs/rifle.svg",
+  "/ui_svgs/pistol.svg",
+  "/ui_svgs/aim.svg",
+  "/ui_svgs/reload.svg",
+  "/ui_svgs/crouch.svg",
+  "/ui_svgs/sprint.svg",
+  "/ui_svgs/fire.svg",
+  "/ui_svgs/helmet.svg",
+  "/ui_svgs/up_arrow.svg",
+  "/ui_svgs/player_arrow.svg",
+  "/ui_svgs/right_arrow.svg",
+  "/ui_svgs/add_friend.svg",
+  "/ui_svgs/coin.svg",
+  "/ui_svgs/energy.svg",
+  "/ui_svgs/messages.svg",
+  "/ui_svgs/microphone.svg",
+  "/ui_svgs/profile.svg",
+  "/ui_svgs/settings.svg",
+  "/ui_svgs/status_signal.svg",
+  "/ui_svgs/bandaid1.svg",
+  "/ui_svgs/bandaid2.svg",
+  "/ui_svgs/char1.svg",
+  "/ui_svgs/char2.svg",
+  "/ui_svgs/char3.svg",
+  "/ui_svgs/char4.svg",
+  "/ui_svgs/crosshair_circle.svg",
+  "/ui_svgs/crosshair_cross.svg",
+  "/ui_svgs/crosshair_dot.svg",
+  "/ui_svgs/crosshair_t.svg",
+  "/ui_svgs/damage_indicator.svg",
+  "/ui_svgs/cursor.svg",
+  "/ui_svgs/eye_full.svg",
+  "/ui_svgs/eye_outer.svg",
+  "/ui_svgs/eye_pupil.svg",
+  "/ui_svgs/health_plus.svg",
+  "/ui_svgs/health_status_critical.svg",
+  "/ui_svgs/health_status_low.svg",
+  "/ui_svgs/google.svg"
+];
+
+const svgDOMCache: HTMLImageElement[] = [];
+
+export function preloadAllUISVGs(): void {
+  if (svgDOMCache.length > 0) return;
+  for (const svgPath of ALL_UI_SVGS) {
+    const img = new Image();
+    img.src = svgPath;
+    svgDOMCache.push(img);
+  }
+}
+
+// Auto-trigger SVG preload immediately
+if (typeof window !== "undefined") {
+  preloadAllUISVGs();
+}
+
 export async function populateBlobUrlMap(): Promise<void> {
   // Deduplicate concurrent calls to prevent clearing or revoking blob URLs mid-load
   if (activePopulatePromise) return activePopulatePromise;
 
   activePopulatePromise = (async () => {
     try {
+      preloadAllUISVGs();
       const db = await initDB();
       await new Promise<void>((resolve) => {
         const transaction = db.transaction(STORE_NAME, "readonly");
@@ -219,7 +296,7 @@ export async function populateBlobUrlMap(): Promise<void> {
             // Pre-decode all cached images into DOM Image elements to prevent pop-in during screen transitions
             for (const [filename, url] of blobUrlMap.entries()) {
               const lower = filename.toLowerCase();
-              if (lower.endsWith('.webp') || lower.endsWith('.png') || lower.endsWith('.jpg') || lower.endsWith('.jpeg')) {
+              if (lower.endsWith('.webp') || lower.endsWith('.png') || lower.endsWith('.jpg') || lower.endsWith('.jpeg') || lower.endsWith('.svg')) {
                 const img = new Image();
                 img.src = url;
               }

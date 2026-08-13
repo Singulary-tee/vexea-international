@@ -108,8 +108,8 @@ export function renderStoreScreen(container: HTMLElement, registeredUserData: an
 
   const discountBadge = featuredOffer.discountPercentage ? `${featuredOffer.discountPercentage}% OFF` : 'FEATURED';
   const priceDisplay = featuredOffer.currency === 'energy'
-    ? `${featuredOffer.priceEnergy} ENERGY`
-    : `${featuredOffer.priceCredits} CR`;
+    ? `<img src="/ui_svgs/energy.svg" style="width:0.88rem; height:0.88rem; vertical-align:middle; filter:brightness(0) invert(1);" alt="Energy" /> ${featuredOffer.priceEnergy} ENERGY`
+    : `<img src="/ui_svgs/coin.svg" style="width:0.88rem; height:0.88rem; vertical-align:middle; filter:brightness(0) invert(1);" alt="Coin" /> ${featuredOffer.priceCredits} CR`;
 
   featuredCard.innerHTML += `
     <div style="display:flex; flex-direction:column; gap:0.5vh; min-height:0;">
@@ -295,8 +295,8 @@ export function renderStoreScreen(container: HTMLElement, registeredUserData: an
     });
 
     const itemPriceDisplay = item.currency === 'energy'
-      ? `${item.priceEnergy} ENERGY`
-      : `${item.priceCredits} CR`;
+      ? `<img src="/ui_svgs/energy.svg" style="width:0.81rem; height:0.81rem; vertical-align:middle; filter:brightness(0) invert(1);" alt="Energy" /> ${item.priceEnergy} ENERGY`
+      : `<img src="/ui_svgs/coin.svg" style="width:0.81rem; height:0.81rem; vertical-align:middle; filter:brightness(0) invert(1);" alt="Coin" /> ${item.priceCredits} CR`;
 
     card.innerHTML = `
       <div style="display:flex; flex-direction:column; gap:0.3vh;">
