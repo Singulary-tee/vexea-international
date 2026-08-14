@@ -158,7 +158,15 @@ This file is the authoritative index of all directories and source files within 
 *   **`StudioPreviewManager.ts`**
     *   *Purpose:* Global 3D studio scene manager orchestrating background 3D character and weapon model rendering across menu views (Main Menu, Armory, Store, Lobby).
 *   **`asset-cache.ts`**
-    *   *Purpose:* Facilitates GLB model and sound file caching, Cloudflare R2 bucket mappings, and preloading routines.
+    *   *Purpose:* Dynamic local-storage asset cache manager using IndexedDB (`VexeaLocalCache`) and zero-GC blob object URL map (`blobUrlMap`). Provides full path tracing resolution, Cloudflare R2 CDN fetching, image SVG placeholder fallback generation, full cache entry deletion across all asset categories, and cache-busting version audit utilities (`checkAndBustStaleCache`, `invalidateCachedAsset`).
+*   **`audio-manifest.ts`**
+    *   *Purpose:* Compile-time source of truth for spatial audio and SFX assets, detailing key names, categories, R2 relative paths, and asset version tags.
+*   **`image-manifest.ts`**
+    *   *Purpose:* Single source of truth for UI, card, background, and promotional image assets hosted on R2.
+*   **`model-manifest.ts`**
+    *   *Purpose:* Manifest registry for entity, drone, and weapon 3D models (.glb) hosted on R2.
+*   **`video-manifest.ts`**
+    *   *Purpose:* Manifest registry for main menu, lobby, and UI webm background videos hosted on R2.
 *   **`audio.ts`**
     *   *Purpose:* Handles spatial sound positioning and 2D UI audio playback.
 *   **`design-system.ts`**

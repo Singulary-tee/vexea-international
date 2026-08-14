@@ -534,7 +534,7 @@ const initClient = async () => {
   // Initialize UI Screens
   initSplash();
   try {
-     await audioManager.loadAll();
+     await audioManager.loadMenuAudio();
      audioManager.playNextMenuMusic();
   } catch(e) {}
 

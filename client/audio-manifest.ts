@@ -3,6 +3,7 @@ export interface AudioManifestEntry {
   path: string;
   category: 'music' | 'sfx' | 'ui' | 'ambient';
   loop?: boolean;
+  version?: string;
 }
 
 export const AUDIO_MANIFEST: AudioManifestEntry[] = [

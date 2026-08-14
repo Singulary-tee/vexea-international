@@ -2,6 +2,7 @@ import { MapRegistryEntry } from "../../../shared/maps/map-registry";
 import { LoadingScreen } from "../ui/LoadingScreen";
 import { getMissingFilesForMap, downloadMapAssets } from "../../asset-cache";
 import { MapLoader } from "./MapLoader";
+import { audioManager } from "../../audio";
 import * as THREE from "three/webgpu";
 
 export async function orchestrateMatchLoad(mapEntry: MapRegistryEntry, channel: any, targetScene: THREE.Scene): Promise<void> {
@@ -21,6 +22,14 @@ export async function orchestrateMatchLoad(mapEntry: MapRegistryEntry, channel: 
       loadingScreen.setPhase(`DOWNLOADING ${progress.currentFile.toUpperCase()}`);
       loadingScreen.setProgress(progress.loaded, progress.total);
     });
+  }
+
+  // Preload and prewarm gameplay audio buffers into Howler
+  loadingScreen.setPhase('PRELOADING AUDIO');
+  try {
+    await audioManager.loadGameplayAudio();
+  } catch (e) {
+    console.warn('[LoadingOrchestrator] Failed to preload gameplay audio:', e);
   }
 
   // Phase 2 — Build Scene

@@ -50,10 +50,13 @@ class AudioManager {
         }
     }
 
-    public async loadAll(): Promise<void> {
-        this.totalAssets = AUDIO_MANIFEST.length;
+    private async loadEntries(entries: typeof AUDIO_MANIFEST): Promise<void> {
+        const unloadedEntries = entries.filter(e => !this.sounds[e.key]);
+        if (unloadedEntries.length === 0) return;
 
-        const loadPromises = AUDIO_MANIFEST.map(async (entry) => {
+        this.totalAssets += unloadedEntries.length;
+
+        const loadPromises = unloadedEntries.map(async (entry) => {
             const cachedUrl = await getCachedOrFetchUrl(entry.path, 'Sound');
             const ext = entry.path.substring(entry.path.lastIndexOf('.') + 1);
             const formats = ext === 'opus' ? ['opus', 'ogg'] : [ext];
@@ -102,6 +105,20 @@ class AudioManager {
         });
 
         await Promise.all(loadPromises);
+    }
+
+    public async loadMenuAudio(): Promise<void> {
+        const menuEntries = AUDIO_MANIFEST.filter(e => e.category === 'ui' || e.category === 'music');
+        await this.loadEntries(menuEntries);
+    }
+
+    public async loadGameplayAudio(): Promise<void> {
+        const gameplayEntries = AUDIO_MANIFEST.filter(e => e.category !== 'ui' && e.category !== 'music');
+        await this.loadEntries(gameplayEntries);
+    }
+
+    public async loadAll(): Promise<void> {
+        await this.loadEntries(AUDIO_MANIFEST);
     }
     
     public play(name: string) {

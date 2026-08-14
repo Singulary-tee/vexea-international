@@ -14,19 +14,50 @@ import { getSettings } from "./settings";
 import { DS } from "./design-system";
 import { ASSET_STRUCTURE } from "../shared/asset-structure";
 import { AUDIO_MANIFEST } from "./audio-manifest";
+import { IMAGE_MANIFEST } from "./image-manifest";
+import { VIDEO_MANIFEST } from "./video-manifest";
+import { MODEL_MANIFEST } from "./model-manifest";
+
+export const GLOBAL_ASSET_CACHE_VERSION = "1.0.0";
+
+export function getAssetVersion(pathOrKey: string): string {
+  const audio = AUDIO_MANIFEST.find(e => e.key === pathOrKey || e.path === pathOrKey);
+  if (audio?.version) return audio.version;
+  const img = IMAGE_MANIFEST.find(e => e.key === pathOrKey || e.path === pathOrKey);
+  if (img?.version) return img.version;
+  const vid = VIDEO_MANIFEST.find(e => e.key === pathOrKey || e.path === pathOrKey);
+  if (vid?.version) return vid.version;
+  const mdl = MODEL_MANIFEST.find(e => e.key === pathOrKey || e.path === pathOrKey);
+  if (mdl?.version) return mdl.version;
+  return GLOBAL_ASSET_CACHE_VERSION;
+}
 
 export function getCacheKey(filename: string, category?: string): string {
-  const isSound = category === "Sound" || 
-                  filename.startsWith("Audio/") || 
-                  filename.endsWith(".opus") ||
-                  AUDIO_MANIFEST.some(e => e.key === filename);
-  if (isSound) {
+  if (!filename) return "";
+
+  // 1. Check Audio manifest
+  const audioEntry = AUDIO_MANIFEST.find(e => e.key === filename || e.path === filename || e.path.endsWith('/' + filename));
+  if (audioEntry) return audioEntry.path;
+
+  // 2. Check Image manifest
+  const imageEntry = IMAGE_MANIFEST.find(e => e.key === filename || e.path === filename || e.path.endsWith('/' + filename));
+  if (imageEntry) return imageEntry.path;
+
+  // 3. Check Video manifest
+  const videoEntry = VIDEO_MANIFEST.find(e => e.key === filename || e.path === filename || e.path.endsWith('/' + filename));
+  if (videoEntry) return videoEntry.path;
+
+  // 4. Check Model manifest
+  const modelEntry = MODEL_MANIFEST.find(e => e.key === filename || e.path === filename || e.path.endsWith('/' + filename));
+  if (modelEntry) return modelEntry.path;
+
+  // Sound heuristic fallback
+  if (category === "Sound" || filename.startsWith("Audio/") || filename.endsWith(".opus")) {
     const cleanName = filename.substring(filename.lastIndexOf("/") + 1).replace(/\.opus$/, '').replace(/\.mp3$/, '');
     const entry = AUDIO_MANIFEST.find(e => e.key === filename || e.key === cleanName || e.path.endsWith(filename));
-    if (entry) {
-      return entry.path;
-    }
+    if (entry) return entry.path;
   }
+
   return filename.substring(filename.lastIndexOf("/") + 1);
 }
 
@@ -70,6 +101,8 @@ function initDB(): Promise<IDBDatabase> {
 async function getCachedBlob(filename: string, category?: string): Promise<Blob | null> {
   const db = await initDB();
   const cacheKey = getCacheKey(filename, category);
+  const expectedVersion = getAssetVersion(cacheKey);
+
   return new Promise((resolve) => {
     const transaction = db.transaction(STORE_NAME, "readonly");
     const store = transaction.objectStore(STORE_NAME);
@@ -77,6 +110,12 @@ async function getCachedBlob(filename: string, category?: string): Promise<Blob 
 
     request.onsuccess = () => {
       if (request.result) {
+        if (request.result.version && request.result.version !== expectedVersion) {
+          console.warn(`[CacheBuster] Stale cached asset detected for ${cacheKey} (cached: ${request.result.version}, required: ${expectedVersion}). Busting cache.`);
+          deleteCachedFile(cacheKey);
+          resolve(null);
+          return;
+        }
         resolve(request.result.blob);
       } else {
         resolve(null);
@@ -113,15 +152,17 @@ export async function hasCachedBlob(filename: string, category?: string): Promis
 }
 
 /**
- * Stores a blob directly in IndexedDB.
+ * Stores a blob directly in IndexedDB with asset version metadata.
  */
 async function setCachedBlob(filename: string, blob: Blob, category?: string): Promise<void> {
   const db = await initDB();
   const cacheKey = getCacheKey(filename, category);
+  const version = getAssetVersion(cacheKey);
+
   return new Promise((resolve) => {
     const transaction = db.transaction(STORE_NAME, "readwrite");
     const store = transaction.objectStore(STORE_NAME);
-    const request = store.put({ filename: cacheKey, blob, timestamp: Date.now() });
+    const request = store.put({ filename: cacheKey, blob, timestamp: Date.now(), version });
 
     request.onsuccess = () => resolve();
     request.onerror = () => resolve(); // fail silently, memory-only fallback is clean anyway
@@ -152,24 +193,73 @@ export async function listCachedFiles(): Promise<{ filename: string; timestamp: 
 }
 
 /**
- * Deletes a specific file from the IndexedDB cache.
+ * Deletes a specific file from the IndexedDB cache using full path tracing.
  */
 export async function deleteCachedFile(filename: string): Promise<void> {
   const db = await initDB();
+  const cacheKey = getCacheKey(filename);
+  const shortName = filename.substring(filename.lastIndexOf("/") + 1);
+
   return new Promise((resolve) => {
     const transaction = db.transaction(STORE_NAME, "readwrite");
     const store = transaction.objectStore(STORE_NAME);
-    const request = store.delete(filename);
 
-    request.onsuccess = () => {
-      // Also remove from blobUrlMap if present
-      if (blobUrlMap.has(filename)) {
-        URL.revokeObjectURL(blobUrlMap.get(filename)!);
-        blobUrlMap.delete(filename);
+    store.delete(cacheKey);
+    if (cacheKey !== filename) {
+      store.delete(filename);
+    }
+    if (shortName !== cacheKey && shortName !== filename) {
+      store.delete(shortName);
+    }
+
+    transaction.oncomplete = () => {
+      const keysToRemove = new Set([filename, cacheKey, shortName]);
+      for (const k of keysToRemove) {
+        if (blobUrlMap.has(k)) {
+          const url = blobUrlMap.get(k)!;
+          URL.revokeObjectURL(url);
+          blobUrlMap.delete(k);
+        }
       }
       resolve();
     };
-    request.onerror = () => resolve();
+
+    transaction.onerror = () => resolve();
+  });
+}
+
+/**
+ * Manually invalidates a cached asset, forcing a refetch on next access.
+ */
+export async function invalidateCachedAsset(filename: string): Promise<void> {
+  return deleteCachedFile(filename);
+}
+
+/**
+ * Scans the IndexedDB cache for any assets whose version does not match current manifest versions,
+ * purging stale entries.
+ */
+export async function checkAndBustStaleCache(): Promise<number> {
+  const db = await initDB();
+  let bustedCount = 0;
+  return new Promise((resolve) => {
+    const transaction = db.transaction(STORE_NAME, "readonly");
+    const store = transaction.objectStore(STORE_NAME);
+    const request = store.getAll();
+
+    request.onsuccess = async () => {
+      const records = request.result || [];
+      for (const rec of records) {
+        const expectedVersion = getAssetVersion(rec.filename);
+        if (rec.version && rec.version !== expectedVersion) {
+          await deleteCachedFile(rec.filename);
+          bustedCount++;
+        }
+      }
+      resolve(bustedCount);
+    };
+
+    request.onerror = () => resolve(0);
   });
 }
 
@@ -428,9 +518,9 @@ export async function getCachedOrFetchUrl(
     }
   }
 
-  try {
-    const cacheKey = getCacheKey(filename, category);
+  const cacheKey = getCacheKey(filename, category);
 
+  try {
     const existingBlobUrl = blobUrlMap.get(cacheKey);
     if (existingBlobUrl) {
       if (onProgress) onProgress(100);
@@ -449,54 +539,8 @@ export async function getCachedOrFetchUrl(
       return url;
     }
 
-    // 3. Download from appropriate CDN/R2
-    const r2Map: Record<string, string> = {
-      ...Object.keys(ASSET_STRUCTURE).reduce((acc, key) => {
-        acc[key] = `Models/Entities/${key}`;
-        return acc;
-      }, {} as Record<string, string>),
-      "main_menu_1.webm": "Video/Backgrounds/main_menu_1.webm",
-      "lobby_1.webm": "Video/Backgrounds/lobby_1.webm",
-      "armory_1.webp": "Images/Backgrounds/armory_1.webp",
-      "faction_1.webp": "Images/Backgrounds/faction_1.webp",
-      "stats_1.webp": "Images/Backgrounds/stats_1.webp",
-      "store_1.webp": "Images/Backgrounds/store_1.webp",
-      "splash_screen.webp": "Images/Backgrounds/splash_screen.webp",
-      "file_00000000cdd071f48495d22753c89fa1.webp": "Images/Backgrounds/file_00000000cdd071f48495d22753c89fa1.webp",
-      "assault_card_1.webp": "Images/Cards/assault_card_1.webp",
-      "demolition_card_1.webp": "Images/Cards/demolition_card_1.webp",
-      "medic_card_1.webp": "Images/Cards/medic_card_1.webp",
-      "recon_card_1.webp": "Images/Cards/recon_card_1.webp",
-      "infiltration_card_1.webp": "Images/Cards/infiltration_card_1.webp",
-      "intel_card_1.webp": "Images/Cards/intel_card_1.webp",
-      "leaderboard_card_1.webp": "Images/Cards/leaderboard_card_1.webp",
-      "squad_card_1.webp": "Images/Cards/squad_card_1.webp",
-      "update_card_1.webp": "Images/Cards/update_card_1.webp",
-      "promo_rifle_1.webp": "Images/promotional/promo_rifle_1.webp",
-      "promo_pistol_1.webp": "Images/promotional/promo_pistol_1.webp",
-      "promo_shotgun_1.webp": "Images/promotional/promo_shotgun_1.webp",
-      "attachments-optimized.glb": "Models/Weapons/attachments-optimized.glb",
-      "brn_180-optimized.glb": "Models/Weapons/brn_180-optimized.glb",
-      "f_90-optimized.glb": "Models/Weapons/f_90-optimized.glb",
-      "hk_51-optimized.glb": "Models/Weapons/hk_51-optimized.glb",
-      "scar_h_mk_17-optimized.glb": "Models/Weapons/scar_h_mk_17-optimized.glb",
-      "scar_l-optimized.glb": "Models/Weapons/scar_l-optimized.glb"
-    };
-
-    let downloadUrl = "";
-    if (category === "Sound" || filename.startsWith("Audio/") || filename.endsWith(".opus")) {
-      downloadUrl = `https://vexea-r2-asset-guard.alte.workers.dev/${cacheKey}`;
-    } else if (r2Map[cacheKey]) {
-      downloadUrl = `https://vexea-r2-asset-guard.alte.workers.dev/${r2Map[cacheKey]}`;
-    } else {
-      const baseUrl =
-        category === "Asset"
-          ? "https://github.com/Singulary-tee/vexea/releases/download/Asset"
-          : category === "Video"
-          ? "https://github.com/Singulary-tee/vexea/releases/download/Video"
-          : "https://github.com/Singulary-tee/vexea/releases/download/Images";
-      downloadUrl = `${baseUrl}/${cacheKey}`;
-    }
+    // 3. Download from Cloudflare R2
+    const downloadUrl = `https://vexea-r2-asset-guard.alte.workers.dev/${cacheKey}`;
       
     const s = getSettings();
     const serverPrefix = s.serverUrl ? s.serverUrl.replace(/\/$/, "") : "";
@@ -581,8 +625,19 @@ export async function getCachedOrFetchUrl(
     blobUrlMap.set(cacheKey, url);
     return url;
   } catch (error) {
+    const isImage = category === "Image" || cacheKey.startsWith("Images/") || /\.(webp|png|jpg|jpeg|gif|svg)$/i.test(cacheKey);
+    if (isImage) {
+      console.warn(`[Cache] Image ${cacheKey} unavailable on R2. Creating clean placeholder blob.`);
+      const placeholderSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128"><rect width="100%" height="100%" fill="#111113"/><rect x="2" y="2" width="124" height="124" fill="none" stroke="#27272a" stroke-width="2"/><path d="M32 96 L64 48 L96 96 Z" fill="#27272a"/><circle cx="40" cy="40" r="8" fill="#3f3f46"/></svg>`;
+      const blob = new Blob([placeholderSvg], { type: "image/svg+xml" });
+      await setCachedBlob(filename, blob, category);
+      const url = URL.createObjectURL(blob);
+      blobUrlMap.set(cacheKey, url);
+      blobUrlMap.set(filename, url);
+      return url;
+    }
+
     console.error(`[Cache] Fallback redirect activated for ${filename} due to:`, error);
-    // Ultimate local backup fallback so development continues uninterrupted
     return localPath;
   }
 }

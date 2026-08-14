@@ -95,22 +95,8 @@ The full high-fidelity PBR textures folder has been removed from on-disk storage
 
 ---
 
-## 3. High-Fidelity Positional Audio MP3s (`/client/public/audio/`)
+## 3. R2 Media Sourcing Notice
 
-All audio files have been uploaded to GitHub Releases and are seamlessly fetched and compiled into locally-caching blobs in IndexedDB. Audio loading has been decoupled from standard paths, keeping the application fast and avoiding compilation stutter.
+> [!NOTE]
+> All images, videos, and sound assets have been completely purged from GitHub Releases and direct codebase tracking. They are 100% sourced from Cloudflare R2 and tracked in `r2_assets_tracker.json` and `r2_assets_tracker.md`.
 
-| Sound Key | Filename | Category | Direct CDN Source |
-| :--- | :--- | :--- | :--- |
-| `bass_scratch` | `bass_scratch.mp3` | Music Sequence | `Sound` Release Package |
-| `click` | `click.mp3` | UI Interactions | `Sound` Release Package |
-| `concrete_run` | `concrete_run.mp3` | Footsteps Loop | `Sound` Release Package |
-| `concrete_walk` | `concrete_walk.mp3` | Footsteps Loop | `Sound` Release Package |
-| `error` | `error.mp3` | UI Interactions | `Sound` Release Package |
-| `iron_march` | `iron_march.mp3` | Music Sequence | `Sound` Release Package |
-| `metal_ricochet` | `metal_ricochet.mp3` | Ballistics | `Sound` Release Package |
-| `pistol_fire` | `pistol_fire.mp3` | Ballistics | `Sound` Release Package |
-| `pistol_reload` | `pistol_reload.mp3` | Ballistics | `Sound` Release Package |
-| `rifle_fire` | `rifle_fire.mp3` | Ballistics | `Sound` Release Package |
-| `rifle_reload` | `rifle_reload.mp3` | Ballistics | `Sound` Release Package |
-| `vexea_theme` | `vexea_theme.mp3` | Main Menu Theme | `Sound` Release Package |
-| `wood_walk` | `wood_walk.mp3` | Footsteps Loop | `Sound` Release Package |
