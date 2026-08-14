@@ -551,7 +551,11 @@ Every file change in the VEXEA codebase must follow this strict two-step protoco
     * `CODEBASE_INDEX.md`: Updated cycle audit log.
 * **Verification:** Verified zero build/lint errors via `lint_applet` and `compile_applet`.
 
-
-
-
-
+### Cycle 2026-08-14-01: Register Uploaded VFX Flipbooks and Static Layers
+*   **Target Files:** `r2_assets_tracker.json`, `client/image-manifest.ts`, `CODEBASE_INDEX.md`
+*   **Status:** Verified & Finalized
+*   **Modifications:**
+    *   `r2_assets_tracker.json`: Registered 33 CC0-derived, alpha-preserving WebP VFX assets under `Images/VFX/Flipbooks/` (15 animated sheets) and `Images/VFX/Static/` (18 muzzle/flash/spark support layers). No binary assets were added to Git.
+    *   `client/image-manifest.ts`: Added the `vfx` category and manifest entries for all 33 uploaded assets so `getAssetUrl()` / `IMAGE_MANIFEST` can resolve the runtime CDN paths.
+    *   `CODEBASE_INDEX.md`: Registered this VFX asset-library metadata cycle.
+*   **Verification:** Live Cloudflare R2 listing under `Images/VFX/` returned exactly 33 objects, all with `image/webp` metadata and exact staged sizes totaling 5,530,374 bytes; no missing, unexpected, stale-prefix, or size/MIME mismatches were found.

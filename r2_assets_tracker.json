@@ -456,6 +456,204 @@
       "category": "Asset",
       "source": "CloudflareR2",
       "path": "Models/Environment/concrete_fence_low-poly.glb"
+    },
+    {
+      "name": "cloud_01_8x8_q90.webp",
+      "category": "Image",
+      "source": "CloudflareR2",
+      "path": "Images/VFX/Flipbooks/cloud_01_8x8_q90.webp"
+    },
+    {
+      "name": "cloud_02_8x8_q90.webp",
+      "category": "Image",
+      "source": "CloudflareR2",
+      "path": "Images/VFX/Flipbooks/cloud_02_8x8_q90.webp"
+    },
+    {
+      "name": "explosion_01_8x8_q90.webp",
+      "category": "Image",
+      "source": "CloudflareR2",
+      "path": "Images/VFX/Flipbooks/explosion_01_8x8_q90.webp"
+    },
+    {
+      "name": "explosion_02_8x8_q90.webp",
+      "category": "Image",
+      "source": "CloudflareR2",
+      "path": "Images/VFX/Flipbooks/explosion_02_8x8_q90.webp"
+    },
+    {
+      "name": "explosion_smoke_01_8x8_q90.webp",
+      "category": "Image",
+      "source": "CloudflareR2",
+      "path": "Images/VFX/Flipbooks/explosion_smoke_01_8x8_q90.webp"
+    },
+    {
+      "name": "fire_01_8x8_q90.webp",
+      "category": "Image",
+      "source": "CloudflareR2",
+      "path": "Images/VFX/Flipbooks/fire_01_8x8_q90.webp"
+    },
+    {
+      "name": "fire_02_8x8_q90.webp",
+      "category": "Image",
+      "source": "CloudflareR2",
+      "path": "Images/VFX/Flipbooks/fire_02_8x8_q90.webp"
+    },
+    {
+      "name": "fire_03_8x8_q90.webp",
+      "category": "Image",
+      "source": "CloudflareR2",
+      "path": "Images/VFX/Flipbooks/fire_03_8x8_q90.webp"
+    },
+    {
+      "name": "fire_04_8x8_q90.webp",
+      "category": "Image",
+      "source": "CloudflareR2",
+      "path": "Images/VFX/Flipbooks/fire_04_8x8_q90.webp"
+    },
+    {
+      "name": "flame_01_16x4_q90.webp",
+      "category": "Image",
+      "source": "CloudflareR2",
+      "path": "Images/VFX/Flipbooks/flame_01_16x4_q90.webp"
+    },
+    {
+      "name": "flame_02_15x4_q90.webp",
+      "category": "Image",
+      "source": "CloudflareR2",
+      "path": "Images/VFX/Flipbooks/flame_02_15x4_q90.webp"
+    },
+    {
+      "name": "muzzle_flash_01_5frame_q90.webp",
+      "category": "Image",
+      "source": "CloudflareR2",
+      "path": "Images/VFX/Flipbooks/muzzle_flash_01_5frame_q90.webp"
+    },
+    {
+      "name": "wispy_smoke_01_8x8_q90.webp",
+      "category": "Image",
+      "source": "CloudflareR2",
+      "path": "Images/VFX/Flipbooks/wispy_smoke_01_8x8_q90.webp"
+    },
+    {
+      "name": "wispy_smoke_02_8x8_q90.webp",
+      "category": "Image",
+      "source": "CloudflareR2",
+      "path": "Images/VFX/Flipbooks/wispy_smoke_02_8x8_q90.webp"
+    },
+    {
+      "name": "wispy_smoke_03_8x8_q90.webp",
+      "category": "Image",
+      "source": "CloudflareR2",
+      "path": "Images/VFX/Flipbooks/wispy_smoke_03_8x8_q90.webp"
+    },
+    {
+      "name": "circle_01_a.webp",
+      "category": "Image",
+      "source": "CloudflareR2",
+      "path": "Images/VFX/Static/circle_01_a.webp"
+    },
+    {
+      "name": "circle_02_a.webp",
+      "category": "Image",
+      "source": "CloudflareR2",
+      "path": "Images/VFX/Static/circle_02_a.webp"
+    },
+    {
+      "name": "circle_03_a.webp",
+      "category": "Image",
+      "source": "CloudflareR2",
+      "path": "Images/VFX/Static/circle_03_a.webp"
+    },
+    {
+      "name": "circle_04_a.webp",
+      "category": "Image",
+      "source": "CloudflareR2",
+      "path": "Images/VFX/Static/circle_04_a.webp"
+    },
+    {
+      "name": "circle_05_a.webp",
+      "category": "Image",
+      "source": "CloudflareR2",
+      "path": "Images/VFX/Static/circle_05_a.webp"
+    },
+    {
+      "name": "flare_01_a.webp",
+      "category": "Image",
+      "source": "CloudflareR2",
+      "path": "Images/VFX/Static/flare_01_a.webp"
+    },
+    {
+      "name": "muzzle_01_a.webp",
+      "category": "Image",
+      "source": "CloudflareR2",
+      "path": "Images/VFX/Static/muzzle_01_a.webp"
+    },
+    {
+      "name": "muzzle_02_a.webp",
+      "category": "Image",
+      "source": "CloudflareR2",
+      "path": "Images/VFX/Static/muzzle_02_a.webp"
+    },
+    {
+      "name": "muzzle_03_a.webp",
+      "category": "Image",
+      "source": "CloudflareR2",
+      "path": "Images/VFX/Static/muzzle_03_a.webp"
+    },
+    {
+      "name": "muzzle_04_a.webp",
+      "category": "Image",
+      "source": "CloudflareR2",
+      "path": "Images/VFX/Static/muzzle_04_a.webp"
+    },
+    {
+      "name": "muzzle_05_a.webp",
+      "category": "Image",
+      "source": "CloudflareR2",
+      "path": "Images/VFX/Static/muzzle_05_a.webp"
+    },
+    {
+      "name": "spark_01_a.webp",
+      "category": "Image",
+      "source": "CloudflareR2",
+      "path": "Images/VFX/Static/spark_01_a.webp"
+    },
+    {
+      "name": "spark_02_a.webp",
+      "category": "Image",
+      "source": "CloudflareR2",
+      "path": "Images/VFX/Static/spark_02_a.webp"
+    },
+    {
+      "name": "spark_03_a.webp",
+      "category": "Image",
+      "source": "CloudflareR2",
+      "path": "Images/VFX/Static/spark_03_a.webp"
+    },
+    {
+      "name": "spark_04_a.webp",
+      "category": "Image",
+      "source": "CloudflareR2",
+      "path": "Images/VFX/Static/spark_04_a.webp"
+    },
+    {
+      "name": "spark_05_a.webp",
+      "category": "Image",
+      "source": "CloudflareR2",
+      "path": "Images/VFX/Static/spark_05_a.webp"
+    },
+    {
+      "name": "spark_06_a.webp",
+      "category": "Image",
+      "source": "CloudflareR2",
+      "path": "Images/VFX/Static/spark_06_a.webp"
+    },
+    {
+      "name": "spark_07_a.webp",
+      "category": "Image",
+      "source": "CloudflareR2",
+      "path": "Images/VFX/Static/spark_07_a.webp"
     }
   ]
 }
