@@ -568,3 +568,12 @@ Every file change in the VEXEA codebase must follow this strict two-step protoco
     *   `client/image-manifest.ts`: Added all 7 tracer/decal entries to the existing `vfx` category so manifest-driven CDN resolution can locate them.
     *   `CODEBASE_INDEX.md`: Registered this tracer/decal asset cycle. Runtime gameplay code was intentionally left unchanged.
 *   **Verification:** Live Cloudflare R2 listing under `Images/VFX/Static/` found all 7 new keys with `image/webp` metadata and exact staged sizes; 18 pre-existing approved static VFX objects were present in the same prefix and were excluded from the new-asset comparison.
+
+### Cycle 2026-08-14-03: Replace Dot-Like Tracers and Feather Surface-Decal Edges
+*   **Target Files:** `client/image-manifest.ts`, `CODEBASE_INDEX.md`
+*   **Status:** Verified & Finalized
+*   **Modifications:**
+    *   `client/image-manifest.ts`: Bumped the seven replaced tracer/decal asset versions from `1.0.0` to `1.1.0` so the IndexedDB asset cache invalidates stale bytes while preserving the existing R2 keys and `vfx` category.
+    *   Replacement R2 bytes: Rebuilt the three tracer WebPs as elongated tapered streaks with a broad halo and brighter center emission; rebuilt the four decal WebPs with controlled Gaussian edge feathering to reduce hard cutout boundaries. Binary assets remain in R2 only.
+    *   `CODEBASE_INDEX.md`: Registered this replacement cycle. Runtime gameplay code was intentionally left unchanged.
+*   **Verification:** Live Cloudflare R2 listing under `Images/VFX/Static/` found all 7 expected replacement keys with zero missing, byte, or MIME mismatches; 18 pre-existing approved static VFX objects remain in the same prefix. QA preview confirms elongated tracer silhouettes and softened decal edges. TypeScript lint and whitespace validation passed.

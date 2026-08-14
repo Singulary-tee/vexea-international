@@ -74,13 +74,13 @@ export const IMAGE_MANIFEST: ImageManifestEntry[] = [
   { key: 'spark_05_a.webp', path: 'Images/VFX/Static/spark_05_a.webp', category: 'vfx', version: '1.0.0' },
   { key: 'spark_06_a.webp', path: 'Images/VFX/Static/spark_06_a.webp', category: 'vfx', version: '1.0.0' },
   { key: 'spark_07_a.webp', path: 'Images/VFX/Static/spark_07_a.webp', category: 'vfx', version: '1.0.0' },
-  { key: 'tracer_warm_core.webp', path: 'Images/VFX/Static/tracer_warm_core.webp', category: 'vfx', version: '1.0.0' },
-  { key: 'tracer_cool_core.webp', path: 'Images/VFX/Static/tracer_cool_core.webp', category: 'vfx', version: '1.0.0' },
-  { key: 'tracer_white_core.webp', path: 'Images/VFX/Static/tracer_white_core.webp', category: 'vfx', version: '1.0.0' },
-  { key: 'surface_decal_bullet_hole_01.webp', path: 'Images/VFX/Static/surface_decal_bullet_hole_01.webp', category: 'vfx', version: '1.0.0' },
-  { key: 'surface_decal_bullet_hole_02.webp', path: 'Images/VFX/Static/surface_decal_bullet_hole_02.webp', category: 'vfx', version: '1.0.0' },
-  { key: 'surface_decal_bullet_hole_03.webp', path: 'Images/VFX/Static/surface_decal_bullet_hole_03.webp', category: 'vfx', version: '1.0.0' },
-  { key: 'surface_decal_scorch_01.webp', path: 'Images/VFX/Static/surface_decal_scorch_01.webp', category: 'vfx', version: '1.0.0' }
+  { key: 'tracer_warm_core.webp', path: 'Images/VFX/Static/tracer_warm_core.webp', category: 'vfx', version: '1.1.0' },
+  { key: 'tracer_cool_core.webp', path: 'Images/VFX/Static/tracer_cool_core.webp', category: 'vfx', version: '1.1.0' },
+  { key: 'tracer_white_core.webp', path: 'Images/VFX/Static/tracer_white_core.webp', category: 'vfx', version: '1.1.0' },
+  { key: 'surface_decal_bullet_hole_01.webp', path: 'Images/VFX/Static/surface_decal_bullet_hole_01.webp', category: 'vfx', version: '1.1.0' },
+  { key: 'surface_decal_bullet_hole_02.webp', path: 'Images/VFX/Static/surface_decal_bullet_hole_02.webp', category: 'vfx', version: '1.1.0' },
+  { key: 'surface_decal_bullet_hole_03.webp', path: 'Images/VFX/Static/surface_decal_bullet_hole_03.webp', category: 'vfx', version: '1.1.0' },
+  { key: 'surface_decal_scorch_01.webp', path: 'Images/VFX/Static/surface_decal_scorch_01.webp', category: 'vfx', version: '1.1.0' }
 ];
 
 export type ImageKey = typeof IMAGE_MANIFEST[number]['key'];
