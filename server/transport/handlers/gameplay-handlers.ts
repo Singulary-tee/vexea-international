@@ -24,9 +24,14 @@ export function registerGameplayHandlers(
 
       if (seq > p.lastSequence) {
         p.lastSequence = seq;
-        p.pitch = pitch;
-        p.yaw = yaw;
-        p.inputMask = inputMask;
+        const room = getRoom();
+        if (room) {
+          room.updatePlayerInput(p, inputMask, pitch, yaw);
+        } else {
+          p.pitch = pitch;
+          p.yaw = yaw;
+          p.inputMask = inputMask;
+        }
       }
     }
   });
@@ -40,6 +45,7 @@ export function registerGameplayHandlers(
     if (!p.isAlive) return;
 
     const type = args.type;
+    room.recordPlayerActivity(p);
 
     if (type === "USE_UTILITY") {
       const slot = args.slot as "utility1" | "utility2";

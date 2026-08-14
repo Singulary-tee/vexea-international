@@ -552,6 +552,31 @@ export class NetworkSyncSystem {
         match.chatHUD.addQuickCommMessage(msg.sender || "OPERATIVE", msg.optionId);
       }
     }
+
+    if (msg.type === "afk_warning") {
+      if (match.hud) {
+        match.hud.showAFKWarning(msg.remainingSec || 60);
+      }
+      if (match.chatHUD) {
+        match.chatHUD.addMessage("SYSTEM", `AFK WARNING: Inactivity detected. Move or fire within ${msg.remainingSec || 60}s to avoid being kicked.`);
+      }
+    }
+
+    if (msg.type === "afk_cleared") {
+      if (match.hud) {
+        match.hud.hideAFKWarning();
+      }
+    }
+
+    if (msg.type === "KICKED_AFK") {
+      if (match.hud) {
+        match.hud.hideAFKWarning();
+      }
+      if (document.exitPointerLock) document.exitPointerLock();
+      import("../../screens/screen-manager").then((sm) => {
+        sm.showMainMenu();
+      });
+    }
   }
 
   private handleStateSync(json: any) {

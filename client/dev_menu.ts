@@ -1015,55 +1015,6 @@ function renderPanel() {
                     <button id="dev-spawn-bots" style="padding:${DS.spacing.sm};">Spawn 3 Test Bots</button>
                 </div>
             </div>
-            <div style="background:${DS.colors.surface}; padding:${DS.spacing.md}; border:${DS.borders.thin} ${DS.colors.border}; border-radius:${DS.borders.radius.sm}; font-family:${DS.typography.fontFamilyMono}; font-size:${DS.typography.tiny}; margin-bottom:0.94rem; line-height:1.4;">
-                <div style="font-weight:bold; color:${DS.colors.dev}; margin-bottom:0.31rem;">[ROW 2: ISOLATED VEHICLE SPAWNING] <span style="cursor:help; color:#0cf; border:${DS.borders.thin} #0cf; border-radius:50%; padding:0 4px;" title="Spawns a dummy test entity (Type 99) with an isolated Yuka vehicle. Useful for testing raw steering behaviors and physics filters without LLM or gameplay interference.">?</span></div>
-                <div style="display:flex; gap:10px; flex-wrap:wrap;">
-                    <button id="dev-spawn-test-entity" style="padding:${DS.spacing.sm}; background:${DS.colors.dev}; border:${DS.borders.thin} #3b82f6; color:${DS.colors.text};">Spawn Test Entity (Bare Yuka)</button>
-                    <button id="dev-clear-test-entities" style="padding:${DS.spacing.sm}; background:${DS.colors.danger}; border:${DS.borders.thin} ${DS.colors.danger}; color:${DS.colors.text};">Clear All Test Entities</button>
-                </div>
-            </div>
-            <div style="background:${DS.colors.surface}; padding:${DS.spacing.md}; border:${DS.borders.thin} ${DS.colors.border}; border-radius:${DS.borders.radius.sm}; font-family:${DS.typography.fontFamilyMono}; font-size:${DS.typography.tiny}; margin-bottom:0.94rem; line-height:1.4;">
-                <div style="font-weight:bold; color:${DS.colors.warning}; margin-bottom:0.31rem;">[ROW 3: FSM/TASK-MODE CONTROLS] <span style="cursor:help; color:#0cf; border:${DS.borders.thin} #0cf; border-radius:50%; padding:0 4px;" title="Forces the test entity to switch states manually (e.g. NORMAL idling vs COMBAT mode), or sets a specific world-space target for steering.">?</span></div>
-                <div style="display:flex; gap:0.63rem; flex-wrap:wrap; margin-bottom:0.63rem;">
-                    <button id="dev-test-mode-normal" style="padding:${DS.spacing.sm};">Force Mode: NORMAL</button>
-                    <button id="dev-test-mode-combat" style="padding:${DS.spacing.sm};">Force Mode: COMBAT</button>
-                </div>
-                <div style="display:flex; gap:10px; align-items:center;">
-                    <input type="number" id="dev-target-x" value="0" style="width:3.13rem; background:#222; color:${DS.colors.text}; border:${DS.borders.thin} #444;" />
-                    <input type="number" id="dev-target-y" value="0" style="width:3.13rem; background:#222; color:${DS.colors.text}; border:${DS.borders.thin} #444;" />
-                    <input type="number" id="dev-target-z" value="0" style="width:3.13rem; background:#222; color:${DS.colors.text}; border:${DS.borders.thin} #444;" />
-                    <button id="dev-test-assign-target" style="padding:${DS.spacing.sm};">Assign Target Position</button>
-                </div>
-            </div>
-
-            <div style="background:${DS.colors.surface}; padding:${DS.spacing.md}; border:${DS.borders.thin} ${DS.colors.border}; border-radius:${DS.borders.radius.sm}; font-family:${DS.typography.fontFamilyMono}; font-size:${DS.typography.tiny}; margin-bottom:0.94rem; line-height:1.4;">
-                <div style="font-weight:bold; color:${DS.colors.success}; margin-bottom:0.31rem;">[ROW 4: PERCEPTION CONTROLS]</div>
-                <div style="display:flex; gap:10px; flex-wrap:wrap;">
-                    <button id="dev-test-sight" style="padding:${DS.spacing.sm};">Trigger Simulated Sight</button>
-                    <button id="dev-test-sound" style="padding:${DS.spacing.sm};">Trigger Simulated Sound</button>
-                </div>
-            </div>
-
-            <div style="background:${DS.colors.surface}; padding:${DS.spacing.md}; border:${DS.borders.thin} ${DS.colors.border}; border-radius:${DS.borders.radius.sm}; font-family:${DS.typography.fontFamilyMono}; font-size:${DS.typography.tiny}; margin-bottom:0.94rem; line-height:1.4;">
-                <div style="font-weight:bold; color:${DS.colors.warning}; margin-bottom:0.31rem;">[ROW 5: LIVE DECISION DATA BOARD]</div>
-                <div id="dev-test-data-board" style="background:${DS.colors.background}; padding:${DS.spacing.md}; height:9.38rem; overflow-y:auto; border:${DS.borders.thin} ${DS.colors.border};">
-                    Waiting for telemetry...
-                </div>
-            </div>
-
-            <div style="background:${DS.colors.surface}; padding:${DS.spacing.md}; border:${DS.borders.thin} ${DS.colors.border}; border-radius:${DS.borders.radius.sm}; font-family:${DS.typography.fontFamilyMono}; font-size:${DS.typography.tiny}; margin-bottom:0.94rem; line-height:1.4;">
-                <div style="font-weight:bold; color:#0cf; margin-bottom:0.31rem;">[ROW 6: COLLISION TESTING CONTROLS]</div>
-                <div style="margin-bottom:0.63rem; color:${DS.colors.textMuted};">Hypothesis Toggles (Overrides Rapier Bitmask):</div>
-                <div style="display:flex; gap:0.63rem; flex-wrap:wrap; margin-bottom:0.63rem;">
-                    <button id="dev-test-coll-player" style="padding:${DS.spacing.sm};">Group: Player-Only</button>
-                    <button id="dev-test-coll-world" style="padding:${DS.spacing.sm};">Group: World-Only</button>
-                    <button id="dev-test-coll-all" style="padding:${DS.spacing.sm};">Group: All</button>
-                </div>
-                <div style="color:${DS.colors.textMuted};">Current collision bitmask: <span id="dev-test-curr-coll" style="color:#fff; font-weight:bold;">UNKNOWN</span></div>
-                <div id="dev-test-collision-events" style="margin-top:0.63rem; background:${DS.colors.background}; padding:${DS.spacing.md}; height:3.75rem; overflow-y:auto; border:${DS.borders.thin} ${DS.colors.border};">
-                    No recent player contact events.
-                </div>
-            </div>
         `;
 
         // Row 1 Handlers
@@ -1094,63 +1045,6 @@ function renderPanel() {
                 if (activeChannel) activeChannel.emit("dev_spawn_bots", { count: 3 });
             });
         }
-
-        // Row 2 Handlers
-        const spawnTestBtn = document.getElementById('dev-spawn-test-entity');
-        if (spawnTestBtn) {
-            spawnTestBtn.addEventListener('click', () => {
-                if (!camera) return;
-                const dir = new THREE.Vector3(0, 0, -1);
-                dir.applyQuaternion(camera.quaternion);
-                const pos = new THREE.Vector3();
-                pos.copy(camera.position).add(dir.multiplyScalar(10));
-                let spawnY = pos.y;
-                if (spawnY < Number(0.5)) spawnY = Number(0.5);
-                if (activeChannel) activeChannel.emit("dev_spawn_test_entity", { x: pos.x, y: spawnY, z: pos.z });
-            });
-        }
-        const clearTestBtn = document.getElementById('dev-clear-test-entities');
-        if (clearTestBtn) {
-            clearTestBtn.addEventListener('click', () => {
-                if (activeChannel) activeChannel.emit("dev_clear_test_entities", {});
-            });
-        }
-
-        // Row 3 Handlers
-        document.getElementById('dev-test-mode-normal')?.addEventListener('click', () => {
-            if (activeChannel) activeChannel.emit("dev_test_entity_mode", { mode: "NORMAL" });
-        });
-        document.getElementById('dev-test-mode-combat')?.addEventListener('click', () => {
-            if (activeChannel) activeChannel.emit("dev_test_entity_mode", { mode: "COMBAT" });
-        });
-        document.getElementById('dev-test-assign-target')?.addEventListener('click', () => {
-            const x = parseFloat((document.getElementById('dev-target-x') as HTMLInputElement).value) || 0;
-            const y = parseFloat((document.getElementById('dev-target-y') as HTMLInputElement).value) || 0;
-            const z = parseFloat((document.getElementById('dev-target-z') as HTMLInputElement).value) || 0;
-            if (activeChannel) activeChannel.emit("dev_test_entity_target", { x, y, z });
-        });
-
-        // Row 4 Handlers
-        document.getElementById('dev-test-sight')?.addEventListener('click', () => {
-            if (activeChannel) activeChannel.emit("dev_test_entity_sight", {});
-        });
-        document.getElementById('dev-test-sound')?.addEventListener('click', () => {
-            if (activeChannel) activeChannel.emit("dev_test_entity_sound", {});
-        });
-
-        // Row 6 Handlers
-        // Group values: PLAYER is maybe group 1, WORLD is group 2. Let's use 0x0001, 0xFFFF
-        document.getElementById('dev-test-coll-player')?.addEventListener('click', () => {
-            // Hypothesis: Only collide with group 0x0001
-            if (activeChannel) activeChannel.emit("dev_test_entity_collision_filter", { group: 1, mask: 0x0001 });
-        });
-        document.getElementById('dev-test-coll-world')?.addEventListener('click', () => {
-            // Hypothesis: Only collide with group 0x0002
-            if (activeChannel) activeChannel.emit("dev_test_entity_collision_filter", { group: 1, mask: 0x0002 });
-        });
-        document.getElementById('dev-test-coll-all')?.addEventListener('click', () => {
-            if (activeChannel) activeChannel.emit("dev_test_entity_collision_filter", { group: 1, mask: 0xFFFF });
-        });
     }
     else if (activePanel === "PHYSICS") {
         c.innerHTML = `

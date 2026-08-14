@@ -158,6 +158,8 @@ export interface PlayerState {
   lastSequence: number;
   leakyRateLimit: number;
   lastFireTime: number;
+  lastInputChangeTime: number;
+  afkWarningIssued: boolean;
 
   velEmaX: number;
   velEmaY: number;
@@ -394,6 +396,7 @@ export class MatchRoom {
   private physicsInterval: any = null;
   private syncInterval: any = null;
   private aiInterval: any = null;
+  private afkInterval: any = null;
   private isShutdown = false;
 
   public mapId: string;
@@ -922,6 +925,8 @@ export class MatchRoom {
       lastSequence: 0,
       leakyRateLimit: 0,
       lastFireTime: 0,
+      lastInputChangeTime: Date.now(),
+      afkWarningIssued: false,
       velEmaX: 0,
       velEmaY: 0,
       velEmaZ: 0,
@@ -1127,6 +1132,8 @@ export class MatchRoom {
         console.log(`[MATCH] Player ${playerId} reconnected during 75s grace period.`);
       }
       p.channel = newChannel;
+      p.lastInputChangeTime = Date.now();
+      p.afkWarningIssued = false;
     }
   }
 
@@ -1183,6 +1190,68 @@ export class MatchRoom {
     }
   }
 
+  public updatePlayerInput(p: PlayerState, inputMask: number, pitch: number, yaw: number) {
+    const inputChanged =
+      p.inputMask !== inputMask ||
+      Math.abs(p.pitch - pitch) > 0.0001 ||
+      Math.abs(p.yaw - yaw) > 0.0001;
+
+    p.inputMask = inputMask;
+    p.pitch = pitch;
+    p.yaw = yaw;
+
+    if (inputChanged) {
+      if (p.afkWarningIssued) {
+        p.afkWarningIssued = false;
+        try {
+          p.channel.emit("reliable_event", { type: "afk_cleared" });
+        } catch (e) {}
+      }
+      p.lastInputChangeTime = Date.now();
+    }
+  }
+
+  public recordPlayerActivity(p: PlayerState) {
+    if (p.afkWarningIssued) {
+      p.afkWarningIssued = false;
+      try {
+        p.channel.emit("reliable_event", { type: "afk_cleared" });
+      } catch (e) {}
+    }
+    p.lastInputChangeTime = Date.now();
+  }
+
+  private checkPlayerAFK() {
+    if (!this.matchActive || this.isShutdown) return;
+
+    const now = Date.now();
+    for (const player of this.players.values()) {
+      if (player.isBot) continue;
+
+      const idleMs = now - (player.lastInputChangeTime || now);
+
+      if (idleMs >= 120000) {
+        console.log(`[AFK] Kicking player ${player.id} due to ${Math.round(idleMs / 1000)}s inactivity`);
+        try {
+          player.channel.emit("reliable_event", {
+            type: "KICKED_AFK",
+            reason: "Kicked for inactivity (AFK)",
+          });
+        } catch (e) {}
+        this.removePlayer(player.id);
+      } else if (idleMs >= 60000 && !player.afkWarningIssued) {
+        player.afkWarningIssued = true;
+        console.log(`[AFK] Issuing AFK warning to player ${player.id} (${Math.round(idleMs / 1000)}s idle)`);
+        try {
+          player.channel.emit("reliable_event", {
+            type: "afk_warning",
+            remainingSec: Math.ceil((120000 - idleMs) / 1000),
+          });
+        } catch (e) {}
+      }
+    }
+  }
+
   private startSimulationLoops() {
     const PHYSICS_TICK_RATE = 60n;
     const PHYSICS_TIMESTEP = 1000000000n / PHYSICS_TICK_RATE;
@@ -1228,7 +1297,6 @@ export class MatchRoom {
 
         // Broad-phase update BEFORE character queries
         this.rapierWorld.step();
-        this.processTestEntities(Number(PHYSICS_TIMESTEP) / 1000000000.0);
 
         if (this.serverTick % 60 === 0) {
           let activeDrones = 0;
@@ -1879,6 +1947,11 @@ export class MatchRoom {
         }
       }
     }, 50.0);
+
+    // Periodic AFK detection pass (1s granularity)
+    this.afkInterval = setInterval(() => {
+      this.checkPlayerAFK();
+    }, 1000);
   }
 
   public registerDeveloperSpawner(type: number, pos?: { x: number; y: number; z: number }): boolean {
@@ -2857,269 +2930,6 @@ export class MatchRoom {
     }
   }
 
-  public spawnTestEntity(x: number, y: number, z: number) {
-    let spawned = false;
-    for (let i = 0; i < this.drones.length; i++) {
-      const d = this.drones[i];
-      if (d.state === DroneState.DEAD) {
-        this.resetDroneToDefaults(d);
-        d.id = this.nextDroneId++;
-        d.type = DroneType.TEST_ENTITY; // Test Entity
-        d.state = DroneState.IDLE;
-        d.zone = ZONES.COURTYARD;
-        d.posX = x;
-        d.posY = y;
-        d.posZ = z;
-        d.hp = DRONE_CONFIGS[d.type]?.hp ?? 100;
-        d.groupId = "G_TEST";
-        d.cooldown = 40;
-        this.initDronePhysics(d);
-        spawned = true;
-        break;
-      }
-    }
-  }
-
-  public clearTestEntities() {
-    for (let i = 0; i < this.drones.length; i++) {
-      if (this.drones[i].type === DroneType.TEST_ENTITY) {
-        this.despawnDrone(this.drones[i]);
-      }
-    }
-  }
-
-  public setTestEntityMode(mode: "NORMAL" | "COMBAT") {
-    for (let i = 0; i < this.drones.length; i++) {
-      if (this.drones[i].type === DroneType.TEST_ENTITY && this.drones[i].state !== DroneState.DEAD) {
-        this.drones[i].mode = mode;
-      }
-    }
-  }
-
-  public setTestEntityTarget(x: number, y: number, z: number) {
-    for (let i = 0; i < this.drones.length; i++) {
-      const d = this.drones[i];
-      if (d.type === DroneType.TEST_ENTITY && d.state !== DroneState.DEAD) {
-        d.targetX = x;
-        d.targetY = y;
-        d.targetZ = z;
-      }
-    }
-  }
-
-  public triggerTestEntitySight() {
-    for (let i = 0; i < this.drones.length; i++) {
-      const d = this.drones[i];
-      if (d.type === DroneType.TEST_ENTITY && d.state !== DroneState.DEAD && d.memoryRecords) {
-        for (const player of this.players.values()) {
-           if (player.isAlive) {
-              let rec = d.memoryRecords.get(player.id);
-              if (!rec) {
-                 rec = { entityId: player.id, lastSensedPosition: { x: 0, y: 0, z: 0 }, timeLastSensed: 0, confidence: 0 };
-                 d.memoryRecords.set(player.id, rec);
-              }
-              rec.lastSensedPosition.x = player.posX;
-              rec.lastSensedPosition.y = player.posY;
-              rec.lastSensedPosition.z = player.posZ;
-              rec.timeLastSensed = Date.now() / 1000;
-              rec.confidence = 1.0;
-              rec.touchedThisTick = true;
-              break;
-           }
-        }
-      }
-    }
-  }
-
-  public triggerTestEntitySound() {
-    for (let i = 0; i < this.drones.length; i++) {
-      const d = this.drones[i];
-      if (d.type === DroneType.TEST_ENTITY && d.state !== DroneState.DEAD && d.memoryRecords) {
-        for (const player of this.players.values()) {
-           if (player.isAlive) {
-              let rec = d.memoryRecords.get(player.id);
-              if (!rec) {
-                 rec = { entityId: player.id, lastSensedPosition: { x: 0, y: 0, z: 0 }, timeLastSensed: 0, confidence: 0 };
-                 d.memoryRecords.set(player.id, rec);
-              }
-              rec.lastSensedPosition.x = player.posX;
-              rec.lastSensedPosition.y = player.posY;
-              rec.lastSensedPosition.z = player.posZ;
-              rec.timeLastSensed = Date.now() / 1000;
-              rec.confidence = 1.0;
-              rec.touchedThisTick = true;
-              break;
-           }
-        }
-      }
-    }
-  }
-
-  public setTestEntityCollisionFilter(groupStr: string, maskStr: string) {
-    const group = parseInt(groupStr);
-    const mask = parseInt(maskStr);
-    for (let i = 0; i < this.drones.length; i++) {
-      const d = this.drones[i];
-      if (d.type === DroneType.TEST_ENTITY && d.state !== DroneState.DEAD && d.collider) {
-        d.collider.setCollisionGroups((group << 16) | mask);
-      }
-    }
-  }
-
-  private processTestEntities(dt: number) {
-    const telemetry = [];
-    for (let i = 0; i < this.drones.length; i++) {
-      const d = this.drones[i];
-      if (d.state === DroneState.DEAD || d.type !== DroneType.TEST_ENTITY) continue;
-
-      if ((d as any).isFrozen) {
-        if (d.body) {
-          const trans = d.body.translation();
-          d.posX = trans.x;
-          d.posY = trans.y;
-          d.posZ = trans.z;
-        }
-        let currentCollisions: string[] = [];
-        if (d.kcc && d.collider) {
-           const numCollisions = d.kcc.numComputedCollisions();
-           for (let c=0; c<numCollisions; c++) {
-              const col = d.kcc.computedCollision(c);
-              if (col && col.collider) {
-                 for (const p of this.players.values()) {
-                    if (p.collider && p.collider.handle === col.collider.handle) {
-                       currentCollisions.push(p.id);
-                    }
-                 }
-              }
-           }
-        }
-        const historyRecord = {
-           time: Date.now(),
-           targetX: d.targetX,
-           targetY: d.targetY,
-           targetZ: d.targetZ,
-           steerX: 0,
-           steerZ: 0,
-           velX: 0,
-           velZ: 0,
-           posX: d.posX,
-           posZ: d.posZ,
-           headingX: 1,
-           headingZ: 0
-        };
-        if (!(d as any).history) (d as any).history = [];
-        (d as any).history.push(historyRecord);
-        if ((d as any).history.length > 20) (d as any).history.shift();
-
-        telemetry.push({ id: d.id, history: (d as any).history, mode: d.mode, coll: d.collider ? d.collider.collisionGroups() : 0, collisions: currentCollisions });
-        continue;
-      }
-      
-      if (d.currentVelocityX !== undefined) {
-        const dxToTarget = d.targetX - d.posX;
-        const dyToTarget = d.targetY - d.posY;
-        const dzToTarget = d.targetZ - d.posZ;
-        const distToTarget = Math.sqrt(dxToTarget*dxToTarget + dyToTarget*dyToTarget + dzToTarget*dzToTarget);
-
-        let steerX = distToTarget > 0.1 ? (dxToTarget / distToTarget) : 0;
-        let steerY = distToTarget > 0.1 ? (dyToTarget / distToTarget) : 0;
-        let steerZ = distToTarget > 0.1 ? (dzToTarget / distToTarget) : 0;
-
-        const maxSpeed = 10.0;
-        const targetSpeed = distToTarget > 1.0 ? maxSpeed : (distToTarget * maxSpeed);
-
-        const clamp = (val: number, min: number, max: number) => Math.max(min, Math.min(max, val));
-        const maxAccelPerTick = 0.4;
-        
-        const desiredVx = steerX * targetSpeed;
-        const desiredVy = steerY * targetSpeed;
-        const desiredVz = steerZ * targetSpeed;
-
-        d.currentVelocityX += clamp(desiredVx - d.currentVelocityX, -maxAccelPerTick, maxAccelPerTick);
-        d.currentVelocityY += clamp(desiredVy - d.currentVelocityY, -maxAccelPerTick, maxAccelPerTick);
-        d.currentVelocityZ += clamp(desiredVz - d.currentVelocityZ, -maxAccelPerTick, maxAccelPerTick);
-
-        const desiredTx = d.currentVelocityX * 0.0166;
-        const desiredTy = d.currentVelocityY * 0.0166;
-        const desiredTz = d.currentVelocityZ * 0.0166;
-
-        let currentCollisions: string[] = [];
-        if (d.kcc && d.body && d.collider) {
-           d.kcc.computeColliderMovement(
-             d.collider,
-             { x: desiredTx, y: desiredTy, z: desiredTz },
-             RAPIER.QueryFilterFlags.EXCLUDE_SENSORS,
-             undefined,
-             undefined
-           );
-           const movement = d.kcc.computedMovement();
-           d.posX += movement.x;
-           d.posY += movement.y;
-           d.posZ += movement.z;
-
-           d.body.setNextKinematicTranslation({
-             x: d.posX,
-             y: d.posY,
-             z: d.posZ
-           });
-
-           const numCollisions = d.kcc.numComputedCollisions();
-           for (let c=0; c<numCollisions; c++) {
-              const col = d.kcc.computedCollision(c);
-              if (col && col.collider) {
-                 for (const p of this.players.values()) {
-                    if (p.collider && p.collider.handle === col.collider.handle) {
-                       currentCollisions.push(p.id);
-                    }
-                 }
-              }
-           }
-        } else {
-           d.posX += desiredTx;
-           d.posY += desiredTy;
-           d.posZ += desiredTz;
-        }
-
-        const hLen = Math.sqrt(d.currentVelocityX**2 + d.currentVelocityZ**2);
-        if (hLen > 0.01) {
-           d.currentHeadingX = d.currentVelocityX / hLen;
-           d.currentHeadingZ = d.currentVelocityZ / hLen;
-        }
-        
-        d.rotY = Math.atan2(d.currentHeadingX, d.currentHeadingZ);
-        d.rotW = Math.cos(d.rotY / 2);
-        d.rotY = Math.sin(d.rotY / 2);
-        d.rotX = 0;
-        d.rotZ = 0;
-
-        const historyRecord = {
-           time: Date.now(),
-           targetX: d.targetX,
-           targetY: d.targetY,
-           targetZ: d.targetZ,
-           steerX: steerX,
-           steerZ: steerZ,
-           velX: d.currentVelocityX,
-           velZ: d.currentVelocityZ,
-           posX: d.posX,
-           posZ: d.posZ,
-           headingX: d.currentHeadingX,
-           headingZ: d.currentHeadingZ
-        };
-
-        if (!(d as any).history) (d as any).history = [];
-        (d as any).history.push(historyRecord);
-        if ((d as any).history.length > 20) (d as any).history.shift();
-
-        telemetry.push({ id: d.id, history: (d as any).history, mode: d.mode, coll: d.collider ? d.collider.collisionGroups() : 0, collisions: currentCollisions });
-      }
-    }
-
-    if (telemetry.length > 0) {
-      this.broadcastReliableEvent({ type: "dev_test_entity_telemetry", data: telemetry });
-    }
-  }
-
   public setObjectiveHold(playerId: string, holding: boolean): void {
     const player = this.players.get(playerId);
     if (player && player.isAlive) {
@@ -3479,6 +3289,7 @@ export class MatchRoom {
     if (this.physicsInterval) clearInterval(this.physicsInterval);
     if (this.syncInterval) clearInterval(this.syncInterval);
     if (this.aiInterval) clearInterval(this.aiInterval);
+    if (this.afkInterval) clearInterval(this.afkInterval);
 
     // Cleanup remaining players
     for (const p of this.players.values()) {

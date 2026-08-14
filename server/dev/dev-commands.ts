@@ -80,12 +80,6 @@ export function registerDevCommands(
     }
   });
 
-  channel.on("dev_spawn_test_entity", (args: any) => {
-    const currentRoom = getRoom();
-    if (!currentRoom) return;
-    currentRoom.spawnTestEntity(args.x, args.y, args.z);
-  });
-
   channel.on("dev_spawn_frozen_drone", (args: any) => {
     const currentRoom = getRoom();
     if (!currentRoom) return;
@@ -106,42 +100,6 @@ export function registerDevCommands(
         currentRoom.despawnDrone(currentRoom.drones[i]);
       }
     }
-  });
-
-  channel.on("dev_clear_test_entities", () => {
-    const currentRoom = getRoom();
-    if (!currentRoom) return;
-    currentRoom.clearTestEntities();
-  });
-
-  channel.on("dev_test_entity_mode", (args: any) => {
-    const currentRoom = getRoom();
-    if (!currentRoom) return;
-    currentRoom.setTestEntityMode(args.mode);
-  });
-
-  channel.on("dev_test_entity_target", (args: any) => {
-    const currentRoom = getRoom();
-    if (!currentRoom) return;
-    currentRoom.setTestEntityTarget(args.x, args.y, args.z);
-  });
-
-  channel.on("dev_test_entity_sight", () => {
-    const currentRoom = getRoom();
-    if (!currentRoom) return;
-    currentRoom.triggerTestEntitySight();
-  });
-
-  channel.on("dev_test_entity_sound", () => {
-    const currentRoom = getRoom();
-    if (!currentRoom) return;
-    currentRoom.triggerTestEntitySound();
-  });
-
-  channel.on("dev_test_entity_collision_filter", (args: any) => {
-    const currentRoom = getRoom();
-    if (!currentRoom) return;
-    currentRoom.setTestEntityCollisionFilter(args.group, args.mask);
   });
 
   channel.on("dev_toggle_llm", (args: any) => {

@@ -533,6 +533,17 @@ Every file change in the VEXEA codebase must follow this strict two-step protoco
     * `CODEBASE_INDEX.md`: Updated module description and cycle audit log.
 * **Verification:** Verified compilation and lint validation.
 
+### Cycle 2026-08-13-05: Remove Dead Yuka Vehicle Test Entity System
+* **Target Files:** `server/MatchRoom.ts`, `server/dev/dev-commands.ts`, `client/dev_menu.ts`, `CODEBASE_INDEX.md`
+* **Status:** Verified & Finalized
+* **Modifications:**
+    * `server/MatchRoom.ts`: Removed `spawnTestEntity` method and all associated helper methods (`clearTestEntities`, `setTestEntityMode`, `setTestEntityTarget`, `triggerTestEntitySight`, `triggerTestEntitySound`, `setTestEntityCollisionFilter`, `processTestEntities`) and removed simulation loop call.
+    * `server/dev/dev-commands.ts`: Removed dev command handlers for test entities (`dev_spawn_test_entity`, `dev_clear_test_entities`, `dev_test_entity_mode`, `dev_test_entity_target`, `dev_test_entity_sight`, `dev_test_entity_sound`, `dev_test_entity_collision_filter`).
+    * `client/dev_menu.ts`: Removed test entity UI rows and event listeners from `ENTITIES` panel while keeping Row 1 (`[ROW 1: VEXEA DRONE SPAWNING]`) untouched.
+    * `CODEBASE_INDEX.md`: Updated cycle audit log.
+* **Verification:** Verified zero build/lint errors via `lint_applet` and `compile_applet`.
+
+
 
 
 

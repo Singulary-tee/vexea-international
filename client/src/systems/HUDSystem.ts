@@ -256,4 +256,42 @@ export class HUDSystem {
       }
     }, 100);
   }
+
+  public showAFKWarning(remainingSec: number = 60) {
+    let warnEl = document.getElementById("ui-afk-warning");
+    if (!warnEl) {
+      warnEl = document.createElement("div");
+      warnEl.id = "ui-afk-warning";
+      Object.assign(warnEl.style, {
+        position: "absolute",
+        top: "18%",
+        left: "50%",
+        transform: "translateX(-50%)",
+        background: "rgba(239, 68, 68, 0.9)",
+        border: "1px solid #ef4444",
+        padding: "0.75rem 1.5rem",
+        borderRadius: "0.25rem",
+        color: "#ffffff",
+        fontFamily: "monospace",
+        fontWeight: "bold",
+        fontSize: "0.9rem",
+        letterSpacing: "1px",
+        textAlign: "center",
+        zIndex: "9000",
+        pointerEvents: "none",
+        boxShadow: "0 0 15px rgba(239, 68, 68, 0.5)",
+      });
+      const container = document.getElementById("hud-container") || document.body;
+      container.appendChild(warnEl);
+    }
+    warnEl.style.display = "block";
+    warnEl.innerText = `AFK WARNING: INACTIVITY DETECTED! MOVE OR FIRE WITHIN ${remainingSec}S TO AVOID BEING KICKED.`;
+  }
+
+  public hideAFKWarning() {
+    const warnEl = document.getElementById("ui-afk-warning");
+    if (warnEl) {
+      warnEl.style.display = "none";
+    }
+  }
 }
