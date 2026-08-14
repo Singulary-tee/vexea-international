@@ -40,7 +40,7 @@ export const IMAGE_MANIFEST: ImageManifestEntry[] = [
   { key: 'Surface_Impact.png', path: 'Images/Decals/Surface_Impact.png', category: 'decals', version: '1.0.0' },
   { key: 'Blueprint.png', path: 'Images/UI/Blueprint.png', category: 'ui', version: '1.0.0' },
 
-  // VFX flipbooks and static layers
+  // VFX - Animated Flipbooks (15)
   { key: 'cloud_01_8x8_q90.webp', path: 'Images/VFX/Flipbooks/cloud_01_8x8_q90.webp', category: 'vfx', version: '1.0.0' },
   { key: 'cloud_02_8x8_q90.webp', path: 'Images/VFX/Flipbooks/cloud_02_8x8_q90.webp', category: 'vfx', version: '1.0.0' },
   { key: 'explosion_01_8x8_q90.webp', path: 'Images/VFX/Flipbooks/explosion_01_8x8_q90.webp', category: 'vfx', version: '1.0.0' },
@@ -56,6 +56,8 @@ export const IMAGE_MANIFEST: ImageManifestEntry[] = [
   { key: 'wispy_smoke_01_8x8_q90.webp', path: 'Images/VFX/Flipbooks/wispy_smoke_01_8x8_q90.webp', category: 'vfx', version: '1.0.0' },
   { key: 'wispy_smoke_02_8x8_q90.webp', path: 'Images/VFX/Flipbooks/wispy_smoke_02_8x8_q90.webp', category: 'vfx', version: '1.0.0' },
   { key: 'wispy_smoke_03_8x8_q90.webp', path: 'Images/VFX/Flipbooks/wispy_smoke_03_8x8_q90.webp', category: 'vfx', version: '1.0.0' },
+
+  // VFX - Static Support Layers (18)
   { key: 'circle_01_a.webp', path: 'Images/VFX/Static/circle_01_a.webp', category: 'vfx', version: '1.0.0' },
   { key: 'circle_02_a.webp', path: 'Images/VFX/Static/circle_02_a.webp', category: 'vfx', version: '1.0.0' },
   { key: 'circle_03_a.webp', path: 'Images/VFX/Static/circle_03_a.webp', category: 'vfx', version: '1.0.0' },
@@ -74,6 +76,8 @@ export const IMAGE_MANIFEST: ImageManifestEntry[] = [
   { key: 'spark_05_a.webp', path: 'Images/VFX/Static/spark_05_a.webp', category: 'vfx', version: '1.0.0' },
   { key: 'spark_06_a.webp', path: 'Images/VFX/Static/spark_06_a.webp', category: 'vfx', version: '1.0.0' },
   { key: 'spark_07_a.webp', path: 'Images/VFX/Static/spark_07_a.webp', category: 'vfx', version: '1.0.0' },
+
+  // VFX - Weapon Tracers & Surface Decals (7) - Version 1.1.0
   { key: 'tracer_warm_core.webp', path: 'Images/VFX/Static/tracer_warm_core.webp', category: 'vfx', version: '1.1.0' },
   { key: 'tracer_cool_core.webp', path: 'Images/VFX/Static/tracer_cool_core.webp', category: 'vfx', version: '1.1.0' },
   { key: 'tracer_white_core.webp', path: 'Images/VFX/Static/tracer_white_core.webp', category: 'vfx', version: '1.1.0' },

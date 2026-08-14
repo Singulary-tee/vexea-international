@@ -19,6 +19,7 @@ const _dustVec = new THREE.Vector3();
 export let sparkBatch: THREE.BatchedMesh | null = null;
 export let dustBatch: THREE.BatchedMesh | null = null;
 export let decalBatch: THREE.BatchedMesh | null = null;
+export const decalBatches: THREE.BatchedMesh[] = [];
 
 let sparkSlotsCount = 0;
 let dustSlotsCount = 0;
@@ -26,7 +27,8 @@ let decalSlotsCount = 0;
 
 let sparkInstIds: Int32Array | null = null;
 let dustInstIds: Int32Array | null = null;
-let decalInstIds: Int32Array | null = null;
+const decalInstIdsList: Int32Array[] = [];
+const decalVariantIndices = new Int32Array(4);
 
 export let sparkActive: Uint8Array | null = null;
 let sparkLife: Float32Array | null = null;
@@ -49,6 +51,13 @@ let dustVelZ: Float32Array | null = null;
 let decalIndex = 0;
 let _scene: THREE.Scene;
 
+const DECAL_TEXTURE_KEYS = [
+  'surface_decal_bullet_hole_01.webp',
+  'surface_decal_bullet_hole_02.webp',
+  'surface_decal_bullet_hole_03.webp',
+  'surface_decal_scorch_01.webp'
+];
+
 // High-performance dynamic impact lights pool
 export interface ImpactLight {
   light: THREE.PointLight;
@@ -62,6 +71,9 @@ const IMPACT_LIGHT_COUNT = 8;
 export function initHitsVFX(scene: THREE.Scene, config: any) {
   _scene = scene;
   decalIndex = 0;
+  decalBatches.length = 0;
+  decalInstIdsList.length = 0;
+  decalVariantIndices.fill(0);
 
   // 1. SPARK MAT
   const sparkMat = new THREE.MeshBasicNodeMaterial();
@@ -89,20 +101,6 @@ export function initHitsVFX(scene: THREE.Scene, config: any) {
   const dustEdgeColor = vec4(0.24, 0.18, 0.12, 1.0);
   const dustColorNode = mix(dustEdgeColor, dustCenterColor, smoothstep(float(1.0), float(0.0), dustDist));
   dustMat.colorNode = vec4(dustColorNode.x, dustColorNode.y, dustColorNode.z, dustAlpha);
-
-  // 3. DECAL MAT
-  const decalTexture = new THREE.TextureLoader().load(getAssetUrl('Surface_Impact.png'));
-  const decalMat = new THREE.MeshBasicNodeMaterial();
-  decalMat.transparent = true;
-  decalMat.depthWrite = false;
-  decalMat.polygonOffset = true;
-  decalMat.polygonOffsetFactor = VFX_CONSTANTS.HITS.DECAL_OFFSET_FACTOR;
-  decalMat.side = THREE.DoubleSide;
-  const decalTexNode = texture(decalTexture);
-  const decalUV = uv().sub(vec2(0.5, 0.5));
-  const decalDist = tslLength(decalUV).mul(float(2.0));
-  const decalGlow = smoothstep(float(0.8), float(0.0), decalDist).mul(vec4(1.0, 0.27, 0.0, 1.0));
-  decalMat.colorNode = decalTexNode.mul(vec4(0.15, 0.15, 0.15, 1.0)).add(decalGlow.mul(decalTexNode.a).mul(float(0.4)));
 
   // Setup Sparks BatchedMesh
   const sparksPerHit = config.sparksPerHit || 0;
@@ -156,21 +154,44 @@ export function initHitsVFX(scene: THREE.Scene, config: any) {
     _scene.add(dustBatch);
   }
 
-  // Setup Decal BatchedMesh
+  // Setup Decals - Bounded BatchedMesh instances per variant
   const decalSlots = config.decalSlots || 0;
   if (decalSlots > 0) {
     decalSlotsCount = decalSlots;
-    decalInstIds = new Int32Array(decalSlotsCount);
-    decalBatch = new THREE.BatchedMesh(decalSlotsCount, 4, 6, decalMat);
-    decalBatch.name = "VFX_Decal";
-    decalBatch.frustumCulled = false;
+    const perVariantSlots = Math.max(1, Math.ceil(decalSlots / DECAL_TEXTURE_KEYS.length));
+    const texLoader = new THREE.TextureLoader();
     const _decalGeom = new THREE.PlaneGeometry(VFX_CONSTANTS.HITS.DECAL_SIZE, VFX_CONSTANTS.HITS.DECAL_SIZE);
-    const _decalGeomId = decalBatch.addGeometry(_decalGeom);
-    for (let i = 0; i < decalSlotsCount; i++) {
-      decalInstIds[i] = decalBatch.addInstance(_decalGeomId);
-      decalBatch.setVisibleAt(decalInstIds[i], false);
+
+    for (let v = 0; v < DECAL_TEXTURE_KEYS.length; v++) {
+      const texKey = DECAL_TEXTURE_KEYS[v];
+      const decalTex = texLoader.load(getAssetUrl(texKey));
+      
+      const dMat = new THREE.MeshBasicNodeMaterial();
+      dMat.transparent = true;
+      dMat.depthWrite = false;
+      dMat.polygonOffset = true;
+      dMat.polygonOffsetFactor = VFX_CONSTANTS.HITS.DECAL_OFFSET_FACTOR;
+      dMat.side = THREE.DoubleSide;
+      dMat.colorNode = texture(decalTex);
+
+      const b = new THREE.BatchedMesh(perVariantSlots, 4, 6, dMat);
+      b.name = `VFX_Decal_${v}`;
+      b.frustumCulled = false;
+      const geomId = b.addGeometry(_decalGeom);
+
+      const instIds = new Int32Array(perVariantSlots);
+      for (let i = 0; i < perVariantSlots; i++) {
+        instIds[i] = b.addInstance(geomId);
+        b.setVisibleAt(instIds[i], false);
+      }
+      _scene.add(b);
+      decalBatches.push(b);
+      decalInstIdsList.push(instIds);
     }
-    _scene.add(decalBatch);
+
+    decalBatch = decalBatches[0] || null;
+  } else {
+    decalBatch = null;
   }
 
   // Setup Impact PointLights Pool (Removed per user request)
@@ -237,30 +258,38 @@ export function spawnImpactSparks(x: number, y: number, z: number, count: number
 export function spawnEnvironmentDecalAndDust(ix: number, iy: number, iz: number, nx: number = 0, ny: number = 1, nz: number = 0) {
   _hitNormal.set(nx, ny, nz).normalize();
 
-  if (decalBatch && decalInstIds && decalSlotsCount > 0) {
-    const dInstId = decalInstIds[decalIndex];
-    
-    // Offset slightly along surface normal to fully prevent z-fighting with geometry
-    _hitPos.set(ix + _hitNormal.x * 0.012, iy + _hitNormal.y * 0.012, iz + _hitNormal.z * 0.012);
-    
-    // Rotate to align with the surface normal vector
-    _hitQuat.setFromUnitVectors(_hitZAxis, _hitNormal);
-    
-    // Give each decal a tiny randomized rotation around its normal (the local Z axis) so they look organic
-    const randomAngle = Math.random() * Math.PI * 2;
-    _tempRotQuat.setFromAxisAngle(_hitZAxis, randomAngle);
-    _hitQuat.multiply(_tempRotQuat);
+  if (decalBatches.length > 0 && decalSlotsCount > 0) {
+    const v = decalIndex % decalBatches.length;
+    const b = decalBatches[v];
+    const instIds = decalInstIdsList[v];
+    if (b && instIds) {
+      const perVariantSlots = instIds.length;
+      const slot = decalVariantIndices[v] % perVariantSlots;
+      const dInstId = instIds[slot];
 
-    _hitScale.set(1, 1, 1);
-    _hitMatrix.compose(_hitPos, _hitQuat, _hitScale);
-    
-    decalBatch.setMatrixAt(dInstId, _hitMatrix);
-    decalBatch.setVisibleAt(dInstId, true);
-    if ((decalBatch as any).instanceMatrix) {
-      (decalBatch as any).instanceMatrix.needsUpdate = true;
+      // Offset slightly along surface normal to fully prevent z-fighting with geometry
+      _hitPos.set(ix + _hitNormal.x * 0.012, iy + _hitNormal.y * 0.012, iz + _hitNormal.z * 0.012);
+
+      // Rotate to align with the surface normal vector
+      _hitQuat.setFromUnitVectors(_hitZAxis, _hitNormal);
+
+      // Give each decal a tiny randomized rotation around its normal (the local Z axis) so they look organic
+      const randomAngle = Math.random() * Math.PI * 2;
+      _tempRotQuat.setFromAxisAngle(_hitZAxis, randomAngle);
+      _hitQuat.multiply(_tempRotQuat);
+
+      _hitScale.set(1, 1, 1);
+      _hitMatrix.compose(_hitPos, _hitQuat, _hitScale);
+
+      b.setMatrixAt(dInstId, _hitMatrix);
+      b.setVisibleAt(dInstId, true);
+      if ((b as any).instanceMatrix) {
+        (b as any).instanceMatrix.needsUpdate = true;
+      }
+
+      decalVariantIndices[v] = (decalVariantIndices[v] + 1) % perVariantSlots;
+      decalIndex = (decalIndex + 1) % decalBatches.length;
     }
-    
-    decalIndex = (decalIndex + 1) % decalSlotsCount;
   }
   
   if (dustBatch && dustActive && dustInstIds && dustSlotsCount > 0) {
@@ -417,18 +446,24 @@ export function clearHitsVFX() {
     dustBatch.dispose();
     dustBatch = null;
   }
-  if (decalBatch) {
-    if (decalInstIds) {
-      for (let i = 0; i < decalSlotsCount; i++) decalBatch.setVisibleAt(decalInstIds[i], false);
-      decalIndex = 0;
+  for (let v = 0; v < decalBatches.length; v++) {
+    const b = decalBatches[v];
+    const instIds = decalInstIdsList[v];
+    if (b) {
+      if (instIds) {
+        for (let i = 0; i < instIds.length; i++) b.setVisibleAt(instIds[i], false);
+      }
+      _scene?.remove(b);
+      if (b.material) {
+        if ((b.material as any).map) (b.material as any).map.dispose();
+        b.material.dispose();
+      }
+      b.dispose();
     }
-    _scene?.remove(decalBatch);
-    if (decalBatch.material) {
-      if ((decalBatch.material as any).map) (decalBatch.material as any).map.dispose();
-      decalBatch.material.dispose();
-    }
-    decalBatch.dispose();
-    decalBatch = null;
   }
+  decalBatches.length = 0;
+  decalInstIdsList.length = 0;
+  decalBatch = null;
+  decalIndex = 0;
   // Impact light clearing removed per user request
 }

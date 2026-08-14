@@ -362,7 +362,7 @@ export const ALL_UI_SVGS: string[] = [
 const svgDOMCache: HTMLImageElement[] = [];
 
 export function preloadAllUISVGs(): void {
-  if (svgDOMCache.length > 0) return;
+  if (typeof window === 'undefined' || typeof Image === 'undefined' || svgDOMCache.length > 0) return;
   for (const svgPath of ALL_UI_SVGS) {
     const img = new Image();
     img.src = svgPath;
@@ -654,7 +654,7 @@ export function getAssetUrl(filename: string, category?: string): string {
 }
 
 export function warmImageDOMCache(filenames: string[]): void {
-  if (typeof window === 'undefined') return;
+  if (typeof window === 'undefined' || typeof Image === 'undefined') return;
   filenames.forEach((filename) => {
     const url = getAssetUrl(filename);
     if (url) {
