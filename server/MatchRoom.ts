@@ -11,6 +11,7 @@ import { processDroneBehaviors, initBehaviorOutputs } from "./ai/behavior/DroneB
 import { calculateDroneAvoidance } from "./ai/DroneAvoidance";
 import { CommanderMemory } from "./ai/CommanderMemory";
 import { GroupTacticalState, Posture } from "./ai/GroupTacticalState";
+import { createMemoryMap } from "./ai/DroneMemory";
 import { GoogleGenAI, Type } from "@google/genai";
 import RAPIER from "@dimforge/rapier3d-compat";
 import { ACTIVE_GAMEMODE } from "../shared/gamemode-configs.js";
@@ -747,6 +748,61 @@ export class MatchRoom {
       d.body = null;
     }
     d.collider = null;
+  }
+
+  public resetDroneToDefaults(d: ServerDrone): void {
+    d.mode = "NORMAL";
+    d.combatTarget = null;
+    d.memoryRecords = createMemoryMap();
+    d.posture = null;
+    d.bomberState = "SEEKING";
+    d.bomberLockTime = undefined;
+    d.gearActionId = 0;
+    d.gearActionScore = 0;
+    d.gearLastPosture = "";
+    d.playerInFOV = false;
+    d.targetX = 0;
+    d.targetY = 0;
+    d.targetZ = 0;
+    d.path = [];
+    d.pathIndex = 0;
+    d.cooldown = 0;
+    d.damageLog = [];
+    d.lastDamageTick = -9999;
+    d.fixedWingPhase = 'APPROACH';
+    d.humanoidPhase = 'HUNT';
+    d.humanoidPose = "stand_run";
+    d.cachedCoverPos = { x: 0, y: 0, z: 0 };
+    d.coverCacheTick = 0;
+    d.targetLastPos = { x: 0, y: 0, z: 0 };
+    d.targetLastMoveTick = 0;
+    d.suppressToggle = false;
+    d.investigateHoldTick = 0;
+    d.flankStartTick = undefined;
+    d.peekCooldown = 0;
+    d.parkedOrder = { type: "move", targetZone: ZONES.CORE, path: [], pathIndex: 0, active: false };
+    d.strafeRunTarget = null;
+    d.avoidanceState = null;
+    d.stuckTicks = 0;
+    d.currentVelocityX = 0;
+    d.currentVelocityY = 0;
+    d.currentVelocityZ = 0;
+    d.currentHeadingX = 1;
+    d.currentHeadingZ = 0;
+    d.velX = 0;
+    d.velY = 0;
+    d.velZ = 0;
+    d.rotX = 0;
+    d.rotY = 0;
+    d.rotZ = 0;
+    d.rotW = 1;
+    d.currentVelocity = undefined;
+    d.currentHeading = undefined;
+    d.currentSpeed = 0;
+    (d as any).history = [];
+    (d as any).cachedObstacleDetected = false;
+    (d as any).cachedForwardHitDistance = 0;
+    (d as any).isFrozen = false;
   }
 
   public findHitEntity(colliderHandle: number): { type: "player", obj: PlayerState } | { type: "drone", obj: ServerDrone } | null {
@@ -1830,6 +1886,7 @@ export class MatchRoom {
     for (let i = 0; i < this.drones.length; i++) {
       const d = this.drones[i];
       if (d.state === DroneState.DEAD) {
+        this.resetDroneToDefaults(d);
         d.id = this.nextDroneId++;
         d.type = type;
         d.state = DroneState.IDLE;
@@ -1864,9 +1921,6 @@ export class MatchRoom {
         d.hp = DRONE_CONFIGS[d.type]?.hp ?? 100;
         d.groupId = "G_DEV";
         d.cooldown = 40;
-        d.gearActionId = 0;
-        d.gearActionScore = 0;
-        d.gearLastPosture = "";
         this.initDronePhysics(d);
 
         spawned = true;
@@ -2364,6 +2418,7 @@ export class MatchRoom {
       for (let i = 0; i < this.drones.length; i++) {
         const d = this.drones[i];
         if (d.state === DroneState.DEAD) {
+          this.resetDroneToDefaults(d);
           const targetSpawnZone =
             Math.random() < 0.6
               ? playerZone
@@ -2807,6 +2862,7 @@ export class MatchRoom {
     for (let i = 0; i < this.drones.length; i++) {
       const d = this.drones[i];
       if (d.state === DroneState.DEAD) {
+        this.resetDroneToDefaults(d);
         d.id = this.nextDroneId++;
         d.type = DroneType.TEST_ENTITY; // Test Entity
         d.state = DroneState.IDLE;
@@ -2817,15 +2873,7 @@ export class MatchRoom {
         d.hp = DRONE_CONFIGS[d.type]?.hp ?? 100;
         d.groupId = "G_TEST";
         d.cooldown = 40;
-        (d as any).history = [];
         this.initDronePhysics(d);
-        if (d.currentVelocityX !== undefined) {
-          d.currentVelocityX = 0;
-          d.currentVelocityY = 0;
-          d.currentVelocityZ = 0;
-          d.currentHeadingX = 1;
-          d.currentHeadingZ = 0;
-        }
         spawned = true;
         break;
       }
