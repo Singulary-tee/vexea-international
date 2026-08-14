@@ -254,6 +254,9 @@ export interface ServerDrone {
   lastDamageTick: number;
   parkedOrder: { type: "move" | "hold"; targetZone: ZoneName; path: ZoneName[]; pathIndex: number; active: boolean };
   strafeRunTarget?: ZoneName | null;
+  gearActionId: number;
+  gearActionScore: number;
+  gearLastPosture: string;
 }
 
 export interface ServerCamera {
@@ -533,6 +536,9 @@ export class MatchRoom {
         lastDamageTick: -9999,
         parkedOrder: { type: "move" as "move" | "hold", targetZone: ZONES.CORE, path: [] as ZoneName[], pathIndex: 0, active: false },
         strafeRunTarget: null,
+        gearActionId: 0,
+        gearActionScore: 0,
+        gearLastPosture: "",
       });
     }
 
@@ -1858,6 +1864,9 @@ export class MatchRoom {
         d.hp = DRONE_CONFIGS[d.type]?.hp ?? 100;
         d.groupId = "G_DEV";
         d.cooldown = 40;
+        d.gearActionId = 0;
+        d.gearActionScore = 0;
+        d.gearLastPosture = "";
         this.initDronePhysics(d);
 
         spawned = true;

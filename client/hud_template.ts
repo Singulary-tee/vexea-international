@@ -37,13 +37,15 @@ export const HUD_HTML = `
 }
 #hud-container * { box-sizing: border-box; }
 
-#look-zone-right {
+#look-zone {
   position: absolute !important;
   top: 0 !important;
-  right: 0 !important;
-  width: 50% !important;
+  left: 0 !important;
+  width: 100% !important;
   height: 100% !important;
   pointer-events: auto !important;
+  touch-action: none !important;
+  z-index: 1 !important;
 }
 
 /* SQUAD - TOP LEFT */
@@ -223,6 +225,7 @@ export const HUD_HTML = `
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
+  z-index: 20 !important;
 }
 #joystick-knob {
   width: 35% !important;
@@ -247,6 +250,7 @@ export const HUD_HTML = `
   align-items: center !important;
   justify-content: center !important;
   color: white !important;
+  z-index: 20 !important;
 }
 
 #btn-fire-left {
@@ -334,6 +338,7 @@ export const HUD_HTML = `
   justify-content: space-between !important;
   pointer-events: auto !important;
   background: rgba(0, 0, 0, 0.7) !important;
+  z-index: 20 !important;
 }
 #auto-label {
   position: absolute !important;
@@ -346,6 +351,7 @@ export const HUD_HTML = `
   font-size: clamp(0.63rem, 1.1vw, 0.88rem) !important;
   border: none !important;
   text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+  z-index: 20 !important;
 }
 .btn-util {
   width: 7vw !important;
@@ -359,6 +365,8 @@ export const HUD_HTML = `
   align-items: center !important;
   justify-content: center !important;
   color: white !important;
+  pointer-events: auto !important;
+  z-index: 20 !important;
 }
 #weapon-slots-wrap {
   display: flex !important;
@@ -370,6 +378,8 @@ export const HUD_HTML = `
   overflow: hidden !important;
   width: 28vw !important;
   height: 9vh !important;
+  pointer-events: auto !important;
+  z-index: 20 !important;
 }
 #weapon-1-ammo, #weapon-2-ammo {
   position: absolute !important;
@@ -395,6 +405,8 @@ export const HUD_HTML = `
   border: 1px solid transparent !important;
   border-radius: 0 !important;
   box-sizing: border-box !important;
+  pointer-events: auto !important;
+  z-index: 20 !important;
 }
 .weapon-slot.active {
   background: transparent !important;
@@ -425,6 +437,7 @@ export const HUD_HTML = `
   align-items: center !important;
   justify-content: center !important;
   color: white !important;
+  z-index: 20 !important;
 }
 
 #btn-fire-right {
@@ -521,7 +534,7 @@ export const HUD_HTML = `
 </style>
 
 <div id="hud-container" data-ui-surface="true" class="ui-surface">
-  <div id="look-zone-right" class="platform-mobile"></div>
+  <div id="look-zone" class="platform-mobile"></div>
   
   <button id="btn-match-status" title="Match Status & Ping Diagnostics">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:1.38rem; height:1.38rem;">

@@ -483,10 +483,8 @@ function renderIntelView(container: HTMLElement, userData: any): void {
     <!-- Commander Briefing -->
     <div style="background:rgba(0,0,0,0.25); border:1px solid rgba(255,255,255,0.04); padding:0.8vh; border-radius:0px;">
       <div style="font-family:${DS.typography.fontFamily}; font-size:clamp(0.50rem, 1vh, 0.63rem); font-weight:bold; color:${DS.colors.textMuted}; letter-spacing:0.1vw; margin-bottom:0.4vh;">COMMANDER ASSESSMENT</div>
-      <div style="font-family:${DS.typography.fontFamily}; font-size:clamp(0.50rem, 1vh, 0.63rem); color:${DS.colors.text}; line-height:1.4;">
-        ${totalKills > 20 
-          ? 'Contractor displays high combat proficiency in drone elimination and objective control. Recommended for high-tier infiltration sorties.' 
-          : 'Contractor active. Additional field sorties required to refine engagement parameters and increase squad combat yield.'}
+      <div id="intel-commander-assessment" style="font-family:${DS.typography.fontFamily}; font-size:clamp(0.50rem, 1vh, 0.63rem); color:${DS.colors.text}; line-height:1.4;">
+        LOADING TELEMETRY ASSESSMENT...
       </div>
     </div>
   `;
@@ -495,8 +493,82 @@ function renderIntelView(container: HTMLElement, userData: any): void {
   if (auth.currentUser) {
     const uid = auth.currentUser.uid;
     const db = getFirestore();
-    getDoc(doc(db, "Users", uid, "gameProfile", "v1")).then((snap) => {
+
+    const truncateText = (str: string, maxChars: number = 260) => {
+      if (!str || str.length <= maxChars) return str;
+      return str.slice(0, maxChars - 3).trimEnd() + "...";
+    };
+
+    const updateAssessmentUI = (text: string) => {
+      const el = card.querySelector('#intel-commander-assessment');
+      if (el) {
+        el.textContent = truncateText(text, 260);
+      }
+    };
+
+    getDoc(doc(db, "Users", uid, "gameProfile", "v1")).then(async (snap) => {
       const detailsContainer = card.querySelector('#intel-v1-details');
+      let gameProfile: any = null;
+
+      if (snap.exists()) {
+        gameProfile = snap.data();
+      }
+
+      // Read LLM dossier document from Users/{uid}/dossier
+      let dossierText = "";
+      try {
+        const dossierSnap = await getDoc(doc(db, "Users", uid, "dossier"));
+        if (dossierSnap.exists()) {
+          const dData = dossierSnap.data();
+          if (
+            dData &&
+            typeof dData.text === "string" &&
+            dData.text.trim().length > 0 &&
+            (!gameProfile || dData.matchCountAtGeneration === gameProfile.totalMatches)
+          ) {
+            dossierText = dData.text.trim();
+          }
+        }
+      } catch (e) {
+        // Fallback to template if dossier read fails
+      }
+
+      if (dossierText) {
+        updateAssessmentUI(dossierText);
+      } else if (gameProfile) {
+        // Fallback to Phase 1 template logic
+        const totalMatches = gameProfile.totalMatches || 0;
+        const preferredRole = gameProfile.preferredRole || "ASSAULT";
+        const label = auth.currentUser?.displayName || "CONTRACTOR";
+
+        if (totalMatches === 0) {
+          updateAssessmentUI(`OPERATIVE ${label}: FIRST ENGAGEMENT. No historical telemetry. Treat as untested asset — high predictability assumed.`);
+        } else if (totalMatches < 3) {
+          updateAssessmentUI(`OPERATIVE ${label}: ${totalMatches} engagement(s) logged. Preferred role: ${preferredRole}. Insufficient data for pattern analysis.`);
+        } else {
+          const roleSelectionCount = gameProfile.classBreakdown?.[preferredRole] || 0;
+          const rolePct = Math.round((roleSelectionCount / Math.max(1, totalMatches)) * 100);
+          const avgKills = (gameProfile.averages?.kills || 0).toFixed(1);
+          const avgDeaths = (gameProfile.averages?.deaths || 0).toFixed(1);
+          const avgDmg = Math.round(gameProfile.averages?.damageDealt || 0);
+          const recentMatches = gameProfile.recentMatches || [];
+          const wins = recentMatches.filter((m: any) => m.result === "win").length;
+          const recentCount = recentMatches.length;
+
+          const sentence1 = `Operative ${label} favors ${preferredRole} class (${rolePct}% selection rate across ${totalMatches} matches).`;
+          const sentence2 = `Averages ${avgKills} eliminations and ${avgDeaths} deaths per match with ${avgDmg} damage output.`;
+          const sentence3 =
+            recentCount > 0
+              ? `Recent trajectory: ${wins} wins across last ${recentCount} recorded engagements.`
+              : `No recent match telemetry logged.`;
+
+          updateAssessmentUI(`${sentence1} ${sentence2} ${sentence3}`);
+        }
+      } else {
+        const label = auth.currentUser?.displayName || "CONTRACTOR";
+        updateAssessmentUI(`OPERATIVE ${label}: FIRST ENGAGEMENT. No historical telemetry. Treat as untested asset — high predictability assumed.`);
+      }
+
       if (!detailsContainer) return;
 
       if (snap.exists()) {

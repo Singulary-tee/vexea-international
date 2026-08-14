@@ -252,7 +252,7 @@ export class InputSystem {
       joystickBoundary.addEventListener("pointercancel", resetJoystick, { signal: this.abortController.signal });
     }
 
-    const lookZone = document.getElementById("look-zone-right");
+    const lookZone = document.getElementById("look-zone");
     if (lookZone) {
       lookZone.style.touchAction = "none";
       const touchSensitivity = 0.003;
@@ -262,7 +262,13 @@ export class InputSystem {
         if (this.isGameInputLocked()) return;
         if (!this.match || this.match.isLocalPlayerDead) return;
         if (e.pointerType === "mouse") return;
-        e.preventDefault(); e.stopPropagation();
+        if (this.match.activePointers.has(e.pointerId)) return;
+        if (e.target !== lookZone) return;
+        const joystickBoundary = document.getElementById("joystick-boundary");
+        if (joystickBoundary && (e.target === joystickBoundary || joystickBoundary.contains(e.target as Node))) return;
+
+        e.preventDefault();
+        e.stopPropagation();
         if (this.match.lookPointerId !== null) return;
 
         try { lookZone.setPointerCapture(e.pointerId); } catch (_) {}
@@ -274,10 +280,11 @@ export class InputSystem {
       };
 
       const moveLook = (e: PointerEvent) => {
-        if (!this.match || this.match.isLocalPlayerDead) return;
         if (e.pointerType === "mouse") return;
-        if (!this.match.isTouchingLookZone || e.pointerId !== this.match.lookPointerId) return;
-        e.preventDefault(); e.stopPropagation();
+        if (!this.match || this.match.isLocalPlayerDead) return;
+        if (e.pointerId !== this.match.lookPointerId || this.match.isTouchingLookZone !== true) return;
+        e.preventDefault();
+        e.stopPropagation();
 
         const deltaX = e.clientX - this.match.lastTouchX;
         const deltaY = e.clientY - this.match.lastTouchY;
@@ -293,8 +300,9 @@ export class InputSystem {
 
       const stopLook = (e: PointerEvent) => {
         if (e.pointerType === "mouse") return;
-        if (e.pointerId !== this.match.lookPointerId) return;
-        e.preventDefault(); e.stopPropagation();
+        if (e.pointerId !== this.match.lookPointerId || this.match.isTouchingLookZone !== true) return;
+        e.preventDefault();
+        e.stopPropagation();
         this.match.activePointers.delete(e.pointerId);
         try { lookZone.releasePointerCapture(e.pointerId); } catch (_) {}
         this.match.isTouchingLookZone = false;
@@ -324,6 +332,7 @@ export class InputSystem {
 
     this.safeBindTouch("btn-reload", () => { this.requestReload(); });
     this.safeBindTouch("btn-walkie", () => { this.useUtility('utility1'); });
+    this.safeBindTouch("btn-helmet", () => { this.useUtility('utility2'); });
     this.safeBindTouch("btn-medkit", () => { this.useUtility('utility2'); });
 
     const autoLabel = document.getElementById("auto-label");

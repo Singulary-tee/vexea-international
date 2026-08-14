@@ -12,8 +12,8 @@ This file is the authoritative index of all directories and source files within 
     *   *Purpose:* Orchestrates the lifecycle of all active matches.
     *   *Key Functions/Exports:* `MatchManager` class (exported as default and as `matchManager` instance), `getOrCreateRoom(roomId, geminiKey, mapId)` (returns or provisions rooms), `findMatchmakingRoom(geminiKey)` (allocates players to empty rooms under 10 players), `deleteRoom(roomId)` (initiates cleanup), `getRooms()` and `getRoomCount()`.
 *   **`Matchmaker.ts`**
-    *   *Purpose:* Real player pooling system for matchmaking. Groups players into matches without bot-fill.
-    *   *Key Functions/Exports:* `Matchmaker` class, `matchmaker` default/named export instance, `MATCHMAKER_MAX_WAIT_SECONDS` (45s constant), `addPlayerToPool`, `removePlayerFromPool`, `signalPlayerLoadingComplete`, `handlePlayerClassChange`.
+    *   *Purpose:* Real player pooling system with two-tier matchmaking timeout and bot-fill fallback. Groups players into matches and pushes live recurring queue updates.
+    *   *Key Functions/Exports:* `Matchmaker` class, `matchmaker` default/named export instance, `MATCHMAKER_MAX_WAIT_SECONDS` (45s constant), `MATCHMAKER_BOT_FILL_WAIT_SECONDS` (90s constant), `addPlayerToPool`, `removePlayerFromPool`, `getQueueSizeForMap`, `signalPlayerLoadingComplete`, `handlePlayerClassChange`.
 *   **`connection-registry.ts`**
     *   *Purpose:* Lightweight connection registry for tracking active socket sessions without the resource overhead of a MatchRoom.
     *   *Key Functions/Exports:* `ConnectionRegistry` class, `connectionRegistry` instance, `register`, `unregister`, `get`, `getAll`.
@@ -498,11 +498,41 @@ Every file change in the VEXEA codebase must follow this strict two-step protoco
 * **Modifications:** Replaced hard `< 3 matches` gate with graduated tiers: FIRST ENGAGEMENT (0 matches), Early Telemetry (1–2 matches), Full Briefing (3+ matches).
 * **Verification:** Verified compilation and that `renderMatchBriefing()` consumes tiered output without modification.
 
-### Cycle 2026-08-12-02: Centralize LLM Tracking Effect into VFX Folder & Update Codebase Index
-* **Target Files:** `client/src/vfx/LLMTrackingEffect.ts`, `client/dev_menu.ts`, `CODEBASE_INDEX.md`
+### Cycle 2026-08-13-01: Mobile Full-Screen Look Zone Layout & Touch Handling
+* **Target Files:** `client/hud_template.ts`, `client/src/systems/InputSystem.ts`, `CODEBASE_INDEX.md`
 * **Status:** Verified & Finalized
-* **Modifications:** Relocated `LLMTrackingVisualSystem` from `client/src/systems/` to `client/src/vfx/LLMTrackingEffect.ts` to centralize visual effects, updated dev menu imports, and updated `CODEBASE_INDEX.md`.
+* **Modifications:**
+    * `client/hud_template.ts`: Replaced `#look-zone-right` with a 100% width/height `#look-zone` element (`z-index: 1`) positioned behind all HUD controls, and raised HUD interactive elements (`#joystick-boundary`, `.btn-action`, `.btn-util`, `#weapon-selector`, `#auto-label`, `#btn-sprint`) to higher stacking order (`z-index: 20` / `100`).
+    * `client/src/systems/InputSystem.ts`: Updated touch controls to bind `#look-zone` gated under `IS_DESKTOP`. Added pointerdown guards for mouse pointer types, already-active pointers (`activePointers.has`), and joystick boundary targets (`#joystick-boundary` contains check). Enforced `pointermove` and `pointerup` guards ensuring events only process when `e.pointerId === this.match.lookPointerId` and `this.match.isTouchingLookZone === true`.
+    * `CODEBASE_INDEX.md`: Updated cycle audit log.
 * **Verification:** Verified zero build/lint errors via `lint_applet` and `compile_applet`.
+
+### Cycle 2026-08-13-02: Restore Pointer Events & Touch Bindings for Utility HUD Buttons
+* **Target Files:** `client/hud_template.ts`, `client/src/systems/InputSystem.ts`, `CODEBASE_INDEX.md`
+* **Status:** Verified & Finalized
+* **Modifications:**
+    * `client/hud_template.ts`: Added `pointer-events: auto !important;` and `z-index: 20 !important;` to `.btn-util`, `#weapon-slots-wrap`, and `.weapon-slot` CSS rules so pointer events do not fall through to `#look-zone`.
+    * `client/src/systems/InputSystem.ts`: Added `e.target !== lookZone` early-return check in `#look-zone` pointerdown handler so touches targeting utility/HUD elements are ignored by camera look. Bound `btn-helmet` using `safeBindTouch`.
+* **Verification:** Verified zero build/lint errors via `lint_applet` and `compile_applet`.
+
+### Cycle 2026-08-13-03: Dossier Phase 2 — LLM-Generated Commander Assessment
+* **Target Files:** `server/player-data/BriefingRenderer.ts`, `client/screens/stats-screen.ts`, `CODEBASE_INDEX.md`
+* **Status:** Verified & Finalized
+* **Modifications:**
+    * `server/player-data/BriefingRenderer.ts`: Added async dossier reader (`getDossier`) checking Firestore `Users/{uid}/dossier` with fallback to Phase 1 template logic. Added `generateDossierForPlayer` using independent `DOSSIER_MODEL` config (capped at 200 tokens via `maxOutputTokens: 200`). Added fire-and-forget `triggerMatchEndDossiers` to run asynchronously at match-end without blocking.
+    * `client/screens/stats-screen.ts`: Replaced hardcoded two-string logic in INTEL tab's COMMANDER ASSESSMENT panel with dynamic rendering of LLM dossier text from `Users/{uid}/dossier` (or Phase 1 template fallback). Applied 260-character truncation cap with ellipsis.
+    * `CODEBASE_INDEX.md`: Updated cycle audit log.
+* **Verification:** Verified zero build/lint errors via `lint_applet` and `compile_applet`.
+
+### Cycle 2026-08-13-04: Matchmaker Bot-Fill Fallback & Live Queue Updates
+* **Target Files:** `server/Matchmaker.ts`, `client/screens/matchmaking-overlay.ts`, `CODEBASE_INDEX.md`
+* **Status:** Verified & Finalized
+* **Modifications:**
+    * `server/Matchmaker.ts`: Added `MATCHMAKER_BOT_FILL_WAIT_SECONDS = 90` placeholder constant for second-tier matchmaking timeout. Updated `evaluatePool` to trigger match formation with bot-fill when real player count is below 4 after reaching the second timeout. Updated `formMatch` to call `registerBotPlayer()` on target `MatchRoom` to fill the lobby up to 4 total players, with distinct logging for bot-filled matches. Updated `evaluateAllPools` on the 1-second interval to push recurring `MATCHMAKING_STATUS` events with live queue size to all currently waiting players.
+    * `client/screens/matchmaking-overlay.ts`: Verified in-place text update behavior of `updateMatchmakingOverlayStatus` for recurring `MATCHMAKING_STATUS` events.
+    * `CODEBASE_INDEX.md`: Updated module description and cycle audit log.
+* **Verification:** Verified compilation and lint validation.
+
 
 
 

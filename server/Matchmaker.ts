@@ -8,6 +8,9 @@ import { MatchAbuseStore } from "./player-data/MatchAbuseStore";
 // PLACEHOLDER - not specified, needs playtesting
 export const MATCHMAKER_MAX_WAIT_SECONDS = 45;
 
+// PLACEHOLDER - not specified, needs playtesting
+export const MATCHMAKER_BOT_FILL_WAIT_SECONDS = 90;
+
 export interface QueuedPlayer {
   id: string;
   reqUid: string;
@@ -50,15 +53,6 @@ export class Matchmaker {
     displayName?: string,
   ): Promise<void> {
     const uid = reqUid || playerId;
-    const isLocked = await MatchAbuseStore.isLockedOut(uid);
-    if (isLocked) {
-      console.log(`[MATCHMAKER] Rejecting player ${playerId} (${uid}) from pool: Account locked out or banned due to match abandonment.`);
-      channel.emit("reliable_event", {
-        type: "MATCHMAKING_ERROR",
-        message: "Account locked out due to match abandonment penalties.",
-      });
-      return;
-    }
 
     // Remove if already in queue to prevent duplicates
     this.removePlayerFromPool(playerId);
@@ -88,6 +82,18 @@ export class Matchmaker {
       maxPlayers: 10,
     });
 
+    // Check account lockout status
+    MatchAbuseStore.isLockedOut(uid).then((isLocked) => {
+      if (isLocked) {
+        console.log(`[MATCHMAKER] Rejecting player ${playerId} (${uid}) from pool: Account locked out or banned due to match abandonment.`);
+        this.removePlayerFromPool(playerId);
+        channel.emit("reliable_event", {
+          type: "MATCHMAKING_ERROR",
+          message: "Account locked out due to match abandonment penalties.",
+        });
+      }
+    }).catch(() => {});
+
     // Immediate check if we hit max group size
     this.evaluatePool(queuedPlayer.mapId);
   }
@@ -107,6 +113,18 @@ export class Matchmaker {
   private evaluateAllPools(): void {
     const maps = new Set(this.queue.map((p) => p.mapId));
     maps.forEach((mapId) => this.evaluatePool(mapId));
+
+    // Live queue-size push updates to all players currently waiting in queue
+    for (const queuedPlayer of this.queue) {
+      queuedPlayer.channel.emit("reliable_event", {
+        type: "MATCHMAKING_STATUS",
+        status: "QUEUED",
+        mapId: queuedPlayer.mapId,
+        queueSize: this.getQueueSizeForMap(queuedPlayer.mapId),
+        minPlayers: 4,
+        maxPlayers: 10,
+      });
+    }
   }
 
   private evaluatePool(mapId: string): void {
@@ -115,10 +133,12 @@ export class Matchmaker {
 
     const now = Date.now();
     let shouldFormMatch = false;
+    let botCount = 0;
 
     // Condition 1: Full lobby reached (10 players)
     if (mapQueue.length >= 10) {
       shouldFormMatch = true;
+      botCount = 0;
     } else {
       // Condition 2: Max wait timeout reached for any player, provided min 4 players exist
       const oldestPlayer = mapQueue.reduce((oldest, p) =>
@@ -129,13 +149,21 @@ export class Matchmaker {
       if (waitedSeconds >= MATCHMAKER_MAX_WAIT_SECONDS) {
         if (mapQueue.length >= 4) {
           shouldFormMatch = true;
+          botCount = 0;
           console.log(
             `[MATCHMAKER] Max wait timeout (${MATCHMAKER_MAX_WAIT_SECONDS}s) reached for player ${oldestPlayer.id}. Starting match with ${mapQueue.length} real players.`,
           );
-        } else {
-          // Timeout reached but < 4 real players present: DO NOT start match (no bot fill at pool time)
+        } else if (waitedSeconds >= MATCHMAKER_BOT_FILL_WAIT_SECONDS) {
+          // Condition 3: Bot-fill fallback timeout reached with < 4 real players
+          shouldFormMatch = true;
+          botCount = 4 - mapQueue.length;
           console.log(
-            `[MATCHMAKER] Timeout reached (${waitedSeconds.toFixed(1)}s) but only ${mapQueue.length} real players present (min 4 required). Waiting for more human players...`,
+            `[MATCHMAKER] Bot-fill timeout (${MATCHMAKER_BOT_FILL_WAIT_SECONDS}s) reached for player ${oldestPlayer.id}. Starting match with ${mapQueue.length} real players and ${botCount} bots.`,
+          );
+        } else {
+          // Timeout reached but < 4 real players present: waiting for bot-fill threshold
+          console.log(
+            `[MATCHMAKER] First-tier timeout reached (${waitedSeconds.toFixed(1)}s) but only ${mapQueue.length} real players present (min 4 required). Waiting for more human players or bot-fill threshold (${MATCHMAKER_BOT_FILL_WAIT_SECONDS}s)...`,
           );
         }
       }
@@ -149,21 +177,34 @@ export class Matchmaker {
       const matchedIds = new Set(matchedGroup.map((p) => p.id));
       this.queue = this.queue.filter((p) => !matchedIds.has(p.id));
 
-      this.formMatch(matchedGroup, mapId);
+      this.formMatch(matchedGroup, mapId, botCount);
     }
   }
 
-  private formMatch(group: QueuedPlayer[], mapId: string): void {
+  private formMatch(group: QueuedPlayer[], mapId: string, botCount: number = 0): void {
     const matchId = `M_POOL_${Date.now()}_${Math.floor(Math.random() * 10000)}`;
-    console.log(
-      `[MATCHMAKER] Forming match "${matchId}" on map "${mapId}" with ${group.length} real human players (no bots).`,
-    );
+    if (botCount > 0) {
+      console.log(
+        `[MATCHMAKER] Forming bot-filled match "${matchId}" on map "${mapId}" with ${group.length} real human players and ${botCount} bots (total: ${group.length + botCount}).`,
+      );
+    } else {
+      console.log(
+        `[MATCHMAKER] Forming match "${matchId}" on map "${mapId}" with ${group.length} real human players (no bots).`,
+      );
+    }
 
     const targetRoom = matchManager.getOrCreateRoom(
       matchId,
       process.env.GEMINI_API_KEY,
       mapId,
     );
+
+    // Register bot players if fallback triggered
+    for (let i = 0; i < botCount; i++) {
+      if (typeof targetRoom.registerBotPlayer === "function") {
+        targetRoom.registerBotPlayer();
+      }
+    }
 
     const pendingGroup: PendingMatchGroup = {
       matchId,
