@@ -559,3 +559,12 @@ Every file change in the VEXEA codebase must follow this strict two-step protoco
     *   `client/image-manifest.ts`: Added the `vfx` category and manifest entries for all 33 uploaded assets so `getAssetUrl()` / `IMAGE_MANIFEST` can resolve the runtime CDN paths.
     *   `CODEBASE_INDEX.md`: Registered this VFX asset-library metadata cycle.
 *   **Verification:** Live Cloudflare R2 listing under `Images/VFX/` returned exactly 33 objects, all with `image/webp` metadata and exact staged sizes totaling 5,530,374 bytes; no missing, unexpected, stale-prefix, or size/MIME mismatches were found.
+
+### Cycle 2026-08-14-02: Register Tracer and Surface-Decal VFX Assets
+*   **Target Files:** `r2_assets_tracker.json`, `client/image-manifest.ts`, `CODEBASE_INDEX.md`
+*   **Status:** Verified & Finalized
+*   **Modifications:**
+    *   `r2_assets_tracker.json`: Registered 3 CC0-derived weapon-tracer WebP assets and 4 CC0-derived surface-decal WebP assets under `Images/VFX/Static/`. No binary assets were added to Git.
+    *   `client/image-manifest.ts`: Added all 7 tracer/decal entries to the existing `vfx` category so manifest-driven CDN resolution can locate them.
+    *   `CODEBASE_INDEX.md`: Registered this tracer/decal asset cycle. Runtime gameplay code was intentionally left unchanged.
+*   **Verification:** Live Cloudflare R2 listing under `Images/VFX/Static/` found all 7 new keys with `image/webp` metadata and exact staged sizes; 18 pre-existing approved static VFX objects were present in the same prefix and were excluded from the new-asset comparison.
