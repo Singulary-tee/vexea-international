@@ -63,6 +63,9 @@ vi.mock('../client/StudioPreviewManager', () => ({
 vi.mock('../client/audio', () => ({
   audioManager: {
     setMatchState: vi.fn(),
+    startMatchAmbience: vi.fn(),
+    stopMatchAmbience: vi.fn(),
+    play: vi.fn(),
   },
 }));
 
