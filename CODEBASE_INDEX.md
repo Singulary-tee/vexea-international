@@ -234,6 +234,7 @@ This file is the authoritative index of all directories and source files within 
 *   **`screens/` (Client View Screens)**
     *   **`armory-screen.ts`**: Weapon loadout customization, attachment selection, weapon skin selection, and 3D preview.
     *   **`battle-pass-screen.ts`**: UI system for Battle Pass progression, featuring a high-contrast industrial theme, tier reward claiming, and real-time XP tracking.
+    *   **`dev-audio.ts`**: Developer audio inspector listing live audio manifest samples dynamically with audition controls, category filtering, search input, and automatic playback termination rules.
     *   **`dev-entities.ts`**: Developer entity inspector for spawning, tracking, and debugging live match entities.
     *   **`dev-map-editor.ts`**: Level editor interface for placing and editing map colliders, spawn nodes, and zone volumes.
     *   **`faction-screen.ts`**: Faction/INTEL screen displaying operative lore, faction data, contractor dossiers, and intelligence updates.
@@ -579,6 +580,16 @@ Every file change in the VEXEA codebase must follow this strict two-step protoco
     * `client/screens/main-menu.ts`: Added background non-blocking fetch triggers for `EXTENDED_TEXTURES` and `EXTENDED_SOUNDS` upon main menu initialization.
     * `client/src/map/LoadingOrchestrator.ts`: Added dedicated `'PRELOADING VFX TEXTURES'` phase preloading all `category: 'vfx'` assets before map building.
     * `CODEBASE_INDEX.md`: Updated cycle audit log.
+* **Verification:** Verified zero build/lint errors via `lint_applet` and `compile_applet`.
+
+### Cycle 2026-08-14-03: Implement Dynamic Dev Audio Screen
+* **Target Files:** `client/screens/dev-audio.ts`, `client/screens/screen-manager.ts`, `client/screens/main-menu.ts`, `CODEBASE_INDEX.md`
+* **Status:** Verified & Finalized
+* **Modifications:**
+    * `client/screens/dev-audio.ts`: Created new dynamic Dev Audio inspector UI (`dev-audio-screen`). Dynamically imports and reads `AUDIO_MANIFEST` at runtime to ensure sample list never gets stale. Displays sample key name, path, category, and loop status. Enforces playback stop rules under all 4 specified conditions (sample end, stop button pressed, playing another sample, or leaving screen). Added category filtering tabs, text search input, and master "STOP ALL AUDIO" control.
+    * `client/screens/screen-manager.ts`: Registered `'dev-audio-screen'` in screen transition list, exported `showDevAudio()`, and added automatic `stopDevAudio()` cleanup when transitioning away from the screen or calling `hideAll()`.
+    * `client/screens/main-menu.ts`: Added `DEV AUDIO` button alongside dev tools in the main menu card overlay.
+    * `CODEBASE_INDEX.md`: Updated codebase index and audit log.
 * **Verification:** Verified zero build/lint errors via `lint_applet` and `compile_applet`.
 
 

@@ -3,7 +3,7 @@ import { audioManager } from "../audio";
 import { IS_DEV } from "../../shared/gates/production.gate";
 import { StudioPreviewManager } from "../StudioPreviewManager";
 
-const screens = ['splash-screen', 'main-menu-screen', 'lobby-screen', 'dev-map-editor-screen', 'dev-entities-screen', 'post-match-screen', 'battle-pass-screen'];
+const screens = ['splash-screen', 'main-menu-screen', 'lobby-screen', 'dev-map-editor-screen', 'dev-entities-screen', 'dev-audio-screen', 'post-match-screen', 'battle-pass-screen'];
 
 export type ScreenId = typeof screens[number] | 'game-view';
 
@@ -49,6 +49,9 @@ async function executeTransition(target: ScreenId, durationMs: number, immediate
 
   // 1. Handle fading out of current screen if it's different
   if (currentScreen !== target) {
+    if (currentScreen === 'dev-audio-screen') {
+      import("./dev-audio").then(({ stopDevAudio }) => stopDevAudio());
+    }
     if (currentScreen === 'game-view') {
       const canvasContainer = document.getElementById("canvas-container");
       const hudContainer = document.getElementById("hud-container");
@@ -164,6 +167,9 @@ export function hideAll() {
   const hudContainer = document.getElementById("hud-container");
   if (canvasContainer) canvasContainer.style.display = 'none';
   if (hudContainer) hudContainer.style.setProperty("display", "none", "important");
+  if (currentScreen === 'dev-audio-screen') {
+    import("./dev-audio").then(({ stopDevAudio }) => stopDevAudio());
+  }
   audioManager.setMatchState(false);
 }
 
@@ -235,6 +241,18 @@ export function showDevPlacement() {
 }
 if (typeof window !== 'undefined') {
   (window as any).showDevPlacement = showDevPlacement;
+}
+
+export function showDevAudio() {
+  if (!IS_DEV) return;
+  import("./dev-audio").then(({ initDevAudio, activateDevAudio }) => {
+    initDevAudio();
+    activateDevAudio();
+    queueTransition('dev-audio-screen', 100, false);
+  });
+}
+if (typeof window !== 'undefined') {
+  (window as any).showDevAudio = showDevAudio;
 }
 
 export function showGame() {

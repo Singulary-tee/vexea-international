@@ -860,6 +860,10 @@ export function initMainMenu() {
         e.stopPropagation();
         screenManager.showDevPlacement();
     });
+    createDevBtn('DEV AUDIO', (e) => {
+        e.stopPropagation();
+        screenManager.showDevAudio();
+    });
     createDevBtn('DEV ANALYSIS', (e) => {
         e.stopPropagation();
         showArchitecturalAnalysis();
