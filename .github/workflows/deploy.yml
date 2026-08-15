@@ -42,6 +42,19 @@ jobs:
           DOPPLER_TOKEN: ${{ secrets.VITE_DOPPLER_TOKEN }}
         run: doppler run -- npx vite build
 
+      - name: Upload Source Maps to Sentry
+        env:
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
+          SENTRY_PROJECT: ${{ secrets.SENTRY_PROJECT_CLIENT }}
+        run: |
+          VERSION="vexea@0.1.0"
+          echo "Releasing version: $VERSION"
+          npx @sentry/cli releases new -p ${{ secrets.SENTRY_PROJECT_CLIENT }} "$VERSION" || true
+          npx @sentry/cli releases set-commits --auto "$VERSION" || true
+          npx @sentry/cli sourcemaps upload --release "$VERSION" ./dist/client --url-prefix '~/ai.studio'
+          npx @sentry/cli releases finalize "$VERSION" || true
+
       - name: Deploy to Firebase Hosting
         uses: FirebaseExtended/action-hosting-deploy@v0
         with:

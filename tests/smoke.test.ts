@@ -37,41 +37,45 @@ global.fetch = vi.fn().mockResolvedValue({
 global.localStorage = (global.window as any).localStorage;
 global.sessionStorage = global.localStorage;
 
+const createMockElement = (tag: string) => ({
+  tagName: (tag || '').toUpperCase(),
+  className: '',
+  style: { display: 'none', opacity: '1', setProperty: vi.fn() },
+  appendChild: vi.fn((child: any) => child),
+  insertBefore: vi.fn((child: any) => child),
+  removeChild: vi.fn(),
+  setAttribute: vi.fn(),
+  getAttribute: vi.fn().mockReturnValue(''),
+  removeAttribute: vi.fn(),
+  addEventListener: vi.fn(),
+  removeEventListener: vi.fn(),
+  querySelector: vi.fn(),
+  querySelectorAll: vi.fn().mockReturnValue([]),
+  getContext: vi.fn().mockReturnValue({
+    fillRect: vi.fn(),
+    beginPath: vi.fn(),
+    moveTo: vi.fn(),
+    lineTo: vi.fn(),
+    stroke: vi.fn(),
+    clearRect: vi.fn(),
+    fillText: vi.fn(),
+    measureText: vi.fn().mockReturnValue({ width: 10 }),
+  }),
+});
+
 global.document = {
   getElementById: (id: string) => ({
     id: id,
-    style: { display: 'none', opacity: '1', setProperty: vi.fn() },
-    appendChild: vi.fn(),
-    insertBefore: vi.fn(),
-    addEventListener: vi.fn(),
-    removeEventListener: vi.fn(),
-    getContext: vi.fn().mockReturnValue({
-      fillRect: vi.fn(),
-      beginPath: vi.fn(),
-      moveTo: vi.fn(),
-      lineTo: vi.fn(),
-      stroke: vi.fn(),
-      clearRect: vi.fn(),
-      fillText: vi.fn(),
-      measureText: vi.fn().mockReturnValue({ width: 10 }),
-    }),
+    ...createMockElement('div'),
   }),
-  createElement: (tag: string) => ({
-    tagName: tag.toUpperCase(),
-    style: {},
-    appendChild: vi.fn(),
-    addEventListener: vi.fn(),
-    removeEventListener: vi.fn(),
-    getContext: vi.fn().mockReturnValue({
-      fillRect: vi.fn(),
-      beginPath: vi.fn(),
-      moveTo: vi.fn(),
-      lineTo: vi.fn(),
-      stroke: vi.fn(),
-    }),
-  }),
+  createElement: (tag: string) => createMockElement(tag),
+  createElementNS: (_ns: string, tag: string) => createMockElement(tag),
   addEventListener: vi.fn(),
   removeEventListener: vi.fn(),
+  querySelector: vi.fn(),
+  querySelectorAll: vi.fn().mockReturnValue([]),
+  body: createMockElement('body'),
+  head: createMockElement('head'),
 } as any;
 
 vi.mock('@google/genai', () => ({

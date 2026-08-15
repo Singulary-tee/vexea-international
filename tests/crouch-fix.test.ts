@@ -77,7 +77,7 @@ vi.mock('fs', () => ({
 }));
 
 // Mock firebase-admin
-vi.mock('firebase-admin/app', () => ({ initializeApp: vi.fn() }));
+vi.mock('firebase-admin/app', () => ({ initializeApp: vi.fn(), cert: vi.fn(), getApps: vi.fn().mockReturnValue([]) }));
 vi.mock('firebase-admin/firestore', () => ({ getFirestore: vi.fn() }));
 
 describe('Crouch Fix Verification Tests', () => {
