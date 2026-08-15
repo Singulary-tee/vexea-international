@@ -22,13 +22,7 @@ export const MODEL_MANIFEST: ModelManifestEntry[] = [
   { key: 'f_90-optimized.glb', path: 'Models/Weapons/f_90-optimized.glb', category: 'weapons', version: '1.0.0' },
   { key: 'hk_51-optimized.glb', path: 'Models/Weapons/hk_51-optimized.glb', category: 'weapons', version: '1.0.0' },
   { key: 'scar_h_mk_17-optimized.glb', path: 'Models/Weapons/scar_h_mk_17-optimized.glb', category: 'weapons', version: '1.0.0' },
-  { key: 'scar_l-optimized.glb', path: 'Models/Weapons/scar_l-optimized.glb', category: 'weapons', version: '1.0.0' },
-
-  // Props & Environment
-  { key: 'grenade.glb', path: 'Models/Props/grenade.glb', category: 'props', version: '1.0.0' },
-  { key: 'StreetLightPoles.glb', path: 'Models/Environment/StreetLightPoles.glb', category: 'environment', version: '1.0.0' },
-  { key: 'concrete_block_low_poly.glb', path: 'Models/Environment/concrete_block_low_poly.glb', category: 'environment', version: '1.0.0' },
-  { key: 'concrete_fence_low-poly.glb', path: 'Models/Environment/concrete_fence_low-poly.glb', category: 'environment', version: '1.0.0' }
+  { key: 'scar_l-optimized.glb', path: 'Models/Weapons/scar_l-optimized.glb', category: 'weapons', version: '1.0.0' }
 ];
 
 export type ModelKey = typeof MODEL_MANIFEST[number]['key'];

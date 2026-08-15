@@ -305,8 +305,12 @@ async function claimTier(index: number) {
 
     if (tier.freeReward && tier.freeReward.type === 'CREDITS') {
       updates.credits = increment(tier.freeReward.value as number);
+      audioManager.play('credits_gain');
     } else if (tier.freeReward && tier.freeReward.type === 'COSMETIC') {
       updates.unlockedItems = arrayUnion(tier.freeReward.value as string);
+      audioManager.play('level_up');
+    } else {
+      audioManager.play('level_up');
     }
 
     await updateDoc(userRef, updates);

@@ -1,5 +1,6 @@
 import { MatchController } from "../../MatchController";
 import { DS } from "../../design-system";
+import { audioManager } from "../../audio";
 
 export class ChatHUDSystem {
   private match: MatchController;
@@ -317,6 +318,9 @@ export class ChatHUDSystem {
       this.logEl.removeChild(this.logEl.firstChild!);
     }
     this.showChatTemporarily();
+    if (sender.toLowerCase() !== "you" && !sender.toLowerCase().includes("local")) {
+      audioManager.play("notification");
+    }
   }
 
   public addQuickCommMessage(sender: string, optionId: string) {

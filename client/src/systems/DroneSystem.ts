@@ -4,11 +4,16 @@ import { DroneState, DroneType, DRONE_CONFIGS, PLAYER_RADIUS, PLAYER_TOTAL_HEIGH
 import * as SkeletonUtils from "three/addons/utils/SkeletonUtils.js";
 import { createProceduralState, updateProceduralState, applyNodeRotation } from "./DroneProcedural";
 import { fixSkinnedMeshBones } from "../../StudioPreviewManager";
+import { audioManager } from "../../audio";
 
 export class DroneSystem {
 
   private droneProceduralState = new Map<number, any>();
   private proceduralStatePool: any[] = [];
+  private activeDroneAudio = new Set<number>();
+  private lastDroneHpMap = new Map<number, number>();
+  private lastDroneStateMap = new Map<number, number>();
+  private remotePlayerFootsteps = new Map<string, { lastPos: THREE.Vector3; timer: number; variant: number }>();
 
   private createNewProceduralState() {
      return {
@@ -188,7 +193,34 @@ export class DroneSystem {
       (latest as any).clientRotZ = this.diagTempQuaternion.z;
       (latest as any).clientRotW = this.diagTempQuaternion.w;
 
+      // Track HP changes for hit audio
+      const prevHp = this.lastDroneHpMap.get(id);
+      if (prevHp !== undefined && prevHp > (drone as any).hp) {
+        audioManager.playPositional("drone_hit", this.diagTempPosition);
+      }
+      this.lastDroneHpMap.set(id, (drone as any).hp);
+
+      // Track state changes for takeoff audio
+      const lastState = this.lastDroneStateMap.get(id);
+      if (lastState !== undefined && lastState !== latest.state) {
+        if (latest.state === DroneState.PATROLLING || latest.state === DroneState.ATTACKING) {
+          audioManager.playPositional("drone_takeoff", this.diagTempPosition);
+        }
+      }
+      this.lastDroneStateMap.set(id, latest.state);
+
       const typeId = latest.type;
+
+      // Audio loop tracking
+      const droneEntityId = `drone_${id}`;
+      const droneSoundKey = (typeId === DroneType.FIXED_WING) ? "drone_wind_loop" : "drone_hum";
+      if (!this.activeDroneAudio.has(id)) {
+        this.activeDroneAudio.add(id);
+        audioManager.startEmitter(droneEntityId, droneSoundKey, this.diagTempPosition, { loop: true, refDistance: 4, maxDistance: 70 });
+        audioManager.playPositional("drone_spawn", this.diagTempPosition);
+      } else {
+        audioManager.updateEmitter(droneEntityId, this.diagTempPosition);
+      }
       if (typeId >= 0 && typeId <= 6 || typeId === DroneType.TEST_ENTITY) {
         const isStandalone = typeId === DroneType.FIXED_WING || 
                              typeId === DroneType.ROBOT_DOG || 
@@ -507,6 +539,13 @@ export class DroneSystem {
 
     for (const [id, state] of this.droneProceduralState.entries()) {
       if (!this.activeThisTick.has(id)) {
+        if (this.activeDroneAudio.has(id)) {
+          audioManager.stopEmitter(`drone_${id}`);
+          audioManager.playPositional("drone_death", this.diagTempPosition);
+          this.activeDroneAudio.delete(id);
+        }
+        this.lastDroneHpMap.delete(id);
+        this.lastDroneStateMap.delete(id);
         this.proceduralStatePool.push(state);
         this.droneProceduralState.delete(id);
       }
@@ -514,6 +553,13 @@ export class DroneSystem {
 
     for (const [id, assignment] of this.droneSlots.entries()) {
       if (!this.activeThisTick.has(id)) {
+        if (this.activeDroneAudio.has(id)) {
+          audioManager.stopEmitter(`drone_${id}`);
+          audioManager.playPositional("drone_death", this.diagTempPosition);
+          this.activeDroneAudio.delete(id);
+        }
+        this.lastDroneHpMap.delete(id);
+        this.lastDroneStateMap.delete(id);
         this.freeSlots.get(assignment.typeId)?.push(assignment.slotIdx);
         const batch = droneBatches[assignment.typeId];
         if (batch && batch.mesh) {
@@ -526,6 +572,13 @@ export class DroneSystem {
     
     for (const [id, fw] of this.standaloneDrones.entries()) {
       if (!this.activeThisTick.has(id)) {
+         if (this.activeDroneAudio.has(id)) {
+           audioManager.stopEmitter(`drone_${id}`);
+           audioManager.playPositional("drone_death", this.diagTempPosition);
+           this.activeDroneAudio.delete(id);
+         }
+         this.lastDroneHpMap.delete(id);
+         this.lastDroneStateMap.delete(id);
          this.match.scene.remove(fw);
          this.standaloneDrones.delete(id);
          this.standaloneMixers.delete(id);
@@ -595,6 +648,31 @@ export class DroneSystem {
       }
 
       if (group) {
+        let rpState = this.remotePlayerFootsteps.get(id);
+        if (!rpState) {
+          rpState = { lastPos: new THREE.Vector3().copy(group.position), timer: 0, variant: 0 };
+          this.remotePlayerFootsteps.set(id, rpState);
+        }
+        const movedDist = group.position.distanceTo(rpState.lastPos);
+        rpState.lastPos.copy(group.position);
+        const speed = dt > 0 ? (movedDist / dt) : 0;
+
+        if (speed > 0.1) {
+          const isRunning = speed > 6.0;
+          const interval = isRunning ? 0.33 : 0.52;
+          rpState.timer += dt;
+          if (rpState.timer >= interval) {
+            rpState.timer = 0;
+            rpState.variant = 1 - rpState.variant;
+            const stepNum = rpState.variant === 0 ? "01" : "02";
+            const prefix = isRunning ? "run" : "walk";
+            const soundKey = `${prefix}_ground_${stepNum}`;
+            audioManager.playPositional(soundKey, group.position);
+          }
+        } else {
+          rpState.timer = 0;
+        }
+
         group.position.lerp(data.pos, 0.15);
         group.rotation.y += (data.yaw - group.rotation.y) * 0.15;
       }
@@ -607,6 +685,7 @@ export class DroneSystem {
     // Cleanup stale remote players
     for (const [id, group] of match.remotePlayersMeshes.entries()) {
       if (!match.remotePlayersTargetData.has(id)) {
+        this.remotePlayerFootsteps.delete(id);
         match.scene.remove(group);
         match.remotePlayersMeshes.delete(id);
         const mixer = match.remotePlayerMixers.get(id);

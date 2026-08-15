@@ -432,14 +432,16 @@ async function handleStorePurchase(itemId: string, userData: any, container: HTM
         console.warn("Local storage ownership write failed:", e);
       }
 
-      audioManager.play('click');
+      audioManager.play('credits_spend');
       alert(`PURCHASE SUCCESSFUL: ${catalogItem.title}!`);
       renderStoreScreen(container, userData);
     } else {
+      audioManager.play('error');
       alert(`PURCHASE REJECTED: ${data.error?.message || "Transaction failed."}`);
     }
   } catch (err: any) {
     console.error("Store purchase error:", err);
+    audioManager.play('error');
     alert("PURCHASE ERROR: Could not connect to server economy service.");
   }
 }

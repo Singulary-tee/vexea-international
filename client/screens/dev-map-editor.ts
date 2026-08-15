@@ -122,8 +122,8 @@ export function initDevMapEditor() {
         const ctx = canvas.getContext('2d');
         if (!ctx) return;
         
-        const w = bgImg.naturalWidth || 2048;
-        const h = bgImg.naturalHeight || 2048;
+        const w = 2048;
+        const h = 2048;
         
         canvas.width = w;
         canvas.height = h;
@@ -152,17 +152,6 @@ export function initDevMapEditor() {
         ctx.fill();
     };
 
-    bgImg.onload = () => {
-        drawGridAndMarker();
-        updateTransform();
-    };
-    bgImg.src = getAssetUrl('Blueprint.png');
-    
-    // In case the image is already cached/loaded
-    if (bgImg.complete && bgImg.naturalWidth > 0) {
-        drawGridAndMarker();
-        updateTransform();
-    }
-
+    drawGridAndMarker();
     updateTransform();
 }

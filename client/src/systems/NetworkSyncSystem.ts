@@ -11,6 +11,7 @@ import {
 } from "../../../shared/constants";
 import { getAssetUrl } from "../../asset-cache";
 import { setWeaponReloading, resetWeaponAnimations } from "../../weapons_model";
+import { audioManager } from "../../audio";
 
 // --- BEGIN ZERO-GC OPTIMIZATIONS ---
 const _droneMuzzlePos = new THREE.Vector3();
@@ -457,6 +458,7 @@ export class NetworkSyncSystem {
 
     if (msg.type === "YOU_DIED") {
       match.isLocalPlayerDead = true;
+      audioManager.setHeartbeat(false);
       resetWeaponAnimations();
       if (match.hud) match.hud.showDeathOverlay(true, msg.respawnTimer);
       if (typeof (window as any).stopAllInputs === "function") (window as any).stopAllInputs();
@@ -468,6 +470,7 @@ export class NetworkSyncSystem {
 
     if (msg.type === "YOU_RESPAWNED" || msg.type === "RESPAWN") {
       match.isLocalPlayerDead = false;
+      audioManager.setHeartbeat(false);
       resetWeaponAnimations();
       if (match.hud) {
         match.hud.showDeathOverlay(false);
@@ -496,6 +499,11 @@ export class NetworkSyncSystem {
     if (msg.type === "GATE_DAMAGE" || msg.type === "PLAYER_HIT") {
       if (msg.hp !== undefined) match.playerHP = msg.hp;
       if (msg.currentHp !== undefined) match.playerHP = msg.currentHp;
+      if (match.playerHP <= 30 && match.playerHP > 0) {
+        audioManager.setHeartbeat(true);
+      } else {
+        audioManager.setHeartbeat(false);
+      }
       if (match.hud) {
         match.hud.triggerUIFlash("255, 0, 0", 0.5);
         match.hud.updateHUD();
@@ -503,6 +511,7 @@ export class NetworkSyncSystem {
     }
 
     if (msg.type === "MATCH_END") {
+      audioManager.setHeartbeat(false);
       if (typeof (window as any).removeMatchTab === "function") (window as any).removeMatchTab();
       if (document.exitPointerLock) document.exitPointerLock();
       import("../../screens/screen-manager").then((sm) => {
@@ -517,22 +526,66 @@ export class NetworkSyncSystem {
     }
 
     if (msg.type === "UTILITY_ACTIVATED") {
-      // VISUAL STUB - Trigger server-confirmed utility activation animation / sound
-      // Console or animation stub for confirmed utility usage
+      if (msg.origin) {
+        _droneDeathPos.set(msg.origin.x, msg.origin.y, msg.origin.z);
+        if (msg.utilityId === "Grenade" || msg.slot === "utility1") {
+          audioManager.playPositional("grenade_bounce", _droneDeathPos);
+        }
+      }
     }
 
     if (msg.type === "UTILITY_EFFECT") {
-      // VISUAL STUB - Trigger explosion / impact VFX at resolved origin
-      if (msg.utilityId === "Grenade" && msg.origin) {
+      if (msg.origin) {
         _droneDeathPos.set(msg.origin.x, msg.origin.y, msg.origin.z);
-        if (typeof (window as any).triggerExplosion === "function") {
-          (window as any).triggerExplosion(_droneDeathPos);
+        if (msg.utilityId === "Grenade") {
+          audioManager.playPositional("grenade_explode", _droneDeathPos);
+          if (typeof (window as any).triggerExplosion === "function") {
+            (window as any).triggerExplosion(_droneDeathPos);
+          }
+        } else if (msg.utilityId === "Flashbang") {
+          audioManager.playPositional("flashbang_explode", _droneDeathPos);
+        } else if (msg.utilityId === "Smoke") {
+          audioManager.playPositional("smoke_start", _droneDeathPos);
+          audioManager.startEmitter("smoke_" + (msg.id || performance.now()), "smoke_loop", _droneDeathPos, { loop: true, refDistance: 5, maxDistance: 35 });
         }
       }
     }
 
     if (msg.type === "FLASHBANG_DETONATED") {
-      // VISUAL STUB - Flashbang burst visual at origin
+      if (msg.origin) {
+        _droneDeathPos.set(msg.origin.x, msg.origin.y, msg.origin.z);
+        audioManager.playPositional("flashbang_explode", _droneDeathPos);
+      } else {
+        audioManager.play("flashbang_explode");
+      }
+    }
+
+    if (msg.type === "DRONE_SHIELD_HIT") {
+      if (msg.posX !== undefined) {
+        _droneDeathPos.set(msg.posX, msg.posY, msg.posZ);
+        audioManager.playPositional("drone_shield_hit", _droneDeathPos);
+      }
+    }
+
+    if (msg.type === "DRONE_SHIELD_BREAK") {
+      if (msg.posX !== undefined) {
+        _droneDeathPos.set(msg.posX, msg.posY, msg.posZ);
+        audioManager.playPositional("drone_shield_break", _droneDeathPos);
+      }
+    }
+
+    if (msg.type === "DRONE_SHIELD_UP") {
+      if (msg.posX !== undefined) {
+        _droneDeathPos.set(msg.posX, msg.posY, msg.posZ);
+        audioManager.playPositional("drone_shield_up", _droneDeathPos);
+      }
+    }
+
+    if (msg.type === "DRONE_SHIELD_DOWN") {
+      if (msg.posX !== undefined) {
+        _droneDeathPos.set(msg.posX, msg.posY, msg.posZ);
+        audioManager.playPositional("drone_shield_down", _droneDeathPos);
+      }
     }
 
     if (msg.type === "FLASHBANG_HIT") {

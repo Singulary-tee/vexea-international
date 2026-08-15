@@ -24,21 +24,11 @@ export const IMAGE_MANIFEST: ImageManifestEntry[] = [
   { key: 'demolition_card_1.webp', path: 'Images/Cards/demolition_card_1.webp', category: 'cards', version: '1.0.0' },
   { key: 'medic_card_1.webp', path: 'Images/Cards/medic_card_1.webp', category: 'cards', version: '1.0.0' },
   { key: 'recon_card_1.webp', path: 'Images/Cards/recon_card_1.webp', category: 'cards', version: '1.0.0' },
-  { key: 'feedback_card.png', path: 'Images/Cards/feedback_card.png', category: 'cards', version: '1.0.0' },
-  { key: 'multiplayer_card.png', path: 'Images/Cards/multiplayer_card.png', category: 'cards', version: '1.0.0' },
-  { key: 'slopInc_card.png', path: 'Images/Cards/slopInc_card.png', category: 'cards', version: '1.0.0' },
-  { key: 'statistics_card.png', path: 'Images/Cards/statistics_card.png', category: 'cards', version: '1.0.0' },
-  { key: 'store_card.png', path: 'Images/Cards/store_card.png', category: 'cards', version: '1.0.0' },
-  { key: 'vibeCo_card.png', path: 'Images/Cards/vibeCo_card.png', category: 'cards', version: '1.0.0' },
 
   // Promotional
   { key: 'promo_rifle_1.webp', path: 'Images/promotional/promo_rifle_1.webp', category: 'promotional', version: '1.0.0' },
   { key: 'promo_pistol_1.webp', path: 'Images/promotional/promo_pistol_1.webp', category: 'promotional', version: '1.0.0' },
   { key: 'promo_shotgun_1.webp', path: 'Images/promotional/promo_shotgun_1.webp', category: 'promotional', version: '1.0.0' },
-
-  // Decals & UI
-  { key: 'Surface_Impact.png', path: 'Images/Decals/Surface_Impact.png', category: 'decals', version: '1.0.0' },
-  { key: 'Blueprint.png', path: 'Images/UI/Blueprint.png', category: 'ui', version: '1.0.0' },
 
   // VFX - Animated Flipbooks (15)
   { key: 'cloud_01_8x8_q90.webp', path: 'Images/VFX/Flipbooks/cloud_01_8x8_q90.webp', category: 'vfx', version: '1.0.0' },

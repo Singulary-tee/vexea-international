@@ -1,19 +1,5 @@
 [
   {
-    "id": "starter_pack_alpha",
-    "title": "Alpha Operative Starter Assembly",
-    "category": "bundle",
-    "faction": "ANY",
-    "priceCredits": 1200,
-    "priceEnergy": 0,
-    "currency": "credits",
-    "requiredLevel": 1,
-    "description": "Complete tactical starter kit with essential blueprints and credits.",
-    "featured": true,
-    "discountPercentage": 35,
-    "icon": "⚡"
-  },
-  {
     "id": "test_skin",
     "title": "VX-88 Test Coating Assembly",
     "category": "cosmetic",

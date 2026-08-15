@@ -1,17 +1,493 @@
 {
-  "baseUrl": "https://vexea-r2-asset-guard.alte.workers.dev",
+  "version": "1.0.0",
+  "lastVerified": "2026-08-14T23:43:17.158Z",
+  "totalAssets": 155,
   "assets": [
     {
-      "name": "main_menu_1.webm",
-      "category": "Video",
+      "name": "distant_industrial_loop.opus",
+      "category": "Sound",
       "source": "CloudflareR2",
-      "path": "Video/Backgrounds/main_menu_1.webm"
+      "path": "Audio/Ambient/distant_industrial_loop.opus"
     },
     {
-      "name": "lobby_1.webm",
-      "category": "Video",
+      "name": "exterior_base_loop.opus",
+      "category": "Sound",
       "source": "CloudflareR2",
-      "path": "Video/Backgrounds/lobby_1.webm"
+      "path": "Audio/Ambient/exterior_base_loop.opus"
+    },
+    {
+      "name": "interior_base_loop.opus",
+      "category": "Sound",
+      "source": "CloudflareR2",
+      "path": "Audio/Ambient/interior_base_loop.opus"
+    },
+    {
+      "name": "wind_detail.opus",
+      "category": "Sound",
+      "source": "CloudflareR2",
+      "path": "Audio/Ambient/wind_detail.opus"
+    },
+    {
+      "name": "factory_ambience.opus",
+      "category": "Sound",
+      "source": "CloudflareR2",
+      "path": "Audio/Music/factory_ambience.opus"
+    },
+    {
+      "name": "iron_march.opus",
+      "category": "Sound",
+      "source": "CloudflareR2",
+      "path": "Audio/Music/iron_march.opus"
+    },
+    {
+      "name": "vexea_theme.opus",
+      "category": "Sound",
+      "source": "CloudflareR2",
+      "path": "Audio/Music/vexea_theme.opus"
+    },
+    {
+      "name": "tracking_deep_loop.opus",
+      "category": "Sound",
+      "source": "CloudflareR2",
+      "path": "Audio/Sfx/Commander/tracking_deep_loop.opus"
+    },
+    {
+      "name": "bomber_explosion.opus",
+      "category": "Sound",
+      "source": "CloudflareR2",
+      "path": "Audio/Sfx/Drones/bomber_explosion.opus"
+    },
+    {
+      "name": "bomber_lock.opus",
+      "category": "Sound",
+      "source": "CloudflareR2",
+      "path": "Audio/Sfx/Drones/bomber_lock.opus"
+    },
+    {
+      "name": "humanoid_gun_fire.opus",
+      "category": "Sound",
+      "source": "CloudflareR2",
+      "path": "Audio/Sfx/Drones/humanoid_gun_fire.opus"
+    },
+    {
+      "name": "humanoid_mechanical_step.opus",
+      "category": "Sound",
+      "source": "CloudflareR2",
+      "path": "Audio/Sfx/Drones/humanoid_mechanical_step.opus"
+    },
+    {
+      "name": "humanoid_servo.opus",
+      "category": "Sound",
+      "source": "CloudflareR2",
+      "path": "Audio/Sfx/Drones/humanoid_servo.opus"
+    },
+    {
+      "name": "metal_ricochet.opus",
+      "category": "Sound",
+      "source": "CloudflareR2",
+      "path": "Audio/Sfx/Drones/metal_ricochet.opus"
+    },
+    {
+      "name": "quadcopter_rifle_fire.opus",
+      "category": "Sound",
+      "source": "CloudflareR2",
+      "path": "Audio/Sfx/Drones/quadcopter_rifle_fire.opus"
+    },
+    {
+      "name": "quadcopter_rotor_distant.opus",
+      "category": "Sound",
+      "source": "CloudflareR2",
+      "path": "Audio/Sfx/Drones/quadcopter_rotor_distant.opus"
+    },
+    {
+      "name": "quadcopter_rotor_fast.opus",
+      "category": "Sound",
+      "source": "CloudflareR2",
+      "path": "Audio/Sfx/Drones/quadcopter_rotor_fast.opus"
+    },
+    {
+      "name": "quadcopter_rotor_idle.opus",
+      "category": "Sound",
+      "source": "CloudflareR2",
+      "path": "Audio/Sfx/Drones/quadcopter_rotor_idle.opus"
+    },
+    {
+      "name": "quadruped_step.opus",
+      "category": "Sound",
+      "source": "CloudflareR2",
+      "path": "Audio/Sfx/Drones/quadruped_step.opus"
+    },
+    {
+      "name": "recon_scan_loop.opus",
+      "category": "Sound",
+      "source": "CloudflareR2",
+      "path": "Audio/Sfx/Drones/recon_scan_loop.opus"
+    },
+    {
+      "name": "robot_dog_servo.opus",
+      "category": "Sound",
+      "source": "CloudflareR2",
+      "path": "Audio/Sfx/Drones/robot_dog_servo.opus"
+    },
+    {
+      "name": "uav_flight_loop.opus",
+      "category": "Sound",
+      "source": "CloudflareR2",
+      "path": "Audio/Sfx/Drones/uav_flight_loop.opus"
+    },
+    {
+      "name": "ugv_engine_loop.opus",
+      "category": "Sound",
+      "source": "CloudflareR2",
+      "path": "Audio/Sfx/Drones/ugv_engine_loop.opus"
+    },
+    {
+      "name": "ugv_turret_fire.opus",
+      "category": "Sound",
+      "source": "CloudflareR2",
+      "path": "Audio/Sfx/Drones/ugv_turret_fire.opus"
+    },
+    {
+      "name": "crouch.opus",
+      "category": "Sound",
+      "source": "CloudflareR2",
+      "path": "Audio/Sfx/Locomotion/crouch.opus"
+    },
+    {
+      "name": "jump.opus",
+      "category": "Sound",
+      "source": "CloudflareR2",
+      "path": "Audio/Sfx/Locomotion/jump.opus"
+    },
+    {
+      "name": "land.opus",
+      "category": "Sound",
+      "source": "CloudflareR2",
+      "path": "Audio/Sfx/Locomotion/land.opus"
+    },
+    {
+      "name": "run_concrete_02.opus",
+      "category": "Sound",
+      "source": "CloudflareR2",
+      "path": "Audio/Sfx/Locomotion/run_concrete_02.opus"
+    },
+    {
+      "name": "run_gravel_01.opus",
+      "category": "Sound",
+      "source": "CloudflareR2",
+      "path": "Audio/Sfx/Locomotion/run_gravel_01.opus"
+    },
+    {
+      "name": "run_gravel_02.opus",
+      "category": "Sound",
+      "source": "CloudflareR2",
+      "path": "Audio/Sfx/Locomotion/run_gravel_02.opus"
+    },
+    {
+      "name": "run_ground_01.opus",
+      "category": "Sound",
+      "source": "CloudflareR2",
+      "path": "Audio/Sfx/Locomotion/run_ground_01.opus"
+    },
+    {
+      "name": "run_ground_02.opus",
+      "category": "Sound",
+      "source": "CloudflareR2",
+      "path": "Audio/Sfx/Locomotion/run_ground_02.opus"
+    },
+    {
+      "name": "run_hard_01.opus",
+      "category": "Sound",
+      "source": "CloudflareR2",
+      "path": "Audio/Sfx/Locomotion/run_hard_01.opus"
+    },
+    {
+      "name": "run_hard_02.opus",
+      "category": "Sound",
+      "source": "CloudflareR2",
+      "path": "Audio/Sfx/Locomotion/run_hard_02.opus"
+    },
+    {
+      "name": "run_metal_01.opus",
+      "category": "Sound",
+      "source": "CloudflareR2",
+      "path": "Audio/Sfx/Locomotion/run_metal_01.opus"
+    },
+    {
+      "name": "run_metal_02.opus",
+      "category": "Sound",
+      "source": "CloudflareR2",
+      "path": "Audio/Sfx/Locomotion/run_metal_02.opus"
+    },
+    {
+      "name": "run_wood_01.opus",
+      "category": "Sound",
+      "source": "CloudflareR2",
+      "path": "Audio/Sfx/Locomotion/run_wood_01.opus"
+    },
+    {
+      "name": "run_wood_02.opus",
+      "category": "Sound",
+      "source": "CloudflareR2",
+      "path": "Audio/Sfx/Locomotion/run_wood_02.opus"
+    },
+    {
+      "name": "walk_concrete_01.opus",
+      "category": "Sound",
+      "source": "CloudflareR2",
+      "path": "Audio/Sfx/Locomotion/walk_concrete_01.opus"
+    },
+    {
+      "name": "walk_gravel_01.opus",
+      "category": "Sound",
+      "source": "CloudflareR2",
+      "path": "Audio/Sfx/Locomotion/walk_gravel_01.opus"
+    },
+    {
+      "name": "walk_gravel_02.opus",
+      "category": "Sound",
+      "source": "CloudflareR2",
+      "path": "Audio/Sfx/Locomotion/walk_gravel_02.opus"
+    },
+    {
+      "name": "walk_ground_01.opus",
+      "category": "Sound",
+      "source": "CloudflareR2",
+      "path": "Audio/Sfx/Locomotion/walk_ground_01.opus"
+    },
+    {
+      "name": "walk_ground_02.opus",
+      "category": "Sound",
+      "source": "CloudflareR2",
+      "path": "Audio/Sfx/Locomotion/walk_ground_02.opus"
+    },
+    {
+      "name": "walk_hard_01.opus",
+      "category": "Sound",
+      "source": "CloudflareR2",
+      "path": "Audio/Sfx/Locomotion/walk_hard_01.opus"
+    },
+    {
+      "name": "walk_hard_02.opus",
+      "category": "Sound",
+      "source": "CloudflareR2",
+      "path": "Audio/Sfx/Locomotion/walk_hard_02.opus"
+    },
+    {
+      "name": "walk_metal_01.opus",
+      "category": "Sound",
+      "source": "CloudflareR2",
+      "path": "Audio/Sfx/Locomotion/walk_metal_01.opus"
+    },
+    {
+      "name": "walk_metal_02.opus",
+      "category": "Sound",
+      "source": "CloudflareR2",
+      "path": "Audio/Sfx/Locomotion/walk_metal_02.opus"
+    },
+    {
+      "name": "walk_wood_01.opus",
+      "category": "Sound",
+      "source": "CloudflareR2",
+      "path": "Audio/Sfx/Locomotion/walk_wood_01.opus"
+    },
+    {
+      "name": "walk_wood_02.opus",
+      "category": "Sound",
+      "source": "CloudflareR2",
+      "path": "Audio/Sfx/Locomotion/walk_wood_02.opus"
+    },
+    {
+      "name": "damage_heavy.opus",
+      "category": "Sound",
+      "source": "CloudflareR2",
+      "path": "Audio/Sfx/Player/damage_heavy.opus"
+    },
+    {
+      "name": "damage_light.opus",
+      "category": "Sound",
+      "source": "CloudflareR2",
+      "path": "Audio/Sfx/Player/damage_light.opus"
+    },
+    {
+      "name": "hit_confirm.opus",
+      "category": "Sound",
+      "source": "CloudflareR2",
+      "path": "Audio/Sfx/Player/hit_confirm.opus"
+    },
+    {
+      "name": "quick_turn.opus",
+      "category": "Sound",
+      "source": "CloudflareR2",
+      "path": "Audio/Sfx/Player/quick_turn.opus"
+    },
+    {
+      "name": "click.opus",
+      "category": "Sound",
+      "source": "CloudflareR2",
+      "path": "Audio/Sfx/UI/click.opus"
+    },
+    {
+      "name": "credits_gain.opus",
+      "category": "Sound",
+      "source": "CloudflareR2",
+      "path": "Audio/Sfx/UI/credits_gain.opus"
+    },
+    {
+      "name": "credits_spend.opus",
+      "category": "Sound",
+      "source": "CloudflareR2",
+      "path": "Audio/Sfx/UI/credits_spend.opus"
+    },
+    {
+      "name": "error.opus",
+      "category": "Sound",
+      "source": "CloudflareR2",
+      "path": "Audio/Sfx/UI/error.opus"
+    },
+    {
+      "name": "join_match.opus",
+      "category": "Sound",
+      "source": "CloudflareR2",
+      "path": "Audio/Sfx/UI/join_match.opus"
+    },
+    {
+      "name": "level_up.opus",
+      "category": "Sound",
+      "source": "CloudflareR2",
+      "path": "Audio/Sfx/UI/level_up.opus"
+    },
+    {
+      "name": "match_end_motif.opus",
+      "category": "Sound",
+      "source": "CloudflareR2",
+      "path": "Audio/Sfx/UI/match_end_motif.opus"
+    },
+    {
+      "name": "notification.opus",
+      "category": "Sound",
+      "source": "CloudflareR2",
+      "path": "Audio/Sfx/UI/notification.opus"
+    },
+    {
+      "name": "c4_detonate.opus",
+      "category": "Sound",
+      "source": "CloudflareR2",
+      "path": "Audio/Sfx/Utility/c4_detonate.opus"
+    },
+    {
+      "name": "c4_place.opus",
+      "category": "Sound",
+      "source": "CloudflareR2",
+      "path": "Audio/Sfx/Utility/c4_place.opus"
+    },
+    {
+      "name": "flashbang_detonate.opus",
+      "category": "Sound",
+      "source": "CloudflareR2",
+      "path": "Audio/Sfx/Utility/flashbang_detonate.opus"
+    },
+    {
+      "name": "flashbang_throw.opus",
+      "category": "Sound",
+      "source": "CloudflareR2",
+      "path": "Audio/Sfx/Utility/flashbang_throw.opus"
+    },
+    {
+      "name": "grenade_explosion.opus",
+      "category": "Sound",
+      "source": "CloudflareR2",
+      "path": "Audio/Sfx/Utility/grenade_explosion.opus"
+    },
+    {
+      "name": "grenade_throw.opus",
+      "category": "Sound",
+      "source": "CloudflareR2",
+      "path": "Audio/Sfx/Utility/grenade_throw.opus"
+    },
+    {
+      "name": "jammer_active_loop.opus",
+      "category": "Sound",
+      "source": "CloudflareR2",
+      "path": "Audio/Sfx/Utility/jammer_active_loop.opus"
+    },
+    {
+      "name": "jammer_deploy.opus",
+      "category": "Sound",
+      "source": "CloudflareR2",
+      "path": "Audio/Sfx/Utility/jammer_deploy.opus"
+    },
+    {
+      "name": "mine_deploy.opus",
+      "category": "Sound",
+      "source": "CloudflareR2",
+      "path": "Audio/Sfx/Utility/mine_deploy.opus"
+    },
+    {
+      "name": "mine_trigger.opus",
+      "category": "Sound",
+      "source": "CloudflareR2",
+      "path": "Audio/Sfx/Utility/mine_trigger.opus"
+    },
+    {
+      "name": "revive_complete.opus",
+      "category": "Sound",
+      "source": "CloudflareR2",
+      "path": "Audio/Sfx/Utility/revive_complete.opus"
+    },
+    {
+      "name": "revive_start.opus",
+      "category": "Sound",
+      "source": "CloudflareR2",
+      "path": "Audio/Sfx/Utility/revive_start.opus"
+    },
+    {
+      "name": "ads.opus",
+      "category": "Sound",
+      "source": "CloudflareR2",
+      "path": "Audio/Sfx/Weapons/ads.opus"
+    },
+    {
+      "name": "empty_click.opus",
+      "category": "Sound",
+      "source": "CloudflareR2",
+      "path": "Audio/Sfx/Weapons/empty_click.opus"
+    },
+    {
+      "name": "pistol_fire.opus",
+      "category": "Sound",
+      "source": "CloudflareR2",
+      "path": "Audio/Sfx/Weapons/pistol_fire.opus"
+    },
+    {
+      "name": "pistol_reload.opus",
+      "category": "Sound",
+      "source": "CloudflareR2",
+      "path": "Audio/Sfx/Weapons/pistol_reload.opus"
+    },
+    {
+      "name": "reload.opus",
+      "category": "Sound",
+      "source": "CloudflareR2",
+      "path": "Audio/Sfx/Weapons/reload.opus"
+    },
+    {
+      "name": "rifle_fire.opus",
+      "category": "Sound",
+      "source": "CloudflareR2",
+      "path": "Audio/Sfx/Weapons/rifle_fire.opus"
+    },
+    {
+      "name": "rifle_reload.opus",
+      "category": "Sound",
+      "source": "CloudflareR2",
+      "path": "Audio/Sfx/Weapons/rifle_reload.opus"
+    },
+    {
+      "name": "smg_fire.opus",
+      "category": "Sound",
+      "source": "CloudflareR2",
+      "path": "Audio/Sfx/Weapons/smg_fire.opus"
     },
     {
       "name": "armory_1.webp",
@@ -26,6 +502,18 @@
       "path": "Images/Backgrounds/faction_1.webp"
     },
     {
+      "name": "file_00000000cdd071f48495d22753c89fa1.webp",
+      "category": "Image",
+      "source": "CloudflareR2",
+      "path": "Images/Backgrounds/file_00000000cdd071f48495d22753c89fa1.webp"
+    },
+    {
+      "name": "splash_screen.webp",
+      "category": "Image",
+      "source": "CloudflareR2",
+      "path": "Images/Backgrounds/splash_screen.webp"
+    },
+    {
       "name": "stats_1.webp",
       "category": "Image",
       "source": "CloudflareR2",
@@ -38,16 +526,16 @@
       "path": "Images/Backgrounds/store_1.webp"
     },
     {
-      "name": "splash_screen.webp",
+      "name": "assault_card_1.webp",
       "category": "Image",
       "source": "CloudflareR2",
-      "path": "Images/Backgrounds/splash_screen.webp"
+      "path": "Images/Cards/assault_card_1.webp"
     },
     {
-      "name": "file_00000000cdd071f48495d22753c89fa1.webp",
+      "name": "demolition_card_1.webp",
       "category": "Image",
       "source": "CloudflareR2",
-      "path": "Images/Backgrounds/file_00000000cdd071f48495d22753c89fa1.webp"
+      "path": "Images/Cards/demolition_card_1.webp"
     },
     {
       "name": "infiltration_card_1.webp",
@@ -68,30 +556,6 @@
       "path": "Images/Cards/leaderboard_card_1.webp"
     },
     {
-      "name": "squad_card_1.webp",
-      "category": "Image",
-      "source": "CloudflareR2",
-      "path": "Images/Cards/squad_card_1.webp"
-    },
-    {
-      "name": "update_card_1.webp",
-      "category": "Image",
-      "source": "CloudflareR2",
-      "path": "Images/Cards/update_card_1.webp"
-    },
-    {
-      "name": "assault_card_1.webp",
-      "category": "Image",
-      "source": "CloudflareR2",
-      "path": "Images/Cards/assault_card_1.webp"
-    },
-    {
-      "name": "demolition_card_1.webp",
-      "category": "Image",
-      "source": "CloudflareR2",
-      "path": "Images/Cards/demolition_card_1.webp"
-    },
-    {
       "name": "medic_card_1.webp",
       "category": "Image",
       "source": "CloudflareR2",
@@ -104,358 +568,16 @@
       "path": "Images/Cards/recon_card_1.webp"
     },
     {
-      "name": "feedback_card.png",
+      "name": "squad_card_1.webp",
       "category": "Image",
       "source": "CloudflareR2",
-      "path": "Images/Cards/feedback_card.png"
+      "path": "Images/Cards/squad_card_1.webp"
     },
     {
-      "name": "multiplayer_card.png",
+      "name": "update_card_1.webp",
       "category": "Image",
       "source": "CloudflareR2",
-      "path": "Images/Cards/multiplayer_card.png"
-    },
-    {
-      "name": "slopInc_card.png",
-      "category": "Image",
-      "source": "CloudflareR2",
-      "path": "Images/Cards/slopInc_card.png"
-    },
-    {
-      "name": "statistics_card.png",
-      "category": "Image",
-      "source": "CloudflareR2",
-      "path": "Images/Cards/statistics_card.png"
-    },
-    {
-      "name": "store_card.png",
-      "category": "Image",
-      "source": "CloudflareR2",
-      "path": "Images/Cards/store_card.png"
-    },
-    {
-      "name": "vibeCo_card.png",
-      "category": "Image",
-      "source": "CloudflareR2",
-      "path": "Images/Cards/vibeCo_card.png"
-    },
-    {
-      "name": "promo_rifle_1.webp",
-      "category": "Image",
-      "source": "CloudflareR2",
-      "path": "Images/promotional/promo_rifle_1.webp"
-    },
-    {
-      "name": "promo_pistol_1.webp",
-      "category": "Image",
-      "source": "CloudflareR2",
-      "path": "Images/promotional/promo_pistol_1.webp"
-    },
-    {
-      "name": "promo_shotgun_1.webp",
-      "category": "Image",
-      "source": "CloudflareR2",
-      "path": "Images/promotional/promo_shotgun_1.webp"
-    },
-    {
-      "name": "Surface_Impact.png",
-      "category": "Image",
-      "source": "CloudflareR2",
-      "path": "Images/Decals/Surface_Impact.png"
-    },
-    {
-      "name": "Blueprint.png",
-      "category": "Image",
-      "source": "CloudflareR2",
-      "path": "Images/UI/Blueprint.png"
-    },
-    {
-      "name": "vexea_theme.opus",
-      "category": "Sound",
-      "source": "CloudflareR2",
-      "path": "Audio/Music/vexea_theme.opus"
-    },
-    {
-      "name": "click.opus",
-      "category": "Sound",
-      "source": "CloudflareR2",
-      "path": "Audio/Sfx/UI/click.opus"
-    },
-    {
-      "name": "back.opus",
-      "category": "Sound",
-      "source": "CloudflareR2",
-      "path": "Audio/Sfx/UI/back.opus"
-    },
-    {
-      "name": "confirm.opus",
-      "category": "Sound",
-      "source": "CloudflareR2",
-      "path": "Audio/Sfx/UI/confirm.opus"
-    },
-    {
-      "name": "hover.opus",
-      "category": "Sound",
-      "source": "CloudflareR2",
-      "path": "Audio/Sfx/UI/hover.opus"
-    },
-    {
-      "name": "toggle.opus",
-      "category": "Sound",
-      "source": "CloudflareR2",
-      "path": "Audio/Sfx/UI/toggle.opus"
-    },
-    {
-      "name": "match_start.opus",
-      "category": "Sound",
-      "source": "CloudflareR2",
-      "path": "Audio/Sfx/UI/match_start.opus"
-    },
-    {
-      "name": "round_win.opus",
-      "category": "Sound",
-      "source": "CloudflareR2",
-      "path": "Audio/Sfx/UI/round_win.opus"
-    },
-    {
-      "name": "round_loss.opus",
-      "category": "Sound",
-      "source": "CloudflareR2",
-      "path": "Audio/Sfx/UI/round_loss.opus"
-    },
-    {
-      "name": "countdown.opus",
-      "category": "Sound",
-      "source": "CloudflareR2",
-      "path": "Audio/Sfx/UI/countdown.opus"
-    },
-    {
-      "name": "footstep.opus",
-      "category": "Sound",
-      "source": "CloudflareR2",
-      "path": "Audio/Sfx/Player/footstep.opus"
-    },
-    {
-      "name": "jump.opus",
-      "category": "Sound",
-      "source": "CloudflareR2",
-      "path": "Audio/Sfx/Player/jump.opus"
-    },
-    {
-      "name": "land.opus",
-      "category": "Sound",
-      "source": "CloudflareR2",
-      "path": "Audio/Sfx/Player/land.opus"
-    },
-    {
-      "name": "slide.opus",
-      "category": "Sound",
-      "source": "CloudflareR2",
-      "path": "Audio/Sfx/Player/slide.opus"
-    },
-    {
-      "name": "hurt.opus",
-      "category": "Sound",
-      "source": "CloudflareR2",
-      "path": "Audio/Sfx/Player/hurt.opus"
-    },
-    {
-      "name": "die.opus",
-      "category": "Sound",
-      "source": "CloudflareR2",
-      "path": "Audio/Sfx/Player/die.opus"
-    },
-    {
-      "name": "ar_fire.opus",
-      "category": "Sound",
-      "source": "CloudflareR2",
-      "path": "Audio/Sfx/Weapons/ar_fire.opus"
-    },
-    {
-      "name": "smg_fire.opus",
-      "category": "Sound",
-      "source": "CloudflareR2",
-      "path": "Audio/Sfx/Weapons/smg_fire.opus"
-    },
-    {
-      "name": "shotgun_fire.opus",
-      "category": "Sound",
-      "source": "CloudflareR2",
-      "path": "Audio/Sfx/Weapons/shotgun_fire.opus"
-    },
-    {
-      "name": "pistol_fire.opus",
-      "category": "Sound",
-      "source": "CloudflareR2",
-      "path": "Audio/Sfx/Weapons/pistol_fire.opus"
-    },
-    {
-      "name": "reload.opus",
-      "category": "Sound",
-      "source": "CloudflareR2",
-      "path": "Audio/Sfx/Weapons/reload.opus"
-    },
-    {
-      "name": "reload_empty.opus",
-      "category": "Sound",
-      "source": "CloudflareR2",
-      "path": "Audio/Sfx/Weapons/reload_empty.opus"
-    },
-    {
-      "name": "hitmarker.opus",
-      "category": "Sound",
-      "source": "CloudflareR2",
-      "path": "Audio/Sfx/Weapons/hitmarker.opus"
-    },
-    {
-      "name": "headshot.opus",
-      "category": "Sound",
-      "source": "CloudflareR2",
-      "path": "Audio/Sfx/Weapons/headshot.opus"
-    },
-    {
-      "name": "killconfirm.opus",
-      "category": "Sound",
-      "source": "CloudflareR2",
-      "path": "Audio/Sfx/Weapons/killconfirm.opus"
-    },
-    {
-      "name": "dryfire.opus",
-      "category": "Sound",
-      "source": "CloudflareR2",
-      "path": "Audio/Sfx/Weapons/dryfire.opus"
-    },
-    {
-      "name": "drone_rotor.opus",
-      "category": "Sound",
-      "source": "CloudflareR2",
-      "path": "Audio/Sfx/Drones/drone_rotor.opus"
-    },
-    {
-      "name": "drone_engine.opus",
-      "category": "Sound",
-      "source": "CloudflareR2",
-      "path": "Audio/Sfx/Drones/drone_engine.opus"
-    },
-    {
-      "name": "drone_ping.opus",
-      "category": "Sound",
-      "source": "CloudflareR2",
-      "path": "Audio/Sfx/Drones/drone_ping.opus"
-    },
-    {
-      "name": "drone_explode.opus",
-      "category": "Sound",
-      "source": "CloudflareR2",
-      "path": "Audio/Sfx/Drones/drone_explode.opus"
-    },
-    {
-      "name": "Player_one-optimized.glb",
-      "category": "Asset",
-      "source": "CloudflareR2",
-      "path": "Models/Entities/Player_one-optimized.glb"
-    },
-    {
-      "name": "humanoid-optimized.glb",
-      "category": "Asset",
-      "source": "CloudflareR2",
-      "path": "Models/Entities/humanoid-optimized.glb"
-    },
-    {
-      "name": "quadcopter_bmb-optimized.glb",
-      "category": "Asset",
-      "source": "CloudflareR2",
-      "path": "Models/Entities/quadcopter_bmb-optimized.glb"
-    },
-    {
-      "name": "quadcopter_cam-optimized.glb",
-      "category": "Asset",
-      "source": "CloudflareR2",
-      "path": "Models/Entities/quadcopter_cam-optimized.glb"
-    },
-    {
-      "name": "quadcopter_rifle-optimized.glb",
-      "category": "Asset",
-      "source": "CloudflareR2",
-      "path": "Models/Entities/quadcopter_rifle-optimized.glb"
-    },
-    {
-      "name": "uav-optimized.glb",
-      "category": "Asset",
-      "source": "CloudflareR2",
-      "path": "Models/Entities/uav-optimized.glb"
-    },
-    {
-      "name": "ugv-optimized.glb",
-      "category": "Asset",
-      "source": "CloudflareR2",
-      "path": "Models/Entities/ugv-optimized.glb"
-    },
-    {
-      "name": "robodog-optimized.glb",
-      "category": "Asset",
-      "source": "CloudflareR2",
-      "path": "Models/Entities/robodog-optimized.glb"
-    },
-    {
-      "name": "attachments-optimized.glb",
-      "category": "Asset",
-      "source": "CloudflareR2",
-      "path": "Models/Weapons/attachments-optimized.glb"
-    },
-    {
-      "name": "brn_180-optimized.glb",
-      "category": "Asset",
-      "source": "CloudflareR2",
-      "path": "Models/Weapons/brn_180-optimized.glb"
-    },
-    {
-      "name": "f_90-optimized.glb",
-      "category": "Asset",
-      "source": "CloudflareR2",
-      "path": "Models/Weapons/f_90-optimized.glb"
-    },
-    {
-      "name": "hk_51-optimized.glb",
-      "category": "Asset",
-      "source": "CloudflareR2",
-      "path": "Models/Weapons/hk_51-optimized.glb"
-    },
-    {
-      "name": "scar_h_mk_17-optimized.glb",
-      "category": "Asset",
-      "source": "CloudflareR2",
-      "path": "Models/Weapons/scar_h_mk_17-optimized.glb"
-    },
-    {
-      "name": "scar_l-optimized.glb",
-      "category": "Asset",
-      "source": "CloudflareR2",
-      "path": "Models/Weapons/scar_l-optimized.glb"
-    },
-    {
-      "name": "grenade.glb",
-      "category": "Asset",
-      "source": "CloudflareR2",
-      "path": "Models/Props/grenade.glb"
-    },
-    {
-      "name": "StreetLightPoles.glb",
-      "category": "Asset",
-      "source": "CloudflareR2",
-      "path": "Models/Environment/StreetLightPoles.glb"
-    },
-    {
-      "name": "concrete_block_low_poly.glb",
-      "category": "Asset",
-      "source": "CloudflareR2",
-      "path": "Models/Environment/concrete_block_low_poly.glb"
-    },
-    {
-      "name": "concrete_fence_low-poly.glb",
-      "category": "Asset",
-      "source": "CloudflareR2",
-      "path": "Models/Environment/concrete_fence_low-poly.glb"
+      "path": "Images/Cards/update_card_1.webp"
     },
     {
       "name": "cloud_01_8x8_q90.webp",
@@ -656,24 +778,6 @@
       "path": "Images/VFX/Static/spark_07_a.webp"
     },
     {
-      "name": "tracer_warm_core.webp",
-      "category": "Image",
-      "source": "CloudflareR2",
-      "path": "Images/VFX/Static/tracer_warm_core.webp"
-    },
-    {
-      "name": "tracer_cool_core.webp",
-      "category": "Image",
-      "source": "CloudflareR2",
-      "path": "Images/VFX/Static/tracer_cool_core.webp"
-    },
-    {
-      "name": "tracer_white_core.webp",
-      "category": "Image",
-      "source": "CloudflareR2",
-      "path": "Images/VFX/Static/tracer_white_core.webp"
-    },
-    {
       "name": "surface_decal_bullet_hole_01.webp",
       "category": "Image",
       "source": "CloudflareR2",
@@ -696,6 +800,138 @@
       "category": "Image",
       "source": "CloudflareR2",
       "path": "Images/VFX/Static/surface_decal_scorch_01.webp"
+    },
+    {
+      "name": "tracer_cool_core.webp",
+      "category": "Image",
+      "source": "CloudflareR2",
+      "path": "Images/VFX/Static/tracer_cool_core.webp"
+    },
+    {
+      "name": "tracer_warm_core.webp",
+      "category": "Image",
+      "source": "CloudflareR2",
+      "path": "Images/VFX/Static/tracer_warm_core.webp"
+    },
+    {
+      "name": "tracer_white_core.webp",
+      "category": "Image",
+      "source": "CloudflareR2",
+      "path": "Images/VFX/Static/tracer_white_core.webp"
+    },
+    {
+      "name": "promo_pistol_1.webp",
+      "category": "Image",
+      "source": "CloudflareR2",
+      "path": "Images/promotional/promo_pistol_1.webp"
+    },
+    {
+      "name": "promo_rifle_1.webp",
+      "category": "Image",
+      "source": "CloudflareR2",
+      "path": "Images/promotional/promo_rifle_1.webp"
+    },
+    {
+      "name": "promo_shotgun_1.webp",
+      "category": "Image",
+      "source": "CloudflareR2",
+      "path": "Images/promotional/promo_shotgun_1.webp"
+    },
+    {
+      "name": "Player_one-optimized.glb",
+      "category": "Asset",
+      "source": "CloudflareR2",
+      "path": "Models/Entities/Player_one-optimized.glb"
+    },
+    {
+      "name": "humanoid-optimized.glb",
+      "category": "Asset",
+      "source": "CloudflareR2",
+      "path": "Models/Entities/humanoid-optimized.glb"
+    },
+    {
+      "name": "quadcopter_bmb-optimized.glb",
+      "category": "Asset",
+      "source": "CloudflareR2",
+      "path": "Models/Entities/quadcopter_bmb-optimized.glb"
+    },
+    {
+      "name": "quadcopter_cam-optimized.glb",
+      "category": "Asset",
+      "source": "CloudflareR2",
+      "path": "Models/Entities/quadcopter_cam-optimized.glb"
+    },
+    {
+      "name": "quadcopter_rifle-optimized.glb",
+      "category": "Asset",
+      "source": "CloudflareR2",
+      "path": "Models/Entities/quadcopter_rifle-optimized.glb"
+    },
+    {
+      "name": "robodog-optimized.glb",
+      "category": "Asset",
+      "source": "CloudflareR2",
+      "path": "Models/Entities/robodog-optimized.glb"
+    },
+    {
+      "name": "uav-optimized.glb",
+      "category": "Asset",
+      "source": "CloudflareR2",
+      "path": "Models/Entities/uav-optimized.glb"
+    },
+    {
+      "name": "ugv-optimized.glb",
+      "category": "Asset",
+      "source": "CloudflareR2",
+      "path": "Models/Entities/ugv-optimized.glb"
+    },
+    {
+      "name": "attachments-optimized.glb",
+      "category": "Asset",
+      "source": "CloudflareR2",
+      "path": "Models/Weapons/attachments-optimized.glb"
+    },
+    {
+      "name": "brn_180-optimized.glb",
+      "category": "Asset",
+      "source": "CloudflareR2",
+      "path": "Models/Weapons/brn_180-optimized.glb"
+    },
+    {
+      "name": "f_90-optimized.glb",
+      "category": "Asset",
+      "source": "CloudflareR2",
+      "path": "Models/Weapons/f_90-optimized.glb"
+    },
+    {
+      "name": "hk_51-optimized.glb",
+      "category": "Asset",
+      "source": "CloudflareR2",
+      "path": "Models/Weapons/hk_51-optimized.glb"
+    },
+    {
+      "name": "scar_h_mk_17-optimized.glb",
+      "category": "Asset",
+      "source": "CloudflareR2",
+      "path": "Models/Weapons/scar_h_mk_17-optimized.glb"
+    },
+    {
+      "name": "scar_l-optimized.glb",
+      "category": "Asset",
+      "source": "CloudflareR2",
+      "path": "Models/Weapons/scar_l-optimized.glb"
+    },
+    {
+      "name": "lobby_1.webm",
+      "category": "Video",
+      "source": "CloudflareR2",
+      "path": "Video/Backgrounds/lobby_1.webm"
+    },
+    {
+      "name": "main_menu_1.webm",
+      "category": "Video",
+      "source": "CloudflareR2",
+      "path": "Video/Backgrounds/main_menu_1.webm"
     }
   ]
 }

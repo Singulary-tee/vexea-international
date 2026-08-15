@@ -102,6 +102,13 @@ export function initMainMenu() {
     img.src = getAssetUrl(name);
   });
 
+  EXTENDED_TEXTURES.forEach((tex) => {
+    getCachedOrFetchUrl(tex, "Image").catch(() => {});
+  });
+  EXTENDED_SOUNDS.forEach((snd) => {
+    getCachedOrFetchUrl(snd, "Sound").catch(() => {});
+  });
+
   const auth = getAuth();
   const db = getFirestore();
 

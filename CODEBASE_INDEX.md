@@ -551,6 +551,36 @@ Every file change in the VEXEA codebase must follow this strict two-step protoco
     * `CODEBASE_INDEX.md`: Updated cycle audit log.
 * **Verification:** Verified zero build/lint errors via `lint_applet` and `compile_applet`.
 
+### Cycle 2026-08-14-01: Wire Dead Audio Keys & Fix Audio Loading Stage Overlap
+* **Target Files:** `client/screens/splash.ts`, `client/audio.ts`, `client/src/systems/InputSystem.ts`, `client/src/systems/CombatSystem.ts`, `client/src/systems/DroneSystem.ts`, `client/src/systems/NetworkSyncSystem.ts`, `client/src/systems/ChatHUDSystem.ts`, `client/screens/post-match-screen.ts`, `client/screens/store-screen.ts`, `client/screens/battle-pass-screen.ts`, `client/screens/screen-manager.ts`, `CODEBASE_INDEX.md`
+* **Status:** Verified & Finalized
+* **Modifications:**
+    * `client/screens/splash.ts`: Filtered initial `EXTENDED_SOUNDS` asset pre-fetching in splash stage to strictly `ui` and `music` categories, preventing premature network congestion and resource competition with gameplay sound downloads.
+    * `client/audio.ts`: Added deduplication logic via `inFlightLoads` Map in `loadEntries` to ensure idempotent loading. Implemented helper and state methods: `updateFootsteps` (with raycast ground surface detection across metal, concrete, vent, gravel, dirt, and ground categories), `playJump`, `playJumpLand`, `playDryFire`, `playShotgunPump`, `setHeartbeat` (looping low-health audio indicator), `startMatchAmbience`, `stopMatchAmbience`, `startEmitter`, and `stopEmitter`.
+    * `client/src/systems/InputSystem.ts`: Wired ground transitions for jump takeoffs (`jump`), landings (`jump_land`), continuous footsteps (walk/run on detected surfaces), and utility item throw sound triggers (`grenade_throw`).
+    * `client/src/systems/CombatSystem.ts`: Wired dry-fire audio trigger (`playDryFire`) when firing with an empty magazine, and shotgun pump audio trigger for pump-action weapons.
+    * `client/src/systems/DroneSystem.ts`: Wired positional audio triggers for drone spawn, takeoff, damage hit, death, spatial engine hum loops (`drone_hum`, `drone_wind_loop`), and remote player footstep simulation.
+    * `client/src/systems/NetworkSyncSystem.ts`: Wired network events for low health heartbeat, grenade bounce/explosion, flashbang detonation, smoke deployment, and drone shield state events (`drone_shield_hit`, `drone_shield_break`, `drone_shield_up`, `drone_shield_down`).
+    * `client/src/systems/ChatHUDSystem.ts`: Wired `notification` audio on incoming chat and tactical quick comm messages.
+    * `client/screens/post-match-screen.ts`: Wired `match_end_motif` audio playback upon post-match results screen display.
+    * `client/screens/store-screen.ts`: Wired `credits_spend` on successful economy transactions and `error` on failed transactions.
+    * `client/screens/battle-pass-screen.ts`: Wired `credits_gain` and `level_up` on reward tier claims.
+    * `client/screens/screen-manager.ts`: Wired `join_match` sound and match ambient background loops on transitioning into active game-view.
+    * `CODEBASE_INDEX.md`: Updated cycle audit log.
+* **Verification:** Verified zero build/lint errors via `lint_applet` and `compile_applet`.
+
+### Cycle 2026-08-14-02: Image Loading Stage Split + Remove Silent Asset-Fetch Fallback
+* **Target Files:** `client/image-manifest.ts`, `client/asset-cache.ts`, `client/screens/splash.ts`, `client/screens/main-menu.ts`, `client/src/map/LoadingOrchestrator.ts`, `CODEBASE_INDEX.md`
+* **Status:** Verified & Finalized
+* **Modifications:**
+    * `client/image-manifest.ts`: Removed 6 dead card image manifest entries (`feedback_card.png`, `multiplayer_card.png`, `slopInc_card.png`, `statistics_card.png`, `store_card.png`, `vibeCo_card.png`).
+    * `client/asset-cache.ts`: Refactored `getCachedOrFetchUrl` to remove silent fallback behavior (removed placeholder SVG generation, `setCachedBlob` poisoning on error, and `localPath` fallback return) and re-throw fetch errors cleanly.
+    * `client/screens/splash.ts`: Split image loading into essential splash/first-frame preload (`IMAGES_TO_PRELOAD`) and secondary view textures (`EXTENDED_TEXTURES`).
+    * `client/screens/main-menu.ts`: Added background non-blocking fetch triggers for `EXTENDED_TEXTURES` and `EXTENDED_SOUNDS` upon main menu initialization.
+    * `client/src/map/LoadingOrchestrator.ts`: Added dedicated `'PRELOADING VFX TEXTURES'` phase preloading all `category: 'vfx'` assets before map building.
+    * `CODEBASE_INDEX.md`: Updated cycle audit log.
+* **Verification:** Verified zero build/lint errors via `lint_applet` and `compile_applet`.
+
 
 
 

@@ -20,9 +20,20 @@ class AudioManager {
     
     // Footstep state
     private footstepTimer = 0;
+    private lastFootstepVariant = 0;
+
+    // Heartbeat state
+    private heartbeatHowl: Howl | null = null;
+    private heartbeatActive = false;
+
+    // In-flight loading promises to prevent duplicate fetches
+    private inFlightLoads = new Map<string, Promise<void>>();
 
     // Continuous spatial loops/emitters registry
     private activeEmitters = new Map<string, { howl: Howl; soundId: number; key: string; position: THREE.Vector3 }>();
+
+    // Ambient match zone emitters
+    private ambientEmitterIds: string[] = [];
 
     // Pre-allocated vectors to prevent GC churn in tick/render loops
     private tempPos = new THREE.Vector3();
@@ -51,60 +62,75 @@ class AudioManager {
     }
 
     private async loadEntries(entries: typeof AUDIO_MANIFEST): Promise<void> {
-        const unloadedEntries = entries.filter(e => !this.sounds[e.key]);
-        if (unloadedEntries.length === 0) return;
+        const unloadedEntries = entries.filter(e => !this.sounds[e.key] && !this.inFlightLoads.has(e.key));
+        
+        // Also wait on any already in-flight loads for requested entries
+        const existingInFlight = entries
+            .filter(e => this.inFlightLoads.has(e.key))
+            .map(e => this.inFlightLoads.get(e.key)!);
+
+        if (unloadedEntries.length === 0 && existingInFlight.length === 0) return;
 
         this.totalAssets += unloadedEntries.length;
 
-        const loadPromises = unloadedEntries.map(async (entry) => {
-            const cachedUrl = await getCachedOrFetchUrl(entry.path, 'Sound');
-            const ext = entry.path.substring(entry.path.lastIndexOf('.') + 1);
-            const formats = ext === 'opus' ? ['opus', 'ogg'] : [ext];
+        const newLoadPromises = unloadedEntries.map((entry) => {
+            const promise = (async () => {
+                try {
+                    const cachedUrl = await getCachedOrFetchUrl(entry.path, 'Sound');
+                    const ext = entry.path.substring(entry.path.lastIndexOf('.') + 1);
+                    const formats = ext === 'opus' ? ['opus', 'ogg'] : [ext];
 
-            return new Promise<void>((resolve) => {
-                const howl = new Howl({
-                    src: [cachedUrl],
-                    format: formats,
-                    preload: true,
-                    loop: entry.loop ?? false,
-                    onplayerror: () => {
-                        if (!entry.loop) {
-                            howl.once('unlock', () => {
-                                howl.play();
-                            });
+                    await new Promise<void>((resolve) => {
+                        const howl = new Howl({
+                            src: [cachedUrl],
+                            format: formats,
+                            preload: true,
+                            loop: entry.loop ?? false,
+                            onplayerror: () => {
+                                if (!entry.loop) {
+                                    howl.once('unlock', () => {
+                                        howl.play();
+                                    });
+                                }
+                            },
+                            onload: () => {
+                                this.assetsLoaded++;
+                                resolve();
+                            },
+                            onloaderror: (id, err) => {
+                                console.warn(`[Audio] Failed to load audio: ${entry.path}`, err);
+                                resolve();
+                            }
+                        });
+
+                        this.sounds[entry.key] = howl;
+
+                        const s = (window as any).vexeaSettings;
+                        if (s) {
+                            const category = entry.category;
+                            let vol = 1.0;
+                            if (category === 'music') {
+                                vol = s.music ? s.musicVolume : 0;
+                            } else if (category === 'ui') {
+                                vol = s.uiSounds ? s.uiVolume : 0;
+                            } else if (category === 'ambient') {
+                                vol = s.music ? s.musicVolume * 0.5 : 0;
+                            } else {
+                                vol = s.sfxVolume;
+                            }
+                            howl.volume(vol);
                         }
-                    },
-                    onload: () => {
-                        this.assetsLoaded++;
-                        resolve();
-                    },
-                    onloaderror: (id, err) => {
-                        console.warn(`[Audio] Failed to load audio: ${entry.path}`, err);
-                        resolve();
-                    }
-                });
-
-                this.sounds[entry.key] = howl;
-
-                const s = (window as any).vexeaSettings;
-                if (s) {
-                    const category = entry.category;
-                    let vol = 1.0;
-                    if (category === 'music') {
-                        vol = s.music ? s.musicVolume : 0;
-                    } else if (category === 'ui') {
-                        vol = s.uiSounds ? s.uiVolume : 0;
-                    } else if (category === 'ambient') {
-                        vol = s.music ? s.musicVolume * 0.5 : 0;
-                    } else {
-                        vol = s.sfxVolume;
-                    }
-                    howl.volume(vol);
+                    });
+                } finally {
+                    this.inFlightLoads.delete(entry.key);
                 }
-            });
+            })();
+
+            this.inFlightLoads.set(entry.key, promise);
+            return promise;
         });
 
-        await Promise.all(loadPromises);
+        await Promise.all([...newLoadPromises, ...existingInFlight]);
     }
 
     public async loadMenuAudio(): Promise<void> {
@@ -380,7 +406,30 @@ class AudioManager {
         }
     }
 
-    public updateFootsteps(dt: number, speed: number, position: THREE.Vector3, isGrounded: boolean) {
+    public getFootstepKey(isRunning: boolean, surface = 'ground'): string {
+        this.lastFootstepVariant = 1 - this.lastFootstepVariant;
+        const stepNum = this.lastFootstepVariant === 0 ? '01' : '02';
+        const prefix = isRunning ? 'run' : 'walk';
+
+        // Handlers for single-variant assets in manifest (run_concrete_02, walk_concrete_01)
+        if (surface === 'concrete') {
+            return isRunning ? 'run_concrete_02' : 'walk_concrete_01';
+        }
+
+        const candidate = `${prefix}_${surface}_${stepNum}`;
+        if (this.sounds[candidate]) return candidate;
+
+        // Fallback to ground or hard
+        const fallbackGround = `${prefix}_ground_${stepNum}`;
+        if (this.sounds[fallbackGround]) return fallbackGround;
+
+        const fallbackHard = `${prefix}_hard_${stepNum}`;
+        if (this.sounds[fallbackHard]) return fallbackHard;
+
+        return `${prefix}_hard_01`;
+    }
+
+    public updateFootsteps(dt: number, speed: number, position: THREE.Vector3, isGrounded: boolean, surface = 'ground') {
         if (!isGrounded || speed < 0.1) {
             this.footstepTimer = 0;
             return;
@@ -392,14 +441,113 @@ class AudioManager {
         this.footstepTimer += dt;
         if (this.footstepTimer >= interval) {
             this.footstepTimer = 0;
-
-            const mat = 'hard'; // default surface material (concrete)
-            const prefix = isRunning ? 'run' : 'walk';
-            const stepNum = Math.random() < 0.5 ? '01' : '02';
-            const soundKey = `${prefix}_${mat}_${stepNum}`;
-
+            const soundKey = this.getFootstepKey(isRunning, surface);
             this.playPositional(soundKey, position);
         }
+    }
+
+    public playJump(position?: THREE.Vector3) {
+        if (position) {
+            this.playPositional('jump_01', position);
+        } else {
+            this.play('jump_01');
+        }
+    }
+
+    public playJumpLand(position?: THREE.Vector3) {
+        const variants = ['jump_land_01', 'jump_land_02', 'jump_land_03'];
+        const key = variants[Math.floor(Math.random() * variants.length)];
+        if (position) {
+            this.playPositional(key, position);
+        } else {
+            this.play(key);
+        }
+    }
+
+    public setHeartbeat(active: boolean) {
+        if (this.heartbeatActive === active) return;
+        this.heartbeatActive = active;
+
+        if (active) {
+            const sound = this.sounds['heart_beat_loop'];
+            if (sound) {
+                sound.loop(true);
+                const s = (window as any).vexeaSettings;
+                const vol = s ? s.sfxVolume : 1.0;
+                sound.volume(vol);
+                sound.play();
+                this.heartbeatHowl = sound;
+            }
+        } else {
+            if (this.heartbeatHowl) {
+                this.heartbeatHowl.stop();
+                this.heartbeatHowl = null;
+            } else {
+                this.stop('heart_beat_loop');
+            }
+        }
+    }
+
+    public playDryFire() {
+        this.play('dry_fire');
+    }
+
+    public playShotgunPump(position?: THREE.Vector3) {
+        if (position) {
+            this.playPositional('shotgun_pump', position);
+        } else {
+            this.play('shotgun_pump');
+        }
+    }
+
+    public startMatchAmbience(zones?: Array<{ id: string; bounds?: { xMin: number; xMax: number; zMin: number; zMax: number } }>) {
+        this.stopMatchAmbience();
+
+        // Standard spatial ambient bed locations (facility 01 map bounds 0..768)
+        const defaultZonePositions: Array<{ id: string; soundKey: string; pos: THREE.Vector3 }> = [
+            { id: 'ambient_spawn', soundKey: 'air_traffic', pos: new THREE.Vector3(64, 0, 704) },
+            { id: 'ambient_warehouse', soundKey: 'warehouse_drone_distant', pos: new THREE.Vector3(144, 0, 240) },
+            { id: 'ambient_plant', soundKey: 'industrial_hum', pos: new THREE.Vector3(528, 0, 448) },
+            { id: 'ambient_core', soundKey: 'computer_room', pos: new THREE.Vector3(384, 0, 384) }
+        ];
+
+        if (zones && zones.length > 0) {
+            zones.forEach(z => {
+                let soundKey = '';
+                if (z.id.includes('warehouse')) soundKey = 'warehouse_drone_distant';
+                else if (z.id.includes('plant')) soundKey = 'industrial_hum';
+                else if (z.id.includes('core') || z.id.includes('tunnel') || z.id.includes('datacenter')) soundKey = 'computer_room';
+                else if (z.id.includes('spawn') || z.id.includes('courtyard')) soundKey = 'air_traffic';
+
+                if (soundKey && z.bounds) {
+                    const cx = (z.bounds.xMin + z.bounds.xMax) / 2;
+                    const cz = (z.bounds.zMin + z.bounds.zMax) / 2;
+                    const emitterId = `match_ambient_${z.id}`;
+                    this.ambientEmitterIds.push(emitterId);
+                    this.startEmitter(emitterId, soundKey, new THREE.Vector3(cx, 0, cz), {
+                        loop: true,
+                        refDistance: 25,
+                        maxDistance: 250
+                    });
+                }
+            });
+        } else {
+            defaultZonePositions.forEach(dz => {
+                this.ambientEmitterIds.push(dz.id);
+                this.startEmitter(dz.id, dz.soundKey, dz.pos, {
+                    loop: true,
+                    refDistance: 25,
+                    maxDistance: 250
+                });
+            });
+        }
+    }
+
+    public stopMatchAmbience() {
+        this.ambientEmitterIds.forEach(id => {
+            this.stopEmitter(id);
+        });
+        this.ambientEmitterIds = [];
     }
 }
 

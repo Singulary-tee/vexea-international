@@ -65,6 +65,8 @@ export function initPostMatch() {
 export function renderPostMatchScreen(payload?: MatchEndPayload) {
   if (!postMatchScreenEl) return;
 
+  audioManager.play("match_end_motif");
+
   const result = payload?.result || "loss";
   const isWin = result === "win";
   const outcomeText = isWin ? "VICTORY" : "DEFEAT";

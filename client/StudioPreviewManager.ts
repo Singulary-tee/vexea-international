@@ -381,7 +381,7 @@ class StudioPreviewManagerImpl {
     let glbName = "";
     if (itemKey.endsWith(".glb")) {
       glbName = itemKey;
-    } else if (itemKey === 'scar_l' || itemKey === 'rifle') {
+    } else if (itemKey === 'scar_l' || itemKey === 'rifle' || itemKey === 'm4_rifle' || itemKey === 'lmg' || itemKey === 'sniper' || itemKey.includes('rifle_')) {
       glbName = "scar_l-optimized.glb";
     } else if (itemKey === 'brn_180') {
       glbName = "brn_180-optimized.glb";
@@ -389,14 +389,8 @@ class StudioPreviewManagerImpl {
       glbName = "f_90-optimized.glb";
     } else if (itemKey === 'hk_51') {
       glbName = "hk_51-optimized.glb";
-    } else if (itemKey === 'scar_h_mk_17') {
+    } else if (itemKey === 'scar_h_mk_17' || itemKey === 'shotgun' || itemKey === 'pistol' || itemKey === 'viper_pistol') {
       glbName = "scar_h_mk_17-optimized.glb";
-    } else if (itemKey === 'm4_rifle' || itemKey === 'lmg' || itemKey === 'shotgun' || itemKey === 'sniper' || itemKey.includes('rifle_')) {
-      glbName = "smg_fps_animations.glb";
-    } else if (itemKey === 'pistol' || itemKey === 'viper_pistol' || itemKey.includes('pistol_')) {
-      glbName = "animated_pistol.glb";
-    } else if (itemKey === 'grenade' || itemKey === 'frag_grenade' || itemKey.includes('grenade_') || itemKey.includes('flash_') || itemKey.includes('emp_') || itemKey.includes('c4_')) {
-      glbName = "grenade.glb";
     } else {
       glbName = itemKey || "Player_one-optimized.glb";
     }

@@ -81,6 +81,8 @@ async function executeTransition(target: ScreenId, durationMs: number, immediate
   // 3. Bring in the target state
   if (target === 'game-view') {
     audioManager.setMatchState(true);
+    audioManager.play('join_match');
+    audioManager.startMatchAmbience();
     const canvasContainer = document.getElementById("canvas-container");
     const hudContainer = document.getElementById("hud-container");
     if (canvasContainer) {
@@ -120,6 +122,7 @@ async function executeTransition(target: ScreenId, durationMs: number, immediate
     window.dispatchEvent(new Event("resize"));
   } else {
     audioManager.setMatchState(false);
+    audioManager.stopMatchAmbience();
     const el = document.getElementById(target);
     if (el) {
       if (immediate || durationMs === 0) {

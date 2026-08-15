@@ -1,6 +1,7 @@
 import { MapRegistryEntry } from "../../../shared/maps/map-registry";
 import { LoadingScreen } from "../ui/LoadingScreen";
-import { getMissingFilesForMap, downloadMapAssets } from "../../asset-cache";
+import { getMissingFilesForMap, downloadMapAssets, getCachedOrFetchUrl } from "../../asset-cache";
+import { IMAGE_MANIFEST } from "../../image-manifest";
 import { MapLoader } from "./MapLoader";
 import { audioManager } from "../../audio";
 import * as THREE from "three/webgpu";
@@ -30,6 +31,32 @@ export async function orchestrateMatchLoad(mapEntry: MapRegistryEntry, channel: 
     await audioManager.loadGameplayAudio();
   } catch (e) {
     console.warn('[LoadingOrchestrator] Failed to preload gameplay audio:', e);
+  }
+
+  // Preload VFX textures
+  loadingScreen.setPhase('PRELOADING VFX TEXTURES');
+  try {
+    const vfxEntries = IMAGE_MANIFEST.filter(entry => entry.category === 'vfx');
+    const totalVfx = vfxEntries.length;
+    let loadedVfx = 0;
+    const queue = [...vfxEntries];
+    const workerCount = 4;
+    const processQueue = async () => {
+      while (queue.length > 0) {
+        const item = queue.shift();
+        if (!item) break;
+        try {
+          await getCachedOrFetchUrl(item.key, 'Image');
+        } catch (err) {
+          console.warn(`[LoadingOrchestrator] Failed to preload VFX texture ${item.key}:`, err);
+        }
+        loadedVfx++;
+        loadingScreen.setProgress(loadedVfx, totalVfx);
+      }
+    };
+    await Promise.all(Array(workerCount).fill(0).map(() => processQueue()));
+  } catch (e) {
+    console.warn('[LoadingOrchestrator] Failed to preload VFX textures:', e);
   }
 
   // Phase 2 — Build Scene

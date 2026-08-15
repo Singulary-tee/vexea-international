@@ -21,23 +21,14 @@ const MODELS_TO_PRELOAD = [
 
 const IMAGES_TO_PRELOAD = [
   'splash_screen.webp',
-  'assault_card_1.webp',
-  'demolition_card_1.webp',
-  'medic_card_1.webp',
-  'recon_card_1.webp',
   'infiltration_card_1.webp',
   'intel_card_1.webp',
   'leaderboard_card_1.webp',
   'squad_card_1.webp',
+  'update_card_1.webp',
   'promo_rifle_1.webp',
   'promo_pistol_1.webp',
-  'promo_shotgun_1.webp',
-  'file_00000000cdd071f48495d22753c89fa1.webp',
-  'update_card_1.webp',
-  'armory_1.webp',
-  'faction_1.webp',
-  'stats_1.webp',
-  'store_1.webp'
+  'promo_shotgun_1.webp'
 ];
 
 const VIDEOS_TO_PRELOAD: string[] = [
@@ -45,10 +36,22 @@ const VIDEOS_TO_PRELOAD: string[] = [
   'lobby_1.webm'
 ];
 
-// The rest of the game assets
-export const EXTENDED_SOUNDS = AUDIO_MANIFEST.filter(e => e.key !== 'click' && e.key !== 'vexea_theme').map(e => e.path);
+// The rest of the game UI and menu music assets (gameplay SFX/ambient load on match enter via loadGameplayAudio)
+export const EXTENDED_SOUNDS = AUDIO_MANIFEST
+  .filter(e => (e.category === 'ui' || e.category === 'music') && e.key !== 'click' && e.key !== 'vexea_theme')
+  .map(e => e.path);
 
-export const EXTENDED_TEXTURES: string[] = [];
+export const EXTENDED_TEXTURES: string[] = [
+  'assault_card_1.webp',
+  'demolition_card_1.webp',
+  'medic_card_1.webp',
+  'recon_card_1.webp',
+  'file_00000000cdd071f48495d22753c89fa1.webp',
+  'armory_1.webp',
+  'faction_1.webp',
+  'stats_1.webp',
+  'store_1.webp'
+];
 
 (window as any).interactionStarted = false;
 

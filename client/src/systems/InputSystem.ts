@@ -35,6 +35,7 @@ export class InputSystem {
   private camera: THREE.PerspectiveCamera;
   private canvasContainer: HTMLElement | null;
   private abortController = new AbortController();
+  private wasGrounded = true;
 
   constructor(private match: MatchController, camera: THREE.PerspectiveCamera) {
     this.camera = camera;
@@ -164,6 +165,7 @@ export class InputSystem {
 
   public useUtility(slot: 'utility1' | 'utility2') {
     if (!this.match || this.match.isLocalPlayerDead) return;
+    audioManager.play("grenade_throw");
     if (this.match.transport) {
       this.match.transport.emit("reliable_event", {
         type: "USE_UTILITY",
@@ -315,7 +317,12 @@ export class InputSystem {
       lookZone.addEventListener("pointercancel", stopLook, { signal: this.abortController.signal });
     }
 
-    this.safeBindTouch("btn-jump", () => { inputManager.isJumping = true; }, () => { inputManager.isJumping = false; });
+    this.safeBindTouch("btn-jump", () => {
+      if (this.match && this.match.localGrounded) {
+        audioManager.playJump(this.match.playerPos);
+      }
+      inputManager.isJumping = true;
+    }, () => { inputManager.isJumping = false; });
     this.toggleStateBtn("btn-crouch", "Crouch");
     this.safeBindTouch("btn-sprint", () => {});
 
@@ -625,6 +632,7 @@ export class InputSystem {
       if (keys.Space && this.match.localGrounded) {
         this.match.localVy = PLAYER_JUMP_VELOCITY;
         this.match.localGrounded = false;
+        audioManager.playJump(this.match.playerPos);
       }
 
       if (!this.match.localGrounded) {
@@ -686,6 +694,11 @@ export class InputSystem {
         mask
       });
     }
+
+    if (!this.wasGrounded && this.match.localGrounded) {
+      audioManager.playJumpLand(this.match.playerPos);
+    }
+    this.wasGrounded = this.match.localGrounded;
 
     const currentSpeed = len > 0 ? targetSpeed : 0;
     audioManager.updateFootsteps(dt, currentSpeed, this.match.playerPos, this.match.localGrounded);

@@ -114,7 +114,7 @@ export async function initPlayerWeapons(scene: THREE.Scene, camera: THREE.Camera
   // Load SMG (Rifle slot)
   const loadRiflePromise = (async () => {
     try {
-      const url = await getCachedOrFetchUrl("smg_fps_animations.glb", "Asset");
+      const url = await getCachedOrFetchUrl("scar_l-optimized.glb", "Asset");
       const gltf = await loader.loadAsync(url);
       rifleGroup!.add(gltf.scene);
       rifleMixer = new THREE.AnimationMixer(gltf.scene);
@@ -182,7 +182,7 @@ export async function initPlayerWeapons(scene: THREE.Scene, camera: THREE.Camera
   // Load Pistol
   const loadPistolPromise = (async () => {
     try {
-      const url = await getCachedOrFetchUrl("animated_pistol.glb", "Asset");
+      const url = await getCachedOrFetchUrl("scar_h_mk_17-optimized.glb", "Asset");
       const gltf = await loader.loadAsync(url);
       pistolGroup!.add(gltf.scene);
       pistolMixer = new THREE.AnimationMixer(gltf.scene);

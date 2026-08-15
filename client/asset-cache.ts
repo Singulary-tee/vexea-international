@@ -290,8 +290,6 @@ export async function clearCache(): Promise<void> {
  */
 export function mapRequestedFileToReal(filename: string): string {
   const base = filename.substring(filename.lastIndexOf("/") + 1);
-  if (base === "defaultmaterial.glb" || base === "defaultmaterial_1.glb") return "concrete_block_low_poly.glb";
-  if (base === "single_arm.glb" || base === "double_arm.glb") return "StreetLightPoles.glb";
   return base;
 }
 
@@ -426,17 +424,7 @@ export async function populateBlobUrlMap(): Promise<void> {
  * Static lists of required files for maps
  */
 export const MAP_1_ASSETS = [
-  "grenade.glb",
-  "attachments-optimized.glb",
-  "brn_180-optimized.glb",
-  "f_90-optimized.glb",
-  "hk_51-optimized.glb",
-  "scar_h_mk_17-optimized.glb",
-  "scar_l-optimized.glb",
-  ...Object.keys(ASSET_STRUCTURE),
-  "concrete_fence_low-poly.glb",
-  "concrete_block_low_poly.glb",
-  "StreetLightPoles.glb"
+  ...Object.keys(ASSET_STRUCTURE)
 ];
 
 export const REQUIRED_SOUNDS = AUDIO_MANIFEST.map(e => e.path);
@@ -445,8 +433,7 @@ export function getRequiredFilesForMap(mapId: string): { name: string; cat: "Ass
   if (mapId === 'map_1_facility') {
     return [
       ...MAP_1_ASSETS.map(name => ({ name, cat: "Asset" as const })),
-      ...REQUIRED_SOUNDS.map(name => ({ name, cat: "Sound" as const })),
-      { name: "Surface_Impact.png", cat: "Image" as const }
+      ...REQUIRED_SOUNDS.map(name => ({ name, cat: "Sound" as const }))
     ];
   }
   return []; // Dev maps do not require external downloads
@@ -510,7 +497,7 @@ export async function getCachedOrFetchUrl(
   if (localPath.startsWith("client/public/")) {
     localPath = "/" + localPath.substring("client/public/".length);
   } else if (!localPath.startsWith("/") && !localPath.startsWith("http")) {
-    // If it's a relative path name like 'defaultmaterial.glb', prepend the mapping prefix
+    // If it's a relative path name, prepend the mapping prefix
     if (category === "Asset") {
       localPath = "/assets/maps/map_1/" + localPath;
     } else {
@@ -625,20 +612,8 @@ export async function getCachedOrFetchUrl(
     blobUrlMap.set(cacheKey, url);
     return url;
   } catch (error) {
-    const isImage = category === "Image" || cacheKey.startsWith("Images/") || /\.(webp|png|jpg|jpeg|gif|svg)$/i.test(cacheKey);
-    if (isImage) {
-      console.warn(`[Cache] Image ${cacheKey} unavailable on R2. Creating clean placeholder blob.`);
-      const placeholderSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128"><rect width="100%" height="100%" fill="#111113"/><rect x="2" y="2" width="124" height="124" fill="none" stroke="#27272a" stroke-width="2"/><path d="M32 96 L64 48 L96 96 Z" fill="#27272a"/><circle cx="40" cy="40" r="8" fill="#3f3f46"/></svg>`;
-      const blob = new Blob([placeholderSvg], { type: "image/svg+xml" });
-      await setCachedBlob(filename, blob, category);
-      const url = URL.createObjectURL(blob);
-      blobUrlMap.set(cacheKey, url);
-      blobUrlMap.set(filename, url);
-      return url;
-    }
-
-    console.error(`[Cache] Fallback redirect activated for ${filename} due to:`, error);
-    return localPath;
+    console.error(`[Cache] Failed to fetch asset ${filename} (${category}) for cacheKey ${cacheKey}:`, error);
+    throw error;
   }
 }
 
