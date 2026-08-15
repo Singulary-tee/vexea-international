@@ -15,6 +15,10 @@ import { db, doc, getDoc, setDoc, updateDoc, runTransaction, increment } from ".
 import { DEFAULT_SHARED_FEATURE_FLAGS, SharedFeatureFlagKey } from "../../shared/feature-flags";
 
 export function registerApiRoutes(app: Express): void {
+  app.get("/.well-known/discord", (req, res) => {
+    res.type("text/plain").send("dh=c7fcc88ec8fb058c2fa2b99e5a177846e092b3f7");
+  });
+
   app.get("/api/health", (req, res) => {
     res.status(200).send("OK");
   });
