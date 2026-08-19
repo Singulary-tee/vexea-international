@@ -47,7 +47,7 @@ import { StudioPreviewManager } from "./StudioPreviewManager";
 import { audioManager } from "./audio";
 import { MapLoader } from "./src/map/MapLoader";
 import { getMapById } from "../shared/maps/map-registry";
-import { getAssetUrl, createConfiguredGLTFLoader, initKTX2Support } from "./asset-cache";
+import { getAssetUrl, createConfiguredGLTFLoader, initKTX2Support, ensureAssetsDownloaded } from "./asset-cache";
 import { ASSET_STRUCTURE } from "../shared/asset-structure";
 import { inputManager, InputAction } from "./input";
 import { GlobalState } from "./state";
@@ -459,6 +459,11 @@ const initClient = async () => {
 
     // Steps 2-5: Real Matchmaking pool flow
     console.log("[MATCHMAKING] Joining pool for map:", requestedMap, "class:", requestedClass);
+
+    // Pre-warm assigned map assets during matchmaking queue
+    ensureAssetsDownloaded(requestedMap).catch((err) => {
+      console.warn("[MATCHMAKING] Asset pre-warm failed:", err);
+    });
 
     showMatchmakingOverlay({
       mapId: requestedMap,

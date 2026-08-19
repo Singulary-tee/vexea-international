@@ -167,6 +167,7 @@ export const HUD_HTML = `
 /* SIDEKICK UTIL BUTTONS - COLUMN LEFT OF MINIMAP */
 .btn-sidekick {
   position: absolute !important;
+  z-index: 20 !important;
   right: 17.5vw !important;
   width: 5vw !important;
   height: 5vw !important;

@@ -639,12 +639,27 @@ export function warmImageDOMCache(filenames: string[]): void {
   });
 }
 
-export async function ensureAssetsDownloaded(onComplete: () => void, mapId: string) {
+export async function ensureAssetsDownloaded(onCompleteOrMapId?: (() => void) | string, maybeMapId?: string | (() => void)) {
+  let onComplete: (() => void) | undefined;
+  let mapId: string = "map_1_facility";
+
+  if (typeof onCompleteOrMapId === "function") {
+    onComplete = onCompleteOrMapId;
+    if (typeof maybeMapId === "string") {
+      mapId = maybeMapId;
+    }
+  } else if (typeof onCompleteOrMapId === "string") {
+    mapId = onCompleteOrMapId;
+    if (typeof maybeMapId === "function") {
+      onComplete = maybeMapId;
+    }
+  }
+
   const missingAssets = await getMissingFilesForMap(mapId);
 
   if (missingAssets.length === 0) {
     await populateBlobUrlMap();
-    onComplete();
+    if (onComplete) onComplete();
     return;
   }
 
@@ -733,7 +748,7 @@ export async function ensureAssetsDownloaded(onComplete: () => void, mapId: stri
     progressText.textContent = "VEXEA SYSTEM READY";
     setTimeout(() => {
       document.body.removeChild(modal);
-      onComplete();
+      if (onComplete) onComplete();
     }, 500);
   });
 

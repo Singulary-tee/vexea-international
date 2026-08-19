@@ -196,28 +196,30 @@ export class DroneSystem {
       // Track HP changes for hit audio
       const prevHp = this.lastDroneHpMap.get(id);
       if (prevHp !== undefined && prevHp > (drone as any).hp) {
-        audioManager.playPositional("drone_hit", this.diagTempPosition);
+        audioManager.playPositional("metal_ricochet", this.diagTempPosition);
       }
       this.lastDroneHpMap.set(id, (drone as any).hp);
 
-      // Track state changes for takeoff audio
+      // Track state changes
       const lastState = this.lastDroneStateMap.get(id);
-      if (lastState !== undefined && lastState !== latest.state) {
-        if (latest.state === DroneState.PATROLLING || latest.state === DroneState.ATTACKING) {
-          audioManager.playPositional("drone_takeoff", this.diagTempPosition);
-        }
-      }
       this.lastDroneStateMap.set(id, latest.state);
 
       const typeId = latest.type;
 
-      // Audio loop tracking
+      // Audio loop tracking with verified AUDIO_MANIFEST keys
       const droneEntityId = `drone_${id}`;
-      const droneSoundKey = (typeId === DroneType.FIXED_WING) ? "drone_wind_loop" : "drone_hum";
+      let droneSoundKey = "quadcopter_rotor_idle";
+      if (typeId === DroneType.FIXED_WING) {
+        droneSoundKey = "uav_flight_loop";
+      } else if (typeId === DroneType.WHEELED) {
+        droneSoundKey = "ugv_engine_loop";
+      } else if (typeId === DroneType.RECON) {
+        droneSoundKey = "recon_scan_loop";
+      }
+
       if (!this.activeDroneAudio.has(id)) {
         this.activeDroneAudio.add(id);
         audioManager.startEmitter(droneEntityId, droneSoundKey, this.diagTempPosition, { loop: true, refDistance: 4, maxDistance: 70 });
-        audioManager.playPositional("drone_spawn", this.diagTempPosition);
       } else {
         audioManager.updateEmitter(droneEntityId, this.diagTempPosition);
       }
@@ -541,7 +543,7 @@ export class DroneSystem {
       if (!this.activeThisTick.has(id)) {
         if (this.activeDroneAudio.has(id)) {
           audioManager.stopEmitter(`drone_${id}`);
-          audioManager.playPositional("drone_death", this.diagTempPosition);
+          audioManager.playPositional("bomber_explosion", this.diagTempPosition);
           this.activeDroneAudio.delete(id);
         }
         this.lastDroneHpMap.delete(id);
@@ -555,7 +557,7 @@ export class DroneSystem {
       if (!this.activeThisTick.has(id)) {
         if (this.activeDroneAudio.has(id)) {
           audioManager.stopEmitter(`drone_${id}`);
-          audioManager.playPositional("drone_death", this.diagTempPosition);
+          audioManager.playPositional("bomber_explosion", this.diagTempPosition);
           this.activeDroneAudio.delete(id);
         }
         this.lastDroneHpMap.delete(id);
@@ -574,7 +576,7 @@ export class DroneSystem {
       if (!this.activeThisTick.has(id)) {
          if (this.activeDroneAudio.has(id)) {
            audioManager.stopEmitter(`drone_${id}`);
-           audioManager.playPositional("drone_death", this.diagTempPosition);
+           audioManager.playPositional("bomber_explosion", this.diagTempPosition);
            this.activeDroneAudio.delete(id);
          }
          this.lastDroneHpMap.delete(id);

@@ -1718,11 +1718,91 @@ function renderDevAssetsTab(container: HTMLElement, s: VexeaSettingsData) {
     purgeBtn.style.color = '#ef4444';
     purgeBtn.style.borderColor = '#ef4444';
     bind(purgeBtn, 'click', () => {
-        if (confirm('Are you sure you want to clear the entire IndexedDB asset cache?')) {
+        const overlayHost = document.getElementById('vexea-settings-overlay') || document.body;
+        const existingModal = document.getElementById('vexea-purge-confirm-modal');
+        if (existingModal) existingModal.remove();
+
+        const modalBackdrop = document.createElement('div');
+        modalBackdrop.id = 'vexea-purge-confirm-modal';
+        Object.assign(modalBackdrop.style, {
+            position: 'fixed',
+            inset: '0',
+            background: 'rgba(0, 0, 0, 0.75)',
+            backdropFilter: 'blur(4px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: '10001',
+            padding: DS.spacing.md
+        });
+
+        const modalBox = document.createElement('div');
+        Object.assign(modalBox.style, {
+            background: '#111113',
+            border: `1px solid #ef4444`,
+            borderRadius: DS.borders.radius.sm,
+            padding: DS.spacing.md,
+            maxWidth: '24rem',
+            width: '100%',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: DS.spacing.md,
+            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.8)'
+        });
+
+        const modalHeader = document.createElement('div');
+        modalHeader.innerText = '// WARNING: PURGE ASSET CACHE';
+        Object.assign(modalHeader.style, {
+            fontFamily: 'monospace',
+            fontWeight: 'bold',
+            fontSize: DS.typography.sizes.body,
+            color: '#ef4444',
+            letterSpacing: '0.5px'
+        });
+
+        const modalBody = document.createElement('div');
+        modalBody.innerText = 'Are you sure you want to clear the entire IndexedDB asset cache? All downloaded models, textures, and audio files will be re-fetched on demand.';
+        Object.assign(modalBody.style, {
+            fontFamily: DS.typography.fontFamilySecondary,
+            fontSize: DS.typography.sizes.small,
+            color: '#a1a1aa',
+            lineHeight: '1.5'
+        });
+
+        const modalActions = document.createElement('div');
+        Object.assign(modalActions.style, {
+            display: 'flex',
+            justifyContent: 'flex-end',
+            gap: DS.spacing.sm
+        });
+
+        const cancelBtn = document.createElement('button');
+        cancelBtn.innerText = 'CANCEL';
+        cancelBtn.className = 'action-btn';
+        cancelBtn.onclick = () => modalBackdrop.remove();
+
+        const confirmBtn = document.createElement('button');
+        confirmBtn.innerText = 'CONFIRM PURGE';
+        confirmBtn.className = 'action-btn';
+        Object.assign(confirmBtn.style, {
+            background: '#ef4444',
+            borderColor: '#ef4444',
+            color: '#ffffff'
+        });
+        confirmBtn.onclick = () => {
+            modalBackdrop.remove();
             clearCache().then(() => {
                 refreshCacheTable();
             });
-        }
+        };
+
+        modalActions.appendChild(cancelBtn);
+        modalActions.appendChild(confirmBtn);
+        modalBox.appendChild(modalHeader);
+        modalBox.appendChild(modalBody);
+        modalBox.appendChild(modalActions);
+        modalBackdrop.appendChild(modalBox);
+        overlayHost.appendChild(modalBackdrop);
     });
 
     const refreshBtn = document.createElement('button');

@@ -104,14 +104,17 @@ async function playSample(entry: AudioManifestEntry): Promise<void> {
   currentHowlInstance = howl;
   updateSampleCardState(targetKey);
 
-  // Set up end callback (Condition 1: Sample ends)
-  howl.once("end", () => {
-    if (currentPlayingKey === targetKey) {
-      currentHowlInstance = null;
-      currentPlayingKey = null;
-      updateSampleCardState(targetKey);
-    }
-  });
+  // Set up end callback (Condition 1: Sample ends, non-looping samples only)
+  const isLooping = !!(entry.loop || (typeof howl.loop === "function" && howl.loop()));
+  if (!isLooping) {
+    howl.once("end", () => {
+      if (currentPlayingKey === targetKey) {
+        currentHowlInstance = null;
+        currentPlayingKey = null;
+        updateSampleCardState(targetKey);
+      }
+    });
+  }
 
   // Force rate and volume for clear auditioning
   howl.rate(1.0);

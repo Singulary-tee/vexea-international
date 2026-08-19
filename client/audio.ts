@@ -87,11 +87,8 @@ class AudioManager {
                             preload: true,
                             loop: entry.loop ?? false,
                             onplayerror: () => {
-                                if (!entry.loop) {
-                                    howl.once('unlock', () => {
-                                        howl.play();
-                                    });
-                                }
+                                // Fail silently when AudioContext is locked prior to user interaction.
+                                // Do not queue up for replay upon unlock.
                             },
                             onload: () => {
                                 this.assetsLoaded++;
@@ -448,76 +445,54 @@ class AudioManager {
 
     public playJump(position?: THREE.Vector3) {
         if (position) {
-            this.playPositional('jump_01', position);
+            this.playPositional('jump', position);
         } else {
-            this.play('jump_01');
+            this.play('jump');
         }
     }
 
     public playJumpLand(position?: THREE.Vector3) {
-        const variants = ['jump_land_01', 'jump_land_02', 'jump_land_03'];
-        const key = variants[Math.floor(Math.random() * variants.length)];
         if (position) {
-            this.playPositional(key, position);
+            this.playPositional('land', position);
         } else {
-            this.play(key);
+            this.play('land');
         }
     }
 
     public setHeartbeat(active: boolean) {
-        if (this.heartbeatActive === active) return;
+        // No matching heart_beat_loop audio key exists in AUDIO_MANIFEST.
+        // Clean no-op to prevent missing asset errors.
         this.heartbeatActive = active;
-
-        if (active) {
-            const sound = this.sounds['heart_beat_loop'];
-            if (sound) {
-                sound.loop(true);
-                const s = (window as any).vexeaSettings;
-                const vol = s ? s.sfxVolume : 1.0;
-                sound.volume(vol);
-                sound.play();
-                this.heartbeatHowl = sound;
-            }
-        } else {
-            if (this.heartbeatHowl) {
-                this.heartbeatHowl.stop();
-                this.heartbeatHowl = null;
-            } else {
-                this.stop('heart_beat_loop');
-            }
-        }
     }
 
     public playDryFire() {
-        this.play('dry_fire');
+        this.play('empty_click');
     }
 
     public playShotgunPump(position?: THREE.Vector3) {
-        if (position) {
-            this.playPositional('shotgun_pump', position);
-        } else {
-            this.play('shotgun_pump');
-        }
+        // No matching shotgun_pump audio key exists in AUDIO_MANIFEST.
+        // Clean no-op to prevent missing asset errors.
     }
 
     public startMatchAmbience(zones?: Array<{ id: string; bounds?: { xMin: number; xMax: number; zMin: number; zMax: number } }>) {
         this.stopMatchAmbience();
 
-        // Standard spatial ambient bed locations (facility 01 map bounds 0..768)
+        // Standard spatial ambient bed locations using verified AUDIO_MANIFEST ambient keys
         const defaultZonePositions: Array<{ id: string; soundKey: string; pos: THREE.Vector3 }> = [
-            { id: 'ambient_spawn', soundKey: 'air_traffic', pos: new THREE.Vector3(64, 0, 704) },
-            { id: 'ambient_warehouse', soundKey: 'warehouse_drone_distant', pos: new THREE.Vector3(144, 0, 240) },
-            { id: 'ambient_plant', soundKey: 'industrial_hum', pos: new THREE.Vector3(528, 0, 448) },
-            { id: 'ambient_core', soundKey: 'computer_room', pos: new THREE.Vector3(384, 0, 384) }
+            { id: 'ambient_spawn', soundKey: 'exterior_base_loop', pos: new THREE.Vector3(64, 0, 704) },
+            { id: 'ambient_warehouse', soundKey: 'distant_industrial_loop', pos: new THREE.Vector3(144, 0, 240) },
+            { id: 'ambient_plant', soundKey: 'interior_base_loop', pos: new THREE.Vector3(528, 0, 448) },
+            { id: 'ambient_core', soundKey: 'interior_base_loop', pos: new THREE.Vector3(384, 0, 384) }
         ];
 
         if (zones && zones.length > 0) {
             zones.forEach(z => {
                 let soundKey = '';
-                if (z.id.includes('warehouse')) soundKey = 'warehouse_drone_distant';
-                else if (z.id.includes('plant')) soundKey = 'industrial_hum';
-                else if (z.id.includes('core') || z.id.includes('tunnel') || z.id.includes('datacenter')) soundKey = 'computer_room';
-                else if (z.id.includes('spawn') || z.id.includes('courtyard')) soundKey = 'air_traffic';
+                if (z.id.includes('warehouse')) soundKey = 'distant_industrial_loop';
+                else if (z.id.includes('plant')) soundKey = 'interior_base_loop';
+                else if (z.id.includes('core') || z.id.includes('tunnel') || z.id.includes('datacenter')) soundKey = 'interior_base_loop';
+                else if (z.id.includes('spawn') || z.id.includes('courtyard')) soundKey = 'exterior_base_loop';
+                else soundKey = 'wind_detail';
 
                 if (soundKey && z.bounds) {
                     const cx = (z.bounds.xMin + z.bounds.xMax) / 2;
