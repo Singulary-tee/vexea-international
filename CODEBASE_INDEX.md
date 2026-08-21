@@ -353,11 +353,26 @@ This file is the authoritative index of all directories and source files within 
 ---
 
 ### 1.5 UI Assets (`/ui_svgs`)
-
 *   **`ui_svgs/`**
     *   *Purpose:* Collection of production-ready SVG icons for the HUD and menu interfaces (aim, reload, sprint, medkit, weapons, etc.).
-
+    *   *New weapon catalogue SVGs (traced silhouettes):* `smg.svg`, `shotgun.svg`, `lmg.svg`, `sniper.svg` — white-filled hardware-accurate silhouettes wired via `shared/asset-details.ts` `WEAPON_ASSET_DETAILS` (`smg`, `shotgun`, `lmg`, `sniper`) and registered in `client/asset-cache.ts` `ALL_UI_SVGS`.
+    *   *Glyph replacements:* `class_assault.svg` replaced with the approved double-chevron class glyph; `fullscreen_exit.svg` uses the opposite corner orientation from `fullscreen.svg` for the exit/collapse state (same 112-grid design family).
 ---
+### Cycle 2026-08-21-01: New Weapon Catalogue SVGs & Approved Glyph Replacements
+*   **Target Files:** `client/public/ui_svgs/smg.svg`, `client/public/ui_svgs/shotgun.svg`, `client/public/ui_svgs/lmg.svg`, `client/public/ui_svgs/sniper.svg`, `client/public/ui_svgs/class_assault.svg`, `client/public/ui_svgs/fullscreen_exit.svg`, `client/asset-cache.ts`, `CODEBASE_INDEX.md`
+*   **Status:** Verified & Finalized (delivered on branch `manuss-svg-weapon-icons` for manual merge)
+*   **Modifications:**
+    *   `ui_svgs/smg.svg`, `ui_svgs/shotgun.svg`, `ui_svgs/lmg.svg`, `ui_svgs/sniper.svg`: Created white-filled silhouette SVGs for the four new catalogue weapons (SMG, Shotgun, LMG, Sniper) via AI mockup generation and vector tracing pipeline; paths `svgPath` in `shared/asset-details.ts` required no change.
+    *   `ui_svgs/class_assault.svg`: Replaced the rifle glyph with the approved double-chevron class glyph.
+    *   `ui_svgs/fullscreen_exit.svg`: Created the exit-fullscreen glyph with the opposite bracket orientation to `fullscreen.svg`, used by `client/src/ui/fullscreen.ts` `getFullscreenIconSrc()`.
+    *   `client/asset-cache.ts`: Registered the four new weapon SVGs in `ALL_UI_SVGS` for preload.
+*   **Verification:** `tsc --noEmit` passed with 0 errors; contact-sheet renders QA'd against existing `rifle.svg`/`pistol.svg` references; fullscreen_exit verified pixel-against fullscreen.svg design family.
+
+### Cycle 2026-08-21-02: Correct Fullscreen Exit Glyph Orientation
+*   **Target Files:** `client/public/ui_svgs/fullscreen_exit.svg`, `CODEBASE_INDEX.md`
+*   **Status:** Corrected & QA-verified on branch `manuss-svg-weapon-icons`
+*   **Modifications:** Replaced the duplicate entering-fullscreen geometry with the opposite four-bracket collapse geometry shown in the approved reference: entering uses inward-open corners, while exiting uses the reversed orientation.
+*   **Verification:** Rendered `fullscreen.svg` and `fullscreen_exit.svg` side by side in Chromium; the two states now visibly use opposite bracket orientations.
 
 ### 1.6 Test Suite (`/tests`)
 
