@@ -130,14 +130,24 @@ export async function initPlayerWeapons(scene: THREE.Scene, camera: THREE.Camera
       primaryMixer = new THREE.AnimationMixer(gltf.scene);
       rifleMixer = primaryMixer;
       
-      // Map the resolved primary animations to stable internal action keys
+      // Map measured semantic clips to stable legacy internal action keys.
+      // `shoot`/`walk`/`draw` remain the runtime state names for compatibility;
+      // authored GLBs expose `fire`/`sprint`/`equip` semantic clip names.
+      const primaryAnimation = primaryAsset.animation;
+      const primaryClipNames = {
+        idle: primaryAnimation?.clips.idle ?? primaryAsset.animations.idle,
+        walk: primaryAnimation?.clips.sprint ?? primaryAsset.animations.walk,
+        shoot: primaryAnimation?.clips.fire ?? primaryAsset.animations.shoot,
+        reload: primaryAnimation?.clips.reload ?? primaryAsset.animations.reload,
+        draw: primaryAnimation?.clips.equip ?? primaryAsset.animations.draw,
+      };
       gltf.animations.forEach((clip) => {
         const name = clip.name;
-        if (name === primaryAsset.animations.idle) primaryActions['idle'] = primaryMixer!.clipAction(clip);
-        if (name === primaryAsset.animations.walk) primaryActions['walk'] = primaryMixer!.clipAction(clip);
-        if (name === primaryAsset.animations.shoot) primaryActions['shoot'] = primaryMixer!.clipAction(clip);
-        if (name === primaryAsset.animations.reload) primaryActions['reload'] = primaryMixer!.clipAction(clip);
-        if (name === primaryAsset.animations.draw) primaryActions['draw'] = primaryMixer!.clipAction(clip);
+        if (name === primaryClipNames.idle) primaryActions['idle'] = primaryMixer!.clipAction(clip);
+        if (name === primaryClipNames.walk) primaryActions['walk'] = primaryMixer!.clipAction(clip);
+        if (name === primaryClipNames.shoot) primaryActions['shoot'] = primaryMixer!.clipAction(clip);
+        if (name === primaryClipNames.reload) primaryActions['reload'] = primaryMixer!.clipAction(clip);
+        if (name === primaryClipNames.draw) primaryActions['draw'] = primaryMixer!.clipAction(clip);
       });
 
       // Try play idle
@@ -153,8 +163,11 @@ export async function initPlayerWeapons(scene: THREE.Scene, camera: THREE.Camera
           }
       });
 
-      // Find muzzle node or create one
-      let muzzleNode = gltf.scene.getObjectByName('Muzzle') || gltf.scene.getObjectByName('muzzle');
+      // Prefer the measured authored anchor, then retain legacy name fallbacks.
+      const primaryMuzzleName = primaryAsset.animation?.nodes.muzzle;
+      let muzzleNode = (primaryMuzzleName ? gltf.scene.getObjectByName(primaryMuzzleName) : undefined)
+        || gltf.scene.getObjectByName('Muzzle')
+        || gltf.scene.getObjectByName('muzzle');
       let isProcedural = false;
       if (!muzzleNode) {
           isProcedural = true;
@@ -198,13 +211,21 @@ export async function initPlayerWeapons(scene: THREE.Scene, camera: THREE.Camera
       secondaryMixer = new THREE.AnimationMixer(gltf.scene);
       pistolMixer = secondaryMixer;
 
+      const secondaryAnimation = secondaryAsset.animation;
+      const secondaryClipNames = {
+          idle: secondaryAnimation?.clips.idle ?? secondaryAsset.animations.idle,
+          walk: secondaryAnimation?.clips.sprint ?? secondaryAsset.animations.walk,
+          shoot: secondaryAnimation?.clips.fire ?? secondaryAsset.animations.shoot,
+          reload: secondaryAnimation?.clips.reload ?? secondaryAsset.animations.reload,
+          draw: secondaryAnimation?.clips.equip ?? secondaryAsset.animations.draw,
+      };
       gltf.animations.forEach((clip) => {
           const name = clip.name;
-          if (name === secondaryAsset.animations.idle) secondaryActions['idle'] = secondaryMixer!.clipAction(clip);
-          if (name === secondaryAsset.animations.walk) secondaryActions['walk'] = secondaryMixer!.clipAction(clip);
-          if (name === secondaryAsset.animations.shoot) secondaryActions['shoot'] = secondaryMixer!.clipAction(clip);
-          if (name === secondaryAsset.animations.reload) secondaryActions['reload'] = secondaryMixer!.clipAction(clip);
-          if (name === secondaryAsset.animations.draw) secondaryActions['draw'] = secondaryMixer!.clipAction(clip);
+          if (name === secondaryClipNames.idle) secondaryActions['idle'] = secondaryMixer!.clipAction(clip);
+          if (name === secondaryClipNames.walk) secondaryActions['walk'] = secondaryMixer!.clipAction(clip);
+          if (name === secondaryClipNames.shoot) secondaryActions['shoot'] = secondaryMixer!.clipAction(clip);
+          if (name === secondaryClipNames.reload) secondaryActions['reload'] = secondaryMixer!.clipAction(clip);
+          if (name === secondaryClipNames.draw) secondaryActions['draw'] = secondaryMixer!.clipAction(clip);
       });
 
       // Try play idle
@@ -219,7 +240,10 @@ export async function initPlayerWeapons(scene: THREE.Scene, camera: THREE.Camera
           }
       });
 
-      let muzzleNode = gltf.scene.getObjectByName('Muzzle') || gltf.scene.getObjectByName('muzzle');
+      const secondaryMuzzleName = secondaryAsset.animation?.nodes.muzzle;
+      let muzzleNode = (secondaryMuzzleName ? gltf.scene.getObjectByName(secondaryMuzzleName) : undefined)
+        || gltf.scene.getObjectByName('Muzzle')
+        || gltf.scene.getObjectByName('muzzle');
       let isProcedural = false;
       if (!muzzleNode) {
           isProcedural = true;

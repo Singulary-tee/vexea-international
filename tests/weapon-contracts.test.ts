@@ -42,12 +42,28 @@ describe('named utility and asset connector contract', () => {
 
   it('binds every utility identity to a model and all weapon identities to asset details', () => {
     for (const utilityId of Object.keys(UTILITIES) as Array<keyof typeof UTILITIES>) {
-      expect(UTILITY_MODEL_KEYS[utilityId]).toBe(UTILITY_ASSET_DETAILS[utilityId].modelKey);
-      expect(UTILITY_ASSET_DETAILS[utilityId].animationUseKey).toContain('PLACEHOLDER');
+      const details = UTILITY_ASSET_DETAILS[utilityId];
+      expect(UTILITY_MODEL_KEYS[utilityId]).toBe(details.modelKey);
+      expect(details.animationUseKey).toContain('PLACEHOLDER');
+      expect(details.authored).toBe(true);
+      expect(details.animation?.nodes.root).toBe('UtilityRoot');
+      expect(details.animation?.nodes.usePoint).toBe('UtilityUsePoint');
+      expect(details.animation?.clips.equip).toBe('equip');
+      expect(details.animation?.clips.idle).toBe('idle');
+      expect(details.animation?.clips.inspect).toBe('inspect');
+      expect(Object.values(details.animation?.markers ?? {}).length).toBeGreaterThan(0);
     }
 
     for (const weaponId of Object.keys(WEAPON_ASSET_DETAILS)) {
-      expect(WEAPON_ASSET_DETAILS[weaponId as keyof typeof WEAPON_ASSET_DETAILS].modelKey).toMatch(/\.glb$/);
+      const details = WEAPON_ASSET_DETAILS[weaponId as keyof typeof WEAPON_ASSET_DETAILS];
+      expect(details.modelKey).toMatch(/\.glb$/);
+      if (details.authored) {
+        expect(details.animation?.clips.fire).toBe('fire');
+        expect(details.animation?.clips.reload).toBe('reload');
+        expect(details.animation?.nodes.muzzle).toBe('Muzzle');
+        expect(details.animation?.nodes.adsReference).toBe('ADSReference');
+        expect(details.animation?.measuredSize.every((value) => value > 0)).toBe(true);
+      }
     }
   });
 
@@ -57,5 +73,8 @@ describe('named utility and asset connector contract', () => {
     expect(isRuntimeWeaponId('pistol')).toBe(true);
     expect(isRuntimeWeaponId('smg')).toBe(false);
     expect(WEAPON_ASSET_DETAILS.smg.authored).toBe(false);
+    expect(WEAPON_ASSET_DETAILS.smg.animation).toBeNull();
+    expect(UTILITY_ASSET_DETAILS['Signal Jammer'].modelKey).toBe('prc152-optimized.glb');
+    expect(UTILITY_ASSET_DETAILS['Signal Jammer'].animation?.clips.use).toBe('use');
   });
 });
