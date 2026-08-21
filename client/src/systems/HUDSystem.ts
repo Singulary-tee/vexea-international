@@ -2,6 +2,7 @@ import { MatchController } from "../../MatchController";
 import { ACTIVE_GAMEMODE } from "../../../shared/gamemode-configs";
 import { PlayerUtilityState } from "../../../shared/utilities";
 import { IS_MOBILE } from "../../gates/platform.gate";
+import { bindFullscreenButton } from "../ui/fullscreen";
 
 export function getUtilitySvgPath(utilityName: string): string {
   const name = (utilityName || '').toLowerCase();
@@ -32,33 +33,7 @@ export class HUDSystem {
   private setupFullscreenButton() {
     const fsBtn = document.getElementById("btn-fullscreen");
     if (!fsBtn) return;
-
-    const updateFullscreenIcon = () => {
-      const isFS = !!(document.fullscreenElement || (document as any).webkitFullscreenElement);
-      const iconSrc = isFS ? "/ui_svgs/fullscreen_exit.svg" : "/ui_svgs/fullscreen.svg";
-      fsBtn.innerHTML = `<img src="${iconSrc}" style="width: 1.38rem; height: 1.38rem; filter: brightness(0) invert(1);" alt="Fullscreen" />`;
-    };
-    updateFullscreenIcon();
-
-    fsBtn.addEventListener("click", (e) => {
-      e.stopPropagation();
-      try {
-        if (!document.fullscreenElement && !(document as any).webkitFullscreenElement) {
-          const docEl = document.documentElement as any;
-          if (docEl.requestFullscreen) docEl.requestFullscreen();
-          else if (docEl.webkitRequestFullscreen) docEl.webkitRequestFullscreen();
-        } else {
-          const doc = document as any;
-          if (doc.exitFullscreen) doc.exitFullscreen();
-          else if (doc.webkitExitFullscreen) doc.webkitExitFullscreen();
-        }
-      } catch (err) {
-        console.warn("HUD Fullscreen toggle failed:", err);
-      }
-    });
-
-    document.addEventListener("fullscreenchange", updateFullscreenIcon);
-    document.addEventListener("webkitfullscreenchange", updateFullscreenIcon);
+    bindFullscreenButton(fsBtn, 1.38);
   }
 
   private setupMatchStatusModal() {

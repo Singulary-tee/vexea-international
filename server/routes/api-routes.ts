@@ -83,7 +83,8 @@ export function registerApiRoutes(app: Express): void {
     try {
       const fetchResponse = await fetch(fileUrl, {
         headers: {
-          "User-Agent": "Vexea-Game-Server/1.0"
+          "User-Agent": "Vexea-Game-Server/1.0",
+          "Origin": "http://localhost:5173"
         }
       });
       if (!fetchResponse.ok) {

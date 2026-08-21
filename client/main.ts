@@ -1330,6 +1330,9 @@ const animateFrame = async () => {
       match.llmObjective.update(dt);
     }
 
+    // 4.9 Spatial Audio Listener Position & Orientation Update
+    audioManager.updateListener(camera);
+
     // 5. Render Step
     const tLogicEnd = performance.now();
     if ((window as any).isWebGPU && (window as any).renderPipeline) {

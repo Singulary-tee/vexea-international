@@ -71,7 +71,7 @@ export const VFX_CONSTANTS = {
       fire_03: { key: 'fire_03_8x8_q90.webp', cols: 8, rows: 8, frameCount: 64, duration: 1.0, effect: 'fire', luminanceKeyed: true, additive: true },
       fire_04: { key: 'fire_04_8x8_q90.webp', cols: 8, rows: 8, frameCount: 64, duration: 1.0, effect: 'fire', luminanceKeyed: true, additive: true },
       flame_01: { key: 'flame_01_16x4_q90.webp', cols: 16, rows: 4, frameCount: 64, duration: 1.0, effect: 'fire', luminanceKeyed: false, additive: true },
-      flame_02: { key: 'flame_02_15x4_q90.webp', cols: 8, rows: 4, frameCount: 32, duration: 0.8, effect: 'fire', luminanceKeyed: false, additive: true },
+      flame_02: { key: 'flame_02_15x4_q90.webp', cols: 15, rows: 4, frameCount: 60, duration: 0.8, effect: 'fire', luminanceKeyed: false, additive: true },
       muzzle_flash_01: { key: 'muzzle_flash_01_5frame_q90.webp', cols: 5, rows: 1, frameCount: 5, duration: 0.08, effect: 'muzzle_flash', luminanceKeyed: false, additive: true },
       wispy_smoke_01: { key: 'wispy_smoke_01_8x8_q90.webp', cols: 8, rows: 8, frameCount: 64, duration: 0.65, effect: 'smoke', luminanceKeyed: false, additive: false },
       wispy_smoke_02: { key: 'wispy_smoke_02_8x8_q90.webp', cols: 8, rows: 8, frameCount: 64, duration: 0.65, effect: 'smoke', luminanceKeyed: false, additive: false },

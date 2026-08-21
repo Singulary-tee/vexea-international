@@ -5,6 +5,7 @@ import { VexeaSettingsData } from './types';
 import { getSettings, saveSettings, applySettings } from './state';
 import { listCachedFiles, deleteCachedFile, clearCache } from '../../asset-cache';
 import { audioManager } from '../../audio';
+import { isFullscreen, toggleFullscreen } from '../ui/fullscreen';
 
 export let overlayEl: HTMLDivElement | null = null;
 let boundListeners: Array<{ el: HTMLElement; type: string; fn: any }> = [];
@@ -650,28 +651,12 @@ function renderControlsTab(container: HTMLElement, s: VexeaSettingsData) {
         fsBtn.style.minWidth = '10.00rem';
 
         const updateSettingsFSLabel = () => {
-            if (document.fullscreenElement || (document as any).webkitFullscreenElement) {
-                fsBtn.innerText = 'EXIT FULLSCREEN';
-            } else {
-                fsBtn.innerText = 'TOGGLE FULLSCREEN';
-            }
+            fsBtn.innerText = isFullscreen() ? 'EXIT FULLSCREEN' : 'TOGGLE FULLSCREEN';
         };
         updateSettingsFSLabel();
 
         bind(fsBtn, 'click', () => {
-            try {
-                if (!document.fullscreenElement && !(document as any).webkitFullscreenElement) {
-                    const docEl = document.documentElement as any;
-                    if (docEl.requestFullscreen) docEl.requestFullscreen();
-                    else if (docEl.webkitRequestFullscreen) docEl.webkitRequestFullscreen();
-                } else {
-                    const doc = document as any;
-                    if (doc.exitFullscreen) doc.exitFullscreen();
-                    else if (doc.webkitExitFullscreen) doc.webkitExitFullscreen();
-                }
-            } catch (err) {
-                console.warn("Settings Fullscreen toggle failed:", err);
-            }
+            toggleFullscreen();
         });
 
         document.addEventListener('fullscreenchange', updateSettingsFSLabel);

@@ -22,6 +22,7 @@ import { renderStoreScreen } from "./store-screen";
 import { StudioPreviewManager } from "../StudioPreviewManager";
 import { CLASSES } from "../../shared/classes";
 import { resolveDisplayName, sendFriendRequest, getFriendsList, getIncomingRequests, respondToFriendRequest, ensureUsernameMapped, getLobbyInvites, respondToLobbyInvite } from "../social";
+import { bindFullscreenButton } from "../src/ui/fullscreen";
 
 // In-memory cache to resolve user profiles without N+1 loops
 const userProfileCache = new Map<string, string>();
@@ -601,34 +602,10 @@ export function initMainMenu() {
   pFullscreen.style.transition = 'color 0.2s';
   pFullscreen.title = 'Toggle Fullscreen';
 
-  const updateFullscreenIcon = () => {
-    const isFS = !!(document.fullscreenElement || (document as any).webkitFullscreenElement);
-    const iconSrc = isFS ? "/ui_svgs/fullscreen_exit.svg" : "/ui_svgs/fullscreen.svg";
-    pFullscreen.innerHTML = `<img src="${iconSrc}" style="width: 1.13rem; height: 1.13rem; filter: brightness(0) invert(1);" alt="Fullscreen" />`;
-  };
-  updateFullscreenIcon();
-
-  pFullscreen.addEventListener('click', (e) => {
-    e.stopPropagation();
-    try {
-      if (!document.fullscreenElement && !(document as any).webkitFullscreenElement) {
-        const docEl = document.documentElement as any;
-        if (docEl.requestFullscreen) docEl.requestFullscreen();
-        else if (docEl.webkitRequestFullscreen) docEl.webkitRequestFullscreen();
-      } else {
-        const doc = document as any;
-        if (doc.exitFullscreen) doc.exitFullscreen();
-        else if (doc.webkitExitFullscreen) doc.webkitExitFullscreen();
-      }
-    } catch (err) {
-      console.warn("Fullscreen toggle failed:", err);
-    }
-  });
+  bindFullscreenButton(pFullscreen, 1.13);
 
   pFullscreen.addEventListener('mouseenter', () => { pFullscreen.style.color = DS.colors.text; });
   pFullscreen.addEventListener('mouseleave', () => { pFullscreen.style.color = DS.colors.textMuted; });
-  document.addEventListener('fullscreenchange', updateFullscreenIcon);
-  document.addEventListener('webkitfullscreenchange', updateFullscreenIcon);
   const pFeedback = document.createElement('div');
   pFeedback.innerHTML = `<img src="/ui_svgs/messages.svg" style="width: 1.13rem; height: 1.13rem; filter: brightness(0) invert(1);" alt="Messages" />`;
   pFeedback.style.color = DS.colors.textMuted;
