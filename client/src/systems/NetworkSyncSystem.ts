@@ -7,7 +7,7 @@ import {
   DRONE_CONFIGS,
   HEADER_SIZE, 
   DRONE_STRUCT_SIZE,
-  DETAILED_WEAPONS 
+  getWeaponPerformance
 } from "../../../shared/constants";
 import { getAssetUrl } from "../../asset-cache";
 import { setWeaponReloading, resetWeaponAnimations } from "../../weapons_model";
@@ -442,16 +442,23 @@ export class NetworkSyncSystem {
       match.droneJitterMap.delete(msg.droneId);
     }
 
+    if (msg.type === "WEAPON_LOADOUT") {
+      match.configureLoadout(msg.classId || 'ASSAULT', msg.primaryWeaponId, msg.secondaryWeaponId);
+      return;
+    }
+
     if (msg.type === "AMMO_STATE") {
       if (msg.primary) {
+        if (msg.primary.weaponId) match.primaryWeaponId = msg.primary.weaponId;
         match.ammo1 = msg.primary.currentMag;
-        match.maxAmmo1 = msg.primary.maxMag ?? 40;
+        match.maxAmmo1 = getWeaponPerformance(match.primaryWeaponId)?.capacity ?? match.maxAmmo1;
         match.isReloading = msg.primary.isReloading || (msg.secondary ? msg.secondary.isReloading : false);
         setWeaponReloading(match.isReloading);
       }
       if (msg.secondary) {
+        if (msg.secondary.weaponId) match.secondaryWeaponId = msg.secondary.weaponId;
         match.ammo2 = msg.secondary.currentMag;
-        match.maxAmmo2 = msg.secondary.maxMag ?? 35;
+        match.maxAmmo2 = getWeaponPerformance(match.secondaryWeaponId)?.capacity ?? match.maxAmmo2;
       }
       if (match.hud) match.hud.updateAmmo(msg.primary, msg.secondary);
     }

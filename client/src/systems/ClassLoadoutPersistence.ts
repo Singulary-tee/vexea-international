@@ -1,6 +1,10 @@
 import { getFirestore, doc, updateDoc } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
 import { CATALOG_LOADOUTS, LoadoutSlotItem } from "../../screens/armory-screen";
+import { CLASSES, ClassId, isClassWeaponAllowed, getClassWeaponId } from "../../../shared/classes";
+import { isRuntimeWeaponId } from "../../../shared/constants";
+import { UTILITIES, UtilityId } from "../../../shared/utilities";
+import type { WeaponId } from "../../../shared/weapons";
 
 const STORAGE_KEY = "vex_class_loadouts";
 
@@ -53,35 +57,84 @@ export class ClassLoadoutPersistence {
    * Retrieves current loadout items for a class from local cache or default catalog.
    */
   public static getClassLoadout(classId: string): LoadoutSlotItem[] {
-    const allLoadouts = this.getAllStoredLoadouts();
-    if (allLoadouts[classId] && Array.isArray(allLoadouts[classId]) && allLoadouts[classId].length === 4) {
-      // Validate loadout content in case items were saved but are actually locked
-      const sanitized = allLoadouts[classId].map((item, index) => {
-        if (this.isItemUnlocked(item.id)) {
-          return item;
-        }
-        const defaultItem = CATALOG_LOADOUTS[classId]?.[index] || CATALOG_LOADOUTS.ASSAULT[index];
-        return { ...defaultItem };
-      });
-      return sanitized;
+    const normalizedClassId = (classId in CLASSES ? classId : 'ASSAULT') as ClassId;
+    const defaults = this.getDefaultClassLoadout(normalizedClassId);
+    const stored = this.getAllStoredLoadouts()[normalizedClassId];
+    if (!Array.isArray(stored)) return defaults;
+
+    const sanitized = [...defaults];
+    for (const item of stored) {
+      if (!item || !this.isItemUnlocked(item.id) || !this.isValidClassItem(normalizedClassId, item)) continue;
+      const slotIndex = this.getSlotIndex(item.slotName);
+      if (slotIndex >= 0) sanitized[slotIndex] = item;
     }
-    const defaultConfig = CATALOG_LOADOUTS[classId] || CATALOG_LOADOUTS.ASSAULT;
-    return [...defaultConfig];
+    return sanitized;
+  }
+
+  public static getClassWeaponIds(classId: ClassId): { primaryWeaponId: WeaponId; secondaryWeaponId: WeaponId } {
+    const loadout = this.getClassLoadout(classId);
+    let primaryWeaponId = getClassWeaponId(classId, 'primary');
+    let secondaryWeaponId = getClassWeaponId(classId, 'secondary');
+
+    for (const item of loadout) {
+      if (item.slotName === 'PRIMARY' && isRuntimeWeaponId(item.weaponKey) && isClassWeaponAllowed(classId, 'primary', item.weaponKey)) {
+        primaryWeaponId = item.weaponKey;
+      } else if (item.slotName === 'SECONDARY' && isRuntimeWeaponId(item.weaponKey) && isClassWeaponAllowed(classId, 'secondary', item.weaponKey)) {
+        secondaryWeaponId = item.weaponKey;
+      }
+    }
+
+    return { primaryWeaponId, secondaryWeaponId };
+  }
+
+  private static getDefaultClassLoadout(classId: ClassId): LoadoutSlotItem[] {
+    const catalog = CATALOG_LOADOUTS[classId] || CATALOG_LOADOUTS.ASSAULT;
+    const slotNames = ['PRIMARY', 'SECONDARY', 'UTILITY 1', 'UTILITY 2'];
+    return slotNames.map((slotName) => catalog.find((item) => item.slotName === slotName) || CATALOG_LOADOUTS.ASSAULT[slotNames.indexOf(slotName)]);
+  }
+
+  private static getSlotIndex(slotName: string): number {
+    if (slotName === 'PRIMARY') return 0;
+    if (slotName === 'SECONDARY') return 1;
+    if (slotName === 'UTILITY 1') return 2;
+    if (slotName === 'UTILITY 2') return 3;
+    return -1;
+  }
+
+  private static isValidClassItem(classId: ClassId, item: LoadoutSlotItem): boolean {
+    if (item.slotName === 'PRIMARY' || item.slotName === 'SECONDARY') {
+      return isClassWeaponAllowed(classId, item.slotName === 'PRIMARY' ? 'primary' : 'secondary', item.weaponKey);
+    }
+    const utilityIdByKey: Record<string, UtilityId> = {
+      grenade: 'Grenade',
+      flashbang: 'Flashbang',
+      medkit: 'Med Kit',
+      revive: 'Revive Tool',
+      radio: 'Radio',
+      signal_jammer: 'Signal Jammer',
+      proximity_mine: 'Proximity Mine',
+      c4: 'C4',
+    };
+    const utilityId = utilityIdByKey[item.weaponKey];
+    if (!utilityId) return false;
+    const utility = UTILITIES[utilityId];
+    return utility.classId === classId && utility.slot === item.slotName.toLowerCase().replace(' ', '') as 'utility1' | 'utility2';
   }
 
   /**
    * Saves a single slot modification for a class and persists to LocalStorage & Firestore.
    */
   public static async saveClassLoadout(classId: string, slotIndex: number, item: LoadoutSlotItem): Promise<void> {
-    if (!this.isItemUnlocked(item.id)) {
-      console.warn(`[ClassLoadoutPersistence] Cannot equip locked item ${item.id} to slot ${slotIndex} on ${classId}`);
+    const normalizedClassId = (classId in CLASSES ? classId : 'ASSAULT') as ClassId;
+    if (!this.isItemUnlocked(item.id) || !this.isValidClassItem(normalizedClassId, item) || this.getSlotIndex(item.slotName) !== slotIndex) {
+      console.warn(`[ClassLoadoutPersistence] Rejected invalid item ${item.id} for slot ${slotIndex} on ${normalizedClassId}`);
       return;
     }
 
-    const current = this.getClassLoadout(classId);
+    const current = this.getClassLoadout(normalizedClassId);
     if (slotIndex >= 0 && slotIndex < current.length) {
       current[slotIndex] = item;
-      await this.saveFullClassLoadout(classId, current);
+      await this.saveFullClassLoadout(normalizedClassId, current);
     }
   }
 
@@ -89,16 +142,18 @@ export class ClassLoadoutPersistence {
    * Saves full class loadout configuration to LocalStorage and optionally Firestore.
    */
   public static async saveFullClassLoadout(classId: string, items: LoadoutSlotItem[]): Promise<void> {
+    const normalizedClassId = (classId in CLASSES ? classId : 'ASSAULT') as ClassId;
+    const defaults = this.getDefaultClassLoadout(normalizedClassId);
     const sanitizedItems = items.map((item, index) => {
-      if (this.isItemUnlocked(item.id)) {
+      if (item && this.isItemUnlocked(item.id) && this.isValidClassItem(normalizedClassId, item) && this.getSlotIndex(item.slotName) === index) {
         return item;
       }
-      console.warn(`[ClassLoadoutPersistence] Equipping default fallback for slot ${index} of ${classId} because ${item.id} is locked.`);
-      return CATALOG_LOADOUTS[classId]?.[index] || CATALOG_LOADOUTS.ASSAULT[index];
+      console.warn(`[ClassLoadoutPersistence] Equipping default fallback for slot ${index} of ${normalizedClassId}.`);
+      return defaults[index];
     });
 
     const all = this.getAllStoredLoadouts();
-    all[classId] = sanitizedItems;
+    all[normalizedClassId] = sanitizedItems;
 
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(all));
@@ -106,7 +161,7 @@ export class ClassLoadoutPersistence {
       console.warn("[ClassLoadoutPersistence] LocalStorage write failed:", e);
     }
 
-    this.debounceFirestoreUpdate(classId, sanitizedItems);
+    this.debounceFirestoreUpdate(normalizedClassId, sanitizedItems);
   }
 
   private static debounceFirestoreUpdate(classId: string, items: LoadoutSlotItem[]): void {

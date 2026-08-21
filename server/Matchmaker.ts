@@ -1,5 +1,7 @@
 import { ChannelAdapter } from "./transport/adapter";
-import { ClassId, CLASSES } from "../shared/classes";
+import { ClassId, CLASSES, getClassWeaponId, isClassWeaponAllowed } from "../shared/classes";
+import { isRuntimeWeaponId } from "../shared/constants";
+import type { WeaponId } from "../shared/weapons";
 import matchManager from "./MatchManager";
 import { MatchRoom } from "./MatchRoom";
 import { ACTIVE_GAMEMODE } from "../shared/gamemode-configs";
@@ -19,6 +21,8 @@ export interface QueuedPlayer {
   joinedTimestamp: number;
   mapId: string;
   classId: ClassId;
+  primaryWeaponId: WeaponId;
+  secondaryWeaponId: WeaponId;
 }
 
 interface PendingMatchGroup {
@@ -51,6 +55,8 @@ export class Matchmaker {
     mapId: string = "map_1_facility",
     classId: ClassId = "ASSAULT",
     displayName?: string,
+    requestedPrimaryWeaponId?: string,
+    requestedSecondaryWeaponId?: string,
   ): Promise<void> {
     const uid = reqUid || playerId;
 
@@ -58,6 +64,12 @@ export class Matchmaker {
     this.removePlayerFromPool(playerId);
 
     const validClassId: ClassId = CLASSES[classId] ? classId : "ASSAULT";
+    const primaryWeaponId: WeaponId = requestedPrimaryWeaponId && isRuntimeWeaponId(requestedPrimaryWeaponId) && isClassWeaponAllowed(validClassId, "primary", requestedPrimaryWeaponId)
+      ? requestedPrimaryWeaponId
+      : getClassWeaponId(validClassId, "primary");
+    const secondaryWeaponId: WeaponId = requestedSecondaryWeaponId && isRuntimeWeaponId(requestedSecondaryWeaponId) && isClassWeaponAllowed(validClassId, "secondary", requestedSecondaryWeaponId)
+      ? requestedSecondaryWeaponId
+      : getClassWeaponId(validClassId, "secondary");
     const queuedPlayer: QueuedPlayer = {
       id: playerId,
       reqUid: uid,
@@ -66,6 +78,8 @@ export class Matchmaker {
       joinedTimestamp: Date.now(),
       mapId: mapId || "map_1_facility",
       classId: validClassId,
+      primaryWeaponId,
+      secondaryWeaponId,
     };
 
     this.queue.push(queuedPlayer);
@@ -227,7 +241,7 @@ export class Matchmaker {
       }
 
       (p.channel as any).currentRoom = targetRoom;
-      const newPState = targetRoom.registerPlayer(p.reqUid || p.id, p.channel, null, p.classId, p.displayName);
+      const newPState = targetRoom.registerPlayer(p.reqUid || p.id, p.channel, null, p.classId, p.displayName, p.reqUid, p.primaryWeaponId, p.secondaryWeaponId);
 
       // Notify connection handler that match has formed
       const onMatchFormed = (p.channel as any).onMatchFormed;

@@ -1,7 +1,9 @@
 import * as THREE from "three/webgpu";
 import { DETAILED_WEAPONS } from "../shared/weapons";
-import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+import { getWeaponPerformance } from "../shared/constants";
 import { getCachedOrFetchUrl, createConfiguredGLTFLoader } from "./asset-cache";
+import { WEAPON_ASSET_DETAILS } from "../shared/asset-details";
+import type { WeaponId } from "../shared/weapons";
 import { CAMERA_EFFECTS_CONFIG } from "./src/camera/constants";
 import { getMatch } from "./MatchController";
 
@@ -18,26 +20,27 @@ let isFirstFrame = true;
 
 // Weapon Container Group (attached directly to the camera)
 export let weaponsContainer: THREE.Group | null = null;
+export let primaryGroup: THREE.Group | null = null;
+export let secondaryGroup: THREE.Group | null = null;
+// Legacy aliases retained for prewarm/dev consumers; slot semantics are primary/secondary.
 export let rifleGroup: THREE.Group | null = null;
 export let pistolGroup: THREE.Group | null = null;
 
 // Animation stuff
+export let primaryMixer: THREE.AnimationMixer | null = null;
+export let secondaryMixer: THREE.AnimationMixer | null = null;
+// Legacy aliases retained for prewarm/dev consumers.
 export let rifleMixer: THREE.AnimationMixer | null = null;
 export let pistolMixer: THREE.AnimationMixer | null = null;
 
-// Explicit mapping for SMG animations to friendly internal keys
-const SMG_ANIM_MAP = {
-  idle: "Rig|KDW_DPose_Idle",
-  walk: "Rig|KDW_Walk",
-  shoot: "Rig|KDW_Shot",
-  reload_fast: "Rig|KDW_Reload_fast",
-  reload_full: "Rig|KDW_Reload_full",
-  draw: "Rig|KDW_Draw"
-};
-
+const primaryActions = {} as Record<string, THREE.AnimationAction>;
+const secondaryActions = {} as Record<string, THREE.AnimationAction>;
 export const weaponActions = {
-  rifle: {} as Record<string, THREE.AnimationAction>,
-  pistol: {} as Record<string, THREE.AnimationAction>
+  primary: primaryActions,
+  secondary: secondaryActions,
+  // Legacy aliases retained for prewarm/dev consumers.
+  rifle: primaryActions,
+  pistol: secondaryActions,
 };
 
 // Global constants
@@ -69,9 +72,9 @@ export enum WeaponAnimState {
 }
 
 export interface WeaponVisualState {
-  activeSlot: number;            // 1 = Rifle/SMG, 2 = Pistol
+  activeSlot: number;            // 1 = primary weapon, 2 = secondary weapon
   switchTimer: number;           // Decays from WEAPON_SWITCH_DURATION to 0
-  pendingSlot: number;           // The weapon we are switching to
+  pendingSlot: number;           // The semantic slot we are switching to
   recoilZ: number;             
   recoilPitch: number;         
   recoilYaw: number;           
@@ -100,44 +103,51 @@ export async function initPlayerWeapons(scene: THREE.Scene, camera: THREE.Camera
   weaponsContainer.name = "WeaponsContainer";
   scene.add(weaponsContainer);
 
-  rifleGroup = new THREE.Group();
-  rifleGroup.name = "RifleModel";
-  weaponsContainer.add(rifleGroup);
+  primaryGroup = new THREE.Group();
+  primaryGroup.name = "PrimaryWeaponModel";
+  weaponsContainer.add(primaryGroup);
+  rifleGroup = primaryGroup;
 
-  pistolGroup = new THREE.Group();
-  pistolGroup.name = "PistolModel";
-  pistolGroup.visible = false;
-  weaponsContainer.add(pistolGroup);
+  secondaryGroup = new THREE.Group();
+  secondaryGroup.name = "SecondaryWeaponModel";
+  secondaryGroup.visible = false;
+  weaponsContainer.add(secondaryGroup);
+  pistolGroup = secondaryGroup;
 
   const loader = createConfiguredGLTFLoader();
+  const match = getMatch();
+  const primaryWeaponId: WeaponId = match?.primaryWeaponId || 'rifle';
+  const secondaryWeaponId: WeaponId = match?.secondaryWeaponId || 'pistol';
+  const primaryAsset = WEAPON_ASSET_DETAILS[primaryWeaponId];
+  const secondaryAsset = WEAPON_ASSET_DETAILS[secondaryWeaponId];
 
-  // Load SMG (Rifle slot)
-  const loadRiflePromise = (async () => {
+  // Load primary weapon slot
+  const loadPrimaryPromise = (async () => {
     try {
-      const url = await getCachedOrFetchUrl("scar_l-optimized.glb", "Asset");
+      const url = await getCachedOrFetchUrl(primaryAsset.modelKey, "Asset");
       const gltf = await loader.loadAsync(url);
-      rifleGroup!.add(gltf.scene);
-      rifleMixer = new THREE.AnimationMixer(gltf.scene);
+      primaryGroup!.add(gltf.scene);
+      primaryMixer = new THREE.AnimationMixer(gltf.scene);
+      rifleMixer = primaryMixer;
       
-      // Explicitly map rifle animations to internal friendly keys
+      // Map the resolved primary animations to stable internal action keys
       gltf.animations.forEach((clip) => {
         const name = clip.name;
-        if (name === SMG_ANIM_MAP.idle) weaponActions.rifle['idle'] = rifleMixer!.clipAction(clip);
-        if (name === SMG_ANIM_MAP.walk) weaponActions.rifle['walk'] = rifleMixer!.clipAction(clip);
-        if (name === SMG_ANIM_MAP.shoot) weaponActions.rifle['shoot'] = rifleMixer!.clipAction(clip);
-        if (name === SMG_ANIM_MAP.reload_fast) weaponActions.rifle['reload'] = rifleMixer!.clipAction(clip);
-        if (name === SMG_ANIM_MAP.reload_full) weaponActions.rifle['reload_full'] = rifleMixer!.clipAction(clip);
-        if (name === SMG_ANIM_MAP.draw) weaponActions.rifle['draw'] = rifleMixer!.clipAction(clip);
+        if (name === primaryAsset.animations.idle) primaryActions['idle'] = primaryMixer!.clipAction(clip);
+        if (name === primaryAsset.animations.walk) primaryActions['walk'] = primaryMixer!.clipAction(clip);
+        if (name === primaryAsset.animations.shoot) primaryActions['shoot'] = primaryMixer!.clipAction(clip);
+        if (name === primaryAsset.animations.reload) primaryActions['reload'] = primaryMixer!.clipAction(clip);
+        if (name === primaryAsset.animations.draw) primaryActions['draw'] = primaryMixer!.clipAction(clip);
       });
 
       // Try play idle
-      if (weaponActions.rifle['idle']) {
-         weaponActions.rifle['idle'].play();
+      if (primaryActions['idle']) {
+         primaryActions['idle'].play();
          weaponVisualState.currentState = WeaponAnimState.IDLE;
       }
 
       // Smooth blending fallback back to base movement animation on action completion
-      rifleMixer.addEventListener('finished', (e: any) => {
+      primaryMixer.addEventListener('finished', (e: any) => {
           if (e.action.loop === THREE.LoopOnce) {
               transitionToState(lastBaseState, true);
           }
@@ -163,7 +173,7 @@ export async function initPlayerWeapons(scene: THREE.Scene, camera: THREE.Camera
           if (weaponBone) {
               weaponBone.add(muzzleNode);
           } else {
-              rifleGroup!.add(muzzleNode);
+              primaryGroup!.add(muzzleNode);
           }
       } else {
           const dummy = new THREE.Object3D();
@@ -171,49 +181,39 @@ export async function initPlayerWeapons(scene: THREE.Scene, camera: THREE.Camera
           muzzleNode.add(dummy);
           muzzleNode = dummy;
       }
-      (rifleGroup as any).muzzleNode = muzzleNode;
-      (rifleGroup as any).isProceduralMuzzle = isProcedural;
-      console.log("[WEAPONS] SMG Loaded, Animations:", Object.keys(weaponActions.rifle));
+      (primaryGroup as any).muzzleNode = muzzleNode;
+      (primaryGroup as any).isProceduralMuzzle = isProcedural;
+      console.log(`[WEAPONS] Primary ${primaryWeaponId} loaded, animations:`, Object.keys(primaryActions));
     } catch (e) {
-      console.error("[WEAPONS] Failed to load SMG:", e);
+      console.error(`[WEAPONS] Failed to load primary ${primaryWeaponId}:`, e);
     }
   })();
 
-  // Load Pistol
-  const loadPistolPromise = (async () => {
+  // Load secondary weapon slot
+  const loadSecondaryPromise = (async () => {
     try {
-      const url = await getCachedOrFetchUrl("scar_h_mk_17-optimized.glb", "Asset");
+      const url = await getCachedOrFetchUrl(secondaryAsset.modelKey, "Asset");
       const gltf = await loader.loadAsync(url);
-      pistolGroup!.add(gltf.scene);
-      pistolMixer = new THREE.AnimationMixer(gltf.scene);
+      secondaryGroup!.add(gltf.scene);
+      secondaryMixer = new THREE.AnimationMixer(gltf.scene);
+      pistolMixer = secondaryMixer;
 
-      // Extract sub-clips from single track "allanimations" (8.8s total duration @ 30fps)
-      const originalClip = gltf.animations.find(c => c.name.toLowerCase() === "allanimations") || gltf.animations[0];
-      if (originalClip) {
-          const fps = 30;
-          // Precision mapping for (shoot, reload, shoot, reload, reload, walk)
-          const shootClip = THREE.AnimationUtils.subclip(originalClip, "shoot", 0, 12, fps);
-          const reloadClip = THREE.AnimationUtils.subclip(originalClip, "reload", 80, 175, fps); // Adjusted to skip leading shooting frames
-          const walkClip = THREE.AnimationUtils.subclip(originalClip, "walk", 230, 264, fps);
-          const idleClip = THREE.AnimationUtils.subclip(originalClip, "idle", 0, 1, fps); 
-
-          const clips = [idleClip, walkClip, shootClip, reloadClip];
-          clips.forEach(clip => {
-              weaponActions.pistol[clip.name] = pistolMixer!.clipAction(clip);
-          });
-      } else {
-          gltf.animations.forEach((clip) => {
-              weaponActions.pistol[clip.name.toLowerCase()] = pistolMixer!.clipAction(clip);
-          });
-      }
+      gltf.animations.forEach((clip) => {
+          const name = clip.name;
+          if (name === secondaryAsset.animations.idle) secondaryActions['idle'] = secondaryMixer!.clipAction(clip);
+          if (name === secondaryAsset.animations.walk) secondaryActions['walk'] = secondaryMixer!.clipAction(clip);
+          if (name === secondaryAsset.animations.shoot) secondaryActions['shoot'] = secondaryMixer!.clipAction(clip);
+          if (name === secondaryAsset.animations.reload) secondaryActions['reload'] = secondaryMixer!.clipAction(clip);
+          if (name === secondaryAsset.animations.draw) secondaryActions['draw'] = secondaryMixer!.clipAction(clip);
+      });
 
       // Try play idle
-      if (weaponActions.pistol['idle']) {
-         weaponActions.pistol['idle'].play();
+      if (secondaryActions['idle']) {
+         secondaryActions['idle'].play();
       }
 
       // Smooth blending fallback back to base movement animation on action completion
-      pistolMixer.addEventListener('finished', (e: any) => {
+      secondaryMixer.addEventListener('finished', (e: any) => {
           if (e.action.loop === THREE.LoopOnce) {
               transitionToState(lastBaseState, true);
           }
@@ -238,7 +238,7 @@ export async function initPlayerWeapons(scene: THREE.Scene, camera: THREE.Camera
           if (weaponBone) {
               weaponBone.add(muzzleNode);
           } else {
-              pistolGroup!.add(muzzleNode);
+              secondaryGroup!.add(muzzleNode);
           }
       } else {
           const dummy = new THREE.Object3D();
@@ -246,15 +246,15 @@ export async function initPlayerWeapons(scene: THREE.Scene, camera: THREE.Camera
           muzzleNode.add(dummy);
           muzzleNode = dummy;
       }
-      (pistolGroup as any).muzzleNode = muzzleNode;
-      (pistolGroup as any).isProceduralMuzzle = isProcedural;
-      console.log("[WEAPONS] Pistol Loaded, Animations:", Object.keys(weaponActions.pistol));
+      (secondaryGroup as any).muzzleNode = muzzleNode;
+      (secondaryGroup as any).isProceduralMuzzle = isProcedural;
+      console.log(`[WEAPONS] Secondary ${secondaryWeaponId} loaded, animations:`, Object.keys(secondaryActions));
     } catch (e) {
-      console.error("[WEAPONS] Failed to load Pistol:", e);
+      console.error(`[WEAPONS] Failed to load secondary ${secondaryWeaponId}:`, e);
     }
   })();
 
-  await Promise.all([loadRiflePromise, loadPistolPromise]);
+  await Promise.all([loadPrimaryPromise, loadSecondaryPromise]);
 
   return weaponsContainer;
 }
@@ -269,7 +269,7 @@ export let lastBaseAnim = 'idle';
 
 export function transitionToState(state: WeaponAnimState, force: boolean = false) {
     const slot = weaponVisualState.activeSlot;
-    const actions = slot === 1 ? weaponActions.rifle : weaponActions.pistol;
+    const actions = slot === 1 ? primaryActions : secondaryActions;
     
     // Find animation key (ADS_IDLE maps to IDLE frozen)
     let clipKey = state === WeaponAnimState.ADS_IDLE ? 'idle' : state.toString();
@@ -321,7 +321,7 @@ export function transitionToState(state: WeaponAnimState, force: boolean = false
 }
 
 export function resetWeaponAnimations() {
-    [rifleMixer, pistolMixer].forEach(m => m?.stopAllAction());
+    [primaryMixer, secondaryMixer].forEach(m => m?.stopAllAction());
     weaponVisualState.currentState = WeaponAnimState.IDLE;
     lastBaseState = WeaponAnimState.IDLE;
     transitionToState(WeaponAnimState.IDLE, true);
@@ -353,7 +353,7 @@ export function getMuzzleWorldPosition(outVec: THREE.Vector3, camera: THREE.Came
   if (weaponsContainer) {
     weaponsContainer.updateMatrixWorld(true);
   }
-  const activeMesh = weaponVisualState.activeSlot === 1 ? rifleGroup : pistolGroup;
+  const activeMesh = weaponVisualState.activeSlot === 1 ? primaryGroup : secondaryGroup;
   if (activeMesh && (activeMesh as any).muzzleNode) {
     (activeMesh as any).muzzleNode.updateMatrixWorld(true);
     
@@ -363,7 +363,8 @@ export function getMuzzleWorldPosition(outVec: THREE.Vector3, camera: THREE.Came
     // ONLY apply the camera-space offset if this is a procedurally created dynamic muzzle fallback.
     // Authored gltf muzzle nodes are already placed perfectly at the tip.
     if ((activeMesh as any).isProceduralMuzzle) {
-      const activeStats = weaponVisualState.activeSlot === 1 ? DETAILED_WEAPONS.rifle : DETAILED_WEAPONS.pistol;
+      const activeWeaponId = getMatch()?.getActiveWeaponId() || (weaponVisualState.activeSlot === 1 ? 'rifle' : 'pistol');
+      const activeStats = getWeaponPerformance(activeWeaponId) || getWeaponPerformance('rifle')!;
       const muzzleOffset = activeStats.visualConfig.muzzleOffset;
       
       // Convert the camera's rotation to world axes so the offsets 
@@ -399,15 +400,15 @@ export function updateWeaponsContainer(
   currentAdsLerp: number,
   isMoving: boolean = false
 ): void {
-  if (!weaponsContainer || !rifleGroup || !pistolGroup) return;
+  if (!weaponsContainer || !primaryGroup || !secondaryGroup) return;
 
   const slot = weaponVisualState.activeSlot;
   
   // Downstream Gating: Only update the mixer of the active weapon
-  if (slot === 1 && rifleMixer) rifleMixer.update(dt);
-  if (slot === 2 && pistolMixer) pistolMixer.update(dt);
+  if (slot === 1 && primaryMixer) primaryMixer.update(dt);
+  if (slot === 2 && secondaryMixer) secondaryMixer.update(dt);
 
-  const actions = slot === 1 ? weaponActions.rifle : weaponActions.pistol;
+  const actions = slot === 1 ? primaryActions : secondaryActions;
 
   // Schema-driven state determination
   if (weaponVisualState.currentState !== WeaponAnimState.SHOOT && weaponVisualState.currentState !== WeaponAnimState.RELOAD) {
@@ -434,14 +435,15 @@ export function updateWeaponsContainer(
 
     if (prevTimer > WEAPON_SWITCH_DURATION * 0.5 && weaponVisualState.switchTimer <= WEAPON_SWITCH_DURATION * 0.5) {
       weaponVisualState.activeSlot = weaponVisualState.pendingSlot;
-      rifleGroup.visible = (weaponVisualState.activeSlot === 1);
-      pistolGroup.visible = (weaponVisualState.activeSlot === 2);
+      primaryGroup.visible = (weaponVisualState.activeSlot === 1);
+      secondaryGroup.visible = (weaponVisualState.activeSlot === 2);
       transitionToState(WeaponAnimState.DRAW, true);
     }
   }
 
   const activeSlot = weaponVisualState.activeSlot;
-  const stats = activeSlot === 1 ? DETAILED_WEAPONS.rifle : DETAILED_WEAPONS.pistol;
+  const activeWeaponId = getMatch()?.getActiveWeaponId() || (activeSlot === 1 ? 'rifle' : 'pistol');
+  const stats = getWeaponPerformance(activeWeaponId) || getWeaponPerformance('rifle')!;
 
   const recoverySpeed = stats.recoilRecoveryRate * 1.5;
   weaponVisualState.recoilZ = Math.max(0.0, weaponVisualState.recoilZ - dt * recoverySpeed);

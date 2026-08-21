@@ -48,11 +48,14 @@ import {
   PLAYER_MAX_HP,
   PLAYER_RESPAWN_DELAY_DEFAULT,
   getDroneMuzzleWorldPosition,
+  getWeaponPerformance,
   INTEL_CONFIGS,
-  DroneIntelConfig
+  DroneIntelConfig,
+  isRuntimeWeaponId
 } from "../shared/constants";
 import { ChannelAdapter } from "./transport/adapter";
-import { CLASSES, ClassId } from "../shared/classes.js";
+import { CLASSES, ClassId, getClassWeaponId, isClassWeaponAllowed } from "../shared/classes.js";
+import type { WeaponId } from "../shared/weapons.js";
 import {
   createInitialUtilityState,
   PlayerUtilityState,
@@ -104,6 +107,43 @@ import { MatchAbuseStore } from "./player-data/MatchAbuseStore";
 
 export const MAX_PROJECTILES = 200;
 
+type WeaponSlot = 'primary' | 'secondary';
+
+type WeaponSlotState = PlayerState['weaponState'][WeaponSlot];
+
+function getResolvedWeaponPerformance(weaponId: WeaponId) {
+  return getWeaponPerformance(weaponId) || getWeaponPerformance('rifle')!;
+}
+
+function getWeaponReserveCapacity(weaponId: WeaponId): number {
+  const performance = getResolvedWeaponPerformance(weaponId);
+  return performance.reserveCapacity ?? performance.capacity;
+}
+
+export function getWeaponReloadTicks(weaponId: WeaponId): number {
+  const performance = getResolvedWeaponPerformance(weaponId);
+  return Math.max(1, Math.ceil(performance.visualConfig.reloadDuration * 60));
+}
+
+function resetWeaponSlotState(state: WeaponSlotState, weaponId: WeaponId): void {
+  const performance = getResolvedWeaponPerformance(weaponId);
+  state.weaponId = weaponId;
+  state.currentMag = performance.capacity;
+  state.reserve = getWeaponReserveCapacity(weaponId);
+  state.isReloading = false;
+  state.reloadTimer = 0;
+  state.leakyBucket = 0;
+  state.lastConfirmedShotT = 0;
+}
+
+function applyWeaponReload(state: WeaponSlotState): void {
+  const performance = getResolvedWeaponPerformance(state.weaponId);
+  const needed = performance.capacity - state.currentMag;
+  const taken = Math.min(needed, state.reserve);
+  state.currentMag += taken;
+  state.reserve -= taken;
+}
+
 export interface PlayerState {
   id: string;
   reqUid?: string;
@@ -132,9 +172,10 @@ export interface PlayerState {
   hp: number;
   score: number;
   classId?: ClassId;
-  weapon?: string;
+  weapon?: WeaponId;
   weaponState: {
     primary: {
+      weaponId: WeaponId;
       currentMag: number;
       reserve: number;
       isReloading: boolean;
@@ -144,6 +185,7 @@ export interface PlayerState {
       leakyBucket: number;
     };
     secondary: {
+      weaponId: WeaponId;
       currentMag: number;
       reserve: number;
       isReloading: boolean;
@@ -814,21 +856,40 @@ export class MatchRoom {
 
 
 
-  public applyPlayerClassLoadout(pStateOrId: PlayerState | string, classId: ClassId): void {
+  public applyPlayerClassLoadout(
+    pStateOrId: PlayerState | string,
+    classId: ClassId,
+    requestedPrimaryWeaponId?: string,
+    requestedSecondaryWeaponId?: string,
+  ): void {
     const pState = typeof pStateOrId === 'string' ? this.players.get(pStateOrId) : pStateOrId;
     if (!pState) return;
     const classDef = CLASSES[classId] || CLASSES.ASSAULT;
+    const primaryWeaponId = requestedPrimaryWeaponId && isRuntimeWeaponId(requestedPrimaryWeaponId) && isClassWeaponAllowed(classDef.id, 'primary', requestedPrimaryWeaponId)
+      ? requestedPrimaryWeaponId
+      : classDef.primaryWeapon;
+    const secondaryWeaponId = requestedSecondaryWeaponId && isRuntimeWeaponId(requestedSecondaryWeaponId) && isClassWeaponAllowed(classDef.id, 'secondary', requestedSecondaryWeaponId)
+      ? requestedSecondaryWeaponId
+      : classDef.secondaryWeapon;
 
     pState.classId = classDef.id;
-    pState.weapon = classDef.primaryWeapon.toLowerCase();
+    pState.weapon = primaryWeaponId;
+    resetWeaponSlotState(pState.weaponState.primary, primaryWeaponId);
+    resetWeaponSlotState(pState.weaponState.secondary, secondaryWeaponId);
     pState.hp = 100;
     pState.maxHp = PLAYER_MAX_HP;
     pState.utilityState = createInitialUtilityState(classDef.id, ACTIVE_GAMEMODE.utilityCooldownMultiplier);
     pState.channel.emit("reliable_event", {
+      type: "WEAPON_LOADOUT",
+      classId: classDef.id,
+      primaryWeaponId,
+      secondaryWeaponId,
+    });
+    pState.channel.emit("reliable_event", {
       type: "UTILITY_STATE",
       state: pState.utilityState,
     });
-    console.log(`[MATCH] Applied class ${classDef.id} loadout to player ${pState.id}: Primary=${classDef.primaryWeapon}, Secondary=${classDef.secondaryWeapon}, Utility1=${classDef.utility1}, Utility2=${classDef.utility2}`);
+    console.log(`[MATCH] Applied class ${classDef.id} loadout to player ${pState.id}: Primary=${primaryWeaponId}, Secondary=${secondaryWeaponId}, Utility1=${classDef.utility1}, Utility2=${classDef.utility2}`);
   }
 
   public registerPlayer(
@@ -837,7 +898,9 @@ export class MatchRoom {
     stats: any,
     playerClass?: ClassId,
     displayName?: string,
-    reqUid?: string
+    reqUid?: string,
+    requestedPrimaryWeaponId?: string,
+    requestedSecondaryWeaponId?: string
   ): PlayerState {
     console.log(`[SERVER registerPlayer] playerId: "${playerId}", displayName: "${displayName || playerId}", mapId: "${this.mapId}", class: "${playerClass || 'ASSAULT'}"`);
 
@@ -848,7 +911,7 @@ export class MatchRoom {
       if (reqUid) existing.reqUid = reqUid;
       if (displayName) existing.displayName = displayName;
       if (playerClass && CLASSES[playerClass]) {
-        this.applyPlayerClassLoadout(existing, playerClass);
+        this.applyPlayerClassLoadout(existing, playerClass, requestedPrimaryWeaponId, requestedSecondaryWeaponId);
       }
       console.log(`[MATCH] Player ${playerId} reconnected. Rebinding to existing session state at [${existing.posX.toFixed(2)}, ${existing.posY.toFixed(2)}, ${existing.posZ.toFixed(2)}]`);
       
@@ -862,6 +925,8 @@ export class MatchRoom {
         hp: existing.hp,
         weapon: existing.weapon,
         classId: existing.classId,
+        primaryWeaponId: existing.weaponState.primary.weaponId,
+        secondaryWeaponId: existing.weaponState.secondary.weaponId,
         stats: existing.stats
       });
       
@@ -875,6 +940,14 @@ export class MatchRoom {
 
     const chosenClassId: ClassId = (playerClass && CLASSES[playerClass]) ? playerClass : 'ASSAULT';
     const classDef = CLASSES[chosenClassId];
+    const primaryWeaponId = requestedPrimaryWeaponId && isRuntimeWeaponId(requestedPrimaryWeaponId) && isClassWeaponAllowed(chosenClassId, 'primary', requestedPrimaryWeaponId)
+      ? requestedPrimaryWeaponId
+      : classDef.primaryWeapon;
+    const secondaryWeaponId = requestedSecondaryWeaponId && isRuntimeWeaponId(requestedSecondaryWeaponId) && isClassWeaponAllowed(chosenClassId, 'secondary', requestedSecondaryWeaponId)
+      ? requestedSecondaryWeaponId
+      : classDef.secondaryWeapon;
+    const primaryPerformance = getResolvedWeaponPerformance(primaryWeaponId);
+    const secondaryPerformance = getResolvedWeaponPerformance(secondaryWeaponId);
 
     const pState: PlayerState = {
       id: playerId,
@@ -900,11 +973,12 @@ export class MatchRoom {
       hp: 100,
       score: 0,
       classId: chosenClassId,
-      weapon: classDef.primaryWeapon.toLowerCase(),
+      weapon: primaryWeaponId,
       weaponState: {
         primary: {
-          currentMag: 40,
-          reserve: 120,
+          weaponId: primaryWeaponId,
+          currentMag: primaryPerformance.capacity,
+          reserve: getWeaponReserveCapacity(primaryWeaponId),
           isReloading: false,
           reloadTimer: 0,
           fireMode: "auto",
@@ -912,8 +986,9 @@ export class MatchRoom {
           leakyBucket: 0,
         },
         secondary: {
-          currentMag: 35,
-          reserve: 100,
+          weaponId: secondaryWeaponId,
+          currentMag: secondaryPerformance.capacity,
+          reserve: getWeaponReserveCapacity(secondaryWeaponId),
           isReloading: false,
           reloadTimer: 0,
           fireMode: "auto",
@@ -985,8 +1060,17 @@ export class MatchRoom {
       id: playerId,
       zones: Object.values(ZONES),
       position: { x: pState.posX, y: pState.posY, z: pState.posZ },
+      classId: pState.classId,
+      primaryWeaponId: pState.weaponState.primary.weaponId,
+      secondaryWeaponId: pState.weaponState.secondary.weaponId,
     });
 
+    channel.emit("reliable_event", {
+      type: "WEAPON_LOADOUT",
+      classId: pState.classId,
+      primaryWeaponId: pState.weaponState.primary.weaponId,
+      secondaryWeaponId: pState.weaponState.secondary.weaponId,
+    });
     channel.emit("reliable_event", {
       type: "UTILITY_STATE",
       state: pState.utilityState,
@@ -1448,15 +1532,9 @@ export class MatchRoom {
                 player.isDead = false;
                 player.hp = player.maxHp;
                 
-                // Reset weapon state on respawn
-                player.weaponState.primary.reserve = 120;
-                player.weaponState.primary.currentMag = 40;
-                player.weaponState.primary.isReloading = false;
-                player.weaponState.primary.reloadTimer = 0;
-                player.weaponState.secondary.reserve = 60;
-                player.weaponState.secondary.currentMag = 35;
-                player.weaponState.secondary.isReloading = false;
-                player.weaponState.secondary.reloadTimer = 0;
+                // Reset each semantic slot from its resolved weapon identity.
+                resetWeaponSlotState(player.weaponState.primary, player.weaponState.primary.weaponId);
+                resetWeaponSlotState(player.weaponState.secondary, player.weaponState.secondary.weaponId);
                 
                 if (ACTIVE_GAMEMODE.utilityResetsOnRespawn && player.utilityState) {
                   player.utilityState = createInitialUtilityState(player.classId || "ASSAULT", ACTIVE_GAMEMODE.utilityCooldownMultiplier);
@@ -1503,27 +1581,34 @@ export class MatchRoom {
               continue;
             }
 
-            // Reload timers
-            ["primary", "secondary"].forEach((s) => {
-              const slot = s as "primary" | "secondary";
-              const wState = player.weaponState[slot];
-              if (wState.isReloading) {
-                wState.reloadTimer--;
-                if (wState.reloadTimer <= 0) {
-                  wState.isReloading = false;
-                  const maxCapacity = slot === "primary" ? 40 : 35;
-                  const needed = maxCapacity - wState.currentMag;
-                  const taken = Math.min(needed, wState.reserve);
-                  wState.currentMag += taken;
-                  wState.reserve -= taken;
-                  player.channel.emit("reliable_event", {
-                    type: "AMMO_STATE",
-                    primary: player.weaponState.primary,
-                    secondary: player.weaponState.secondary,
-                  });
-                }
+            // Reload timers. Keep the two fixed semantic slots explicit to avoid
+            // allocating an iterable in the 60Hz authoritative tick.
+            const primaryState = player.weaponState.primary;
+            const secondaryState = player.weaponState.secondary;
+            if (primaryState.isReloading) {
+              primaryState.reloadTimer--;
+              if (primaryState.reloadTimer <= 0) {
+                primaryState.isReloading = false;
+                applyWeaponReload(primaryState);
+                player.channel.emit("reliable_event", {
+                  type: "AMMO_STATE",
+                  primary: player.weaponState.primary,
+                  secondary: player.weaponState.secondary,
+                });
               }
-            });
+            }
+            if (secondaryState.isReloading) {
+              secondaryState.reloadTimer--;
+              if (secondaryState.reloadTimer <= 0) {
+                secondaryState.isReloading = false;
+                applyWeaponReload(secondaryState);
+                player.channel.emit("reliable_event", {
+                  type: "AMMO_STATE",
+                  primary: player.weaponState.primary,
+                  secondary: player.weaponState.secondary,
+                });
+              }
+            }
 
             // Utility cooldown tick
             if (player.utilityState) {

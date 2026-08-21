@@ -134,15 +134,30 @@ export const UTILITIES: Record<UtilityId, UtilityDefinition> = {
   },
 };
 
+import { UTILITY_ASSET_DETAILS } from './asset-details';
+
 export const UTILITY_MODEL_KEYS: Record<UtilityId, string> = {
-  'Grenade': 'm67-grenade-optimized.glb',
-  'Flashbang': 'm84-flashbang-optimized.glb',
-  'Med Kit': 'emergency-medkit-optimized.glb',
-  'Revive Tool': 'healthshot-optimized.glb',
-  'Radio': 'selex-prr-optimized.glb',
-  'Signal Jammer': 'prc152-optimized.glb',
-  'Proximity Mine': 'proximity-mine-optimized.glb',
-  'C4': 'c4-optimized.glb',
+  'Grenade': UTILITY_ASSET_DETAILS['Grenade'].modelKey,
+  'Flashbang': UTILITY_ASSET_DETAILS['Flashbang'].modelKey,
+  'Med Kit': UTILITY_ASSET_DETAILS['Med Kit'].modelKey,
+  'Revive Tool': UTILITY_ASSET_DETAILS['Revive Tool'].modelKey,
+  'Radio': UTILITY_ASSET_DETAILS['Radio'].modelKey,
+  'Signal Jammer': UTILITY_ASSET_DETAILS['Signal Jammer'].modelKey,
+  'Proximity Mine': UTILITY_ASSET_DETAILS['Proximity Mine'].modelKey,
+  'C4': UTILITY_ASSET_DETAILS['C4'].modelKey,
+};
+
+export interface UtilityDisplayStats {
+  damage: number;
+  fireRateHz: number;
+  capacity: number;
+  range: number;
+}
+
+export const UTILITY_DISPLAY_STATS: Partial<Record<UtilityId, UtilityDisplayStats>> = {
+  'Signal Jammer': { damage: 0, fireRateHz: 0.2, capacity: 1, range: 0 },
+  'Proximity Mine': { damage: PROXIMITY_MINE_DAMAGE, fireRateHz: 0.3, capacity: PROXIMITY_MINE_MAX_CHARGES, range: PROXIMITY_MINE_RADIUS },
+  'C4': { damage: C4_DAMAGE, fireRateHz: 0.3, capacity: C4_MAX_CHARGES, range: C4_RADIUS },
 };
 
 export interface SlotUtilityState {

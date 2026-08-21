@@ -4,6 +4,11 @@ import { audioManager } from "../audio";
 import { StudioPreviewManager, AVAILABLE_SKINS } from "../StudioPreviewManager";
 import { CLASSES, ClassId } from "../../shared/classes";
 import { ClassLoadoutSystem } from "../src/systems/ClassLoadoutSystem";
+import { ClassLoadoutPersistence } from "../src/systems/ClassLoadoutPersistence";
+import { isRuntimeWeaponId } from "../../shared/constants";
+import { UTILITY_DISPLAY_STATS, type UtilityId } from "../../shared/utilities";
+import { WEAPON_ASSET_DETAILS, UTILITY_ASSET_DETAILS } from "../../shared/asset-details";
+import type { WeaponId } from "../../shared/weapons";
 
 export interface LoadoutSlotItem {
   id: string;
@@ -17,27 +22,31 @@ export interface LoadoutSlotItem {
 export const CATALOG_LOADOUTS: Record<string, LoadoutSlotItem[]> = {
   ASSAULT: [
     { id: 'm4_rifle_assault', name: 'M4 BATTLE RIFLE', weaponKey: 'rifle', category: 'Assault Rifle', slotName: 'PRIMARY', stats: DETAILED_WEAPONS.rifle },
+    { id: 'f90_smg_assault', name: 'F90 SMG', weaponKey: 'smg', category: 'Submachine Gun', slotName: 'PRIMARY', stats: null },
     { id: 'viper_pistol_assault', name: 'VIPER PISTOL', weaponKey: 'pistol', category: 'Sidearm', slotName: 'SECONDARY', stats: DETAILED_WEAPONS.pistol },
     { id: 'frag_grenade_assault', name: 'FRAG GRENADE', weaponKey: 'grenade', category: 'Ordnance', slotName: 'UTILITY 1', stats: DETAILED_WEAPONS.grenade },
     { id: 'flashbang_assault', name: 'FLASH GRENADE', weaponKey: 'flashbang', category: 'Disruption', slotName: 'UTILITY 2', stats: { damage: 0, fireRateHz: 1, capacity: 2, range: 15 } }
   ],
   MEDIC: [
     { id: 'm4_rifle_medic', name: 'M4 BATTLE RIFLE', weaponKey: 'rifle', category: 'Assault Rifle', slotName: 'PRIMARY', stats: DETAILED_WEAPONS.rifle },
+    { id: 'benelli_shotgun_medic', name: 'BENELLI M4 SHOTGUN', weaponKey: 'shotgun', category: 'Shotgun', slotName: 'PRIMARY', stats: DETAILED_WEAPONS.shotgun },
     { id: 'viper_pistol_medic', name: 'VIPER PISTOL', weaponKey: 'pistol', category: 'Sidearm', slotName: 'SECONDARY', stats: DETAILED_WEAPONS.pistol },
     { id: 'medkit_medic', name: 'MEDKIT', weaponKey: 'medkit', category: 'Support', slotName: 'UTILITY 1', stats: DETAILED_WEAPONS.medkit },
     { id: 'revive_medic', name: 'REVIVE TOOL', weaponKey: 'revive', category: 'Support', slotName: 'UTILITY 2', stats: { damage: 0, fireRateHz: 0.5, capacity: 1, range: 4 } }
   ],
   RECON: [
     { id: 'm4_rifle_recon', name: 'M4 BATTLE RIFLE', weaponKey: 'rifle', category: 'Assault Rifle', slotName: 'PRIMARY', stats: DETAILED_WEAPONS.rifle },
+    { id: 'pgm_sniper_recon', name: 'PGM ULTIMA RATIO', weaponKey: 'sniper', category: 'Sniper Rifle', slotName: 'PRIMARY', stats: DETAILED_WEAPONS.sniper },
     { id: 'viper_pistol_recon', name: 'VIPER PISTOL', weaponKey: 'pistol', category: 'Sidearm', slotName: 'SECONDARY', stats: DETAILED_WEAPONS.pistol },
     { id: 'radio_recon', name: 'FIELD RADIO', weaponKey: 'radio', category: 'Comms', slotName: 'UTILITY 1', stats: DETAILED_WEAPONS.radio },
     { id: 'disruptor_recon', name: 'SIGNAL DISRUPTOR', weaponKey: 'signal_jammer', category: 'Electronic', slotName: 'UTILITY 2', stats: { damage: 0, fireRateHz: 0.2, capacity: 1, range: 0 } }
   ],
   DEMOLITIONS: [
     { id: 'm4_rifle_demo', name: 'M4 BATTLE RIFLE', weaponKey: 'rifle', category: 'Assault Rifle', slotName: 'PRIMARY', stats: DETAILED_WEAPONS.rifle },
+    { id: 'lmg_demo', name: 'LMG RIFLE', weaponKey: 'lmg', category: 'Light Machine Gun', slotName: 'PRIMARY', stats: DETAILED_WEAPONS.lmg },
     { id: 'viper_pistol_demo', name: 'VIPER PISTOL', weaponKey: 'pistol', category: 'Sidearm', slotName: 'SECONDARY', stats: DETAILED_WEAPONS.pistol },
-    { id: 'emp_demo', name: 'EMP CHARGE', weaponKey: 'signal_jammer', category: 'Disruption', slotName: 'UTILITY 1', stats: { damage: 0, fireRateHz: 0.5, capacity: 1, range: 10 } },
-    { id: 'c4_demo', name: 'C4 EXPLOSIVE', weaponKey: 'c4', category: 'Demolition', slotName: 'UTILITY 2', stats: { damage: 150, fireRateHz: 0.3, capacity: 1, range: 8 } }
+    { id: 'c4_demo', name: 'C4 EXPLOSIVE', weaponKey: 'c4', category: 'Demolition', slotName: 'UTILITY 1', stats: UTILITY_DISPLAY_STATS['C4'] },
+    { id: 'mine_demo', name: 'PROXIMITY MINE', weaponKey: 'proximity_mine', category: 'Demolition', slotName: 'UTILITY 2', stats: UTILITY_DISPLAY_STATS['Proximity Mine'] }
   ]
 };
 
@@ -144,34 +153,22 @@ export function renderArmoryScreen(container: HTMLElement, registeredUserData?: 
   const selectedItem = currentList[selectedItemIdx] || currentList[0];
 
 function getSlotIconSvg(item: LoadoutSlotItem): string {
-  const id = (item.id || '').toLowerCase();
-  const name = (item.name || '').toLowerCase();
   const key = (item.weaponKey || '').toLowerCase();
-  const cat = (item.category || '').toLowerCase();
-
-  let src = '/ui_svgs/utility_grenade.svg';
-
-  if (key === 'rifle' || cat.includes('rifle') || name.includes('rifle')) {
-    src = '/ui_svgs/rifle.svg';
-  } else if (key === 'pistol' || cat.includes('sidearm') || cat.includes('pistol') || name.includes('pistol')) {
-    src = '/ui_svgs/pistol.svg';
-  } else if (name.includes('flash') || id.includes('flash')) {
-    src = '/ui_svgs/utility_flashbang.svg';
-  } else if (name.includes('frag') || name.includes('grenade') || id.includes('frag')) {
-    src = '/ui_svgs/utility_grenade.svg';
-  } else if (name.includes('medkit') || cat.includes('medkit') || id.includes('medkit')) {
-    src = '/ui_svgs/medkit.svg';
-  } else if (name.includes('revive') || id.includes('revive')) {
-    src = '/ui_svgs/utility_revive.svg';
-  } else if (name.includes('disrupt') || name.includes('jam') || id.includes('disrupt')) {
-    src = '/ui_svgs/utility_jammer.svg';
-  } else if (name.includes('radio') || name.includes('comms') || id.includes('radio')) {
-    src = '/ui_svgs/radio.svg';
-  } else if (name.includes('c4') || id.includes('c4')) {
-    src = '/ui_svgs/utility_c4.svg';
-  } else if (name.includes('emp') || name.includes('mine') || id.includes('mine')) {
-    src = '/ui_svgs/utility_mine.svg';
-  }
+  const weaponDetails = WEAPON_ASSET_DETAILS[key as WeaponId];
+  const utilityKeyByCatalogKey: Record<string, UtilityId> = {
+    grenade: 'Grenade',
+    flashbang: 'Flashbang',
+    medkit: 'Med Kit',
+    revive: 'Revive Tool',
+    radio: 'Radio',
+    signal_jammer: 'Signal Jammer',
+    proximity_mine: 'Proximity Mine',
+    c4: 'C4',
+  };
+  const utilityId = utilityKeyByCatalogKey[key];
+  const utilityDetails = utilityId ? UTILITY_ASSET_DETAILS[utilityId] : undefined;
+  // SVG CONNECTOR PLACEHOLDER: svg-responsible agent replaces registry paths only.
+  const src = weaponDetails?.svgPath || utilityDetails?.svgPath || '/ui_svgs/utility_grenade.svg';
 
   return `<img src="${src}" style="width: 1.13rem; height: 1.13rem; filter: brightness(0) invert(1); opacity: 0.85; object-fit: contain;" alt="${item.name}" />`;
 }
@@ -299,6 +296,49 @@ function getSlotIconSvg(item: LoadoutSlotItem): string {
   `;
 
   leftCol.appendChild(statsCard);
+
+  const slotIndexByName: Record<string, number> = {
+    'PRIMARY': 0,
+    'SECONDARY': 1,
+    'UTILITY 1': 2,
+    'UTILITY 2': 3,
+  };
+  const selectedSlotIndex = selectedItem ? slotIndexByName[selectedItem.slotName] : -1;
+  const isWeaponItem = selectedItem?.slotName === 'PRIMARY' || selectedItem?.slotName === 'SECONDARY';
+  const hasAuthoredWeaponRuntime = !isWeaponItem || isRuntimeWeaponId(selectedItem!.weaponKey);
+  const currentLoadout = ClassLoadoutPersistence.getClassLoadout(activeCategory);
+  const isEquipped = selectedItem && selectedSlotIndex >= 0
+    ? currentLoadout[selectedSlotIndex]?.id === selectedItem.id
+    : false;
+  const equipButton = document.createElement('button');
+  equipButton.type = 'button';
+  equipButton.textContent = !hasAuthoredWeaponRuntime
+    ? 'AUTHORING REQUIRED'
+    : (isEquipped ? `EQUIPPED · ${selectedItem?.slotName || 'SLOT'}` : `EQUIP · ${selectedItem?.slotName || 'SLOT'}`);
+  Object.assign(equipButton.style, {
+    width: '100%',
+    minHeight: '1.75rem',
+    marginTop: '0.35rem',
+    background: isEquipped ? 'rgba(255, 69, 0, 0.12)' : 'transparent',
+    border: `1px solid ${hasAuthoredWeaponRuntime ? (isEquipped ? '#FF4500' : '#444444') : '#333333'}`,
+    color: hasAuthoredWeaponRuntime ? (isEquipped ? '#FF4500' : '#AAAAAA') : '#555555',
+    fontFamily: DS.typography.fontFamily,
+    fontSize: DS.typography.sizes.tiny,
+    fontWeight: 'bold',
+    letterSpacing: '0.04em',
+    cursor: hasAuthoredWeaponRuntime ? 'pointer' : 'not-allowed',
+  });
+  equipButton.disabled = !selectedItem || selectedSlotIndex < 0 || !hasAuthoredWeaponRuntime;
+  equipButton.title = !hasAuthoredWeaponRuntime
+    ? 'This weapon requires authored shared stats before it can enter an authoritative match.'
+    : 'Persist this item to the selected class and named slot.';
+  equipButton.onclick = async () => {
+    if (!selectedItem || selectedSlotIndex < 0 || !hasAuthoredWeaponRuntime) return;
+    audioManager.play('click');
+    await ClassLoadoutPersistence.saveClassLoadout(activeCategory, selectedSlotIndex, selectedItem);
+    renderArmoryScreen(container, registeredUserData);
+  };
+  leftCol.appendChild(equipButton);
   wrap.appendChild(leftCol);
 
   // Viewport Container positioned absolutely - starts from the top bar bottom boundary and expands to fill space

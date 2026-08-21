@@ -572,7 +572,7 @@ export interface DroneNetworkData {
 }
 
 import { DETAILED_WEAPONS } from "./weapons";
-import type { WeaponPerformance } from "./weapons";
+import type { WeaponId, WeaponPerformance } from "./weapons";
 
 export { DETAILED_WEAPONS };
 export type { WeaponPerformance };
@@ -585,10 +585,20 @@ export interface WeaponStats {
   capacity: number;
 }
 
-export const WEAPONS: Record<string, WeaponStats> = {
-  rifle: DETAILED_WEAPONS.rifle,
-  pistol: DETAILED_WEAPONS.pistol
-};
+export const WEAPONS: Record<string, WeaponStats> = DETAILED_WEAPONS;
+export const RUNTIME_WEAPON_IDS: readonly WeaponId[] = ['rifle', 'pistol', 'smg', 'shotgun', 'lmg', 'sniper'];
+
+export function isRuntimeWeaponId(value: string): value is WeaponId {
+  return RUNTIME_WEAPON_IDS.includes(value as WeaponId) && value in DETAILED_WEAPONS;
+}
+
+export function getWeaponPerformance(weaponId: string): WeaponPerformance | null {
+  return isRuntimeWeaponId(weaponId) ? DETAILED_WEAPONS[weaponId] : null;
+}
+
+export function getWeaponStats(weaponId: string): WeaponStats | null {
+  return getWeaponPerformance(weaponId);
+}
 
 // Combat & Health sync structure
 export interface HitEvent {

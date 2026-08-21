@@ -7,10 +7,8 @@ import {
   HISTORICAL_SAMPLES_MAX, 
   HISTORIC_BLOCK_SIZE 
 } from "../../shared/constants";
-import { 
-  DETAILED_WEAPONS, 
-  calculateDamageWithFalloff 
-} from "../../shared/weapons";
+import { getWeaponPerformance } from "../../shared/constants";
+import { calculateDamageWithFalloff } from "../../shared/weapons";
 import { 
   recordHitscanRejected, 
   recordSecurityExploit 
@@ -141,9 +139,8 @@ export function processHitscan(
   }
 
   if (bestHitDrone) {
-    const weaponPerf = isPrimary
-      ? DETAILED_WEAPONS.rifle
-      : DETAILED_WEAPONS.pistol;
+    const weaponPerf = getWeaponPerformance(pState.weaponState[isPrimary ? "primary" : "secondary"].weaponId);
+    if (!weaponPerf) return;
     const distance = distSqMin;
     const rawDamage = calculateDamageWithFalloff(
       weaponPerf.damage,

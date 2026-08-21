@@ -1,10 +1,6 @@
 import * as THREE from "three";
 import { MatchController } from "../../MatchController";
-import { 
-  WEAPONS, 
-  DETAILED_WEAPONS, 
-  WeaponStats 
-} from "../../../shared/constants";
+import { getWeaponPerformance } from "../../../shared/constants";
 import { GlobalState } from "../../state";
 import { audioManager } from "../../audio";
 import { hitscanSystem } from "../../hitscan";
@@ -46,7 +42,8 @@ export class CombatSystem {
 
     // 3. CHECKS COOLDOWN GATE
     const now = performance.now();
-    const weaponStats = this.match.activeWeapon === 1 ? WEAPONS.rifle : WEAPONS.pistol;
+    const activeWeaponId = this.match.getActiveWeaponId();
+    const weaponStats = getWeaponPerformance(activeWeaponId) || getWeaponPerformance('rifle')!;
     const allowedInterval = 1000 / weaponStats.fireRateHz;
     const lastShotTime = this.match.activeWeapon === 1 ? this.match.lastPrimaryShotT : this.match.lastSecondaryShotT;
 
@@ -70,12 +67,12 @@ export class CombatSystem {
       if (!this.match.isReloading) {
         this.match.isReloading = true;
         setWeaponReloading(true);
-        audioManager.playWeaponReload(this.match.activeWeapon);
+        audioManager.playWeaponReload(activeWeaponId);
       }
     }
 
     // 5. PROCESS ACCURACY BLOOM, RECOIL KICK & CAMERA SHAKE
-    const currentWeaponStats = this.match.activeWeapon === 1 ? DETAILED_WEAPONS.rifle : DETAILED_WEAPONS.pistol;
+    const currentWeaponStats = weaponStats;
 
     this.match.currentAccuracyHeat = Math.min(1.0, this.match.currentAccuracyHeat + currentWeaponStats.heatPerShot);
     this.match.visualRecoilUpOffset = Math.min(0.2, this.match.visualRecoilUpOffset + currentWeaponStats.recoilForceUp);
@@ -110,7 +107,7 @@ export class CombatSystem {
     }
 
     applyWeaponRecoil(currentWeaponStats.recoilForceUp, currentWeaponStats.recoilForceSide);
-    audioManager.playWeaponFire(this.match.activeWeapon);
+    audioManager.playWeaponFire(activeWeaponId);
 
     this.weaponMuzzlePos.set(0, 0, 0);
     getMuzzleWorldPosition(this.weaponMuzzlePos, camera);

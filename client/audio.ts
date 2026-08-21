@@ -2,6 +2,8 @@ import { Howl, Howler } from 'howler';
 import * as THREE from 'three';
 import { getCachedOrFetchUrl } from "./asset-cache";
 import { AUDIO_MANIFEST, getManifestEntry, AudioKey } from "./audio-manifest";
+import { WEAPON_ASSET_DETAILS } from "../shared/asset-details";
+import type { WeaponId } from "../shared/weapons";
 
 class AudioManager {
     private assetsLoaded = 0;
@@ -145,6 +147,9 @@ class AudioManager {
     }
     
     public play(name: string) {
+        // AUDIO CONNECTOR PLACEHOLDER: audio-responsible agent replaces keys in shared/asset-details.ts and audio-manifest.ts.
+        // Placeholder keys intentionally no-op so missing authored audio never floods runtime logs.
+        if (name.startsWith('PLACEHOLDER_')) return;
         const sound = this.sounds[name];
         if (sound) {
             const entry = getManifestEntry(name);
@@ -370,28 +375,32 @@ class AudioManager {
         }
     }
 
-    public playWeaponFire(activeWeapon: number) {
-        if (activeWeapon === 1) {
-            this.play('rifle_fire');
-        } else if (activeWeapon === 2) {
-            this.play('pistol_fire');
-        } else {
-            this.play('smg_fire');
-        }
+    public playWeaponFire(weapon: number | WeaponId) {
+        const weaponId: WeaponId = typeof weapon === 'number'
+            ? (weapon === 1 ? 'rifle' : 'pistol')
+            : weapon;
+        const key = WEAPON_ASSET_DETAILS[weaponId]?.audio.fire;
+        if (key) this.play(key);
     }
 
-    public playWeaponReload(activeWeapon: number) {
-        this.stopWeaponReload();
-        if (activeWeapon === 1) {
-            this.play('rifle_reload');
-        } else if (activeWeapon === 2) {
-            this.play('pistol_reload');
-        } else {
-            this.play('reload');
-        }
+    public playWeaponReload(weapon: number | WeaponId) {
+        this.stopWeaponReload(weapon);
+        const weaponId: WeaponId = typeof weapon === 'number'
+            ? (weapon === 1 ? 'rifle' : 'pistol')
+            : weapon;
+        const key = WEAPON_ASSET_DETAILS[weaponId]?.audio.reload;
+        if (key) this.play(key);
     }
     
-    public stopWeaponReload() {
+    public stopWeaponReload(weapon?: number | WeaponId) {
+        const weaponId: WeaponId | undefined = weapon === undefined
+            ? undefined
+            : (typeof weapon === 'number' ? (weapon === 1 ? 'rifle' : 'pistol') : weapon);
+        if (weaponId) {
+            const key = WEAPON_ASSET_DETAILS[weaponId]?.audio.reload;
+            if (key && !key.startsWith('PLACEHOLDER_')) this.stop(key);
+            return;
+        }
         this.stop('reload');
         this.stop('pistol_reload');
         this.stop('rifle_reload');

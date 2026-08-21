@@ -1,6 +1,8 @@
 import * as THREE from "three/webgpu";
 import { ClientTransport } from "./transport/adapter";
-import { DroneState, DroneType } from "../shared/constants";
+import { DroneState, DroneType, getWeaponPerformance } from "../shared/constants";
+import { CLASSES, ClassId, getClassWeaponId, isClassWeaponAllowed } from "../shared/classes";
+import type { WeaponId } from "../shared/weapons";
 import { MinimapSystem } from "./src/systems/MinimapSystem";
 import { NetworkSyncSystem } from "./src/systems/NetworkSyncSystem";
 import { SimulationSystem } from "./src/systems/SimulationSystem";
@@ -168,6 +170,9 @@ export class MatchController {
 
   // Combat State
   public activeWeapon = 1;
+  public classId: ClassId = 'ASSAULT';
+  public primaryWeaponId: WeaponId = 'rifle';
+  public secondaryWeaponId: WeaponId = 'pistol';
   public ammo1 = 40;
   public maxAmmo1 = 40;
   public ammo2 = 35;
@@ -178,6 +183,27 @@ export class MatchController {
   public fireSequenceNumber = 0;
   public pendingFire = false;
   public rifleMode: "auto" | "burst" = "auto";
+
+  public configureLoadout(classId: ClassId, primaryWeaponId?: WeaponId, secondaryWeaponId?: WeaponId): void {
+    const classDef = CLASSES[classId] || CLASSES.ASSAULT;
+    this.classId = classDef.id;
+    this.primaryWeaponId = primaryWeaponId && isClassWeaponAllowed(this.classId, 'primary', primaryWeaponId)
+      ? primaryWeaponId
+      : getClassWeaponId(this.classId, 'primary');
+    this.secondaryWeaponId = secondaryWeaponId && isClassWeaponAllowed(this.classId, 'secondary', secondaryWeaponId)
+      ? secondaryWeaponId
+      : getClassWeaponId(this.classId, 'secondary');
+    const primaryStats = getWeaponPerformance(this.primaryWeaponId) || getWeaponPerformance('rifle')!;
+    const secondaryStats = getWeaponPerformance(this.secondaryWeaponId) || getWeaponPerformance('pistol')!;
+    this.maxAmmo1 = primaryStats.capacity;
+    this.maxAmmo2 = secondaryStats.capacity;
+    this.ammo1 = primaryStats.capacity;
+    this.ammo2 = secondaryStats.capacity;
+  }
+
+  public getActiveWeaponId(): WeaponId {
+    return this.activeWeapon === 1 ? this.primaryWeaponId : this.secondaryWeaponId;
+  }
 
   // Input/Touch State
   public activePointers = new Map<number, { type: string; id: string }>();

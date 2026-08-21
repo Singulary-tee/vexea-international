@@ -1,7 +1,7 @@
 import { ChannelAdapter } from "../adapter";
-import { MatchRoom, PlayerState } from "../../MatchRoom";
+import { MatchRoom, PlayerState, getWeaponReloadTicks } from "../../MatchRoom";
 import { processHitscan } from "../../combat/hitscan";
-import { WEAPONS } from "../../../shared/constants";
+import { getWeaponPerformance } from "../../../shared/constants";
 import { recordHitscanRejected } from "../../sentry";
 
 export function registerGameplayHandlers(
@@ -74,8 +74,9 @@ export function registerGameplayHandlers(
       const slot = args.weaponSlot as "primary" | "secondary";
       if (!slot) return;
       const wState = p.weaponState[slot];
-      const wDef = slot === "primary" ? WEAPONS.rifle : WEAPONS.pistol;
-      const reloadTicks = slot === "primary" ? 150 : 120;
+      const wDef = getWeaponPerformance(wState.weaponId);
+      if (!wDef) return;
+      const reloadTicks = getWeaponReloadTicks(wState.weaponId);
 
       if (!wState.isReloading && wState.currentMag < wDef.capacity && wState.reserve > 0) {
         wState.isReloading = true;
@@ -107,14 +108,16 @@ export function registerGameplayHandlers(
 
     if (type === "FIRE") {
       const slot = args.weaponSlot as "primary" | "secondary";
-      const isPrimary = slot === "primary";
-      const weaponStats = isPrimary ? WEAPONS.rifle : WEAPONS.pistol;
+      if (slot !== "primary" && slot !== "secondary") return;
       const wState = p.weaponState[slot];
+      const weaponStats = getWeaponPerformance(wState.weaponId);
+      if (!weaponStats) return;
+      const reloadTicks = getWeaponReloadTicks(wState.weaponId);
 
       if (wState.currentMag <= 0) {
         if (!wState.isReloading && wState.reserve > 0) {
           wState.isReloading = true;
-          wState.reloadTimer = isPrimary ? 150 : 120;
+          wState.reloadTimer = reloadTicks;
           p.channel.emit("reliable_event", {
             type: "AMMO_STATE",
             primary: p.weaponState.primary,
@@ -147,7 +150,7 @@ export function registerGameplayHandlers(
 
         if (wState.currentMag === 0 && wState.reserve > 0 && !p.infiniteAmmo) {
           wState.isReloading = true;
-          wState.reloadTimer = isPrimary ? 150 : 120;
+          wState.reloadTimer = reloadTicks;
         }
 
         p.channel.emit("reliable_event", {
