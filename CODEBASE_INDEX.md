@@ -596,3 +596,17 @@ Every file change in the VEXEA codebase must follow this strict two-step protoco
 
 
 
+
+### Cycle 2026-08-21-04: Approved R2 Model Manifest and Preview Binding
+*   **Target Files:** `client/model-manifest.ts`, `shared/utilities.ts`, `client/StudioPreviewManager.ts`, `client/screens/armory-screen.ts`, `CODEBASE_INDEX.md`
+*   **Status:** Verified & Finalized
+*   **Scope:**
+    *   `client/model-manifest.ts`: Added 14 additive manifest records for the verified R2 ETC1S GLBs: eight utility/entity models and six weapon models, preserving all existing manifest keys and categories.
+    *   `shared/utilities.ts`: Added the typed `UTILITY_MODEL_KEYS` map for all eight existing `UtilityId` values without changing cooldowns, charges, state shape, or hot-loop behavior.
+    *   `client/StudioPreviewManager.ts`: Added stable model-key aliases for the approved pistol, shotgun, LMG, sniper, and utility previews, replacing their prior SCAR placeholder routing while preserving the rifle fallback and character-preview path.
+    *   `client/screens/armory-screen.ts`: Replaced catalog-level utility placeholders with direct approved model keys for flashbang, revive, signal jammer/EMP, and C4 previews.
+    *   `CODEBASE_INDEX.md`: Finalized this registration with the implemented-file summary and post-edit evidence.
+*   **Explicit Non-Scope:** `client/weapons_model.ts`, `client/main.ts`, server weapon contracts, HUD slot count, combat-stat selection, and audio slot routing remain unchanged in this slice because the current gameplay contract supports only rifle/pistol slots; expanding those contracts requires a separately registered design and regression pass.
+*   **Constraints:** No WebGLRenderer, no React, no changes to Geckos.io, no new allocations in physics/network hot loops, no duplicated gameplay constants, no secret exposure, and no R2 mutation.
+*   **Pre-Edit Evidence:** The 14 uploaded objects were verified in R2 at 9,171,028 aggregate bytes; all production-origin worker fetches returned HTTP 200 with exact local SHA-256 matches. The branch is based on current `origin/main` and was clean before this registration.
+*   **Post-Edit Status:** Verified. `npm run build` passed; `tsc --noEmit` passed; `npm test` passed with 20/20 test files and 101/101 tests. The corrected outside-repository verifier passed all 14 manifest-key/path checks, all eight utility bindings, preview aliases, protected-file scope, WebGPU guard, and Geckos.io retention. Architectural regression checks confirmed no `THREE.WebGLRenderer`, no hot-loop files changed, and no decoder/transcoder artifacts remain modified.

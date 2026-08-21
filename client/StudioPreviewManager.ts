@@ -21,6 +21,29 @@ export const AVAILABLE_SKINS: Record<string, WeaponSkin> = {
   test_skin: { id: 'test_skin', name: 'TEST COATING', textureFile: null, previewBg: '#1d222e' }
 };
 
+const MODEL_KEY_ALIASES: Record<string, string> = {
+  rifle: 'scar_l-optimized.glb',
+  m4_rifle: 'scar_l-optimized.glb',
+  lmg: 'lmg-rifle-optimized.glb',
+  shotgun: 'benelli-m4-optimized.glb',
+  sniper: 'pgm-ultima-ratio-optimized.glb',
+  pistol: 'g17-optimized.glb',
+  viper_pistol: 'g17-optimized.glb',
+  sig_m18: 'sig-m18-optimized.glb',
+  sig_p320_m18: 'sig-m18-optimized.glb',
+  grenade: 'm67-grenade-optimized.glb',
+  flashbang: 'm84-flashbang-optimized.glb',
+  smoke: 'm18-smoke-optimized.glb',
+  medkit: 'emergency-medkit-optimized.glb',
+  revive: 'healthshot-optimized.glb',
+  revive_tool: 'healthshot-optimized.glb',
+  radio: 'selex-prr-optimized.glb',
+  signal_jammer: 'prc152-optimized.glb',
+  disruptor: 'prc152-optimized.glb',
+  proximity_mine: 'proximity-mine-optimized.glb',
+  c4: 'c4-optimized.glb',
+};
+
 function isFirearm(itemKey: string, glbName: string): boolean {
   const key = (itemKey || "").toLowerCase();
   const name = (glbName || "").toLowerCase();
@@ -381,7 +404,11 @@ class StudioPreviewManagerImpl {
     let glbName = "";
     if (itemKey.endsWith(".glb")) {
       glbName = itemKey;
-    } else if (itemKey === 'scar_l' || itemKey === 'rifle' || itemKey === 'm4_rifle' || itemKey === 'lmg' || itemKey === 'sniper' || itemKey.includes('rifle_')) {
+    } else if (MODEL_KEY_ALIASES[itemKey]) {
+      glbName = MODEL_KEY_ALIASES[itemKey];
+    } else if (itemKey.includes('rifle_')) {
+      glbName = "scar_l-optimized.glb";
+    } else if (itemKey === 'scar_l') {
       glbName = "scar_l-optimized.glb";
     } else if (itemKey === 'brn_180') {
       glbName = "brn_180-optimized.glb";
@@ -389,7 +416,7 @@ class StudioPreviewManagerImpl {
       glbName = "f_90-optimized.glb";
     } else if (itemKey === 'hk_51') {
       glbName = "hk_51-optimized.glb";
-    } else if (itemKey === 'scar_h_mk_17' || itemKey === 'shotgun' || itemKey === 'pistol' || itemKey === 'viper_pistol') {
+    } else if (itemKey === 'scar_h_mk_17') {
       glbName = "scar_h_mk_17-optimized.glb";
     } else {
       glbName = itemKey || "Player_one-optimized.glb";

@@ -19,25 +19,25 @@ export const CATALOG_LOADOUTS: Record<string, LoadoutSlotItem[]> = {
     { id: 'm4_rifle_assault', name: 'M4 BATTLE RIFLE', weaponKey: 'rifle', category: 'Assault Rifle', slotName: 'PRIMARY', stats: DETAILED_WEAPONS.rifle },
     { id: 'viper_pistol_assault', name: 'VIPER PISTOL', weaponKey: 'pistol', category: 'Sidearm', slotName: 'SECONDARY', stats: DETAILED_WEAPONS.pistol },
     { id: 'frag_grenade_assault', name: 'FRAG GRENADE', weaponKey: 'grenade', category: 'Ordnance', slotName: 'UTILITY 1', stats: DETAILED_WEAPONS.grenade },
-    { id: 'flashbang_assault', name: 'FLASH GRENADE', weaponKey: 'grenade', category: 'Disruption', slotName: 'UTILITY 2', stats: { damage: 0, fireRateHz: 1, capacity: 2, range: 15 } }
+    { id: 'flashbang_assault', name: 'FLASH GRENADE', weaponKey: 'flashbang', category: 'Disruption', slotName: 'UTILITY 2', stats: { damage: 0, fireRateHz: 1, capacity: 2, range: 15 } }
   ],
   MEDIC: [
     { id: 'm4_rifle_medic', name: 'M4 BATTLE RIFLE', weaponKey: 'rifle', category: 'Assault Rifle', slotName: 'PRIMARY', stats: DETAILED_WEAPONS.rifle },
     { id: 'viper_pistol_medic', name: 'VIPER PISTOL', weaponKey: 'pistol', category: 'Sidearm', slotName: 'SECONDARY', stats: DETAILED_WEAPONS.pistol },
     { id: 'medkit_medic', name: 'MEDKIT', weaponKey: 'medkit', category: 'Support', slotName: 'UTILITY 1', stats: DETAILED_WEAPONS.medkit },
-    { id: 'revive_medic', name: 'REVIVE TOOL', weaponKey: 'radio', category: 'Support', slotName: 'UTILITY 2', stats: { damage: 0, fireRateHz: 0.5, capacity: 1, range: 4 } }
+    { id: 'revive_medic', name: 'REVIVE TOOL', weaponKey: 'revive', category: 'Support', slotName: 'UTILITY 2', stats: { damage: 0, fireRateHz: 0.5, capacity: 1, range: 4 } }
   ],
   RECON: [
     { id: 'm4_rifle_recon', name: 'M4 BATTLE RIFLE', weaponKey: 'rifle', category: 'Assault Rifle', slotName: 'PRIMARY', stats: DETAILED_WEAPONS.rifle },
     { id: 'viper_pistol_recon', name: 'VIPER PISTOL', weaponKey: 'pistol', category: 'Sidearm', slotName: 'SECONDARY', stats: DETAILED_WEAPONS.pistol },
     { id: 'radio_recon', name: 'FIELD RADIO', weaponKey: 'radio', category: 'Comms', slotName: 'UTILITY 1', stats: DETAILED_WEAPONS.radio },
-    { id: 'disruptor_recon', name: 'SIGNAL DISRUPTOR', weaponKey: 'radio', category: 'Electronic', slotName: 'UTILITY 2', stats: { damage: 0, fireRateHz: 0.2, capacity: 1, range: 0 } }
+    { id: 'disruptor_recon', name: 'SIGNAL DISRUPTOR', weaponKey: 'signal_jammer', category: 'Electronic', slotName: 'UTILITY 2', stats: { damage: 0, fireRateHz: 0.2, capacity: 1, range: 0 } }
   ],
   DEMOLITIONS: [
     { id: 'm4_rifle_demo', name: 'M4 BATTLE RIFLE', weaponKey: 'rifle', category: 'Assault Rifle', slotName: 'PRIMARY', stats: DETAILED_WEAPONS.rifle },
     { id: 'viper_pistol_demo', name: 'VIPER PISTOL', weaponKey: 'pistol', category: 'Sidearm', slotName: 'SECONDARY', stats: DETAILED_WEAPONS.pistol },
-    { id: 'emp_demo', name: 'EMP CHARGE', weaponKey: 'grenade', category: 'Disruption', slotName: 'UTILITY 1', stats: { damage: 0, fireRateHz: 0.5, capacity: 1, range: 10 } },
-    { id: 'c4_demo', name: 'C4 EXPLOSIVE', weaponKey: 'grenade', category: 'Demolition', slotName: 'UTILITY 2', stats: { damage: 150, fireRateHz: 0.3, capacity: 1, range: 8 } }
+    { id: 'emp_demo', name: 'EMP CHARGE', weaponKey: 'signal_jammer', category: 'Disruption', slotName: 'UTILITY 1', stats: { damage: 0, fireRateHz: 0.5, capacity: 1, range: 10 } },
+    { id: 'c4_demo', name: 'C4 EXPLOSIVE', weaponKey: 'c4', category: 'Demolition', slotName: 'UTILITY 2', stats: { damage: 150, fireRateHz: 0.3, capacity: 1, range: 8 } }
   ]
 };
 

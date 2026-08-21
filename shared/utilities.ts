@@ -134,6 +134,17 @@ export const UTILITIES: Record<UtilityId, UtilityDefinition> = {
   },
 };
 
+export const UTILITY_MODEL_KEYS: Record<UtilityId, string> = {
+  'Grenade': 'm67-grenade-optimized.glb',
+  'Flashbang': 'm84-flashbang-optimized.glb',
+  'Med Kit': 'emergency-medkit-optimized.glb',
+  'Revive Tool': 'healthshot-optimized.glb',
+  'Radio': 'selex-prr-optimized.glb',
+  'Signal Jammer': 'prc152-optimized.glb',
+  'Proximity Mine': 'proximity-mine-optimized.glb',
+  'C4': 'c4-optimized.glb',
+};
+
 export interface SlotUtilityState {
   id: UtilityId;
   charges: number;
