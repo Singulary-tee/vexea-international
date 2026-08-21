@@ -3,6 +3,10 @@
  * Zero-allocation, mathematically aligned with server-side validation.
  */
 
+export type WeaponId = 'rifle' | 'pistol' | 'smg' | 'shotgun' | 'lmg' | 'sniper';
+
+export const AUTHORING_REQUIRED_WEAPON_IDS: readonly WeaponId[] = ['smg'];
+
 export interface DamageFalloff {
   maxDamageRange: number; // Max damage up to this distance (meters/units)
   minDamageRange: number; // Damage scales down to minDamage at this distance
@@ -31,6 +35,7 @@ export interface WeaponPerformance {
   fireRateHz: number;
   damage: number;
   capacity: number;
+  reserveCapacity?: number;
   
   // Recoil Coefficients
   recoilForceUp: number;       // Upward visual pitch recoil
@@ -69,6 +74,7 @@ export const DETAILED_WEAPONS: Record<string, WeaponPerformance> = {
     fireRateHz: 10, // 600 RPM
     damage: 20,
     capacity: 40,
+    reserveCapacity: 120,
     
     recoilForceUp: 0.05,
     recoilForceSide: 0.02,
@@ -117,6 +123,7 @@ export const DETAILED_WEAPONS: Record<string, WeaponPerformance> = {
     fireRateHz: 5,  // Semi-auto
     damage: 25,
     capacity: 35,
+    reserveCapacity: 100,
     
     recoilForceUp: 0.08,
     recoilForceSide: 0.03,
@@ -165,6 +172,7 @@ export const DETAILED_WEAPONS: Record<string, WeaponPerformance> = {
     fireRateHz: 1.2,
     damage: 80,
     capacity: 8,
+    reserveCapacity: 24,
     recoilForceUp: 0.22,
     recoilForceSide: 0.08,
     recoilRecoveryRate: 6.0,
@@ -197,6 +205,7 @@ export const DETAILED_WEAPONS: Record<string, WeaponPerformance> = {
     fireRateHz: 13,
     damage: 18,
     capacity: 100,
+    reserveCapacity: 300,
     recoilForceUp: 0.04,
     recoilForceSide: 0.04,
     recoilRecoveryRate: 7.0,
@@ -229,6 +238,7 @@ export const DETAILED_WEAPONS: Record<string, WeaponPerformance> = {
     fireRateHz: 0.6,
     damage: 110,
     capacity: 5,
+    reserveCapacity: 15,
     recoilForceUp: 0.35,
     recoilForceSide: 0.05,
     recoilRecoveryRate: 4.0,

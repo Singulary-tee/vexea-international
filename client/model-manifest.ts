@@ -15,6 +15,14 @@ export const MODEL_MANIFEST: ModelManifestEntry[] = [
   { key: 'uav-optimized.glb', path: 'Models/Entities/uav-optimized.glb', category: 'entities', version: '1.0.0' },
   { key: 'ugv-optimized.glb', path: 'Models/Entities/ugv-optimized.glb', category: 'entities', version: '1.0.0' },
   { key: 'robodog-optimized.glb', path: 'Models/Entities/robodog-optimized.glb', category: 'entities', version: '1.0.0' },
+  { key: 'emergency-medkit-optimized.glb', path: 'Models/Entities/emergency-medkit-optimized.glb', category: 'entities', version: '1.0.0' },
+  { key: 'proximity-mine-optimized.glb', path: 'Models/Entities/proximity-mine-optimized.glb', category: 'entities', version: '1.0.0' },
+  { key: 'selex-prr-optimized.glb', path: 'Models/Entities/selex-prr-optimized.glb', category: 'entities', version: '1.0.0' },
+  { key: 'm18-smoke-optimized.glb', path: 'Models/Entities/m18-smoke-optimized.glb', category: 'entities', version: '1.0.0' },
+  { key: 'm67-grenade-optimized.glb', path: 'Models/Entities/m67-grenade-optimized.glb', category: 'entities', version: '1.0.0' },
+  { key: 'c4-optimized.glb', path: 'Models/Entities/c4-optimized.glb', category: 'entities', version: '1.0.0' },
+  { key: 'm84-flashbang-optimized.glb', path: 'Models/Entities/m84-flashbang-optimized.glb', category: 'entities', version: '1.0.0' },
+  { key: 'healthshot-optimized.glb', path: 'Models/Entities/healthshot-optimized.glb', category: 'entities', version: '1.0.0' },
 
   // Weapons
   { key: 'attachments-optimized.glb', path: 'Models/Weapons/attachments-optimized.glb', category: 'weapons', version: '1.0.0' },
@@ -22,7 +30,13 @@ export const MODEL_MANIFEST: ModelManifestEntry[] = [
   { key: 'f_90-optimized.glb', path: 'Models/Weapons/f_90-optimized.glb', category: 'weapons', version: '1.0.0' },
   { key: 'hk_51-optimized.glb', path: 'Models/Weapons/hk_51-optimized.glb', category: 'weapons', version: '1.0.0' },
   { key: 'scar_h_mk_17-optimized.glb', path: 'Models/Weapons/scar_h_mk_17-optimized.glb', category: 'weapons', version: '1.0.0' },
-  { key: 'scar_l-optimized.glb', path: 'Models/Weapons/scar_l-optimized.glb', category: 'weapons', version: '1.0.0' }
+  { key: 'scar_l-optimized.glb', path: 'Models/Weapons/scar_l-optimized.glb', category: 'weapons', version: '1.0.0' },
+  { key: 'g17-optimized.glb', path: 'Models/Weapons/g17-optimized.glb', category: 'weapons', version: '1.0.0' },
+  { key: 'sig-m18-optimized.glb', path: 'Models/Weapons/sig-m18-optimized.glb', category: 'weapons', version: '1.0.0' },
+  { key: 'lmg-rifle-optimized.glb', path: 'Models/Weapons/lmg-rifle-optimized.glb', category: 'weapons', version: '1.0.0' },
+  { key: 'benelli-m4-optimized.glb', path: 'Models/Weapons/benelli-m4-optimized.glb', category: 'weapons', version: '1.0.0' },
+  { key: 'pgm-ultima-ratio-optimized.glb', path: 'Models/Weapons/pgm-ultima-ratio-optimized.glb', category: 'weapons', version: '1.0.0' },
+  { key: 'prc152-optimized.glb', path: 'Models/Weapons/prc152-optimized.glb', category: 'weapons', version: '1.0.0' }
 ];
 
 export type ModelKey = typeof MODEL_MANIFEST[number]['key'];

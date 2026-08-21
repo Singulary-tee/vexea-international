@@ -1,20 +1,33 @@
 import { MatchController } from "../../MatchController";
 import { ACTIVE_GAMEMODE } from "../../../shared/gamemode-configs";
-import { PlayerUtilityState } from "../../../shared/utilities";
+import { PlayerUtilityState, type UtilityId } from "../../../shared/utilities";
+import { UTILITY_ASSET_DETAILS } from "../../../shared/asset-details";
 import { IS_MOBILE } from "../../gates/platform.gate";
 import { bindFullscreenButton } from "../ui/fullscreen";
 
+const UTILITY_ID_BY_DISPLAY_NAME: Record<string, UtilityId> = {
+  grenade: 'Grenade',
+  'frag grenade': 'Grenade',
+  frag: 'Grenade',
+  flashbang: 'Flashbang',
+  'flash grenade': 'Flashbang',
+  medkit: 'Med Kit',
+  'med kit': 'Med Kit',
+  revive: 'Revive Tool',
+  'revive tool': 'Revive Tool',
+  radio: 'Radio',
+  'field radio': 'Radio',
+  'signal jammer': 'Signal Jammer',
+  'signal disruptor': 'Signal Jammer',
+  'proximity mine': 'Proximity Mine',
+  mine: 'Proximity Mine',
+  c4: 'C4',
+};
+
 export function getUtilitySvgPath(utilityName: string): string {
-  const name = (utilityName || '').toLowerCase();
-  if (name.includes('grenade') || name.includes('frag')) return '/ui_svgs/utility_grenade.svg';
-  if (name.includes('flash')) return '/ui_svgs/utility_flashbang.svg';
-  if (name.includes('med') || name.includes('kit') || name.includes('health') || name.includes('support')) return '/ui_svgs/medkit.svg';
-  if (name.includes('revive')) return '/ui_svgs/utility_revive.svg';
-  if (name.includes('radio') || name.includes('walkie') || name.includes('comm')) return '/ui_svgs/radio.svg';
-  if (name.includes('jam') || name.includes('disrupt') || name.includes('signal')) return '/ui_svgs/utility_jammer.svg';
-  if (name.includes('c4') || name.includes('emp') || name.includes('bomb')) return '/ui_svgs/utility_c4.svg';
-  if (name.includes('mine') || name.includes('prox') || name.includes('trap')) return '/ui_svgs/utility_mine.svg';
-  return '/ui_svgs/utility_grenade.svg';
+  const utilityId = UTILITY_ID_BY_DISPLAY_NAME[(utilityName || '').toLowerCase()];
+  // SVG CONNECTOR PLACEHOLDER: svg-responsible agent replaces shared registry paths with final approved assets.
+  return (utilityId && UTILITY_ASSET_DETAILS[utilityId]?.svgPath) || '/ui_svgs/utility_grenade.svg';
 }
 
 export class HUDSystem {

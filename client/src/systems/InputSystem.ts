@@ -10,7 +10,7 @@ import {
   incrementInputSequence 
 } from "../input/InputSynchronizer";
 import { 
-  DETAILED_WEAPONS, 
+  getWeaponPerformance,
   PLAYER_EYE_LEVEL, 
   PLAYER_CENTER_OFFSET, 
   PLAYER_EYE_LEVEL_CROUCH,
@@ -92,8 +92,7 @@ export class InputSystem {
     document.addEventListener("mousemove", (e) => {
       if (this.isGameInputLocked()) return;
       if (!this.match || this.match.isLocalPlayerDead) return;
-      const currentWeaponStats =
-        this.match.activeWeapon === 1 ? DETAILED_WEAPONS.rifle : DETAILED_WEAPONS.pistol;
+      const currentWeaponStats = getWeaponPerformance(this.match.getActiveWeaponId()) || getWeaponPerformance('rifle')!;
       const sensMult =
         1.0 - this.match.currentAdsLerp * (1.0 - currentWeaponStats.adsSensitivityMult);
 
@@ -133,7 +132,7 @@ export class InputSystem {
     if (this.match.isReloading || weaponAmmo === weaponMax) return;
     this.match.isReloading = true;
     setWeaponReloading(true);
-    audioManager.playWeaponReload(this.match.activeWeapon);
+    audioManager.playWeaponReload(this.match.getActiveWeaponId());
     const wSlot = this.match.activeWeapon === 1 ? "primary" : "secondary";
     if (this.match.transport) this.match.transport.emit("reliable_event", { type: "RELOAD", weaponSlot: wSlot });
   }

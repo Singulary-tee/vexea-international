@@ -47,6 +47,9 @@ import { StudioPreviewManager } from "./StudioPreviewManager";
 import { audioManager } from "./audio";
 import { MapLoader } from "./src/map/MapLoader";
 import { getMapById } from "../shared/maps/map-registry";
+import { WEAPON_ASSET_DETAILS } from "../shared/asset-details";
+import type { ClassId } from "../shared/classes";
+import { ClassLoadoutPersistence } from "./src/systems/ClassLoadoutPersistence";
 import { getAssetUrl, createConfiguredGLTFLoader, initKTX2Support, ensureAssetsDownloaded } from "./asset-cache";
 import { ASSET_STRUCTURE } from "../shared/asset-structure";
 import { inputManager, InputAction } from "./input";
@@ -145,7 +148,7 @@ import {
   ZoneName,
   WAYPOINTS,
   ZONES_ARRAY,
-  DETAILED_WEAPONS,
+  getWeaponPerformance,
 } from "../shared/constants";
 
 // State Tracker
@@ -395,8 +398,11 @@ const initClient = async () => {
   window.addEventListener("start-match", async (e: any) => {
     const requestedMap = e.detail?.map?.id || "map_0_dev";
     const requestedClass = e.detail?.class || "ASSAULT";
+    const classId = requestedClass.toUpperCase() as ClassId;
+    const selectedWeapons = ClassLoadoutPersistence.getClassWeaponIds(classId);
     const isDevQuickStart = !!e.detail?.isDevQuickStart;
     (window as any).vexMapId = requestedMap;
+    (window as any).vexClassId = requestedClass;
 
     await connectEngineSocket();
 
@@ -406,7 +412,7 @@ const initClient = async () => {
       const matchId = `M_${Math.floor(Math.random() * 1000000)}`;
       const cloudUid = (window as any).vexPlayerUid;
 
-      const match = initializeLocalMatchScene(requestedMap);
+      const match = initializeLocalMatchScene(requestedMap, requestedClass);
       match.transport = channel;
 
       if (cloudUid) {
@@ -418,7 +424,9 @@ const initClient = async () => {
                 uid: cloudUid,
                 matchId,
                 mapId: requestedMap,
-                class: requestedClass,
+                class: classId,
+                primaryWeaponId: selectedWeapons.primaryWeaponId,
+                secondaryWeaponId: selectedWeapons.secondaryWeaponId,
                 isDevQuickStart: true
               });
           }
@@ -430,7 +438,9 @@ const initClient = async () => {
             uid: "guest_" + matchId,
             matchId,
             mapId: requestedMap,
-            class: requestedClass,
+            class: classId,
+            primaryWeaponId: selectedWeapons.primaryWeaponId,
+            secondaryWeaponId: selectedWeapons.secondaryWeaponId,
             isDevQuickStart: true
           });
       }
@@ -481,7 +491,9 @@ const initClient = async () => {
       channel.emit("start_match", {
         uid: cloudUid || ("guest_" + Math.floor(Math.random() * 1000000)),
         mapId: requestedMap,
-        class: requestedClass,
+        class: classId,
+        primaryWeaponId: selectedWeapons.primaryWeaponId,
+        secondaryWeaponId: selectedWeapons.secondaryWeaponId,
         isDevQuickStart: false
       });
     }
@@ -559,14 +571,29 @@ const initClient = async () => {
   animateFrame();
 };
 
-function initializeLocalMatchScene(requestedMap: string) {
+function initializeLocalMatchScene(requestedMap: string, requestedClass: string = 'ASSAULT') {
   const match = createNewMatch();
+  const classId = requestedClass.toUpperCase() as import('../shared/classes').ClassId;
+  const selectedWeapons = ClassLoadoutPersistence.getClassWeaponIds(classId);
+  match.configureLoadout(classId, selectedWeapons.primaryWeaponId, selectedWeapons.secondaryWeaponId);
   match.scene.userData.camera = camera;
 
   match.updateWeaponUI = () => {
     const w1 = document.getElementById("weapon-slot-1");
     const w2 = document.getElementById("weapon-slot-2");
     const autoLabel = document.getElementById("auto-label");
+    const primaryAsset = WEAPON_ASSET_DETAILS[match.primaryWeaponId];
+    const secondaryAsset = WEAPON_ASSET_DETAILS[match.secondaryWeaponId];
+    const w1Icon = w1?.querySelector('img');
+    const w2Icon = w2?.querySelector('img');
+    if (w1Icon && primaryAsset) {
+      w1Icon.src = primaryAsset.svgPath;
+      w1Icon.alt = match.primaryWeaponId;
+    }
+    if (w2Icon && secondaryAsset) {
+      w2Icon.src = secondaryAsset.svgPath;
+      w2Icon.alt = match.secondaryWeaponId;
+    }
     if (w1) {
       w1.style.setProperty("opacity", "1", "important");
       if (match.activeWeapon === 1) w1.classList.add("active");
@@ -650,7 +677,7 @@ function startMatchFromMatchFound(msg: any) {
   (window as any).vexMatchId = matchId;
   (window as any).vexMapId = mapId;
 
-  const match = initializeLocalMatchScene(mapId);
+  const match = initializeLocalMatchScene(mapId, msg.classId || (window as any).vexClassId || 'ASSAULT');
   match.transport = channel;
 
   const mapDef = getMapById(mapId);
@@ -1104,8 +1131,7 @@ const animateFrame = async () => {
     }
 
     // 2. Camera Rotation & Dynamic Weapon Systems Update (Zero allocations in loop)
-    const currentWeaponStats =
-      match.activeWeapon === 1 ? DETAILED_WEAPONS.rifle : DETAILED_WEAPONS.pistol;
+    const currentWeaponStats = getWeaponPerformance(match.getActiveWeaponId()) || getWeaponPerformance('rifle')!;
 
     // Dynamic recoil decay using exponential smoothing
     match.visualRecoilUpOffset =

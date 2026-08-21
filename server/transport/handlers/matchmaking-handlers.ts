@@ -17,6 +17,8 @@ export function registerMatchmakingHandlers(
     const reqUid = args?.uid || playerId;
     const reqMap = args?.mapId || args?.map?.id || "map_1_facility";
     const reqClass = (args?.class || args?.playerClass || "ASSAULT") as ClassId;
+    const reqPrimaryWeaponId = typeof args?.primaryWeaponId === "string" ? args.primaryWeaponId : undefined;
+    const reqSecondaryWeaponId = typeof args?.secondaryWeaponId === "string" ? args.secondaryWeaponId : undefined;
     const reqDisplayName = args?.displayName || args?.name || args?.userName;
 
     console.log(
@@ -34,7 +36,7 @@ export function registerMatchmakingHandlers(
         curRoom.removePlayer(curPState.id);
       }
       (channel as any).currentRoom = targetRoom;
-      const newPState = targetRoom.registerPlayer(playerId, channel, null, reqClass, reqDisplayName);
+      const newPState = targetRoom.registerPlayer(playerId, channel, null, reqClass, reqDisplayName, reqUid, reqPrimaryWeaponId, reqSecondaryWeaponId);
       (channel as any).pState = newPState;
       if ((channel as any).onMatchFormed) {
         (channel as any).onMatchFormed(targetRoom, newPState);
@@ -49,7 +51,7 @@ export function registerMatchmakingHandlers(
       (channel as any).pState = state;
     };
 
-    matchmaker.addPlayerToPool(playerId, reqUid, channel, reqMap, reqClass, reqDisplayName);
+    matchmaker.addPlayerToPool(playerId, reqUid, channel, reqMap, reqClass, reqDisplayName, reqPrimaryWeaponId, reqSecondaryWeaponId);
   };
 
   channel.on("start_match", handleMatchmakingRequest);
