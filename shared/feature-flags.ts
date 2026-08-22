@@ -128,6 +128,10 @@ export function getFeatureFlagScope(key: string): FeatureFlagScope {
     'openai_fallback_models',
     'llm_max_output_tokens_per_cycle',
     'llm_max_tool_calls_per_cycle',
+    'dossier_model_family',
+    'dossier_model',
+    'dossier_fallback_models',
+    'dossier_max_tokens_per_player',
     'security_exploit_logging',
   ];
 

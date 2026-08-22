@@ -189,4 +189,38 @@ export class GeminiAdapter implements CommanderAdapter {
       modelUsed: usedModel,
     };
   }
+
+  public async generateText(
+    prompt: string,
+    systemInstruction: string,
+    options?: { maxTokens?: number }
+  ): Promise<string> {
+    if (!this.client) {
+      const key = process.env.GEMINI_API_KEY;
+      if (key) {
+        this.client = new GoogleGenAI({
+          apiKey: key,
+          httpOptions: { headers: { "User-Agent": "aistudio-build" } },
+        });
+      }
+    }
+
+    if (!this.client) return "";
+
+    try {
+      const model = process.env.DOSSIER_MODEL || "gemini-3.5-flash";
+      const response = await this.client.models.generateContent({
+        model,
+        contents: prompt,
+        config: {
+          systemInstruction,
+          maxOutputTokens: options?.maxTokens ?? 200,
+        },
+      });
+      return response.text?.trim() || "";
+    } catch (err) {
+      console.error("[GeminiAdapter] generateText failed:", err);
+      return "";
+    }
+  }
 }

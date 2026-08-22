@@ -37,4 +37,9 @@ export interface CommanderAdapter {
     usage: TokenUsage;
     modelUsed: string;
   }>;
+  generateText(
+    prompt: string,
+    systemInstruction: string,
+    options?: { maxTokens?: number }
+  ): Promise<string>;
 }

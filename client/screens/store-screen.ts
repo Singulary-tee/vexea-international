@@ -5,7 +5,51 @@ import { audioManager } from "../audio";
 import { StudioPreviewManager, AVAILABLE_SKINS } from "../StudioPreviewManager";
 import { auth } from "../firebase";
 
-let activeCategoryFilter: 'ALL' | 'cosmetic' | 'blueprint' | 'booster' | 'bundle' = 'ALL';
+let activeCategoryFilter: 'ALL' | 'cosmetic' | 'blueprint' | 'booster' | 'bundle' | 'resupply' = 'ALL';
+
+interface ResupplyPack {
+  id: string;
+  title: string;
+  energyAmount: number;
+  priceUsd: string;
+  badge: string;
+  description: string;
+}
+
+const RESUPPLY_PACKS: ResupplyPack[] = [
+  {
+    id: 'resupply_standard',
+    title: 'FIELD CELL PACK',
+    energyAmount: 10,
+    priceUsd: '$0.99 USD',
+    badge: 'ENTRY CELL',
+    description: 'Rapid energy cell replenishment for standard combat deployments.'
+  },
+  {
+    id: 'resupply_operational',
+    title: 'OPERATIONAL BATTERY',
+    energyAmount: 25,
+    priceUsd: '$1.99 USD',
+    badge: 'POPULAR',
+    description: 'High-density power matrix engineered for extended combat sessions.'
+  },
+  {
+    id: 'resupply_reserve',
+    title: 'COMMANDER RESERVE',
+    energyAmount: 60,
+    priceUsd: '$4.99 USD',
+    badge: 'MAX CAPACITY',
+    description: 'Maximum surplus power vault offering complete operational independence.'
+  },
+  {
+    id: 'resupply_armory',
+    title: 'CORPS DEPOT PACK',
+    energyAmount: 150,
+    priceUsd: '$9.99 USD',
+    badge: 'SURPLUS',
+    description: 'Heavy industrial power reserve for persistent high-tempo combat.'
+  }
+];
 
 function getPlayerId(): string {
   if (auth?.currentUser?.uid) {
@@ -226,8 +270,9 @@ export function renderStoreScreen(container: HTMLElement, registeredUserData: an
   });
   filterRow.appendChild(filterLabel);
 
-  const categories: { id: 'ALL' | 'cosmetic' | 'blueprint' | 'booster' | 'bundle'; label: string }[] = [
+  const categories: { id: 'ALL' | 'cosmetic' | 'blueprint' | 'booster' | 'bundle' | 'resupply'; label: string }[] = [
     { id: 'ALL', label: 'ALL' },
+    { id: 'resupply', label: 'RESUPPLY' },
     { id: 'cosmetic', label: 'COSMETIC' },
     { id: 'blueprint', label: 'BLUEPRINT' },
     { id: 'booster', label: 'BOOSTER' },
@@ -275,112 +320,199 @@ export function renderStoreScreen(container: HTMLElement, registeredUserData: an
     overflow: 'hidden'
   });
 
-  const filteredCatalog = (catalogItems as CatalogItem[]).filter((item) => {
-    if (activeCategoryFilter !== 'ALL' && item.category !== activeCategoryFilter) return false;
-    return true;
-  }).slice(0, 4);
+  if (activeCategoryFilter === 'resupply') {
+    // Render Commander Resupply Packs (Visual Only Mock)
+    RESUPPLY_PACKS.forEach((pack) => {
+      const card = document.createElement('div');
+      card.className = 'mm-glass';
+      Object.assign(card.style, {
+        background: 'rgba(255, 255, 255, 0.01)',
+        border: '1px solid rgba(255, 68, 0, 0.25)',
+        padding: '0.8vh 1vw',
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'space-between',
+        borderRadius: '0px',
+        gap: '0.3vh'
+      });
 
-  filteredCatalog.forEach((item) => {
-    const card = document.createElement('div');
-    card.className = 'mm-glass';
-    Object.assign(card.style, {
-      background: 'rgba(255, 255, 255, 0.01)',
-      border: '1px solid rgba(255, 255, 255, 0.05)',
-      padding: '0.8vh 1vw',
-      display: 'flex',
-      flexDirection: 'column',
-      justifyContent: 'space-between',
-      borderRadius: '0px',
-      gap: '0.3vh'
-    });
-
-    const itemPriceDisplay = item.currency === 'energy'
-      ? `<img src="/ui_svgs/energy.svg" style="width:0.81rem; height:0.81rem; vertical-align:middle; filter:brightness(0) invert(1);" alt="Energy" /> ${item.priceEnergy} ENERGY`
-      : `<img src="/ui_svgs/coin.svg" style="width:0.81rem; height:0.81rem; vertical-align:middle; filter:brightness(0) invert(1);" alt="Coin" /> ${item.priceCredits} CR`;
-
-    card.innerHTML = `
-      <div style="display:flex; flex-direction:column; gap:0.3vh;">
-        <div style="display:flex; justify-content:space-between; align-items:center;">
-          <span style="font-family:${DS.typography.fontFamily}; font-size:clamp(0.50rem, 1vh, 0.63rem); color:${DS.colors.accent}; font-weight:bold; letter-spacing:0.08vw; text-transform:uppercase;">${item.category}</span>
-          <span style="font-family:${DS.typography.fontFamily}; font-size:clamp(0.44rem, 0.9vh, 0.56rem); color:${DS.colors.textMuted}; font-weight:bold;">REQ LVL ${item.requiredLevel}</span>
+      card.innerHTML = `
+        <div style="display:flex; flex-direction:column; gap:0.3vh;">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <span style="font-family:${DS.typography.fontFamily}; font-size:clamp(0.50rem, 1vh, 0.63rem); color:${DS.colors.accent}; font-weight:bold; letter-spacing:0.08vw; text-transform:uppercase;">${pack.badge}</span>
+            <span style="font-family:${DS.typography.fontFamily}; font-size:clamp(0.44rem, 0.9vh, 0.56rem); color:#00FF66; font-weight:bold;">ENERGY REFILL</span>
+          </div>
+          <div style="font-family:${DS.typography.fontFamily}; font-size:clamp(0.63rem, 1.2vh, 0.81rem); font-weight:bold; color:${DS.colors.text}; letter-spacing:0.04vw; margin-top:0.2vh; line-height:1.1;">
+            ${pack.title}
+          </div>
+          <div style="font-family:${DS.typography.fontFamily}; font-size:clamp(0.75rem, 1.4vh, 0.94rem); font-weight:900; color:#FFFFFF; margin-top:0.1vh; display:flex; align-items:center; gap:0.31rem;">
+            <img src="/ui_svgs/energy.svg" style="width:0.88rem; height:0.88rem; filter:brightness(0) invert(1);" alt="Energy" />
+            +${pack.energyAmount} ENERGY
+          </div>
+          <div style="font-family:${DS.typography.fontFamily}; font-size:clamp(0.50rem, 1vh, 0.63rem); color:${DS.colors.textMuted}; line-height:1.2; margin-top:0.1vh; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;">
+            ${pack.description}
+          </div>
         </div>
-        <div style="font-family:${DS.typography.fontFamily}; font-size:clamp(0.63rem, 1.2vh, 0.81rem); font-weight:bold; color:${DS.colors.text}; letter-spacing:0.04vw; margin-top:0.2vh; line-height:1.1;">
-          ${item.title.toUpperCase()}
-        </div>
-        <div style="font-family:${DS.typography.fontFamily}; font-size:clamp(0.50rem, 1vh, 0.63rem); color:${DS.colors.textMuted}; line-height:1.2; margin-top:0.2vh; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;">
-          ${item.description}
-        </div>
-      </div>
-    `;
+      `;
 
-    const btnRow = document.createElement('div');
-    Object.assign(btnRow.style, { display: 'flex', gap: '0.8vw', marginTop: '0.5vh' });
+      const btnRow = document.createElement('div');
+      Object.assign(btnRow.style, { display: 'flex', gap: '0.8vw', marginTop: '0.5vh' });
 
-    const previewBtn = document.createElement('button');
-    previewBtn.textContent = 'INSPECT';
-    Object.assign(previewBtn.style, {
-      flex: '1',
-      padding: '0.31rem',
-      background: 'rgba(255, 255, 255, 0.02)',
-      border: '1px solid rgba(255, 255, 255, 0.08)',
-      color: DS.colors.text,
-      fontFamily: DS.typography.fontFamily,
-      fontSize: DS.typography.sizes.tiny,
-      fontWeight: 'bold',
-      letterSpacing: '0.5px',
-      cursor: 'pointer',
-      borderRadius: '2px',
-      transition: 'all 0.15s ease'
+      const inspectBtn = document.createElement('button');
+      inspectBtn.textContent = 'DETAILS';
+      Object.assign(inspectBtn.style, {
+        flex: '1',
+        padding: '0.31rem',
+        background: 'rgba(255, 255, 255, 0.02)',
+        border: '1px solid rgba(255, 255, 255, 0.08)',
+        color: DS.colors.text,
+        fontFamily: DS.typography.fontFamily,
+        fontSize: DS.typography.sizes.tiny,
+        fontWeight: 'bold',
+        letterSpacing: '0.5px',
+        cursor: 'pointer',
+        borderRadius: '2px',
+        transition: 'all 0.15s ease'
+      });
+      inspectBtn.onclick = () => {
+        audioManager.play('click');
+        openResupplyMockModal(pack);
+      };
+
+      const buyBtn = document.createElement('button');
+      buyBtn.textContent = pack.priceUsd;
+      Object.assign(buyBtn.style, {
+        flex: '1',
+        padding: '0.31rem',
+        background: DS.colors.accent,
+        border: 'none',
+        color: '#000000',
+        fontFamily: DS.typography.fontFamily,
+        fontSize: DS.typography.sizes.tiny,
+        fontWeight: 'bold',
+        letterSpacing: '0.5px',
+        cursor: 'pointer',
+        borderRadius: '2px',
+        transition: 'all 0.15s ease'
+      });
+      buyBtn.onclick = () => {
+        audioManager.play('click');
+        openResupplyMockModal(pack);
+      };
+
+      btnRow.appendChild(inspectBtn);
+      btnRow.appendChild(buyBtn);
+      card.appendChild(btnRow);
+      gridContainer.appendChild(card);
     });
+  } else {
+    const filteredCatalog = (catalogItems as CatalogItem[]).filter((item) => {
+      if (activeCategoryFilter !== 'ALL' && item.category !== activeCategoryFilter) return false;
+      return true;
+    }).slice(0, 4);
 
-    previewBtn.onclick = () => {
-      let itemKey = 'rifle';
-      const titleLower = item.title.toLowerCase();
-      const idLower = (item.id || '').toLowerCase();
-      if (titleLower.includes('pistol') || idLower.includes('pistol') || titleLower.includes('viper')) {
-        itemKey = 'pistol';
-      } else if (item.category === 'cosmetic' || titleLower.includes('operative') || titleLower.includes('titan')) {
-        itemKey = 'Player_one-optimized.glb';
-      } else if (titleLower.includes('rifle') || titleLower.includes('vx-88') || titleLower.includes('vx88')) {
-        itemKey = 'rifle';
-      }
+    filteredCatalog.forEach((item) => {
+      const card = document.createElement('div');
+      card.className = 'mm-glass';
+      Object.assign(card.style, {
+        background: 'rgba(255, 255, 255, 0.01)',
+        border: '1px solid rgba(255, 255, 255, 0.05)',
+        padding: '0.8vh 1vw',
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'space-between',
+        borderRadius: '0px',
+        gap: '0.3vh'
+      });
 
-      let skinId = 'STANDARD';
-      if (idLower.includes('test_skin') || idLower.includes('test') || titleLower.includes('test')) {
-        skinId = 'test_skin';
-      }
+      const itemPriceDisplay = item.currency === 'energy'
+        ? `<img src="/ui_svgs/energy.svg" style="width:0.81rem; height:0.81rem; vertical-align:middle; filter:brightness(0) invert(1);" alt="Energy" /> ${item.priceEnergy} ENERGY`
+        : `<img src="/ui_svgs/coin.svg" style="width:0.81rem; height:0.81rem; vertical-align:middle; filter:brightness(0) invert(1);" alt="Coin" /> ${item.priceCredits} CR`;
 
-      const skinObj = AVAILABLE_SKINS[skinId] || AVAILABLE_SKINS.STANDARD;
-      open3DSkinPreviewModal(item.title, skinObj, itemKey);
-    };
+      card.innerHTML = `
+        <div style="display:flex; flex-direction:column; gap:0.3vh;">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <span style="font-family:${DS.typography.fontFamily}; font-size:clamp(0.50rem, 1vh, 0.63rem); color:${DS.colors.accent}; font-weight:bold; letter-spacing:0.08vw; text-transform:uppercase;">${item.category}</span>
+            <span style="font-family:${DS.typography.fontFamily}; font-size:clamp(0.44rem, 0.9vh, 0.56rem); color:${DS.colors.textMuted}; font-weight:bold;">REQ LVL ${item.requiredLevel}</span>
+          </div>
+          <div style="font-family:${DS.typography.fontFamily}; font-size:clamp(0.63rem, 1.2vh, 0.81rem); font-weight:bold; color:${DS.colors.text}; letter-spacing:0.04vw; margin-top:0.2vh; line-height:1.1;">
+            ${item.title.toUpperCase()}
+          </div>
+          <div style="font-family:${DS.typography.fontFamily}; font-size:clamp(0.50rem, 1vh, 0.63rem); color:${DS.colors.textMuted}; line-height:1.2; margin-top:0.2vh; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;">
+            ${item.description}
+          </div>
+        </div>
+      `;
 
-    const buyBtn = document.createElement('button');
-    buyBtn.textContent = itemPriceDisplay;
-    Object.assign(buyBtn.style, {
-      flex: '1',
-      padding: '0.31rem',
-      background: DS.colors.accent,
-      border: 'none',
-      color: '#000000',
-      fontFamily: DS.typography.fontFamily,
-      fontSize: DS.typography.sizes.tiny,
-      fontWeight: 'bold',
-      letterSpacing: '0.5px',
-      cursor: 'pointer',
-      borderRadius: '2px',
-      transition: 'all 0.15s ease'
+      const btnRow = document.createElement('div');
+      Object.assign(btnRow.style, { display: 'flex', gap: '0.8vw', marginTop: '0.5vh' });
+
+      const previewBtn = document.createElement('button');
+      previewBtn.textContent = 'INSPECT';
+      Object.assign(previewBtn.style, {
+        flex: '1',
+        padding: '0.31rem',
+        background: 'rgba(255, 255, 255, 0.02)',
+        border: '1px solid rgba(255, 255, 255, 0.08)',
+        color: DS.colors.text,
+        fontFamily: DS.typography.fontFamily,
+        fontSize: DS.typography.sizes.tiny,
+        fontWeight: 'bold',
+        letterSpacing: '0.5px',
+        cursor: 'pointer',
+        borderRadius: '2px',
+        transition: 'all 0.15s ease'
+      });
+
+      previewBtn.onclick = () => {
+        let itemKey = 'rifle';
+        const titleLower = item.title.toLowerCase();
+        const idLower = (item.id || '').toLowerCase();
+        if (titleLower.includes('pistol') || idLower.includes('pistol') || titleLower.includes('viper')) {
+          itemKey = 'pistol';
+        } else if (item.category === 'cosmetic' || titleLower.includes('operative') || titleLower.includes('titan')) {
+          itemKey = 'Player_one-optimized.glb';
+        } else if (titleLower.includes('rifle') || titleLower.includes('vx-88') || titleLower.includes('vx88')) {
+          itemKey = 'rifle';
+        }
+
+        let skinId = 'STANDARD';
+        if (idLower.includes('test_skin') || idLower.includes('test') || titleLower.includes('test')) {
+          skinId = 'test_skin';
+        }
+
+        const skinObj = AVAILABLE_SKINS[skinId] || AVAILABLE_SKINS.STANDARD;
+        open3DSkinPreviewModal(item.title, skinObj, itemKey);
+      };
+
+      const buyBtn = document.createElement('button');
+      buyBtn.textContent = itemPriceDisplay;
+      Object.assign(buyBtn.style, {
+        flex: '1',
+        padding: '0.31rem',
+        background: DS.colors.accent,
+        border: 'none',
+        color: '#000000',
+        fontFamily: DS.typography.fontFamily,
+        fontSize: DS.typography.sizes.tiny,
+        fontWeight: 'bold',
+        letterSpacing: '0.5px',
+        cursor: 'pointer',
+        borderRadius: '2px',
+        transition: 'all 0.15s ease'
+      });
+
+      buyBtn.onclick = async () => {
+        await handleStorePurchase(item.id, registeredUserData, container);
+      };
+
+      btnRow.appendChild(previewBtn);
+      btnRow.appendChild(buyBtn);
+      card.appendChild(btnRow);
+
+      gridContainer.appendChild(card);
     });
-
-    buyBtn.onclick = async () => {
-      await handleStorePurchase(item.id, registeredUserData, container);
-    };
-
-    btnRow.appendChild(previewBtn);
-    btnRow.appendChild(buyBtn);
-    card.appendChild(btnRow);
-
-    gridContainer.appendChild(card);
-  });
+  }
 
   rightCol.appendChild(gridContainer);
   storeSplit.appendChild(rightCol);
@@ -577,4 +709,118 @@ function open3DSkinPreviewModal(title: string, skin: any, itemKey?: string): voi
     });
     StudioPreviewManager.resizeToContainer();
   });
+}
+
+function openResupplyMockModal(pack: ResupplyPack): void {
+  const overlay = document.createElement('div');
+  overlay.id = 'vex-resupply-mock-modal';
+  Object.assign(overlay.style, {
+    position: 'fixed',
+    top: '0',
+    left: '0',
+    width: '100vw',
+    height: '100vh',
+    background: 'rgba(3, 3, 6, 0.95)',
+    backdropFilter: 'blur(10px)',
+    zIndex: '99999',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    fontFamily: DS.typography.fontFamily,
+    color: DS.colors.text,
+    boxSizing: 'border-box',
+    padding: 'clamp(0.50rem, 2vh, 1.50rem)'
+  });
+
+  const modal = document.createElement('div');
+  modal.className = 'mm-glass';
+  Object.assign(modal.style, {
+    width: 'min(90vw, 32.00rem)',
+    background: 'linear-gradient(180deg, rgba(14, 14, 18, 0.98) 0%, rgba(8, 8, 10, 0.99) 100%)',
+    border: `1px solid ${DS.colors.accent}`,
+    padding: 'clamp(1.00rem, 3vh, 1.75rem)',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 'clamp(0.75rem, 2vh, 1.25rem)',
+    borderRadius: '0px',
+    boxSizing: 'border-box',
+    position: 'relative',
+    boxShadow: '0 0 30px rgba(0,0,0,0.8)'
+  });
+
+  modal.innerHTML = `
+    <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:0.50rem;">
+      <div style="display:flex; align-items:center; gap:0.50rem;">
+        <img src="/ui_svgs/energy.svg" style="width:1.25rem; height:1.25rem; filter:brightness(0) invert(1);" alt="Energy" />
+        <span style="font-size:clamp(0.75rem, 1.6vw, 0.94rem); color:${DS.colors.accent}; font-weight:900; letter-spacing:1.5px; text-transform:uppercase;">
+          COMMANDER RESUPPLY // MOCK PREVIEW
+        </span>
+      </div>
+      <button id="close-resupply-modal-btn" style="background:none; border:none; color:${DS.colors.textMuted}; font-size:1.25rem; cursor:pointer; padding:0 0.38rem; line-height:1;">✕</button>
+    </div>
+
+    <div style="display:flex; flex-direction:column; gap:0.63rem; padding:0.50rem 0;">
+      <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.06); padding:0.88rem 1.00rem; display:flex; justify-content:space-between; align-items:center;">
+        <div>
+          <div style="font-size:clamp(0.50rem, 1vw, 0.63rem); color:${DS.colors.accent}; font-weight:bold; letter-spacing:1px;">${pack.badge}</div>
+          <div style="font-size:clamp(0.94rem, 2vw, 1.25rem); font-weight:900; color:#FFFFFF; letter-spacing:1px; margin-top:0.13rem;">${pack.title}</div>
+          <div style="font-size:clamp(0.56rem, 1.1vw, 0.69rem); color:${DS.colors.textMuted}; margin-top:0.25rem;">${pack.description}</div>
+        </div>
+        <div style="text-align:right;">
+          <div style="font-size:clamp(1.13rem, 2.5vw, 1.50rem); font-weight:900; color:#FFFFFF;">+${pack.energyAmount} EN</div>
+          <div style="font-size:clamp(0.75rem, 1.5vw, 0.88rem); color:${DS.colors.accent}; font-weight:bold;">${pack.priceUsd}</div>
+        </div>
+      </div>
+
+      <div style="background:rgba(255, 68, 0, 0.05); border-left:3px solid ${DS.colors.accent}; padding:0.63rem 0.88rem; font-size:clamp(0.56rem, 1.1vw, 0.69rem); color:rgba(255,255,255,0.8); line-height:1.4;">
+        <strong>SIMULATION NOTICE:</strong> This is a visual-only client mock of the Phase 2 monetization and store resupply pipeline. In production, this triggers the native platform in-app purchase flow.
+      </div>
+    </div>
+
+    <div style="display:flex; gap:0.63rem;">
+      <button id="resupply-cancel-btn" style="
+        flex:1; padding:0.63rem 0.75rem; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.15);
+        color:${DS.colors.text}; font-family:${DS.typography.fontFamily}; font-size:clamp(0.63rem, 1.2vw, 0.75rem);
+        font-weight:bold; letter-spacing:1px; text-transform:uppercase; cursor:pointer;
+      ">
+        CLOSE
+      </button>
+      <button id="resupply-simulate-btn" style="
+        flex:1.5; padding:0.63rem 0.75rem; background:${DS.colors.accent}; border:none;
+        color:#000000; font-family:${DS.typography.fontFamily}; font-size:clamp(0.63rem, 1.2vw, 0.75rem);
+        font-weight:900; letter-spacing:1px; text-transform:uppercase; cursor:pointer;
+      ">
+        SIMULATE PURCHASE (${pack.priceUsd})
+      </button>
+    </div>
+  `;
+
+  overlay.appendChild(modal);
+  document.body.appendChild(overlay);
+
+  const closeModal = () => {
+    overlay.remove();
+  };
+
+  overlay.onclick = (e) => {
+    if (e.target === overlay) closeModal();
+  };
+
+  const closeBtn = modal.querySelector('#close-resupply-modal-btn') as HTMLElement;
+  if (closeBtn) closeBtn.onclick = closeModal;
+
+  const cancelBtn = modal.querySelector('#resupply-cancel-btn') as HTMLElement;
+  if (cancelBtn) cancelBtn.onclick = closeModal;
+
+  const simBtn = modal.querySelector('#resupply-simulate-btn') as HTMLElement;
+  if (simBtn) {
+    simBtn.onclick = () => {
+      audioManager.play('credits_spend');
+      simBtn.textContent = 'TRANSACTION SIMULATED!';
+      simBtn.style.background = '#00FF66';
+      setTimeout(() => {
+        closeModal();
+      }, 1000);
+    };
+  }
 }

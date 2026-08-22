@@ -27,6 +27,12 @@ export enum ServerFeatureFlagKey {
   LLM_MAX_OUTPUT_TOKENS_PER_CYCLE = 'llm_max_output_tokens_per_cycle',
   LLM_MAX_TOOL_CALLS_PER_CYCLE = 'llm_max_tool_calls_per_cycle',
 
+  // Dossier Pipeline Flags
+  DOSSIER_MODEL_FAMILY = 'dossier_model_family',
+  DOSSIER_MODEL = 'dossier_model',
+  DOSSIER_FALLBACK_MODELS = 'dossier_fallback_models',
+  DOSSIER_MAX_TOKENS_PER_PLAYER = 'dossier_max_tokens_per_player',
+
   // Security Flags
   SECURITY_EXPLOIT_LOGGING = 'security_exploit_logging',
 }
@@ -53,6 +59,11 @@ export interface ServerFeatureFlagSchema {
   [ServerFeatureFlagKey.LLM_MAX_OUTPUT_TOKENS_PER_CYCLE]: number;
   [ServerFeatureFlagKey.LLM_MAX_TOOL_CALLS_PER_CYCLE]: number;
 
+  [ServerFeatureFlagKey.DOSSIER_MODEL_FAMILY]: string;
+  [ServerFeatureFlagKey.DOSSIER_MODEL]: string;
+  [ServerFeatureFlagKey.DOSSIER_FALLBACK_MODELS]: string[];
+  [ServerFeatureFlagKey.DOSSIER_MAX_TOKENS_PER_PLAYER]: number;
+
   [ServerFeatureFlagKey.SECURITY_EXPLOIT_LOGGING]: boolean;
 }
 
@@ -78,5 +89,17 @@ export const DEFAULT_SERVER_FEATURE_FLAGS: ServerFeatureFlagSchema = {
   [ServerFeatureFlagKey.LLM_MAX_OUTPUT_TOKENS_PER_CYCLE]: 800,
   [ServerFeatureFlagKey.LLM_MAX_TOOL_CALLS_PER_CYCLE]: 6,
 
+  [ServerFeatureFlagKey.DOSSIER_MODEL_FAMILY]: 'gemini',
+  [ServerFeatureFlagKey.DOSSIER_MODEL]: 'gemini-3.5-flash',
+  [ServerFeatureFlagKey.DOSSIER_FALLBACK_MODELS]: ['gemini-3.6-flash', 'gemini-3.1-flash'],
+  [ServerFeatureFlagKey.DOSSIER_MAX_TOKENS_PER_PLAYER]: 200,
+
   [ServerFeatureFlagKey.SECURITY_EXPLOIT_LOGGING]: true,
 };
+
+export function getServerFlagValue<T>(key: ServerFeatureFlagKey, fallback?: T): T {
+  if (key in DEFAULT_SERVER_FEATURE_FLAGS) {
+    return (DEFAULT_SERVER_FEATURE_FLAGS[key] as unknown as T) ?? (fallback as T);
+  }
+  return fallback as T;
+}

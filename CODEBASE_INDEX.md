@@ -224,6 +224,8 @@ This file is the authoritative index of all directories and source files within 
     *   **`inverted_plus.svg`**: Specialized crosshair asset.
 *   **`weapons_model.ts`**
     *   *Purpose:* Handles first-person weapon meshes, reload animations, and procedural recoil offsets.
+*   **`ads/` (Client Ad & Transmission Providers)**
+    *   **`ad-provider.ts`**: Manages client-side rewarded ad simulation and API transmission playback (`MockAdProvider`), handling daily view cap enforcement (`DAILY_AD_CAP`), loading state delays, progress countdown overlay UI, and fallback verification against `/api/economy/ad-reward`.
 *   **`data/` (JSON Data Registries)**
     *   **`catalog.json`**: Store catalog items, cosmetics, blueprints, pricing, and level requirements.
     *   **`challenges.json`**: Daily and weekly operational challenge definitions, targets, and rewards.
@@ -237,16 +239,17 @@ This file is the authoritative index of all directories and source files within 
     *   **`dev-audio.ts`**: Developer audio inspector listing live audio manifest samples dynamically with audition controls, category filtering, search input, and automatic playback termination rules.
     *   **`dev-entities.ts`**: Developer entity inspector for spawning, tracking, and debugging live match entities.
     *   **`dev-map-editor.ts`**: Level editor interface for placing and editing map colliders, spawn nodes, and zone volumes.
+    *   **`energy-modal.ts`**: Insufficient energy modal (`openInsufficientEnergyModal`, `getEnergyRegenCountdown`, `getMaxFreeEnergy`, `getMatchEnergyCost`) providing 3 actionable CTA pathways (Watch Transmission Ad, Commander Resupply in Store, or Wait for Free Regen) with live countdown calculations and zero-leak DOM lifecycle.
     *   **`faction-screen.ts`**: Faction/INTEL screen displaying operative lore, faction data, contractor dossiers, and intelligence updates.
     *   **`lobby.ts`**: Pre-match staging screen handling class selection, ready toggling, friend invites, and game mode info.
-    *   **`main-menu.ts`**: Central navigation dashboard containing top bar, user profile, nav links, and action cards (PLAY, UPDATES, INTEL, LOADOUT, FACTION, STORE, CHALLENGES).
+    *   **`main-menu.ts`**: Central navigation dashboard containing top bar, user profile, energy reserve bar with live countdown ticker, nav links, and action cards (PLAY, UPDATES, INTEL, LOADOUT, FACTION, STORE, CHALLENGES).
     *   **`map_viewer.ts`**: Interactive 3D map viewer for inspecting level architecture and capture zones.
     *   **`matchmaking-overlay.ts`**: Matchmaking waiting overlay box with pre-match countdown display and cancel option.
     *   **`post-match-screen.ts`**: After-action report screen displaying victory/defeat state, earned XP, credits, kills/deaths, and level progression.
     *   **`screen-manager.ts`**: Screen navigation manager controlling view transitions, active screen lifecycles, and DOM rendering.
     *   **`splash.ts`**: Initial splash screen handling game branding, asset preloading, and system initialization.
     *   **`stats-screen.ts`**: Player statistics dashboard showing career performance metrics, kill/death ratios, and match history.
-    *   **`store-screen.ts`**: In-game store screen for purchasing cosmetics, blueprints, and currency refills.
+    *   **`store-screen.ts`**: In-game store screen for purchasing cosmetics, blueprints, and currency refills, including Commander Resupply energy packages and mock purchase flow.
 *   **`transport/` (Client Connectivity)**
     *   **`adapter.ts`**: Client-side transport. Implements `SocketIOClientAdapter` and `GeckosClientAdapter` wrappers.
 *   **`src/` (Client Subsystems & FX)**
@@ -664,3 +667,17 @@ Every file change in the VEXEA codebase must follow this strict two-step protoco
 *   **External Evidence:** `/tmp/vexea-animation-authoring-spec_2026-08-21.md` records the measured inspection and acceptance decisions. `/tmp/vexea-animation-assets/` contains local raw/normalized GLBs, Blender scenes, sidecars, fixed inspection renders, weapon/utility contact sheets, clip probes, and the approval-ready Draco replacement package set under `replacement-packages/`. Five weapon outputs expose exact semantic clips `equip`, `idle`, `sprint`, `ads_enter`, `ads_hold`, `ads_exit`, `fire`, `reload`, and `inspect`; eight utilities plus the separately audited PRC-152 jammer expose measured equip/idle/inspect and action-specific use/throw/place clips. The corrected utility contact sheet is readable for all approved utilities; healthshot uses stab/press only; the LMG magazine is detachable while ammunition remains concealed; Selex is authored as a single rigid presentation; the downloaded free Animated MP5 candidate was not enabled because its local audit did not satisfy the clean weapon-only/animation acceptance gate. The compressed package batch totals 1,821,856 bytes with a 345,780-byte maximum individual package; all packages re-imported with the Draco-enabled probe and R2 remained read-only.
 *   **Planned Verification:** Blender structural inspection, fixed-view comparison renders, local GLB re-import through the configured loader path, metadata/clip/marker contract checks, `npx tsc --noEmit`, `npm test -- --run`, `npm run build`, `git diff --check`, architectural guards for WebGPU-only rendering, Geckos.io retention, protected hot-loop allocations, and decoder/transcoder artifact restoration.
 *   **Post-Edit Verification:** `npx tsc --noEmit` passed; focused weapon-contract tests passed 5/5; full `npm test -- --run` and `npm run build` passed; `git diff --check` passed after restoring the build-touched decoder/transcoder binaries. Existing Vite chunk-size/dynamic-import warnings and the pre-existing CJS `import.meta` warning remain only.
+
+### Cycle 2026-08-22-01: Dossier Pipeline Architectural Remediation
+* **Target Files:** `server/ai/adapters/CommanderAdapter.ts`, `server/ai/adapters/AdapterFactory.ts`, `server/ai/adapters/GeminiAdapter.ts`, `server/ai/adapters/KimiAdapter.ts`, `server/ai/adapters/ClaudeAdapter.ts`, `server/ai/adapters/OpenAIAdapter.ts`, `server/flags/server-flags.ts`, `shared/feature-flags.ts`, `server/player-data/BriefingRenderer.ts`, `server/MatchRoom.ts`, `FEATURE_FLAGS.md`, `CODEBASE_INDEX.md`
+* **Status:** Verified & Finalized
+* **Modifications:**
+    * `server/ai/adapters/CommanderAdapter.ts`: Added `generateText(prompt: string, systemInstruction: string, options?: { maxTokens?: number }): Promise<string>` to `CommanderAdapter` interface.
+    * `server/ai/adapters/AdapterFactory.ts`: Added `getAdapterByFamily(family: string, apiKey?: string): CommanderAdapter` factory method.
+    * `server/ai/adapters/GeminiAdapter.ts`, `KimiAdapter.ts`, `ClaudeAdapter.ts`, `OpenAIAdapter.ts`: Implemented native `generateText()` text completion per provider SDK without tools.
+    * `server/flags/server-flags.ts` & `shared/feature-flags.ts`: Registered server-side dossier flags (`DOSSIER_MODEL_FAMILY`, `DOSSIER_MODEL`, `DOSSIER_FALLBACK_MODELS`, `DOSSIER_MAX_TOKENS_PER_PLAYER`) and added `getServerFlagValue` helper.
+    * `server/player-data/BriefingRenderer.ts`: Replaced direct `GoogleGenAI` coupling with `AdapterFactory.getAdapterByFamily()`, fixed `winRate` calculation zero-count divisor guard, and refactored `triggerMatchEndDossiers()` to accept only `players` and fetch `gameProfile/v1` internally.
+    * `server/MatchRoom.ts`: Added asynchronous fire-and-forget `BriefingRenderer.triggerMatchEndDossiers()` trigger in `handleMatchEnd()`.
+    * `FEATURE_FLAGS.md`: Documented new dossier server feature flags in the registry table.
+* **Verification:** Full compilation and lint checks passed with zero errors.
+

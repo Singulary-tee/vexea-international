@@ -7,6 +7,7 @@
  */
 
 import { processDroneIntelligence, MemoryRecord } from "./ai/DroneIntelligence";
+import { processBotTick } from "./bot/BotController";
 import { processDroneBehaviors, initBehaviorOutputs } from "./ai/behavior/DroneBehaviorController";
 import { calculateDroneAvoidance } from "./ai/DroneAvoidance";
 import { CommanderMemory } from "./ai/CommanderMemory";
@@ -104,6 +105,7 @@ import { Sentry, recordServerTickDuration, recordServerActiveDrones, recordServe
 import { archiveMatchEvent } from "./player-data/MatchEventCollector";
 import { PlayerProfileStore } from "./player-data/PlayerProfileStore";
 import { MatchAbuseStore } from "./player-data/MatchAbuseStore";
+import { BriefingRenderer } from "./player-data/BriefingRenderer";
 
 export const MAX_PROJECTILES = 200;
 
@@ -213,6 +215,12 @@ export interface PlayerState {
   isHoldingObjective?: boolean;
   currentObjectiveProgress?: number;
   signalDisruptorUntil?: number;
+  botActionId?: number;      // 0=idle/nav, 1=combat, 2=objective
+  botTargetId?: string;      // nearest drone id or ""
+  botTargetDist?: number;
+  botFireCooldown?: number;  // ticks until next shot
+  botAimYaw?: number;
+  botAimPitch?: number;
 
   maxHp: number;
   isAlive: boolean;
@@ -1090,6 +1098,12 @@ export class MatchRoom {
       pState.inputMask = 0; // stands still
       pState.isBot = true;
       pState.isReady = true; // bots are always ready
+      pState.botActionId = 0;
+      pState.botTargetId = "";
+      pState.botTargetDist = 0;
+      pState.botFireCooldown = 0;
+      pState.botAimYaw = 0;
+      pState.botAimPitch = 0;
       return pState;
   }
 
@@ -1531,6 +1545,12 @@ export class MatchRoom {
                 player.isAlive = true;
                 player.isDead = false;
                 player.hp = player.maxHp;
+                player.botActionId = 0;
+                player.botTargetId = "";
+                player.botTargetDist = 0;
+                player.botFireCooldown = 0;
+                player.botAimYaw = 0;
+                player.botAimPitch = 0;
                 
                 // Reset each semantic slot from its resolved weapon identity.
                 resetWeaponSlotState(player.weaponState.primary, player.weaponState.primary.weaponId);
@@ -1643,15 +1663,8 @@ export class MatchRoom {
             // console.log('[MOVEMENT DEBUG] player.kcc:', !!player.kcc, 'player.body:', !!player.body, 'player.collider:', !!player.collider, 'playerId:', player.id);
             if (player.kcc && player.body && player.collider) {
               
-              if ((player as any).isBot) {
-                player.inputMask |= 0x01; // keep pushing forward
-                if ((player as any).botAngle === undefined) {
-                  (player as any).botAngle = Math.random() * Math.PI * 2;
-                }
-                player.yaw = (player as any).botAngle;
-                if (Math.random() < 0.05) {
-                  (player as any).botAngle += (Math.random() - 0.5) * 1.5;
-                }
+              if (player.isBot) {
+                processBotTick(player, this, 0.0166);
               }
 
               const inputMask = player.inputMask;
@@ -2810,6 +2823,10 @@ export class MatchRoom {
         });
       }
     }
+
+    BriefingRenderer.triggerMatchEndDossiers(
+      Array.from(this.players.values()).map(p => ({ id: p.id, isBot: p.isBot, displayName: p.displayName }))
+    );
 
     this.broadcastReliableEvent({
       type: "MATCH_END",

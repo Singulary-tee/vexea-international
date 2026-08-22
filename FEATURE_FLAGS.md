@@ -47,6 +47,10 @@ VEXEA uses **ConfigCat** as the primary OpenFeature provider across three SDK ke
 | `openai_fallback_models` | SERVER | ARRAY | `["gpt-5.6-terra"]` | Fallback OpenAI models on rate limits. |
 | `llm_max_output_tokens_per_cycle` | SERVER | NUMBER | `800` | Max completion tokens allocated per AI step. |
 | `llm_max_tool_calls_per_cycle` | SERVER | NUMBER | `6` | Hard limit on tool calls executed per cycle. |
+| `dossier_model_family` | SERVER | STRING | `"gemini"` | LLM adapter family used for post-match player dossiers. |
+| `dossier_model` | SERVER | STRING | `"gemini-3.5-flash"` | Primary model for operative tactical dossier generation. |
+| `dossier_fallback_models` | SERVER | ARRAY | `["gemini-3.6-flash", "gemini-3.1-flash"]` | Fallback models for dossier generation. |
+| `dossier_max_tokens_per_player` | SERVER | NUMBER | `200` | Max completion token ceiling per player dossier. |
 | `security_exploit_logging` | SERVER | BOOLEAN | `true` | Toggles security exploit attempt logging to Sentry. |
 | **Shared Flags** | | | | |
 | `store_dynamic_offers` | SHARED | BOOLEAN | `true` | Enables store offer rotations (Server/Client/Verification sync). |

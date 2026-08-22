@@ -155,4 +155,38 @@ export class KimiAdapter implements CommanderAdapter {
       modelUsed: usedModel,
     };
   }
+
+  public async generateText(
+    prompt: string,
+    systemInstruction: string,
+    options?: { maxTokens?: number }
+  ): Promise<string> {
+    if (!this.client) {
+      const key = process.env.KIMI_API_KEY;
+      if (key) {
+        this.client = new OpenAI({
+          apiKey: key,
+          baseURL: "https://api.moonshot.ai/v1",
+        });
+      }
+    }
+
+    if (!this.client) return "";
+
+    try {
+      const model = process.env.DOSSIER_MODEL || "kimi-k2.6";
+      const response = await this.client.chat.completions.create({
+        model,
+        messages: [
+          { role: "system", content: systemInstruction },
+          { role: "user", content: prompt },
+        ],
+        max_completion_tokens: options?.maxTokens ?? 200,
+      });
+      return response.choices[0]?.message?.content?.trim() || "";
+    } catch (err) {
+      console.error("[KimiAdapter] generateText failed:", err);
+      return "";
+    }
+  }
 }

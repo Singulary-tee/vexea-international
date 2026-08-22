@@ -153,4 +153,37 @@ export class OpenAIAdapter implements CommanderAdapter {
       modelUsed: usedModel,
     };
   }
+
+  public async generateText(
+    prompt: string,
+    systemInstruction: string,
+    options?: { maxTokens?: number }
+  ): Promise<string> {
+    if (!this.client) {
+      const key = process.env.OPENAI_API_KEY;
+      if (key) {
+        this.client = new OpenAI({
+          apiKey: key,
+        });
+      }
+    }
+
+    if (!this.client) return "";
+
+    try {
+      const model = process.env.DOSSIER_MODEL || "gpt-5.6-sol";
+      const response = await this.client.chat.completions.create({
+        model,
+        messages: [
+          { role: "system", content: systemInstruction },
+          { role: "user", content: prompt },
+        ],
+        max_completion_tokens: options?.maxTokens ?? 200,
+      });
+      return response.choices[0]?.message?.content?.trim() || "";
+    } catch (err) {
+      console.error("[OpenAIAdapter] generateText failed:", err);
+      return "";
+    }
+  }
 }

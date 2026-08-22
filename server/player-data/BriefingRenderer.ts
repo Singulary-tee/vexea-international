@@ -1,6 +1,7 @@
-import { GoogleGenAI } from "@google/genai";
 import { db, doc, getDoc, setDoc } from "../index";
 import { PlayerGameProfile } from "./PlayerProfileStore";
+import { AdapterFactory } from "../ai/adapters/AdapterFactory";
+import { ServerFeatureFlagKey, getServerFlagValue } from "../flags/server-flags";
 
 export class BriefingRenderer {
   /**
@@ -154,13 +155,12 @@ export class BriefingRenderer {
       return null;
     }
 
-    const dossierModel = process.env.DOSSIER_MODEL || "gemini-2.5-flash";
-    const apiKey = process.env.GEMINI_API_KEY;
-
-    if (!apiKey) {
-      console.error(`[BriefingRenderer] Cannot generate dossier for ${playerId}: GEMINI_API_KEY not configured.`);
-      return null;
-    }
+    const family = getServerFlagValue<string>(ServerFeatureFlagKey.DOSSIER_MODEL_FAMILY, 'gemini');
+    let apiKey: string | undefined;
+    if (family === "gemini") apiKey = process.env.GEMINI_API_KEY;
+    else if (family === "kimi") apiKey = process.env.KIMI_API_KEY;
+    else if (family === "claude") apiKey = process.env.ANTHROPIC_API_KEY;
+    else if (family === "openai") apiKey = process.env.OPENAI_API_KEY;
 
     const label = displayName || playerId;
     const preferredRole = profile.preferredRole || "ASSAULT";
@@ -171,7 +171,7 @@ export class BriefingRenderer {
     const recentMatches = profile.recentMatches || [];
     const wins = recentMatches.filter((m) => m.result === "win").length;
     const recentCount = recentMatches.length;
-    const winRate = totalMatches > 0 ? Math.round((wins / Math.max(1, recentCount)) * 100) : 0;
+    const winRate = recentCount > 0 ? Math.round((wins / recentCount) * 100) : 0;
 
     const systemInstruction =
       "You are VEXEA AI Commander evaluating contractor field telemetry. " +
@@ -187,29 +187,19 @@ export class BriefingRenderer {
       `Generate operational commander assessment for this operative dossier.`;
 
     try {
-      const ai = new GoogleGenAI({
-        apiKey,
-        httpOptions: { headers: { "User-Agent": "aistudio-build" } },
+      const adapter = AdapterFactory.getAdapterByFamily(family, apiKey);
+      const generatedText = await adapter.generateText(prompt, systemInstruction, {
+        maxTokens: getServerFlagValue<number>(ServerFeatureFlagKey.DOSSIER_MAX_TOKENS_PER_PLAYER, 200),
       });
 
-      const response = await ai.models.generateContent({
-        model: dossierModel,
-        contents: prompt,
-        config: {
-          systemInstruction,
-          maxOutputTokens: 200,
-        },
-      });
-
-      const generatedText = response.text?.trim();
-
-      if (!generatedText) {
-        console.error(`[BriefingRenderer] Empty response from ${dossierModel} for player ${playerId}`);
+      if (!generatedText || generatedText.trim().length === 0) {
+        console.error(`[BriefingRenderer] Empty response from ${family} adapter for player ${playerId}`);
         return null;
       }
 
+      const dossierModel = getServerFlagValue<string>(ServerFeatureFlagKey.DOSSIER_MODEL, "gemini-3.5-flash");
       const dossierData = {
-        text: generatedText,
+        text: generatedText.trim(),
         matchCountAtGeneration: totalMatches,
         generatedAt: new Date(),
         modelUsed: dossierModel,
@@ -218,7 +208,7 @@ export class BriefingRenderer {
       const dossierRef = doc(db, `Users/${playerId}/dossier`);
       await setDoc(dossierRef, dossierData);
 
-      return generatedText;
+      return generatedText.trim();
     } catch (err) {
       console.error(`[BriefingRenderer] Dossier generation failed for player ${playerId}:`, err);
       return null;
@@ -230,17 +220,21 @@ export class BriefingRenderer {
    * Never blocks match end or other flows.
    */
   public static triggerMatchEndDossiers(
-    players: Array<{ id: string; isBot?: boolean; displayName?: string }>,
-    profiles: Map<string, PlayerGameProfile | null>
+    players: Array<{ id: string; isBot?: boolean; displayName?: string }>
   ): void {
     // Fire and forget - async execution, never blocks caller
     (async () => {
       for (const p of players) {
-        if (p.isBot || !p.id) continue;
-        const profile = profiles.get(p.id) || null;
-        if (!profile || profile.totalMatches < 3) continue;
+        if (p.isBot || !p.id || p.id.startsWith("bot_")) continue;
 
         try {
+          const profileRef = doc(db, `Users/${p.id}/gameProfile/v1`);
+          const profileSnap = await getDoc(profileRef);
+          if (!profileSnap.exists()) continue;
+
+          const profile = profileSnap.data() as PlayerGameProfile;
+          if (!profile || profile.totalMatches < 3) continue;
+
           // Check cache before invoking LLM
           const dossierRef = doc(db, `Users/${p.id}/dossier`);
           const snap = await getDoc(dossierRef);

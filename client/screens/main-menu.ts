@@ -19,6 +19,7 @@ import { renderArmoryScreen } from "./armory-screen";
 import { renderStatsScreen, setActiveStatsSubTab } from "./stats-screen";
 import { renderFactionScreen } from "./faction-screen";
 import { renderStoreScreen } from "./store-screen";
+import { openInsufficientEnergyModal, getEnergyRegenCountdown, getMaxFreeEnergy, getMatchEnergyCost } from "./energy-modal";
 import { StudioPreviewManager } from "../StudioPreviewManager";
 import { CLASSES } from "../../shared/classes";
 import { resolveDisplayName, sendFriendRequest, getFriendsList, getIncomingRequests, respondToFriendRequest, ensureUsernameMapped, getLobbyInvites, respondToLobbyInvite } from "../social";
@@ -34,6 +35,7 @@ let userFaction: string | null = null;
 let registeredUserData: any = null;
 let userSubscriptionUnsubscribe: (() => void) | null = null;
 let offersInterval: any = null;
+let energyRegenInterval: any = null;
 let persistentContainers: { [mode: string]: HTMLElement } = {};
 
 let lastChosenGameMode = localStorage.getItem('lastChosenGameMode') || 'INFILTRATION';
@@ -573,6 +575,16 @@ export function initMainMenu() {
   // Energy & Credits Display stacked vertically
   const crDisplay = document.createElement('div');
   crDisplay.id = 'profile-cr-display';
+  crDisplay.style.cursor = 'pointer';
+  crDisplay.style.pointerEvents = 'auto';
+  crDisplay.title = 'Click to inspect Energy Reserves & Resupply';
+  crDisplay.onclick = (e) => {
+    e.stopPropagation();
+    openInsufficientEnergyModal(registeredUserData, {
+      onEnergyRefilled: () => updateProfileBox(),
+      onNavigateStore: () => setActiveCard('STORE')
+    });
+  };
   Object.assign(crDisplay.style, {
     display: 'flex',
     flexDirection: 'column',
@@ -583,9 +595,9 @@ export function initMainMenu() {
     color: DS.colors.accent,
     fontWeight: 'bold',
     letterSpacing: '0.5px',
-    pointerEvents: 'none',
-    height: '1.75rem',
-    flexShrink: '0'
+    height: 'auto',
+    flexShrink: '0',
+    padding: '2px 4px'
   });
 
   // Far Right Utility buttons: Fullscreen, Feedback, Settings
@@ -787,6 +799,15 @@ export function initMainMenu() {
   playObj.titleEl.style.fontSize = 'clamp(1.06rem, 12.5cqi, 2.63rem)';
   playCard.onclick = (e) => {
     e.stopPropagation();
+    const currentEnergy = registeredUserData?.energy !== undefined ? registeredUserData.energy : 10;
+    const matchCost = getMatchEnergyCost();
+    if (currentEnergy < matchCost) {
+      openInsufficientEnergyModal(registeredUserData, {
+        onEnergyRefilled: () => updateProfileBox(),
+        onNavigateStore: () => setActiveCard('STORE')
+      });
+      return;
+    }
     const lastMapId = localStorage.getItem('lastChosenMap') || getDefaultMap().id;
     ensureAssetsDownloaded(() => screenManager.showLobby(), lastMapId);
   };
@@ -856,18 +877,33 @@ export function initMainMenu() {
 
   if (getMatchesPlayed() >= 1) {
     const qmBtn = document.createElement('div');
-    qmBtn.textContent = 'QUICK MATCH';
-    qmBtn.className = 'mm-deploy-btn-glow';
+    const curEnergy = registeredUserData?.energy !== undefined ? registeredUserData.energy : 10;
+    const matchCost = getMatchEnergyCost();
+    const isLowEnergy = curEnergy < matchCost;
+
+    qmBtn.textContent = isLowEnergy ? 'QUICK MATCH [LOW EN]' : 'QUICK MATCH';
+    qmBtn.className = isLowEnergy ? '' : 'mm-deploy-btn-glow';
     Object.assign(qmBtn.style, {
-      color: DS.colors.background, background: DS.colors.accent, border: 'none',
+      color: isLowEnergy ? DS.colors.accent : DS.colors.background,
+      background: isLowEnergy ? 'rgba(255, 68, 0, 0.15)' : DS.colors.accent,
+      border: isLowEnergy ? `1px solid ${DS.colors.accent}` : 'none',
       padding: '0.50rem 1.25rem',
       fontFamily: DS.typography.fontFamily, fontWeight: DS.typography.weightBold,
       fontSize: 'clamp(1.00rem, 4cqi, 1.50rem)', cursor: 'pointer', pointerEvents: 'auto',
-      borderRadius: '0px', textAlign: 'center', whiteSpace: 'nowrap', boxShadow: '0 2px 6px rgba(0,0,0,0.5)', zIndex: '5',
+      borderRadius: '0px', textAlign: 'center', whiteSpace: 'nowrap',
+      boxShadow: isLowEnergy ? 'none' : '0 2px 6px rgba(0,0,0,0.5)', zIndex: '5',
       marginTop: 'auto'
     });
     qmBtn.onclick = (e) => {
         e.stopPropagation();
+        const activeEn = registeredUserData?.energy !== undefined ? registeredUserData.energy : 10;
+        if (activeEn < getMatchEnergyCost()) {
+          openInsufficientEnergyModal(registeredUserData, {
+            onEnergyRefilled: () => updateProfileBox(),
+            onNavigateStore: () => setActiveCard('STORE')
+          });
+          return;
+        }
         const selectedClass = localStorage.getItem('selectedClass') || CLASSES.ASSAULT.id;
         const lastMapId = localStorage.getItem('lastChosenMap') || getDefaultMap().id;
         const lastMap = getMapById(lastMapId) || getDefaultMap();
@@ -1063,6 +1099,7 @@ export function initMainMenu() {
   updateOffer(0);
 
   // Auto-flipping carousel
+  if (offersInterval) clearInterval(offersInterval);
   offersInterval = setInterval(() => {
     const mmScreen = document.getElementById('main-menu-screen');
     const isVisible = mmScreen && mmScreen.style.display !== 'none' && mmScreen.style.opacity !== '0';
@@ -1075,6 +1112,19 @@ export function initMainMenu() {
       promoTextEl.style.opacity = '1';
     }, 300);
   }, 4000);
+
+  // Real-time energy countdown ticker
+  if (energyRegenInterval) clearInterval(energyRegenInterval);
+  energyRegenInterval = setInterval(() => {
+    const mmScreen = document.getElementById('main-menu-screen');
+    const isVisible = mmScreen && mmScreen.style.display !== 'none' && mmScreen.style.opacity !== '0';
+    if (!isVisible) return;
+    const ticker = document.getElementById('top-energy-regen-ticker');
+    if (ticker) {
+      const countdown = getEnergyRegenCountdown();
+      ticker.textContent = `+1 IN ${countdown.formatted}`;
+    }
+  }, 1000);
 
   // 2. CHALLENGES PANEL (Statically displaying minimum 3 challenges)
   const challengesPanel = document.createElement('div');
@@ -1291,15 +1341,25 @@ function updateProfileBox() {
     }
 
     const creditsVal = registeredUserData.credits !== undefined ? registeredUserData.credits : 100;
-    const energyVal = registeredUserData.energy !== undefined ? registeredUserData.energy : 100;
+    const energyVal = registeredUserData.energy !== undefined ? registeredUserData.energy : 10;
+    const maxFree = getMaxFreeEnergy();
+    const energyPct = Math.min(100, Math.max(0, (energyVal / maxFree) * 100));
+    const isBelowMax = energyVal < maxFree;
+    const regenCountdown = getEnergyRegenCountdown();
 
     if (crDisplay) {
       crDisplay.innerHTML = `
         <div style="display:inline-flex;align-items:center;gap:4px;line-height:1;">
-          ${coinSvg}<span>${creditsVal}</span>
+          ${coinSvg}<span>${creditsVal} CR</span>
         </div>
-        <div style="display:inline-flex;align-items:center;gap:4px;line-height:1;">
-          ${boltSvg}<span>${energyVal}</span>
+        <div style="display:flex;flex-direction:column;gap:2px;">
+          <div style="display:inline-flex;align-items:center;gap:4px;line-height:1;">
+            ${boltSvg}<span>${energyVal}/${maxFree}</span>
+            ${isBelowMax ? `<span id="top-energy-regen-ticker" style="font-size:clamp(0.44rem, 0.9vh, 0.50rem);color:${DS.colors.textMuted};font-weight:normal;letter-spacing:0.5px;">+1 IN ${regenCountdown.formatted}</span>` : ''}
+          </div>
+          <div style="width:100%;height:3px;background:rgba(255,255,255,0.12);overflow:hidden;position:relative;">
+            <div style="width:${energyPct}%;height:100%;background:${energyVal < 2 ? DS.colors.danger : DS.colors.accent};transition:width 0.3s ease;"></div>
+          </div>
         </div>
       `;
     }
@@ -1318,13 +1378,22 @@ function updateProfileBox() {
       xpFill.style.height = '45%';
     }
 
+    const maxFree = getMaxFreeEnergy();
+    const guestEnergy = 10;
+    const energyPct = Math.min(100, Math.max(0, (guestEnergy / maxFree) * 100));
+
     if (crDisplay) {
       crDisplay.innerHTML = `
         <div style="display:inline-flex;align-items:center;gap:4px;line-height:1;">
-          ${coinSvg}<span>100</span>
+          ${coinSvg}<span>100 CR</span>
         </div>
-        <div style="display:inline-flex;align-items:center;gap:4px;line-height:1;">
-          ${boltSvg}<span>100</span>
+        <div style="display:flex;flex-direction:column;gap:2px;">
+          <div style="display:inline-flex;align-items:center;gap:4px;line-height:1;">
+            ${boltSvg}<span>${guestEnergy}/${maxFree}</span>
+          </div>
+          <div style="width:100%;height:3px;background:rgba(255,255,255,0.12);overflow:hidden;position:relative;">
+            <div style="width:${energyPct}%;height:100%;background:${DS.colors.accent};transition:width 0.3s ease;"></div>
+          </div>
         </div>
       `;
     }

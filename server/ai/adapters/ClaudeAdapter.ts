@@ -146,4 +146,36 @@ export class ClaudeAdapter implements CommanderAdapter {
       modelUsed: usedModel,
     };
   }
+
+  public async generateText(
+    prompt: string,
+    systemInstruction: string,
+    options?: { maxTokens?: number }
+  ): Promise<string> {
+    if (!this.client) {
+      const key = process.env.ANTHROPIC_API_KEY;
+      if (key) {
+        this.client = new Anthropic({
+          apiKey: key,
+        });
+      }
+    }
+
+    if (!this.client) return "";
+
+    try {
+      const model = process.env.DOSSIER_MODEL || "claude-sonnet-4-6";
+      const response = await this.client.messages.create({
+        model,
+        max_tokens: options?.maxTokens ?? 200,
+        system: systemInstruction,
+        messages: [{ role: "user", content: prompt }],
+      });
+      const textBlock = response.content?.find((b: any) => b.type === "text") as any;
+      return textBlock?.text?.trim() || "";
+    } catch (err) {
+      console.error("[ClaudeAdapter] generateText failed:", err);
+      return "";
+    }
+  }
 }
