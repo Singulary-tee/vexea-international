@@ -681,3 +681,12 @@ Every file change in the VEXEA codebase must follow this strict two-step protoco
     * `FEATURE_FLAGS.md`: Documented new dossier server feature flags in the registry table.
 * **Verification:** Full compilation and lint checks passed with zero errors.
 
+### Cycle 2026-08-22-02: Server & Test Initialization Hardening (VEXEA-SERVER-5, VEXEA-SERVER-6, VEXEA-SERVER-7)
+* **Target Files:** `server/index.ts`, `client/src/vfx/LLMTrackingEffect.ts`, `tests/match-room.test.ts`, `tests/setup.ts`, `CODEBASE_INDEX.md`
+* **Status:** Verified & Finalized
+* **Modifications:**
+    * `server/index.ts` (VEXEA-SERVER-6): Normalized `private_key` with newline replacement (`replace(/\\n/g, '\n')`), guarded `getApps()` against undefined/empty states before accessing `.length`, and added actionable server-side logging for both admin and fallback initialization failures.
+    * `client/src/vfx/LLMTrackingEffect.ts` (VEXEA-SERVER-7): Converted DOM construction from eager constructor-level execution to lazy initialization via `initDOM()` guarded by `typeof document !== 'undefined'`, preventing module-load-time DOM mutation crashes in headless test and Node environments.
+    * `tests/match-room.test.ts` & `tests/setup.ts` (VEXEA-SERVER-5): Added complete mock definitions for `firebase-admin/app` (including `getApps: vi.fn().mockReturnValue([])`, `initializeApp`, and `cert`) and `firebase-admin/firestore` to prevent mock resolution failures across all test suites.
+* **Verification:** `lint_applet` passed (`tsc --noEmit`), `compile_applet` passed, and full Vitest suite passed with 21/21 test files and 106/106 tests passing.
+

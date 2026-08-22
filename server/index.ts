@@ -415,7 +415,11 @@ const serveApp = async () => {
 
   if (serviceAccount) {
     try {
-      if (getApps().length === 0) {
+      if (serviceAccount.private_key && typeof serviceAccount.private_key === "string") {
+        serviceAccount.private_key = serviceAccount.private_key.replace(/\\n/g, "\n");
+      }
+      const existingApps = getApps();
+      if (!existingApps || existingApps.length === 0) {
         initializeApp({
           credential: cert(serviceAccount),
         });
@@ -425,20 +429,39 @@ const serveApp = async () => {
       }
     } catch (err: any) {
       console.error(
-        "VEXEA Authoritative Database Server: Admin initialization failed, falling back:",
-        err,
+        "VEXEA Authoritative Database Server: Admin initialization failed, falling back to default environment profile:",
+        err?.message || err,
       );
-      if (getApps().length === 0) initializeApp();
+      try {
+        const existingApps = getApps();
+        if (!existingApps || existingApps.length === 0) {
+          initializeApp();
+          console.log(
+            "VEXEA Authoritative Database Server: Firebase fallback initialization with default environment profile succeeded.",
+          );
+        }
+      } catch (fallbackErr: any) {
+        console.error(
+          "VEXEA Authoritative Database Server: Firebase fallback initialization failed:",
+          fallbackErr?.message || fallbackErr,
+        );
+      }
     }
   } else {
     try {
-      if (getApps().length === 0) {
+      const existingApps = getApps();
+      if (!existingApps || existingApps.length === 0) {
         initializeApp();
         console.log(
           "VEXEA Authoritative Database Server: Firebase initialized with default environment profile.",
         );
       }
-    } catch (err) {}
+    } catch (err: any) {
+      console.error(
+        "VEXEA Authoritative Database Server: Default profile initialization failed:",
+        err?.message || err,
+      );
+    }
   }
 
   await serverFlagService.initialize();

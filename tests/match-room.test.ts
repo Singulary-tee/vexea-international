@@ -4,8 +4,20 @@ import { DroneType, DroneState } from '../shared/constants';
 import * as fs from 'fs';
 
 vi.mock('fs');
-vi.mock('firebase-admin/app');
-vi.mock('firebase-admin/firestore');
+vi.mock('firebase-admin/app', () => ({
+  initializeApp: vi.fn(),
+  cert: vi.fn(),
+  getApps: vi.fn().mockReturnValue([]),
+}));
+vi.mock('firebase-admin/firestore', () => ({
+  getFirestore: vi.fn().mockReturnValue({
+    collection: vi.fn().mockReturnThis(),
+    doc: vi.fn().mockReturnThis(),
+    set: vi.fn().mockResolvedValue({}),
+    get: vi.fn().mockResolvedValue({ exists: false, data: () => ({}) })
+  }),
+  FieldValue: { increment: vi.fn() },
+}));
 vi.mock('@dimforge/rapier3d-compat', () => {
   const mockRapier = {
     init: vi.fn().mockResolvedValue({}),

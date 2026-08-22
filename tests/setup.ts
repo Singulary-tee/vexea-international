@@ -4,6 +4,22 @@ process.env.TEST_MODE = 'true';
 process.env.GEMINI_API_KEY = 'fake-key';
 process.env.CODECOV_TOKEN = 'fake-token';
 
+vi.mock('firebase-admin/app', () => ({
+  initializeApp: vi.fn(),
+  cert: vi.fn(),
+  getApps: vi.fn().mockReturnValue([]),
+}));
+
+vi.mock('firebase-admin/firestore', () => ({
+  getFirestore: vi.fn().mockReturnValue({
+    collection: vi.fn().mockReturnThis(),
+    doc: vi.fn().mockReturnThis(),
+    set: vi.fn().mockResolvedValue({}),
+    get: vi.fn().mockResolvedValue({ exists: false, data: () => ({}) }),
+  }),
+  FieldValue: { increment: vi.fn() },
+}));
+
 const store: Record<string, string> = {};
 const localStorageMock = {
   getItem: vi.fn((key: string) => store[key] || null),

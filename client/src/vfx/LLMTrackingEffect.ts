@@ -20,11 +20,16 @@ export class LLMTrackingEffect {
   private readonly SCAN_RADIUS = 12; // px offset from center
   private readonly HUD_MARGIN = 32; // px from top-left
 
+  private domInitialized: boolean = false;
+
   constructor() {
-    this.initDOM();
+    // Lazy initialization: DOM is built on first trigger() or explicit initDOM() call
   }
 
-  private initDOM() {
+  public initDOM() {
+    if (this.domInitialized) return;
+    if (typeof document === "undefined" || !document.body) return;
+
     // Create the SVG Filter for Refraction (No color, pure distortion)
     const svgFilter = document.createElementNS("http://www.w3.org/2000/svg", "svg");
     svgFilter.setAttribute("style", "position: absolute; width: 0; height: 0;");
@@ -94,13 +99,17 @@ export class LLMTrackingEffect {
     this.container.appendChild(this.eyeOuter);
     this.container.appendChild(this.eyePupil);
     document.body.appendChild(this.container);
+
+    this.domInitialized = true;
   }
 
   public trigger() {
     if (this.isActive) return;
-    this.isActive = true;
+    this.initDOM();
+    if (!this.container) return;
 
-    if (this.container) this.container.style.display = "flex";
+    this.isActive = true;
+    this.container.style.display = "flex";
 
     // PHASE 1: Activation
     this.activate();
