@@ -404,6 +404,10 @@ class AudioManager {
         this.stop('reload');
         this.stop('pistol_reload');
         this.stop('rifle_reload');
+        this.stop('smg_reload');
+        this.stop('shotgun_reload');
+        this.stop('lmg_reload');
+        this.stop('sniper_reload');
     }
 
     public stop(key: string) {

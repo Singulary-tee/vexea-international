@@ -4,6 +4,7 @@ import { isRuntimeWeaponId } from '../shared/constants';
 import { AUTHORING_REQUIRED_WEAPON_IDS } from '../shared/weapons';
 import { UTILITY_MODEL_KEYS, UTILITIES, createInitialUtilityState } from '../shared/utilities';
 import { UTILITY_ASSET_DETAILS, WEAPON_ASSET_DETAILS } from '../shared/asset-details';
+import { AUDIO_MANIFEST } from '../client/audio-manifest';
 
 describe('semantic weapon slot contract', () => {
   it('keeps class primary pools and rifle defaults aligned', () => {
@@ -64,6 +65,31 @@ describe('named utility and asset connector contract', () => {
         expect(details.animation?.nodes.adsReference).toBe('ADSReference');
         expect(details.animation?.measuredSize.every((value) => value > 0)).toBe(true);
       }
+    }
+  });
+
+  it('wires authored weapon audio identities to concrete manifest SFX entries', () => {
+    const expectedKeys = [
+      'smg_fire',
+      'smg_reload',
+      'shotgun_fire',
+      'shotgun_reload',
+      'lmg_fire',
+      'lmg_reload',
+      'sniper_fire',
+      'sniper_reload',
+    ];
+
+    for (const key of expectedKeys) {
+      const entry = AUDIO_MANIFEST.find((candidate) => candidate.key === key);
+      expect(entry?.category).toBe('sfx');
+      expect(entry?.path).toBe(`Audio/Sfx/Weapons/${key}.opus`);
+    }
+
+    for (const weaponId of Object.keys(WEAPON_ASSET_DETAILS)) {
+      const details = WEAPON_ASSET_DETAILS[weaponId as keyof typeof WEAPON_ASSET_DETAILS];
+      expect(details.audio.fire).not.toMatch(/^PLACEHOLDER_/);
+      expect(details.audio.reload).not.toMatch(/^PLACEHOLDER_/);
     }
   });
 

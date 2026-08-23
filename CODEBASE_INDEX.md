@@ -690,3 +690,18 @@ Every file change in the VEXEA codebase must follow this strict two-step protoco
     * `tests/match-room.test.ts` & `tests/setup.ts` (VEXEA-SERVER-5): Added complete mock definitions for `firebase-admin/app` (including `getApps: vi.fn().mockReturnValue([])`, `initializeApp`, and `cert`) and `firebase-admin/firestore` to prevent mock resolution failures across all test suites.
 * **Verification:** `lint_applet` passed (`tsc --noEmit`), `compile_applet` passed, and full Vitest suite passed with 21/21 test files and 106/106 tests passing.
 
+
+### Cycle 2026-08-23-01: R2 Weapon Audio Manifest, Placeholder Replacement, and Match-Load Integration
+* **Target Files:** `client/audio-manifest.ts`, `shared/asset-details.ts`, `client/audio.ts`, `tests/weapon-contracts.test.ts`, `r2_assets_tracker.json`, `r2_assets_tracker.md`, `CODEBASE_INDEX.md`
+* **Status:** Verified & Finalized on branch `manus/audio-r2-weapon-integration`.
+* **Scope:** Registered the seven owner-approved R2 weapon audio objects (`lmg_fire`, `lmg_reload`, `shotgun_fire`, `shotgun_reload`, `smg_reload`, `sniper_fire`, `sniper_reload`) in the client manifest; replaced the active weapon audio placeholders in `WEAPON_ASSET_DETAILS`; verified that existing match-entry loading covers the manifest-driven gameplay audio; covered the generic reload-cancellation path; synchronized the verified R2 inventory tracker; and added focused contract coverage.
+* **Constraints:** Utility placeholders, deprecated general-tracker audio rows, and unrelated audio remain unchanged; R2 remains the runtime asset source; the already-approved audio objects were not modified; no WebGLRenderer or React was introduced; Geckos.io remains present; no protected simulation/network hot-loop allocations were added; no secrets were exposed.
+* **Completed Modified Files:**
+    * `client/audio-manifest.ts`: Added the seven canonical gameplay SFX entries under `Audio/Sfx/Weapons/`, extending the derived `AudioKey` union and `AUDIO_PATHS` map.
+    * `shared/asset-details.ts`: Replaced the SMG reload, shotgun fire/reload, LMG fire/reload, and sniper fire/reload audio placeholders with their concrete manifest keys.
+    * `client/audio.ts`: Extended no-argument reload cancellation to stop the four newly wired reload sounds during weapon switches.
+    * `r2_assets_tracker.json` and `r2_assets_tracker.md`: Added the seven verified R2 objects and updated totals from 155 to 162 assets and from 81 to 88 sound assets.
+    * `tests/weapon-contracts.test.ts`: Added manifest/path/category assertions and a no-active-weapon-audio-placeholder regression check.
+    * `CODEBASE_INDEX.md`: Registered and finalized this cycle.
+* **Loading Evidence:** `client/src/map/LoadingOrchestrator.ts` already calls `audioManager.loadGameplayAudio()`, and `client/audio.ts` derives that load set from manifest entries whose category is not `ui` or `music`. The seven new entries are `sfx`, so no separate allowlist or orchestrator code change was required; both standard matchmaking and the existing match-entry path remain delegated through the orchestrator.
+* **Post-Edit Verification:** `npx vitest run tests/weapon-contracts.test.ts` passed 6/6; `npx tsc --noEmit` passed; `npm test -- --run` passed 21/21 files and 107/107 tests; `npm run build` passed with only the existing Vite chunk-size/dynamic-import and CJS `import.meta` warnings; the independent 41-check manifest/placeholder/tracker/reload-stop/orchestrator audit passed; `git diff --check` passed; build-touched decoder assets were restored; no deprecated `assets_tracker.*` audio rows were changed.

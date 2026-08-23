@@ -1,7 +1,7 @@
 {
   "version": "1.0.0",
-  "lastVerified": "2026-08-14T23:43:17.158Z",
-  "totalAssets": 155,
+  "lastVerified": "2026-08-23T01:42:37.791Z",
+  "totalAssets": 162,
   "assets": [
     {
       "name": "distant_industrial_loop.opus",
@@ -488,6 +488,48 @@
       "category": "Sound",
       "source": "CloudflareR2",
       "path": "Audio/Sfx/Weapons/smg_fire.opus"
+    },
+    {
+      "name": "lmg_fire.opus",
+      "category": "Sound",
+      "source": "CloudflareR2",
+      "path": "Audio/Sfx/Weapons/lmg_fire.opus"
+    },
+    {
+      "name": "lmg_reload.opus",
+      "category": "Sound",
+      "source": "CloudflareR2",
+      "path": "Audio/Sfx/Weapons/lmg_reload.opus"
+    },
+    {
+      "name": "shotgun_fire.opus",
+      "category": "Sound",
+      "source": "CloudflareR2",
+      "path": "Audio/Sfx/Weapons/shotgun_fire.opus"
+    },
+    {
+      "name": "shotgun_reload.opus",
+      "category": "Sound",
+      "source": "CloudflareR2",
+      "path": "Audio/Sfx/Weapons/shotgun_reload.opus"
+    },
+    {
+      "name": "smg_reload.opus",
+      "category": "Sound",
+      "source": "CloudflareR2",
+      "path": "Audio/Sfx/Weapons/smg_reload.opus"
+    },
+    {
+      "name": "sniper_fire.opus",
+      "category": "Sound",
+      "source": "CloudflareR2",
+      "path": "Audio/Sfx/Weapons/sniper_fire.opus"
+    },
+    {
+      "name": "sniper_reload.opus",
+      "category": "Sound",
+      "source": "CloudflareR2",
+      "path": "Audio/Sfx/Weapons/sniper_reload.opus"
     },
     {
       "name": "armory_1.webp",
