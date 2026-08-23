@@ -705,3 +705,21 @@ Every file change in the VEXEA codebase must follow this strict two-step protoco
     * `CODEBASE_INDEX.md`: Registered and finalized this cycle.
 * **Loading Evidence:** `client/src/map/LoadingOrchestrator.ts` already calls `audioManager.loadGameplayAudio()`, and `client/audio.ts` derives that load set from manifest entries whose category is not `ui` or `music`. The seven new entries are `sfx`, so no separate allowlist or orchestrator code change was required; both standard matchmaking and the existing match-entry path remain delegated through the orchestrator.
 * **Post-Edit Verification:** `npx vitest run tests/weapon-contracts.test.ts` passed 6/6; `npx tsc --noEmit` passed; `npm test -- --run` passed 21/21 files and 107/107 tests; `npm run build` passed with only the existing Vite chunk-size/dynamic-import and CJS `import.meta` warnings; the independent 41-check manifest/placeholder/tracker/reload-stop/orchestrator audit passed; `git diff --check` passed; build-touched decoder assets were restored; no deprecated `assets_tracker.*` audio rows were changed.
+
+### Cycle 2026-08-23-02: Muzzle Flash Flipbook Conversion, Zero-GC Muzzle Resolution, and Audio Emitter Lifecycle Hardening
+* **Target Files:** `client/src/vfx/firing.ts`, `client/src/systems/VisualsSystem.ts`, `client/weapons_model.ts`, `client/audio.ts`, `client/MatchController.ts`, `client/src/systems/NetworkSyncSystem.ts`, `CODEBASE_INDEX.md`
+* **Status:** Verified & Finalized.
+* **Scope:**
+    * Task 1: Replaced procedural TSL mesh/shader generation in `client/src/vfx/firing.ts` with `triggerMuzzleFlipbook` from `client/src/vfx/flipbooks.ts`. Preserved the zero-GC pooling structure (`POOL_SIZE = 8`, capped `POOL_LIGHTS_COUNT = 2` PointLights with constant visibility and intensity modulation, player and drone jitter attachment). Removed stale Niagara mesh visibility toggling from `VisualsSystem.ts`.
+    * Task 2: Fixed the dynamic muzzle position resolution in `client/weapons_model.ts` (`getMuzzleWorldPosition`), eliminating per-call `new THREE.Vector3()` runtime allocations and applying camera view-space offsets via pre-allocated vector multiplication by `camera.quaternion`.
+    * Task 3: Implemented `stopAllEmitters()` in `client/audio.ts` to stop and clear active positional/looped Howl emitters, match ambient sounds, footstep timers, and active reload audio. Wired `stopAllEmitters()` into `MatchController.dispose()` / `stop()` and the `YOU_DIED` event handler in `NetworkSyncSystem.ts`.
+* **Constraints:** No WebGLRenderer, no React, WebGPU-only pipeline, zero-GC allocations in tick/render loops, preserved all gameplay mechanics and weapon performance constants.
+* **Completed Modified Files:**
+    * `client/src/vfx/firing.ts`: Removed procedural TSL `MeshBasicNodeMaterial`, `SphereGeometry`, `ConeGeometry` and replaced flash emission with `triggerMuzzleFlipbook()`, maintaining PointLight pooling and dynamic attachment.
+    * `client/src/systems/VisualsSystem.ts`: Cleaned up shader pre-warm loop by removing procedural Niagara mesh references.
+    * `client/weapons_model.ts`: Optimized `getMuzzleWorldPosition` to use pre-allocated vectors and accurate view-space transformation via `camera.quaternion`.
+    * `client/audio.ts`: Added `stopAllEmitters()` on `AudioManager` for comprehensive audio loop cleanup.
+    * `client/MatchController.ts`: Disposes and stops all active audio emitters and updates match state in `dispose()`.
+    * `client/src/systems/NetworkSyncSystem.ts`: Stops audio emitters when `YOU_DIED` packet is received.
+    * `CODEBASE_INDEX.md`: Registered this cycle and verified changes.
+* **Post-Edit Verification:** `lint_applet` passed (`tsc --noEmit`), `compile_applet` passed cleanly.

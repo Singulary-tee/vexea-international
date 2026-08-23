@@ -18,6 +18,7 @@ import { CompassSystem } from "./src/systems/CompassSystem";
 import { LLMObjectiveSystem } from "./src/systems/LLMObjectiveSystem";
 import { ChatHUDSystem } from "./src/systems/ChatHUDSystem";
 import { DamageIndicators } from "./src/vfx/DamageIndicators";
+import { audioManager } from "./audio";
 
 
 export interface NetworkDroneState {
@@ -403,6 +404,9 @@ export class MatchController {
         this.cameraEffects = null;
     }
 
+    // Stop all audio emitters and reset audio match state
+    audioManager.stopAllEmitters();
+    audioManager.setMatchState(false);
 
     // 5. Reset primitives
     this.playerHP = 100;

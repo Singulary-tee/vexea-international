@@ -1,12 +1,9 @@
 import * as THREE from "three/webgpu";
-import { uv, float, smoothstep, length as tslLength, vec2, vec4, mix } from "three/tsl";
 import { VFX_CONSTANTS } from "./constants";
 import { MatchController } from "../../MatchController";
-import { getMuzzleWorldPosition } from "../../weapons_model";
+import { triggerMuzzleFlipbook } from "./flipbooks";
 
 export interface NiagaraMuzzleFlash {
-  coreMesh: THREE.Mesh;
-  spikeMesh: THREE.Mesh;
   light: THREE.PointLight | null;
   life: number;
   maxLife: number;
@@ -40,60 +37,7 @@ export function initFiringVFX(scene: THREE.Scene, hasLights: boolean) {
   _scene = scene;
   flashPool.length = 0;
 
-  // 1. Core Material using TSL (Niagara-style hot-white inner core and orange-red outer boundary)
-  const coreMat = new THREE.MeshBasicNodeMaterial();
-  coreMat.transparent = true;
-  coreMat.blending = THREE.AdditiveBlending;
-  coreMat.depthWrite = false;
-  coreMat.side = THREE.DoubleSide;
-
-  const coreUV = uv().sub(vec2(0.5, 0.5));
-  const coreDist = tslLength(coreUV).mul(float(2.0));
-  
-  const innerSoft = smoothstep(float(1.0), float(0.0), coreDist);
-  const outerPlume = smoothstep(float(0.8), float(0.2), coreDist);
-
-  const innerColor = vec4(VFX_CONSTANTS.FIRING.CORE_COLOR[0], VFX_CONSTANTS.FIRING.CORE_COLOR[1], VFX_CONSTANTS.FIRING.CORE_COLOR[2], 1.0);
-  const outerColor = vec4(VFX_CONSTANTS.FIRING.EDGE_COLOR[0], VFX_CONSTANTS.FIRING.EDGE_COLOR[1], VFX_CONSTANTS.FIRING.EDGE_COLOR[2], 0.0);
-  const coreColorNode = mix(outerColor, innerColor, outerPlume);
-
-  coreMat.colorNode = vec4(coreColorNode.x, coreColorNode.y, coreColorNode.z, innerSoft);
-
-  // 2. Gas Spike Material (Linear stretch along U/V axes)
-  const spikeMat = new THREE.MeshBasicNodeMaterial();
-  spikeMat.transparent = true;
-  spikeMat.blending = THREE.AdditiveBlending;
-  spikeMat.depthWrite = false;
-  spikeMat.side = THREE.DoubleSide;
-
-  const spikeUV = uv();
-  const uDist = smoothstep(float(0.0), float(0.2), spikeUV.x).mul(smoothstep(float(1.0), float(0.8), spikeUV.x));
-  const vDist = smoothstep(float(0.5), float(0.0), tslLength(spikeUV.y.sub(float(0.5))));
-  const spikeAlpha = uDist.mul(vDist);
-
-  spikeMat.colorNode = vec4(
-    float(VFX_CONSTANTS.FIRING.EDGE_COLOR[0]),
-    float(VFX_CONSTANTS.FIRING.EDGE_COLOR[1]),
-    float(VFX_CONSTANTS.FIRING.EDGE_COLOR[2]),
-    spikeAlpha
-  );
-
-  // Geometries
-  const coreGeom = new THREE.SphereGeometry(0.35, 16, 16);
-  const spikeGeom = new THREE.ConeGeometry(VFX_CONSTANTS.FIRING.SPIKE_WIDTH, VFX_CONSTANTS.FIRING.SPIKE_LENGTH, 8);
-  spikeGeom.rotateX(Math.PI / 2); // align cone forward along Z axis
-
   for (let i = 0; i < POOL_SIZE; i++) {
-    const coreMesh = new THREE.Mesh(coreGeom, coreMat);
-    coreMesh.name = `VFX_NiagaraFlash_Core_${i}`;
-    coreMesh.visible = false;
-    _scene.add(coreMesh);
-
-    const spikeMesh = new THREE.Mesh(spikeGeom, spikeMat);
-    spikeMesh.name = `VFX_NiagaraFlash_Spike_${i}`;
-    spikeMesh.visible = false;
-    _scene.add(spikeMesh);
-
     let light: THREE.PointLight | null = null;
     if (hasLights && i < POOL_LIGHTS_COUNT) {
       light = new THREE.PointLight(
@@ -109,8 +53,6 @@ export function initFiringVFX(scene: THREE.Scene, hasLights: boolean) {
     }
 
     flashPool.push({
-      coreMesh,
-      spikeMesh,
       light,
       life: 0,
       maxLife: VFX_CONSTANTS.FIRING.FLASH_DURATION,
@@ -131,6 +73,9 @@ export function triggerNiagaraFlash(
   attachToDroneId: number | null = null,
   match?: MatchController
 ) {
+  const sFactor = scale * VFX_CONSTANTS.FIRING.FLASH_SCALE_MULTIPLIER;
+  triggerMuzzleFlipbook(muzzlePos.x, muzzlePos.y, muzzlePos.z, sFactor);
+
   let inst: NiagaraMuzzleFlash | null = null;
   for (let i = 0; i < POOL_SIZE; i++) {
     if (flashPool[i].life <= 0) {
@@ -153,28 +98,16 @@ export function triggerNiagaraFlash(
   }
 
   if (inst) {
-    const sFactor = scale * VFX_CONSTANTS.FIRING.FLASH_SCALE_MULTIPLIER;
     inst.life = VFX_CONSTANTS.FIRING.FLASH_DURATION;
     inst.maxLife = VFX_CONSTANTS.FIRING.FLASH_DURATION;
     inst.scaleFactor = sFactor;
     inst.attachToPlayer = attachToPlayer;
     inst.attachToDroneId = attachToDroneId;
 
-    // Position and align
-    inst.coreMesh.position.copy(muzzlePos);
-    inst.coreMesh.scale.setScalar(sFactor);
-    inst.coreMesh.visible = true;
-
-    inst.spikeMesh.position.copy(muzzlePos);
-    inst.spikeMesh.scale.set(sFactor, sFactor, sFactor);
-    
-    // Rotate spike to point in direction of firing
     _tempFlashQuat.setFromUnitVectors(_zAxis, direction);
-    inst.spikeMesh.quaternion.copy(_tempFlashQuat);
-    inst.spikeMesh.visible = true; // Fully enable visual Niagara-style spikes
 
     if (attachToPlayer) {
-      // Store camera relative local spike orientation and offset so it rotates with player camera
+      // Store camera relative local orientation and offset so it rotates with player camera
       const camera = (window as any).camera;
       if (camera) {
         _tempQuat.copy(camera.quaternion).invert();
@@ -196,16 +129,16 @@ export function triggerNiagaraFlash(
         
         _tempDronePos.set(clientX, clientY, clientZ);
         inst.localOffset.copy(muzzlePos).sub(_tempDronePos);
- 
+
         const clientRotX = (latest as any).clientRotX !== undefined ? (latest as any).clientRotX : latest.rotX;
         const clientRotY = (latest as any).clientRotY !== undefined ? (latest as any).clientRotY : latest.rotY;
         const clientRotZ = (latest as any).clientRotZ !== undefined ? (latest as any).clientRotZ : latest.rotZ;
         const clientRotW = (latest as any).clientRotW !== undefined ? (latest as any).clientRotW : latest.rotW;
- 
+
         _tempDroneQuat.set(clientRotX, clientRotY, clientRotZ, clientRotW);
         inst.localOffset.applyQuaternion(_tempDroneQuat.invert());
- 
-        // Compute local spike rotation relative to the drone's orientation
+
+        // Compute local rotation relative to the drone's orientation
         _tempDroneQuat.set(clientRotX, clientRotY, clientRotZ, clientRotW).invert();
         inst.localSpikeQuat.copy(_tempFlashQuat).premultiply(_tempDroneQuat);
       } else {
@@ -230,21 +163,16 @@ export function updateFiringVFX(deltaTime: number, camera: THREE.PerspectiveCame
     if (inst.life > 0) {
       inst.life -= deltaTime;
       if (inst.life <= 0) {
-        inst.coreMesh.visible = false;
-        inst.spikeMesh.visible = false;
         if (inst.light) {
           // Never change PointLight visibility under WebGPU. Keep visible = true and set intensity = 0 instead.
           inst.light.intensity = 0;
         }
       } else {
-        // Handle Dynamic Attachment
+        // Handle Dynamic Attachment for pooled PointLight
         if (inst.attachToPlayer) {
           _tempOffset.copy(inst.localOffset).applyQuaternion(camera.quaternion);
-          inst.coreMesh.position.copy(camera.position).add(_tempOffset);
-          inst.spikeMesh.position.copy(inst.coreMesh.position);
-          inst.spikeMesh.quaternion.copy(camera.quaternion).multiply(inst.localSpikeQuat);
           if (inst.light) {
-            inst.light.position.copy(inst.coreMesh.position);
+            inst.light.position.copy(camera.position).add(_tempOffset);
           }
         } else if (inst.attachToDroneId !== null && match && match.droneJitterMap) {
           const buffer = match.droneJitterMap.get(inst.attachToDroneId);
@@ -263,30 +191,14 @@ export function updateFiringVFX(deltaTime: number, camera: THREE.PerspectiveCame
             _tempDroneQuat.set(clientRotX, clientRotY, clientRotZ, clientRotW);
 
             _tempOffset.copy(inst.localOffset).applyQuaternion(_tempDroneQuat);
-            
-            inst.coreMesh.position.copy(_tempDronePos).add(_tempOffset);
-            inst.spikeMesh.position.copy(inst.coreMesh.position);
-            inst.spikeMesh.quaternion.copy(_tempDroneQuat).multiply(inst.localSpikeQuat);
 
             if (inst.light) {
-              inst.light.position.copy(inst.coreMesh.position);
+              inst.light.position.copy(_tempDronePos).add(_tempOffset);
             }
           }
         }
 
-        // Core always faces the camera (billboard effect)
-        inst.coreMesh.quaternion.copy(camera.quaternion);
-        
         const progress = inst.life / inst.maxLife; // 1.0 -> 0.0
-        inst.coreMesh.scale.setScalar(inst.scaleFactor * progress);
-        
-        // Spike grows forward, then fades
-        inst.spikeMesh.scale.set(
-          inst.scaleFactor * progress,
-          inst.scaleFactor * progress,
-          inst.scaleFactor * (2.0 - progress) // Stretches Z-axis forward as it decays
-        );
-
         if (inst.light) {
           inst.light.intensity = VFX_CONSTANTS.FIRING.LIGHT_INTENSITY * inst.scaleFactor * progress;
         }
@@ -299,8 +211,6 @@ export function clearFiringVFX() {
   for (let i = 0; i < flashPool.length; i++) {
     const inst = flashPool[i];
     inst.life = 0;
-    inst.coreMesh.visible = false;
-    inst.spikeMesh.visible = false;
     if (inst.light) {
       inst.light.intensity = 0;
     }

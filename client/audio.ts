@@ -333,6 +333,17 @@ class AudioManager {
             this.activeEmitters.delete(entityId);
         }
     }
+
+    public stopAllEmitters(): void {
+        this.activeEmitters.forEach((emitter) => {
+            emitter.howl.stop(emitter.soundId);
+        });
+        this.activeEmitters.clear();
+        this.stopMatchAmbience();
+        this.footstepTimer = 0;
+        this.heartbeatActive = false;
+        this.stopWeaponReload();
+    }
     
     public setMatchState(inMatch: boolean) {
         this.isMatchPlaying = inMatch;

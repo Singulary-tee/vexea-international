@@ -391,20 +391,14 @@ export function getMuzzleWorldPosition(outVec: THREE.Vector3, camera: THREE.Came
       const activeStats = getWeaponPerformance(activeWeaponId) || getWeaponPerformance('rifle')!;
       const muzzleOffset = activeStats.visualConfig.muzzleOffset;
       
-      // Convert the camera's rotation to world axes so the offsets 
-      // predictably apply in view space (X=Right, Y=Up, Z=Backward)
-      const right = new THREE.Vector3(1, 0, 0).applyQuaternion(camera.quaternion);
-      const up = new THREE.Vector3(0, 1, 0).applyQuaternion(camera.quaternion);
-      const forward = new THREE.Vector3(0, 0, 1).applyQuaternion(camera.quaternion);
-      
-      outVec.addScaledVector(right, muzzleOffset[0]);
-      outVec.addScaledVector(up, muzzleOffset[1]);
-      outVec.addScaledVector(forward, muzzleOffset[2]);
+      // Transform view-space offset to world space using pre-allocated vector
+      _muzzleWorldPos.set(muzzleOffset[0], muzzleOffset[1], muzzleOffset[2]).applyQuaternion(camera.quaternion);
+      outVec.add(_muzzleWorldPos);
     }
   } else {
     outVec.copy(camera.position);
-    const cameraDir = _pos.set(0, 0, -1).applyQuaternion(camera.quaternion);
-    outVec.addScaledVector(cameraDir, 0.5);
+    _muzzleWorldPos.set(0, 0, -0.5).applyQuaternion(camera.quaternion);
+    outVec.add(_muzzleWorldPos);
   }
 }
 

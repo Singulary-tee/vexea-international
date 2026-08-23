@@ -466,6 +466,7 @@ export class NetworkSyncSystem {
     if (msg.type === "YOU_DIED") {
       match.isLocalPlayerDead = true;
       audioManager.setHeartbeat(false);
+      audioManager.stopAllEmitters();
       resetWeaponAnimations();
       if (match.hud) match.hud.showDeathOverlay(true, msg.respawnTimer);
       if (typeof (window as any).stopAllInputs === "function") (window as any).stopAllInputs();

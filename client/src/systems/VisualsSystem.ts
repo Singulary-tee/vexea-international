@@ -134,15 +134,6 @@ export class VisualsSystem {
         weaponsContainer.updateMatrixWorld(true);
       }
       
-      // Temporarily show Niagara flash meshes to compile their shaders
-      const firstNiagara = getFirstNiagaraFlash();
-      const wasCoreVisible = firstNiagara ? firstNiagara.coreMesh.visible : false;
-      const wasSpikeVisible = firstNiagara ? firstNiagara.spikeMesh.visible : false;
-      if (firstNiagara) {
-        firstNiagara.coreMesh.visible = true;
-        firstNiagara.spikeMesh.visible = true;
-      }
-
       // Make sure at least one instance is visible in each batch to guarantee compilation of instance rendering shaders
       if (tracerBatch && tracerSlots > 0) tracerBatch.setVisibleAt(0, true);
       if (sparkBatch && sparksPerHitCount > 0) sparkBatch.setVisibleAt(0, true);
@@ -167,10 +158,6 @@ export class VisualsSystem {
       // Restore visibility
       if (pistolGroup) pistolGroup.visible = wasPistolVisible;
       if (rifleGroup) rifleGroup.visible = wasRifleVisible;
-      if (firstNiagara) {
-        firstNiagara.coreMesh.visible = wasCoreVisible;
-        firstNiagara.spikeMesh.visible = wasSpikeVisible;
-      }
 
       if (tracerBatch && tracerSlots > 0) tracerBatch.setVisibleAt(0, false);
       if (sparkBatch && sparksPerHitCount > 0) sparkBatch.setVisibleAt(0, false);
