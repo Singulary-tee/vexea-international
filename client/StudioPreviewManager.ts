@@ -24,6 +24,7 @@ export const AVAILABLE_SKINS: Record<string, WeaponSkin> = {
 const MODEL_KEY_ALIASES: Record<string, string> = {
   rifle: 'scar_l-optimized.glb',
   m4_rifle: 'scar_l-optimized.glb',
+  smg: 'f_90-optimized.glb',
   lmg: 'lmg-rifle-optimized.glb',
   shotgun: 'benelli-m4-optimized.glb',
   sniper: 'pgm-ultima-ratio-optimized.glb',
@@ -156,6 +157,8 @@ interface StudioModeState {
   modelGroup: THREE.Group;
   activeItemKey: string;
   activeSkinId: string;
+  heldWeaponKey?: string;
+  heldSkinId?: string;
   mixer: THREE.AnimationMixer | null;
   lastLoadedModel: THREE.Group | null;
   lastLoadedGlbName: string;
@@ -654,7 +657,7 @@ class StudioPreviewManagerImpl {
         model.visible = true;
 
         // Auto-equip selected weapon and skin to the character in Lobby/Menu
-        await this.loadAndEquipWeaponAlways(model);
+        await this.loadAndEquipWeaponAlways(model, modeState.heldWeaponKey, modeState.heldSkinId);
 
         if (requestId !== modeState.loadRequestId) {
           return;
@@ -825,27 +828,60 @@ class StudioPreviewManagerImpl {
     }
   }
 
-  private async loadAndEquipWeaponAlways(characterModel: THREE.Group): Promise<void> {
+  public setLobbyLoadout(weaponKey: string, skinId: string): void {
+    const modeState = this.getModeState('LOBBY');
+    modeState.heldWeaponKey = weaponKey;
+    modeState.heldSkinId = skinId;
+
+    if (this.currentMode === 'LOBBY' && modeState.lastLoadedModel) {
+      this.loadAndEquipWeaponAlways(modeState.lastLoadedModel, weaponKey, skinId);
+    } else if (this.currentMode === 'LOBBY') {
+      this.setShowcaseItem('Player_one-optimized.glb', skinId, 'LOBBY');
+    }
+  }
+
+  private async loadAndEquipWeaponAlways(characterModel: THREE.Group, weaponKey?: string, skinId?: string): Promise<void> {
     try {
       await preloadAttachments();
 
+      if (characterModel.userData.activeWeapon) {
+        characterModel.userData.activeWeapon.removeFromParent();
+        characterModel.userData.activeWeapon = null;
+      }
+
+      let glbName = "scar_l-optimized.glb";
+      if (weaponKey) {
+        if (weaponKey.endsWith(".glb")) {
+          glbName = weaponKey;
+        } else if (MODEL_KEY_ALIASES[weaponKey]) {
+          glbName = MODEL_KEY_ALIASES[weaponKey];
+        } else {
+          const lower = weaponKey.toLowerCase();
+          if (lower.includes("smg") || lower.includes("f90") || lower.includes("f_90")) glbName = "f_90-optimized.glb";
+          else if (lower.includes("lmg")) glbName = "lmg-rifle-optimized.glb";
+          else if (lower.includes("shotgun") || lower.includes("benelli")) glbName = "benelli-m4-optimized.glb";
+          else if (lower.includes("sniper") || lower.includes("pgm")) glbName = "pgm-ultima-ratio-optimized.glb";
+          else if (lower.includes("pistol") || lower.includes("g17") || lower.includes("viper")) glbName = "g17-optimized.glb";
+        }
+      }
+
       let gltf;
-      if (this.gltfCache.has("scar_l-optimized.glb")) {
-        gltf = this.gltfCache.get("scar_l-optimized.glb");
-      } else if (this.pendingGltfPromises.has("scar_l-optimized.glb")) {
-        gltf = await this.pendingGltfPromises.get("scar_l-optimized.glb");
+      if (this.gltfCache.has(glbName)) {
+        gltf = this.gltfCache.get(glbName);
+      } else if (this.pendingGltfPromises.has(glbName)) {
+        gltf = await this.pendingGltfPromises.get(glbName);
       } else {
         const loadPromise = (async () => {
           const loader = createConfiguredGLTFLoader();
-          const url = await getCachedOrFetchUrl("scar_l-optimized.glb", "Asset");
+          const url = await getCachedOrFetchUrl(glbName, "Asset");
           return await loader.loadAsync(url);
         })();
-        this.pendingGltfPromises.set("scar_l-optimized.glb", loadPromise);
+        this.pendingGltfPromises.set(glbName, loadPromise);
         try {
           gltf = await loadPromise;
-          this.gltfCache.set("scar_l-optimized.glb", gltf);
+          this.gltfCache.set(glbName, gltf);
         } finally {
-          this.pendingGltfPromises.delete("scar_l-optimized.glb");
+          this.pendingGltfPromises.delete(glbName);
         }
       }
       const weapon = SkeletonUtils.clone(gltf.scene) as THREE.Group;
@@ -868,7 +904,7 @@ class StudioPreviewManagerImpl {
       weapon.scale.set(weaponScale, weaponScale, weaponScale);
 
       // Apply currently equipped weapon skin dynamically
-      const currentSkinId = ClassLoadoutSystem.getEquippedSkin("m4_rifle_assault");
+      const currentSkinId = skinId || ClassLoadoutSystem.getEquippedSkin("m4_rifle_assault");
       ClassLoadoutSystem.applySkin(weapon, currentSkinId);
 
       await attachScope(weapon, "ACOG");

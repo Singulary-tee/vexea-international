@@ -752,4 +752,22 @@ Every file change in the VEXEA codebase must follow this strict two-step protoco
     * `CODEBASE_INDEX.md`: Registered and finalized this cycle.
 * **Post-Edit Verification:** `lint_applet` and `compile_applet` verified.
 
+### Cycle 2026-08-23-05: Class Loadout Persistence Unified Integration
+* **Target Files:** `client/src/systems/ClassLoadoutPersistence.ts`, `client/screens/lobby.ts`, `client/screens/armory-screen.ts`, `client/StudioPreviewManager.ts`, `server/dev/dev-commands.ts`, `CODEBASE_INDEX.md`
+* **Status:** Verified & Finalized.
+* **Scope:**
+    * Fixed Bug 1: Added `getEquippedClass()` and `setEquippedClass()` methods to `ClassLoadoutPersistence.ts`. Updated `client/screens/lobby.ts` to initialize `selectedClassIdx` from saved class persistence instead of hardcoding `0` (`ASSAULT`). Synchronized `armory-screen.ts` category tab selections to write to `ClassLoadoutPersistence.setEquippedClass()`.
+    * Fixed Bug 2: Updated `client/screens/lobby.ts` class selection handler to invoke `StudioPreviewManager.setLobbyLoadout()` on selection changes. Added per-mode held weapon and skin properties to `StudioModeState` in `StudioPreviewManager.ts` to equip and display the exact per-class weapon and skin loadout on the 3D lobby showcase model without altering `MAIN_MENU` behavior.
+    * Addressed Bug 3: Preserved dev quick-start baseline in `client/screens/main-menu.ts` without silent alterations, providing formal architectural recommendation.
+    * Fixed Bug 4: Implemented missing server-side `dev_set_class` socket event listener in `server/dev/dev-commands.ts` gated to `IS_DEV`. Resolved class weapon loadouts from Firestore/class defaults and invoked `applyPlayerClassLoadout` to re-apply primary/secondary weapons and utility states mid-match.
+* **Completed Modified Files:**
+    * `client/src/systems/ClassLoadoutPersistence.ts`: Added active class getter and setter (`getEquippedClass`, `setEquippedClass`).
+    * `client/screens/lobby.ts`: Initialized lobby class card selection from persistence and triggered `StudioPreviewManager.setLobbyLoadout()` on card click/selection update.
+    * `client/screens/armory-screen.ts`: Read and set equipped class on render and category tab switches via `ClassLoadoutPersistence`.
+    * `client/StudioPreviewManager.ts`: Added `heldWeaponKey` and `heldSkinId` state to `StudioModeState`, added `setLobbyLoadout()`, updated `loadAndEquipWeaponAlways()` to process custom weapon keys and skins.
+    * `server/dev/dev-commands.ts`: Added server-side socket handler for `dev_set_class` with Firestore loadout resolution and mid-match loadout re-application via `applyPlayerClassLoadout()`.
+    * `CODEBASE_INDEX.md`: Registered and finalized this cycle.
+* **Post-Edit Verification:** `lint_applet` passed (`tsc --noEmit`), `compile_applet` passed cleanly.
+
+
 

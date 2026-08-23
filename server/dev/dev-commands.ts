@@ -20,6 +20,41 @@ export function registerDevCommands(
     currentRoom.spawnTestBots(count);
   });
 
+  channel.on("dev_set_class", async (args: any) => {
+    const currentRoom = getRoom();
+    const pState = getPlayer();
+    if (!currentRoom || !pState) return;
+
+    const requestedClassStr = args?.playerClass || args?.class;
+    if (!requestedClassStr) return;
+
+    const classId = (typeof requestedClassStr === "string" ? requestedClassStr.toUpperCase() : "ASSAULT") as ClassId;
+    if (!(classId in CLASSES)) return;
+
+    let primaryWeaponId: string | undefined;
+    let secondaryWeaponId: string | undefined;
+
+    if (db && pState.reqUid) {
+      try {
+        const userDoc = await db.collection("Users").doc(pState.reqUid).get();
+        if (userDoc && userDoc.exists) {
+          const data = userDoc.data();
+          const classLoadout = data?.armory?.loadouts?.[classId];
+          if (Array.isArray(classLoadout)) {
+            const primaryItem = classLoadout.find((item: any) => item?.slotName === "PRIMARY");
+            const secondaryItem = classLoadout.find((item: any) => item?.slotName === "SECONDARY");
+            if (primaryItem?.weaponKey) primaryWeaponId = primaryItem.weaponKey;
+            if (secondaryItem?.weaponKey) secondaryWeaponId = secondaryItem.weaponKey;
+          }
+        }
+      } catch (err) {
+        console.warn(`[DEV] Failed to fetch loadout for ${classId} from Firestore:`, err);
+      }
+    }
+
+    currentRoom.applyPlayerClassLoadout(pState, classId, primaryWeaponId, secondaryWeaponId);
+  });
+
   channel.on("dev_spawn_cube", (args: any) => {
     const currentRoom = getRoom();
     const pState = getPlayer();

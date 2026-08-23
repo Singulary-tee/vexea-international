@@ -7,6 +7,8 @@ import { StudioPreviewManager } from "../StudioPreviewManager";
 import { getAuth } from "firebase/auth";
 import { getFriendsList, sendLobbyInvite, cancelLobbyInvites } from "../social";
 import { CLASSES, ClassId } from "../../shared/classes";
+import { ClassLoadoutPersistence } from "../src/systems/ClassLoadoutPersistence";
+import { ClassLoadoutSystem } from "../src/systems/ClassLoadoutSystem";
 
 const sentInviteUids: string[] = [];
 
@@ -290,7 +292,10 @@ export function initLobby() {
       RECON: 'recon_card_1.webp'
     };
 
-    let selectedClassIdx = 0;
+    const classList = Object.values(CLASSES);
+    const savedClassId = ClassLoadoutPersistence.getEquippedClass();
+    const initialClassIdx = classList.findIndex(c => c.id === savedClassId);
+    let selectedClassIdx = initialClassIdx >= 0 ? initialClassIdx : 0;
     const cards: HTMLElement[] = [];
 
     const createClassCard = (idx: number, id: string, name: string) => {
@@ -369,12 +374,21 @@ export function initLobby() {
       classCardsContainer.appendChild(card);
     };
 
-    const classList = Object.values(CLASSES);
     classList.forEach((cls, idx) => {
       createClassCard(idx, cls.id, cls.displayName);
     });
 
     const updateSelection = () => {
+      const selectedClass = classList[selectedClassIdx];
+      if (selectedClass) {
+        ClassLoadoutPersistence.setEquippedClass(selectedClass.id);
+        const loadout = ClassLoadoutPersistence.getClassLoadout(selectedClass.id);
+        const primaryItem = loadout.find(item => item.slotName === 'PRIMARY') || loadout[0];
+        const weaponKey = primaryItem?.weaponKey || 'rifle';
+        const itemId = primaryItem?.id || '';
+        const skinId = ClassLoadoutSystem.getEquippedSkin(itemId);
+        StudioPreviewManager.setLobbyLoadout(weaponKey, skinId);
+      }
       cards.forEach((c, i) => {
         const nameEl = c.querySelector('.class-card-name') as HTMLElement;
         const cardImg = c.dataset.cardImg || 'assault_card_1.webp';

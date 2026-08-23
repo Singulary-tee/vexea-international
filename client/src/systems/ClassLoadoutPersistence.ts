@@ -7,6 +7,7 @@ import { UTILITIES, UtilityId } from "../../../shared/utilities";
 import type { WeaponId } from "../../../shared/weapons";
 
 const STORAGE_KEY = "vex_class_loadouts";
+const ACTIVE_CLASS_KEY = "vex_active_class";
 
 /**
  * ClassLoadoutPersistence
@@ -15,6 +16,31 @@ const STORAGE_KEY = "vex_class_loadouts";
  */
 export class ClassLoadoutPersistence {
   private static debounceTimers: Record<string, any> = {};
+
+  /**
+   * Retrieves currently equipped/active class ID.
+   */
+  public static getEquippedClass(): ClassId {
+    try {
+      const stored = localStorage.getItem(ACTIVE_CLASS_KEY);
+      if (stored && stored in CLASSES) {
+        return stored as ClassId;
+      }
+    } catch {}
+    return 'ASSAULT';
+  }
+
+  /**
+   * Persists currently equipped/active class ID.
+   */
+  public static setEquippedClass(classId: ClassId): void {
+    if (!(classId in CLASSES)) return;
+    try {
+      localStorage.setItem(ACTIVE_CLASS_KEY, classId);
+    } catch (e) {
+      console.warn("[ClassLoadoutPersistence] Failed to save active class:", e);
+    }
+  }
 
   /**
    * Checks if an item is unlocked by default or exists in the user's unlocked items collection.

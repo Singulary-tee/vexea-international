@@ -64,6 +64,7 @@ let activeCategory: ClassId = 'ASSAULT';
 let selectedItemIdx = 0;
 
 export function renderArmoryScreen(container: HTMLElement, registeredUserData?: any): void {
+  activeCategory = ClassLoadoutPersistence.getEquippedClass();
   container.innerHTML = '';
   
   // Enable parent container to display absolute overflow nicely and fill the screen area
@@ -141,6 +142,7 @@ export function renderArmoryScreen(container: HTMLElement, registeredUserData?: 
     tabBtn.onclick = () => {
       audioManager.play('click');
       activeCategory = cat.id;
+      ClassLoadoutPersistence.setEquippedClass(cat.id);
       selectedItemIdx = 0;
       renderArmoryScreen(container, registeredUserData);
     };
