@@ -140,7 +140,7 @@ export const WEAPON_ASSET_DETAILS: Record<WeaponId, WeaponAssetDetails> = {
   smg: {
     modelKey: 'f_90-optimized.glb',
     svgPath: '/ui_svgs/smg.svg',
-    audio: { fire: 'smg_fire', reload: 'PLACEHOLDER_SMG_RELOAD' },
+    audio: { fire: 'smg_fire', reload: 'smg_reload' },
     animations: {
       idle: 'PLACEHOLDER_SMG_IDLE',
       walk: 'PLACEHOLDER_SMG_SPRINT',
@@ -154,7 +154,7 @@ export const WEAPON_ASSET_DETAILS: Record<WeaponId, WeaponAssetDetails> = {
   shotgun: {
     modelKey: 'benelli-m4-optimized.glb',
     svgPath: '/ui_svgs/shotgun.svg',
-    audio: { fire: 'PLACEHOLDER_SHOTGUN_FIRE', reload: 'PLACEHOLDER_SHOTGUN_RELOAD' },
+    audio: { fire: 'shotgun_fire', reload: 'shotgun_reload' },
     animations: createCompatibilityAnimationAliases(SHOTGUN_ANIMATION),
     animation: SHOTGUN_ANIMATION,
     authored: true,
@@ -162,7 +162,7 @@ export const WEAPON_ASSET_DETAILS: Record<WeaponId, WeaponAssetDetails> = {
   lmg: {
     modelKey: 'lmg-rifle-optimized.glb',
     svgPath: '/ui_svgs/lmg.svg',
-    audio: { fire: 'PLACEHOLDER_LMG_FIRE', reload: 'PLACEHOLDER_LMG_RELOAD' },
+    audio: { fire: 'lmg_fire', reload: 'lmg_reload' },
     animations: createCompatibilityAnimationAliases(LMG_ANIMATION),
     animation: LMG_ANIMATION,
     authored: true,
@@ -170,7 +170,7 @@ export const WEAPON_ASSET_DETAILS: Record<WeaponId, WeaponAssetDetails> = {
   sniper: {
     modelKey: 'pgm-ultima-ratio-optimized.glb',
     svgPath: '/ui_svgs/sniper.svg',
-    audio: { fire: 'PLACEHOLDER_SNIPER_FIRE', reload: 'PLACEHOLDER_SNIPER_RELOAD' },
+    audio: { fire: 'sniper_fire', reload: 'sniper_reload' },
     animations: createCompatibilityAnimationAliases(SNIPER_ANIMATION),
     animation: SNIPER_ANIMATION,
     authored: true,

@@ -98,7 +98,14 @@ export const AUDIO_MANIFEST: AudioManifestEntry[] = [
   { key: 'reload', path: 'Audio/Sfx/Weapons/reload.opus', category: 'sfx', loop: false },
   { key: 'rifle_fire', path: 'Audio/Sfx/Weapons/rifle_fire.opus', category: 'sfx', loop: false },
   { key: 'rifle_reload', path: 'Audio/Sfx/Weapons/rifle_reload.opus', category: 'sfx', loop: false },
-  { key: 'smg_fire', path: 'Audio/Sfx/Weapons/smg_fire.opus', category: 'sfx', loop: false }
+  { key: 'lmg_fire', path: 'Audio/Sfx/Weapons/lmg_fire.opus', category: 'sfx', loop: false },
+  { key: 'lmg_reload', path: 'Audio/Sfx/Weapons/lmg_reload.opus', category: 'sfx', loop: false },
+  { key: 'shotgun_fire', path: 'Audio/Sfx/Weapons/shotgun_fire.opus', category: 'sfx', loop: false },
+  { key: 'shotgun_reload', path: 'Audio/Sfx/Weapons/shotgun_reload.opus', category: 'sfx', loop: false },
+  { key: 'smg_fire', path: 'Audio/Sfx/Weapons/smg_fire.opus', category: 'sfx', loop: false },
+  { key: 'smg_reload', path: 'Audio/Sfx/Weapons/smg_reload.opus', category: 'sfx', loop: false },
+  { key: 'sniper_fire', path: 'Audio/Sfx/Weapons/sniper_fire.opus', category: 'sfx', loop: false },
+  { key: 'sniper_reload', path: 'Audio/Sfx/Weapons/sniper_reload.opus', category: 'sfx', loop: false }
 ];
 
 export type AudioKey = typeof AUDIO_MANIFEST[number]['key'];

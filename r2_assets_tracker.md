@@ -8,9 +8,9 @@
 ## Base URL
 `https://vexea-r2-asset-guard.alte.workers.dev/`
 
-## Verified R2 Assets (155 Total)
+## Verified R2 Assets (162 Total)
 
-### Sound (81 items)
+### Sound (88 items)
 
 | Asset Name | Category | Path |
 | :--- | :--- | :--- |
@@ -95,6 +95,13 @@
 | `rifle_fire.opus` | Sound | `Audio/Sfx/Weapons/rifle_fire.opus` |
 | `rifle_reload.opus` | Sound | `Audio/Sfx/Weapons/rifle_reload.opus` |
 | `smg_fire.opus` | Sound | `Audio/Sfx/Weapons/smg_fire.opus` |
+| `lmg_fire.opus` | Sound | `Audio/Sfx/Weapons/lmg_fire.opus` |
+| `lmg_reload.opus` | Sound | `Audio/Sfx/Weapons/lmg_reload.opus` |
+| `shotgun_fire.opus` | Sound | `Audio/Sfx/Weapons/shotgun_fire.opus` |
+| `shotgun_reload.opus` | Sound | `Audio/Sfx/Weapons/shotgun_reload.opus` |
+| `smg_reload.opus` | Sound | `Audio/Sfx/Weapons/smg_reload.opus` |
+| `sniper_fire.opus` | Sound | `Audio/Sfx/Weapons/sniper_fire.opus` |
+| `sniper_reload.opus` | Sound | `Audio/Sfx/Weapons/sniper_reload.opus` |
 
 ### Image (58 items)
 
