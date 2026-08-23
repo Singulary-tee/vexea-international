@@ -1,12 +1,19 @@
 import { MapRegistryEntry } from "../../../shared/maps/map-registry";
 import { LoadingScreen } from "../ui/LoadingScreen";
-import { getMissingFilesForMap, downloadMapAssets, getCachedOrFetchUrl } from "../../asset-cache";
+import { getMissingFilesForMap, downloadMapAssets, getCachedOrFetchUrl, createConfiguredGLTFLoader, getAssetUrl } from "../../asset-cache";
 import { IMAGE_MANIFEST } from "../../image-manifest";
 import { MapLoader } from "./MapLoader";
 import { audioManager } from "../../audio";
+import { initDroneModels } from "../../drone_models";
+import { initPlayerWeapons } from "../../weapons_model";
 import * as THREE from "three/webgpu";
 
-export async function orchestrateMatchLoad(mapEntry: MapRegistryEntry, channel: any, targetScene: THREE.Scene): Promise<void> {
+export async function orchestrateMatchLoad(
+  mapEntry: MapRegistryEntry,
+  channel: any,
+  targetScene: THREE.Scene,
+  camera?: THREE.Camera
+): Promise<void> {
   (window as any)._serverMatchReady = false; // Reset the server ready flag for the new match load!
   const loadingScreen = new LoadingScreen();
   const mapLoader = new MapLoader(targetScene);
@@ -59,7 +66,7 @@ export async function orchestrateMatchLoad(mapEntry: MapRegistryEntry, channel: 
     console.warn('[LoadingOrchestrator] Failed to preload VFX textures:', e);
   }
 
-  // Phase 2 — Build Scene
+  // Phase 2 — Build Scene & Map Props
   loadingScreen.setPhase('BUILDING MAP');
   loadingScreen.setProgress(0, 1);
   try {
@@ -71,7 +78,53 @@ export async function orchestrateMatchLoad(mapEntry: MapRegistryEntry, channel: 
     console.error("Error building map scene:", e);
   }
 
-  // Prewarm shaders and materials with a multi-directional panoramic view from the spawn point
+  // Phase 3 — Load Character, Drone, and Weapon Models
+  loadingScreen.setPhase('LOADING COMBAT ASSETS');
+  loadingScreen.setProgress(0, 3);
+  try {
+    const renderer = (window as any).renderer;
+    const gltfLoader = createConfiguredGLTFLoader(undefined, renderer);
+
+    // 1. Character model
+    await new Promise<void>((resolve) => {
+      gltfLoader.load(
+        getAssetUrl("Player_one-optimized.glb"),
+        (gltf) => {
+          const playerModel = gltf.scene;
+          (playerModel as any).animations = gltf.animations;
+          (window as any).playerModel = playerModel;
+          playerModel.traverse((child) => {
+            if ((child as any).isMesh) {
+              child.castShadow = true;
+              child.receiveShadow = true;
+            }
+          });
+          resolve();
+        },
+        undefined,
+        (err) => {
+          console.warn("[LoadingOrchestrator] Failed to load Player_one-optimized.glb:", err);
+          resolve();
+        }
+      );
+    });
+    loadingScreen.setProgress(1, 3);
+
+    // 2. Drone procedural/hierarchy models
+    await initDroneModels(targetScene);
+    loadingScreen.setProgress(2, 3);
+
+    // 3. Player weapon models
+    const activeCamera = camera || (window as any).camera;
+    if (activeCamera) {
+      await initPlayerWeapons(targetScene, activeCamera);
+    }
+    loadingScreen.setProgress(3, 3);
+  } catch (e) {
+    console.warn("[LoadingOrchestrator] Error loading combat assets:", e);
+  }
+
+  // Phase 4 — Prewarm shaders and materials with a multi-directional panoramic view from the spawn point
   loadingScreen.setPhase('PREWARMING SHADERS');
   const prewarmCam = new THREE.PerspectiveCamera(90, 1, 0.1, 2000);
   
@@ -118,7 +171,7 @@ export async function orchestrateMatchLoad(mapEntry: MapRegistryEntry, channel: 
     channel.emit("player_ready", {});
   }
 
-  // Phase 3 — Wait for server ready confirmation
+  // Phase 5 — Wait for server ready confirmation
   loadingScreen.setPhase('WAITING FOR SERVER');
   await waitForServerReady(channel);
 

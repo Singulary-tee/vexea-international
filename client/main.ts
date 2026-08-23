@@ -627,19 +627,6 @@ function initializeLocalMatchScene(requestedMap: string, requestedClass: string 
 
   (window as any)._serverMatchReady = false;
 
-  const gltfLoader = createConfiguredGLTFLoader(undefined, renderer || (window as any).renderer);
-  gltfLoader.load(getAssetUrl("Player_one-optimized.glb"), (gltf) => {
-    playerModel = gltf.scene;
-    (playerModel as any).animations = gltf.animations;
-    (window as any).playerModel = playerModel;
-    playerModel.traverse((child) => {
-      if ((child as any).isMesh) {
-        child.castShadow = true;
-        child.receiveShadow = true;
-      }
-    });
-  });
-
   if (!audioListener) {
     audioListener = new THREE.AudioListener();
     camera.add(audioListener);
@@ -683,7 +670,7 @@ function startMatchFromMatchFound(msg: any) {
   const mapDef = getMapById(mapId);
   if (mapDef && channel) {
     import("./src/map/LoadingOrchestrator").then((m) => {
-      m.orchestrateMatchLoad(mapDef, channel!, match.scene).then(() => {
+      m.orchestrateMatchLoad(mapDef, channel!, match.scene, camera).then(() => {
         console.log("[MATCHMAKING] Loading complete. Signaling server loading_complete for matchId:", matchId);
         channel?.emit("loading_complete", { matchId });
       });

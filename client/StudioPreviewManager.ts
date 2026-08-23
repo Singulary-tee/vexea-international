@@ -151,6 +151,21 @@ function computeWeaponBoxRelativeToParent(object: THREE.Object3D, parent: THREE.
   return box;
 }
 
+interface StudioModeState {
+  mode: StudioMode;
+  modelGroup: THREE.Group;
+  activeItemKey: string;
+  activeSkinId: string;
+  mixer: THREE.AnimationMixer | null;
+  lastLoadedModel: THREE.Group | null;
+  lastLoadedGlbName: string;
+  turntableEnabled: boolean;
+  loadRequestId: number;
+  rotationY: number;
+  isDragging: boolean;
+  previousMouseX: number;
+}
+
 class StudioPreviewManagerImpl {
   private studioScene: THREE.Scene;
   private studioCamera: THREE.PerspectiveCamera;
@@ -161,17 +176,13 @@ class StudioPreviewManagerImpl {
   
   // Studio 3D Objects
   private stageGroup: THREE.Group;
-  private activeModelGroup: THREE.Group;
   private keyLight: THREE.DirectionalLight;
   private rimLight: THREE.DirectionalLight;
   private ambientLight: THREE.AmbientLight;
   
-  // Turntable and hook states
-  private turntableEnabled = false;
-  private activeMixer: THREE.AnimationMixer | null = null;
+  // Isolated per-mode state store
+  private modeStates: Map<StudioMode, StudioModeState> = new Map();
   private _onModelLoaded: ((model: THREE.Group, glbName: string) => void) | null = null;
-  private lastLoadedModel: THREE.Group | null = null;
-  private lastLoadedGlbName: string = "";
 
   public get onModelLoaded(): ((model: THREE.Group, glbName: string) => void) | null {
     return this._onModelLoaded;
@@ -179,8 +190,9 @@ class StudioPreviewManagerImpl {
 
   public set onModelLoaded(fn: ((model: THREE.Group, glbName: string) => void) | null) {
     this._onModelLoaded = fn;
-    if (fn && this.lastLoadedModel) {
-      fn(this.lastLoadedModel, this.lastLoadedGlbName);
+    const activeState = this.getModeState(this.currentMode);
+    if (fn && activeState.lastLoadedModel) {
+      fn(activeState.lastLoadedModel, activeState.lastLoadedGlbName);
     }
   }
   
@@ -189,10 +201,6 @@ class StudioPreviewManagerImpl {
   private previousMouseX = 0;
   private dragSensitivity = 0.008;
 
-  // Active showcase item state
-  private activeItemKey = 'Player_one-optimized.glb';
-  private activeSkinId = 'STANDARD';
-  private currentLoadRequestId = 0;
   private gltfCache = new Map<string, any>();
   private pendingGltfPromises = new Map<string, Promise<any>>();
   private activeLoadPromise: Promise<void> | null = null;
@@ -221,14 +229,44 @@ class StudioPreviewManagerImpl {
 
     this.studioScene.add(this.ambientLight, this.keyLight, this.rimLight);
 
-    // Build Studio Stage - No pedestal or grid helpers
+    // Build Studio Stage
     this.stageGroup = new THREE.Group();
-    
-    this.activeModelGroup = new THREE.Group();
-    this.activeModelGroup.position.set(0, 0, 0);
-    this.stageGroup.add(this.activeModelGroup);
-
     this.studioScene.add(this.stageGroup);
+
+    // Pre-initialize mode states
+    const modes: StudioMode[] = ['MAIN_MENU', 'LOBBY', 'ARMORY', 'STORE', 'INACTIVE'];
+    for (const m of modes) {
+      this.getModeState(m);
+    }
+  }
+
+  public getModeState(mode: StudioMode): StudioModeState {
+    let state = this.modeStates.get(mode);
+    if (!state) {
+      const modelGroup = new THREE.Group();
+      modelGroup.name = `studio-model-group-${mode.toLowerCase()}`;
+      modelGroup.position.set(0, 0, 0);
+      modelGroup.rotation.set(0, (mode === 'MAIN_MENU') ? -0.35 : 0, 0);
+      modelGroup.visible = false;
+      this.stageGroup.add(modelGroup);
+
+      state = {
+        mode,
+        modelGroup,
+        activeItemKey: (mode === 'MAIN_MENU' || mode === 'LOBBY') ? 'Player_one-optimized.glb' : 'scar_l-optimized.glb',
+        activeSkinId: 'STANDARD',
+        mixer: null,
+        lastLoadedModel: null,
+        lastLoadedGlbName: '',
+        turntableEnabled: (mode === 'ARMORY' || mode === 'STORE'),
+        loadRequestId: 0,
+        rotationY: (mode === 'MAIN_MENU') ? -0.35 : 0,
+        isDragging: false,
+        previousMouseX: 0
+      };
+      this.modeStates.set(mode, state);
+    }
+    return state;
   }
 
   public getStudioScene(): THREE.Scene {
@@ -248,7 +286,7 @@ class StudioPreviewManagerImpl {
   }
 
   public getActiveModelGroup(): THREE.Group {
-    return this.activeModelGroup;
+    return this.getModeState(this.currentMode).modelGroup;
   }
 
   public getKeyLight(): THREE.DirectionalLight {
@@ -268,23 +306,21 @@ class StudioPreviewManagerImpl {
   }
 
   public isTurntableEnabled(): boolean {
-    return this.turntableEnabled;
+    return this.getModeState(this.currentMode).turntableEnabled;
   }
 
   public setTurntableEnabled(enabled: boolean): void {
-    this.turntableEnabled = enabled;
+    this.getModeState(this.currentMode).turntableEnabled = enabled;
   }
 
   public detach(): void {
     this.currentMode = 'INACTIVE';
     this.containerEl = null;
-    this.currentLoadRequestId++;
 
-    while (this.activeModelGroup.children.length > 0) {
-      this.activeModelGroup.remove(this.activeModelGroup.children[0]);
+    // Hide all mode model groups
+    for (const [, state] of this.modeStates) {
+      state.modelGroup.visible = false;
     }
-    this.activeMixer = null;
-    this.lastLoadedModel = null;
 
     if (!this.canvasContainerEl) {
       this.canvasContainerEl = document.getElementById('canvas-container');
@@ -321,35 +357,47 @@ class StudioPreviewManagerImpl {
     this.currentMode = mode;
     this.containerEl = container;
 
-    let itemToLoad = options?.itemKey || this.activeItemKey;
+    // Update visibility of isolated mode model groups
+    for (const [m, state] of this.modeStates) {
+      state.modelGroup.visible = (m === mode);
+    }
+
+    const modeState = this.getModeState(mode);
+
+    let itemToLoad = options?.itemKey || modeState.activeItemKey;
     if ((mode === 'MAIN_MENU' || mode === 'LOBBY') && !options?.itemKey) {
       itemToLoad = "Player_one-optimized.glb";
     }
-    const skinToLoad = options?.skinId || this.activeSkinId;
+    const skinToLoad = options?.skinId || modeState.activeSkinId;
 
-    if (this.currentMode === 'LOBBY' || this.currentMode === 'MAIN_MENU') {
-      this.setTurntableEnabled(false);
+    if (mode === 'LOBBY' || mode === 'MAIN_MENU') {
+      modeState.turntableEnabled = false;
     } else {
-      this.setTurntableEnabled(true);
+      modeState.turntableEnabled = true;
     }
 
-    // Only reset and reload if item or skin actually changed
-    const isModelAlreadyLoaded = this.lastLoadedModel &&
-      this.activeItemKey === itemToLoad &&
-      this.activeSkinId === skinToLoad &&
-      this.activeModelGroup.children.length > 0;
+    // Check if model is already loaded for this isolated mode
+    const isModelAlreadyLoaded = modeState.lastLoadedModel &&
+      modeState.activeItemKey === itemToLoad &&
+      modeState.activeSkinId === skinToLoad &&
+      modeState.modelGroup.children.length > 0;
 
-    if (!isModelAlreadyLoaded) {
-      this.currentLoadRequestId++;
-      while (this.activeModelGroup.children.length > 0) {
-        this.activeModelGroup.remove(this.activeModelGroup.children[0]);
+    if (isModelAlreadyLoaded) {
+      // Fast path: restore camera, framing, and light settings without re-fetching or clearing
+      this.applyModePresentation(mode, modeState);
+    } else {
+      // Reload needed for this specific mode
+      modeState.loadRequestId++;
+      while (modeState.modelGroup.children.length > 0) {
+        modeState.modelGroup.remove(modeState.modelGroup.children[0]);
       }
-      this.activeMixer = null;
-      this.lastLoadedModel = null;
-      this.activeModelGroup.position.set(0, 0, 0);
-      this.activeModelGroup.rotation.set(0, 0, 0);
+      modeState.mixer = null;
+      modeState.lastLoadedModel = null;
+      modeState.rotationY = (mode === 'MAIN_MENU') ? -0.35 : 0;
+      modeState.modelGroup.position.set(0, 0, 0);
+      modeState.modelGroup.rotation.set(0, modeState.rotationY, 0);
 
-      this.setShowcaseItem(itemToLoad, skinToLoad);
+      this.setShowcaseItem(itemToLoad, skinToLoad, mode);
     }
 
     if (!this.canvasContainerEl) {
@@ -382,24 +430,72 @@ class StudioPreviewManagerImpl {
     }
   }
 
-  public setShowcaseItem(itemKey: string, skinId?: string): Promise<void> {
-    this.activeItemKey = itemKey;
-    if (skinId !== undefined) {
-      this.activeSkinId = skinId;
+  private applyModePresentation(mode: StudioMode, modeState: StudioModeState): void {
+    const isCharacter = modeState.lastLoadedGlbName.toLowerCase().includes('player') || 
+                        modeState.lastLoadedGlbName.toLowerCase().includes('character');
+
+    if (isCharacter) {
+      const targetHeight = 1.8;
+      const fovRad = (this.studioCamera.fov * Math.PI) / 180;
+      const padding = 1.15;
+      const distance = (targetHeight / 2) / Math.tan(fovRad / 2) * padding;
+      const targetY = targetHeight * 0.5;
+
+      if (mode === 'LOBBY') {
+        modeState.modelGroup.position.set(0, 0, 0);
+        modeState.modelGroup.rotation.set(0, modeState.rotationY, 0);
+
+        this.studioCamera.position.set(0, targetY, distance);
+        this.studioCamera.lookAt(0, targetY, 0);
+
+        if (this.keyLight) this.keyLight.intensity = 2.5;
+        if (this.rimLight) this.rimLight.intensity = 1.8;
+        if (this.ambientLight) this.ambientLight.intensity = 0.9;
+      } else {
+        // MAIN_MENU mode: fixed backdrop pose and position
+        const aspect = this.studioCamera.aspect || (window.innerWidth / window.innerHeight);
+        const visibleHeight = 2 * distance * Math.tan(fovRad / 2);
+        const visibleWidth = visibleHeight * aspect;
+        const offsetX = visibleWidth * 0.20;
+
+        modeState.modelGroup.position.set(offsetX, 0, 0);
+        modeState.modelGroup.rotation.set(0, -0.35, 0);
+
+        this.studioCamera.position.set(0, targetY, distance);
+        this.studioCamera.lookAt(0, targetY, 0);
+
+        if (this.keyLight) this.keyLight.intensity = 2.2;
+        if (this.rimLight) this.rimLight.intensity = 1.5;
+        if (this.ambientLight) this.ambientLight.intensity = 0.8;
+      }
+    } else {
+      if (this.keyLight) this.keyLight.intensity = 2.8;
+      if (this.rimLight) this.rimLight.intensity = 2.0;
+      if (this.ambientLight) this.ambientLight.intensity = 1.0;
     }
-    this.activeLoadPromise = this.buildShowcaseModel(itemKey, this.activeSkinId);
+  }
+
+  public setShowcaseItem(itemKey: string, skinId?: string, targetMode?: StudioMode): Promise<void> {
+    const mode = targetMode || this.currentMode;
+    const modeState = this.getModeState(mode);
+    modeState.activeItemKey = itemKey;
+    if (skinId !== undefined) {
+      modeState.activeSkinId = skinId;
+    }
+    this.activeLoadPromise = this.buildShowcaseModel(itemKey, modeState.activeSkinId, mode);
     return this.activeLoadPromise;
   }
 
-  private async buildShowcaseModel(itemKey: string, skinId: string): Promise<void> {
-    const requestId = ++this.currentLoadRequestId;
+  private async buildShowcaseModel(itemKey: string, skinId: string, mode: StudioMode): Promise<void> {
+    const modeState = this.getModeState(mode);
+    const requestId = ++modeState.loadRequestId;
 
-    // Synchronously clear previous active models
-    while (this.activeModelGroup.children.length > 0) {
-      this.activeModelGroup.remove(this.activeModelGroup.children[0]);
+    // Synchronously clear previous active models for this mode
+    while (modeState.modelGroup.children.length > 0) {
+      modeState.modelGroup.remove(modeState.modelGroup.children[0]);
     }
-    this.activeMixer = null;
-    this.lastLoadedModel = null;
+    modeState.mixer = null;
+    modeState.lastLoadedModel = null;
 
     let glbName = "";
     if (itemKey.endsWith(".glb")) {
@@ -448,8 +544,8 @@ class StudioPreviewManagerImpl {
         }
       }
       
-      // Cancel if a newer load request arrived while fetching
-      if (requestId !== this.currentLoadRequestId) {
+      // Cancel if a newer load request arrived for this mode while fetching
+      if (requestId !== modeState.loadRequestId) {
         return;
       }
 
@@ -477,7 +573,7 @@ class StudioPreviewManagerImpl {
       ClassLoadoutSystem.applySkin(model, skinId);
 
       // Cancel if a newer load request arrived while applying skin texture
-      if (requestId !== this.currentLoadRequestId) {
+      if (requestId !== modeState.loadRequestId) {
         return;
       }
 
@@ -511,17 +607,18 @@ class StudioPreviewManagerImpl {
         const distance = (targetHeight / 2) / Math.tan(fovRad / 2) * padding;
         const targetY = targetHeight * 0.5;
 
-        this.activeModelGroup.rotation.set(0, 0, 0);
+        if (mode === 'LOBBY') {
+          modeState.modelGroup.position.set(0, 0, 0);
+          modeState.modelGroup.rotation.set(0, modeState.rotationY, 0);
 
-        if (this.currentMode === 'LOBBY') {
-          this.activeModelGroup.position.set(0, 0, 0);
+          if (this.currentMode === 'LOBBY') {
+            this.studioCamera.position.set(0, targetY, distance);
+            this.studioCamera.lookAt(0, targetY, 0);
 
-          this.studioCamera.position.set(0, targetY, distance);
-          this.studioCamera.lookAt(0, targetY, 0);
-
-          if (this.keyLight) this.keyLight.intensity = 2.5;
-          if (this.rimLight) this.rimLight.intensity = 1.8;
-          if (this.ambientLight) this.ambientLight.intensity = 0.9;
+            if (this.keyLight) this.keyLight.intensity = 2.5;
+            if (this.rimLight) this.rimLight.intensity = 1.8;
+            if (this.ambientLight) this.ambientLight.intensity = 0.9;
+          }
         } else {
           // MAIN_MENU mode
           const aspect = this.studioCamera.aspect || (window.innerWidth / window.innerHeight);
@@ -529,39 +626,44 @@ class StudioPreviewManagerImpl {
           const visibleWidth = visibleHeight * aspect;
           const offsetX = visibleWidth * 0.20;
 
-          this.activeModelGroup.position.set(offsetX, 0, 0);
-          this.activeModelGroup.rotation.set(0, -0.35, 0);
+          modeState.modelGroup.position.set(offsetX, 0, 0);
+          modeState.modelGroup.rotation.set(0, -0.35, 0);
+          modeState.rotationY = -0.35;
 
-          this.studioCamera.position.set(0, targetY, distance);
-          this.studioCamera.lookAt(0, targetY, 0);
+          if (this.currentMode === 'MAIN_MENU') {
+            this.studioCamera.position.set(0, targetY, distance);
+            this.studioCamera.lookAt(0, targetY, 0);
 
-          if (this.keyLight) this.keyLight.intensity = 2.2;
-          if (this.rimLight) this.rimLight.intensity = 1.5;
-          if (this.ambientLight) this.ambientLight.intensity = 0.8;
+            if (this.keyLight) this.keyLight.intensity = 2.2;
+            if (this.rimLight) this.rimLight.intensity = 1.5;
+            if (this.ambientLight) this.ambientLight.intensity = 0.8;
+          }
         }
 
         // Setup Animation Mixer
-        this.activeMixer = null;
+        modeState.mixer = null;
         if (gltf.animations && gltf.animations.length > 0) {
           const mixer = new THREE.AnimationMixer(model);
-          this.activeMixer = mixer;
-          let clip = gltf.animations.find(a => a.name.toLowerCase().includes("idle"));
+          modeState.mixer = mixer;
+          let clip = gltf.animations.find((a: any) => a.name.toLowerCase().includes("idle"));
           if (!clip) clip = gltf.animations[0];
           if (clip) mixer.clipAction(clip).play();
         }
 
-        this.activeModelGroup.add(model);
+        modeState.modelGroup.add(model);
         model.visible = true;
 
         // Auto-equip selected weapon and skin to the character in Lobby/Menu
-        this.loadAndEquipWeaponAlways(model);
+        await this.loadAndEquipWeaponAlways(model);
+
+        if (requestId !== modeState.loadRequestId) {
+          return;
+        }
 
       } else {
         // WEAPON SHOWCASE: Upright 3/4 diagonal presentation angle
-        // Temporarily reset activeModelGroup and model transforms to identity
-        // to prevent any async turntable or drag rotation from poisoning the centering math.
-        this.activeModelGroup.position.set(0, 0, 0);
-        this.activeModelGroup.rotation.set(0, 0, 0);
+        modeState.modelGroup.position.set(0, 0, 0);
+        modeState.modelGroup.rotation.set(0, 0, 0);
 
         let weaponMeshes: THREE.Mesh[] = [];
         model.traverse((child: any) => {
@@ -582,7 +684,7 @@ class StudioPreviewManagerImpl {
         }
 
         const firearm = isFirearm(itemKey, glbName);
-        this.activeModelGroup.add(model);
+        modeState.modelGroup.add(model);
         
         // 1. Reset model transforms
         model.position.set(0, 0, 0);
@@ -611,18 +713,14 @@ class StudioPreviewManagerImpl {
             const R = new THREE.Matrix4();
             const m = R.elements;
 
-            // Row 0 is the longest axis (length) -> World X (horizontal)
             const r00 = (longAxis === 'x') ? 1 : 0;
             const r01 = (longAxis === 'y') ? 1 : 0;
             const r02 = (longAxis === 'z') ? 1 : 0;
 
-            // Row 1 is the second longest axis (height) -> World Y (upright)
             const r10 = (heightAxis === 'x') ? 1 : 0;
             const r11 = (heightAxis === 'y') ? 1 : 0;
             const r12 = (heightAxis === 'z') ? 1 : 0;
 
-            // Row 2 is the shortest axis (thickness) -> World Z (depth)
-            // We use the cross product of Row 0 and Row 1 to guarantee a right-handed orthogonal matrix
             const r20 = r01 * r12 - r02 * r11;
             const r21 = r02 * r10 - r00 * r12;
             const r22 = r00 * r11 - r01 * r10;
@@ -635,8 +733,6 @@ class StudioPreviewManagerImpl {
             model.quaternion.setFromRotationMatrix(R);
             model.updateMatrixWorld(true);
 
-            // Apply standard presentation rotation based on common showcase projection (Yaw 30 deg, Pitch 5 deg)
-            // This is a systematic constant derived from isometric-adjacent viewing theory, not eyeballed.
             const presentationRot = new THREE.Quaternion().setFromEuler(new THREE.Euler(0.087, -0.523, 0.0));
             model.quaternion.premultiply(presentationRot);
             model.updateMatrixWorld(true);
@@ -646,8 +742,8 @@ class StudioPreviewManagerImpl {
           model.updateMatrixWorld(true);
         }
 
-        // 3. Get exact bounding box of the oriented meshes in parent space (WEAPON ONLY - DO NOT FILTER 'BODY')
-        const boundsBox = computeWeaponBoxRelativeToParent(model, this.activeModelGroup, false);
+        // 3. Get exact bounding box of the oriented meshes in parent space
+        const boundsBox = computeWeaponBoxRelativeToParent(model, modeState.modelGroup, false);
 
         if (!boundsBox.isEmpty()) {
           const rawSize = new THREE.Vector3();
@@ -656,69 +752,71 @@ class StudioPreviewManagerImpl {
           const centerWorld = new THREE.Vector3();
           boundsBox.getCenter(centerWorld);
 
-          // Get exact canvas dimensions for 100% mathematical, zero-eyeballing sizing
           const width = this.containerEl ? (this.containerEl.clientWidth || window.innerWidth) : window.innerWidth;
           const height = this.containerEl ? (this.containerEl.clientHeight || window.innerHeight) : window.innerHeight;
           const aspect = (width / height) || (16 / 9);
 
           const fovRad = (this.studioCamera.fov * Math.PI) / 180;
           
-          // Calculate framing distance based on bounding sphere to guarantee fit without magic offsets
           const sphere = new THREE.Sphere();
           boundsBox.getBoundingSphere(sphere);
           const radius = sphere.radius;
           
-          // distance = (size / 2) / tan(fov / 2)
-          // We use the radius and adjust for aspect ratio to ensure full horizontal/vertical fit
           const distY = radius / Math.tan(fovRad / 2);
           const distX = distY / aspect;
-          const dist = Math.max(distX, distY) * 1.5; // 50% margin for UI elements
+          const dist = Math.max(distX, distY) * 1.5;
 
-          this.studioCamera.position.set(0, 0, dist);
-          this.studioCamera.lookAt(0, 0, 0);
+          if (this.currentMode === mode) {
+            this.studioCamera.position.set(0, 0, dist);
+            this.studioCamera.lookAt(0, 0, 0);
+          }
 
           const visibleHeight = 2 * dist * Math.tan(fovRad / 2);
           const visibleWidth = visibleHeight * aspect;
 
           let weaponScaleFactor = 1.0;
           if (firearm) {
-            // For rifles: width/depth (rawSize.x) sets final size. Safe horizontal ratio = 0.70, vertical ratio = 0.55
             const scaleX = (visibleWidth * 0.70) / (rawSize.x || 1.0);
             const scaleY = (visibleHeight * 0.55) / (rawSize.y || 1.0);
             weaponScaleFactor = Math.min(scaleX, scaleY);
           } else {
-            // For grenades/other: height (rawSize.y) sets final size. Safe vertical ratio = 0.55, horizontal ratio = 0.65
             const scaleX = (visibleWidth * 0.65) / (rawSize.x || 1.0);
             const scaleY = (visibleHeight * 0.55) / (rawSize.y || 1.0);
             weaponScaleFactor = Math.min(scaleX, scaleY);
           }
 
-          // Apply scale and translation to perfectly center the meshes around activeModelGroup's pivot
           model.scale.set(weaponScaleFactor, weaponScaleFactor, weaponScaleFactor);
           model.position.copy(centerWorld).negate().multiplyScalar(weaponScaleFactor);
           model.updateMatrixWorld(true);
 
-          // Calculate final bounds of the centered weapon in parent space to frame the camera perfectly
-          const finalBox = computeWeaponBoxRelativeToParent(model, this.activeModelGroup);
+          const finalBox = computeWeaponBoxRelativeToParent(model, modeState.modelGroup);
           const size = new THREE.Vector3();
           finalBox.getSize(size);
 
-          this.autoFrameCameraForSize(size);
+          if (this.currentMode === mode) {
+            this.autoFrameCameraForSize(size);
+          }
         } else {
-          this.studioCamera.position.set(0, 0, 1.2);
-          this.studioCamera.lookAt(0, 0, 0);
+          if (this.currentMode === mode) {
+            this.studioCamera.position.set(0, 0, 1.2);
+            this.studioCamera.lookAt(0, 0, 0);
+          }
         }
 
-        if (this.keyLight) this.keyLight.intensity = 2.8;
-        if (this.rimLight) this.rimLight.intensity = 2.0;
-        if (this.ambientLight) this.ambientLight.intensity = 1.0;
+        if (this.currentMode === mode) {
+          if (this.keyLight) this.keyLight.intensity = 2.8;
+          if (this.rimLight) this.rimLight.intensity = 2.0;
+          if (this.ambientLight) this.ambientLight.intensity = 1.0;
+        }
 
         model.visible = true;
       }
 
-      this.lastLoadedModel = model;
-      this.lastLoadedGlbName = glbName;
-      if (this._onModelLoaded) {
+      modeState.lastLoadedModel = model;
+      modeState.lastLoadedGlbName = glbName;
+      modeState.modelGroup.visible = (this.currentMode === mode);
+
+      if (this.currentMode === mode && this._onModelLoaded) {
         this._onModelLoaded(model, glbName);
       }
 
@@ -822,8 +920,6 @@ class StudioPreviewManagerImpl {
         lHandRotY: -1.60159265358979,
         lHandRotZ: -0.411592653589793
       });
-
-      console.log("[StudioPreviewManager] Weapon loaded and scenic posed successfully on player avatar.");
     } catch (err) {
       console.error("[StudioPreviewManager] loadAndEquipWeaponAlways error:", err);
     }
@@ -848,51 +944,6 @@ class StudioPreviewManagerImpl {
     this.studioCamera.near = 0.01; 
     this.studioCamera.far = dist + 50.0;
     this.studioCamera.updateProjectionMatrix();
-  }
-
-  private applySkinToModelAsync(model: THREE.Object3D, textureFile: string | null): Promise<void> {
-    return new Promise((resolve) => {
-      if (!textureFile) {
-        // Restore original materials if standard
-        model.traverse((child: any) => {
-          if (child.isMesh) {
-            if (child.userData.originalMap !== undefined) {
-              child.material.map = child.userData.originalMap;
-              child.material.needsUpdate = true;
-            }
-          }
-        });
-        resolve();
-        return;
-      }
-
-      // Load texture
-      import('./asset-cache').then(({ getAssetUrl }) => {
-        const textureLoader = new THREE.TextureLoader();
-        textureLoader.load(getAssetUrl(textureFile), (texture) => {
-          texture.wrapS = THREE.RepeatWrapping;
-          texture.wrapT = THREE.RepeatWrapping;
-          texture.repeat.set(2, 2); // Repeat to look nice and detailed
-          
-          model.traverse((child: any) => {
-            if (child.isMesh) {
-              if (child.material) {
-                child.material = child.material.clone();
-              }
-              // Backup original map
-              if (child.userData.originalMap === undefined) {
-                child.userData.originalMap = child.material.map;
-              }
-              child.material.map = texture;
-              child.material.needsUpdate = true;
-            }
-          });
-          resolve();
-        }, undefined, () => {
-          resolve(); // Resolve anyway on error
-        });
-      }).catch(() => resolve());
-    });
   }
 
   public resizeToContainer(): void {
@@ -926,8 +977,12 @@ class StudioPreviewManagerImpl {
 
     this.canvasContainerEl.onmousemove = (e) => {
       if (!this.isDragging) return;
+      // In MAIN_MENU mode, the backdrop character is fixed and should not rotate on mouse drag
+      if (this.currentMode === 'MAIN_MENU') return;
       const deltaX = e.clientX - this.previousMouseX;
-      this.activeModelGroup.rotation.y += deltaX * this.dragSensitivity;
+      const activeState = this.getModeState(this.currentMode);
+      activeState.rotationY += deltaX * this.dragSensitivity;
+      activeState.modelGroup.rotation.y = activeState.rotationY;
       this.previousMouseX = e.clientX;
     };
 
@@ -944,8 +999,11 @@ class StudioPreviewManagerImpl {
 
     this.canvasContainerEl.ontouchmove = (e) => {
       if (!this.isDragging || e.touches.length === 0) return;
+      if (this.currentMode === 'MAIN_MENU') return;
       const deltaX = e.touches[0].clientX - this.previousMouseX;
-      this.activeModelGroup.rotation.y += deltaX * this.dragSensitivity;
+      const activeState = this.getModeState(this.currentMode);
+      activeState.rotationY += deltaX * this.dragSensitivity;
+      activeState.modelGroup.rotation.y = activeState.rotationY;
       this.previousMouseX = e.touches[0].clientX;
     };
   }
@@ -953,31 +1011,34 @@ class StudioPreviewManagerImpl {
   public update(dt: number): void {
     if (this.currentMode === 'INACTIVE') return;
 
+    const activeState = this.getModeState(this.currentMode);
+
     // Smooth scale-in transition
-    for (let i = 0; i < this.activeModelGroup.children.length; i++) {
-      const model = this.activeModelGroup.children[i];
+    for (let i = 0; i < activeState.modelGroup.children.length; i++) {
+      const model = activeState.modelGroup.children[i];
       if (model.userData.targetScale) {
         const target = model.userData.targetScale as THREE.Vector3;
         model.scale.lerp(target, Math.min(dt * 12, 1.0));
       }
     }
 
-    // Update animation mixer if active
-    if (this.activeMixer) {
-      this.activeMixer.update(dt);
+    // Update animation mixer if active for the current mode
+    if (activeState.mixer) {
+      activeState.mixer.update(dt);
     }
 
     // Call procedural skeletal pose to maintain low-ready alignment over animations
-    if (this.lastLoadedModel && this.lastLoadedGlbName.toLowerCase().includes("player")) {
-      const activeWeapon = this.lastLoadedModel.userData.activeWeapon;
+    if (activeState.lastLoadedModel && activeState.lastLoadedGlbName.toLowerCase().includes("player")) {
+      const activeWeapon = activeState.lastLoadedModel.userData.activeWeapon;
       if (activeWeapon) {
-        applyScenicGripPose(this.lastLoadedModel, activeWeapon, this.lastLoadedModel.userData.poseConfig);
+        applyScenicGripPose(activeState.lastLoadedModel, activeWeapon, activeState.lastLoadedModel.userData.poseConfig);
       }
     }
 
-    // Slow turntable rotation when idle (disabled in LOBBY mode per requirement: DONT SPIN AUTOMATICALLY)
-    if (!this.isDragging && this.turntableEnabled && this.currentMode !== 'LOBBY') {
-      this.activeModelGroup.rotation.y += dt * 0.4;
+    // Slow turntable rotation when idle (disabled in LOBBY and MAIN_MENU modes)
+    if (!this.isDragging && activeState.turntableEnabled && this.currentMode !== 'LOBBY' && this.currentMode !== 'MAIN_MENU') {
+      activeState.rotationY += dt * 0.4;
+      activeState.modelGroup.rotation.y = activeState.rotationY;
     }
 
     // Subtle lighting motion

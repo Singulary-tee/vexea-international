@@ -723,3 +723,33 @@ Every file change in the VEXEA codebase must follow this strict two-step protoco
     * `client/src/systems/NetworkSyncSystem.ts`: Stops audio emitters when `YOU_DIED` packet is received.
     * `CODEBASE_INDEX.md`: Registered this cycle and verified changes.
 * **Post-Edit Verification:** `lint_applet` passed (`tsc --noEmit`), `compile_applet` passed cleanly.
+
+### Cycle 2026-08-23-03: StudioPreviewManager Mode State Isolation & Async Load Race Guarding
+* **Target Files:** `client/StudioPreviewManager.ts`, `CODEBASE_INDEX.md`
+* **Status:** Verified & Finalized.
+* **Scope:**
+    * Task 1: Refactored `StudioPreviewManager` singleton to isolate per-mode scene graph and presentation state (`Map<StudioMode, StudioModeState>`). Separated `MAIN_MENU`, `LOBBY`, `ARMORY`, and `STORE` state containers (including dedicated model groups, turntable settings, rotation, mixers, and load request counters) to eliminate state bleed between screens.
+    * Fixed the asynchronous race condition in `buildShowcaseModel()` by gating state resolution on per-mode `modeState.loadRequestId` across async ticks and during weapon attachment equipping.
+    * Preserved single `WebGPURenderer` instance and avoided flickering or redundant model rebuilding when re-attaching already loaded mode assets via `applyModePresentation()`.
+* **Constraints:** No React, WebGPU-only pipeline, strict mode isolation, zero-GC per tick.
+* **Completed Modified Files:**
+    * `client/StudioPreviewManager.ts`: Added `StudioModeState` interface, isolated model groups per mode, updated `attachTo()`, `setShowcaseItem()`, `buildShowcaseModel()`, and input listeners to use per-mode states.
+    * `CODEBASE_INDEX.md`: Registered this cycle and verified changes.
+* **Post-Edit Verification:** `lint_applet` and `compile_applet` verified.
+
+### Cycle 2026-08-23-04: LoadingOrchestrator Consolidation (Character, Drone, and Weapon Models)
+* **Target Files:** `client/src/map/LoadingOrchestrator.ts`, `client/main.ts`, `CODEBASE_INDEX.md`
+* **Status:** Verified & Finalized.
+* **Scope:**
+    * Consolidated decoupled match-loading calls (`Player_one-optimized.glb` character model load, `initDroneModels`, and `initPlayerWeapons`) directly into `LoadingOrchestrator.orchestrateMatchLoad` ahead of the `player_ready` network dispatch and server sync phase.
+    * Added Phase 3 `LOADING COMBAT ASSETS` to `orchestrateMatchLoad` with discrete progress bar tracking.
+    * Cleaned up redundant inline `Player_one-optimized.glb` loader in `client/main.ts`'s `initializeLocalMatchScene` and passed active `camera` reference to `orchestrateMatchLoad`.
+    * Maintained decoupling for `dev-entities.ts`, `StudioCharacterPreview.ts`, and `StudioPreviewManager.ts`.
+* **Constraints:** No React, WebGPU-only pipeline, zero-GC allocations in tick/render loops, preserve all network flow contracts and loading bar accuracy.
+* **Completed Modified Files:**
+    * `client/src/map/LoadingOrchestrator.ts`: Imported `initDroneModels`, `initPlayerWeapons`, and asset loaders; added Combat Assets loading phase (character GLTF, drone procedural models, weapon models) with progress bar updates prior to shader prewarm and `player_ready` emit.
+    * `client/main.ts`: Removed duplicate inline character model GLTFLoader call from `initializeLocalMatchScene`; passed camera to `orchestrateMatchLoad`.
+    * `CODEBASE_INDEX.md`: Registered and finalized this cycle.
+* **Post-Edit Verification:** `lint_applet` and `compile_applet` verified.
+
+
