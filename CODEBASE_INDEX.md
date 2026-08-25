@@ -771,3 +771,15 @@ Every file change in the VEXEA codebase must follow this strict two-step protoco
 
 
 
+
+### Cycle 2026-08-25-01: Accepted Gameplay VFX and UI Motion Documentation (Planned)
+* **Target Files:** `VEXEA_GAMEPLAY_VFX_CONTRACT.md`, `VEXEA_UI_ANIMATION_CONTRACT.md`, `VEXEA_UI_DESIGN_SYSTEM_INTERACTIONS.md`, `VEXEA_UI_LOADING_BATTLEPASS_CONTRACT.md`, `GEMINI_VEXEA_VFX_UI_IMPLEMENTATION_PROMPT.md`, `VEXEA_UI_MOTION_RESEARCH_AND_PROPOSALS.md`, `VEXEA_UI_REDESIGN_RESEARCH.md`, `VEXEA_UI_CONCEPT_RESET.md`, `VEXEA_APPROVED_MOTION_LANGUAGE.md`, `VEXEA_BP_LOADING_REFRESH_BRIEF.md`, `VEXEA_UI_SVG_AND_CLICKABLE_AUDIT.md`, `VEXEA_SETTINGS_MOTION_AUDIT.md`, `CODEBASE_INDEX.md`
+* **Status:** Planned; documentation-only branch preparation. No production implementation files are in scope.
+* **Scope:** Register the reconstructed gameplay VFX contract, approved matchmaking and internal UI motion contract, reusable icon/settings/ambient interaction contract, accepted horizontal loading-bar contract, accepted full-season battle-pass contract, and Gemini handoff prompt. Historical rejected visual experiments remain explicitly excluded. Main-menu action cards remain untouched.
+* **Verification planned:** `git diff --check`, markdown completeness scan, branch status review, and confirmation that no production source file is modified.
+
+### Cycle 2026-08-25-01: Accepted Gameplay VFX and UI Motion Documentation (Completed)
+* **Status:** Completed as a documentation-only branch preparation.
+* **Completed Files:** `docs/vexea/README.md`, `docs/vexea/VEXEA_GAMEPLAY_VFX_CONTRACT.md`, `docs/vexea/VEXEA_UI_ANIMATION_CONTRACT.md`, `docs/vexea/VEXEA_UI_DESIGN_SYSTEM_INTERACTIONS.md`, `docs/vexea/VEXEA_UI_LOADING_BATTLEPASS_CONTRACT.md`, `docs/vexea/GEMINI_VEXEA_VFX_UI_IMPLEMENTATION_PROMPT.md`, `docs/vexea/VEXEA_UI_MOTION_RESEARCH_AND_PROPOSALS.md`, `docs/vexea/VEXEA_UI_REDESIGN_RESEARCH.md`, `docs/vexea/VEXEA_UI_CONCEPT_RESET.md`, `docs/vexea/VEXEA_APPROVED_MOTION_LANGUAGE.md`, `docs/vexea/VEXEA_BP_LOADING_REFRESH_BRIEF.md`, `docs/vexea/VEXEA_UI_SVG_AND_CLICKABLE_AUDIT.md`, `docs/vexea/VEXEA_SETTINGS_MOTION_AUDIT.md`, `docs/vexea/contract_calibration_review.md`, `docs/vexea/research_motion_sources.md`.
+* **Scope Confirmation:** Accepted loading-bar and full-season battle-pass directions are documented. Accepted matchmaking, graph foundation, icon, settings, and quiet-ambient directions are documented. Superseded rejected visual experiments are labeled historical and excluded from implementation guidance. Main-menu action cards and all production implementation files remain unchanged.
+* **Verification:** `git diff --check` passed before final index registration. Branch contains documentation files only plus this index registration; no production runtime source was modified.
