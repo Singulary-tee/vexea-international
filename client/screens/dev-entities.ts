@@ -95,6 +95,13 @@ function getLocalBoundingBoxOfNode(node: THREE.Object3D): THREE.Box3 {
     return box;
 }
 
+// Returns the live turret/gun pivot array from DRONE_CONFIGS for the given drone
+// type, so "no slider override" fallbacks track retunes of shared/constants.ts
+// instead of going stale against a frozen hardcoded copy.
+function getConfigPivot(type: DroneType, key: 'turretYawPivot' | 'gunPitchPivot'): number[] | undefined {
+    return (DRONE_CONFIGS[type] as any)?.[key];
+}
+
 function verifyPivotRotationMath() {
     if (!activeGLBModel) return;
     const rotateNode = activeGLBModel.getObjectByName("Turret");
@@ -107,17 +114,21 @@ function verifyPivotRotationMath() {
     const baseWorldMat = modelGroup.userData.baseWorldMatrix;
     if (!baseWorldMat) return;
 
+    const activeDroneType = DRONE_SCHEMAS.find(s => s.id === currentTab)?.type;
+    const cfgTurretPivot = activeDroneType !== undefined ? getConfigPivot(activeDroneType, 'turretYawPivot') : undefined;
+    const cfgGunPivot = activeDroneType !== undefined ? getConfigPivot(activeDroneType, 'gunPitchPivot') : undefined;
+
     // 1. Get current pivot configurations in unscaled model space
     const turretPivotModel = new THREE.Vector3(
-        params.turretYawPivotX !== undefined ? params.turretYawPivotX : 0.0,
-        params.turretYawPivotY !== undefined ? params.turretYawPivotY : 0.45,
-        params.turretYawPivotZ !== undefined ? params.turretYawPivotZ : -0.1
+        params.turretYawPivotX !== undefined ? params.turretYawPivotX : cfgTurretPivot?.[0] ?? 0.0,
+        params.turretYawPivotY !== undefined ? params.turretYawPivotY : cfgTurretPivot?.[1] ?? 0.45,
+        params.turretYawPivotZ !== undefined ? params.turretYawPivotZ : cfgTurretPivot?.[2] ?? -0.1
     );
 
     const gunPivotModel = new THREE.Vector3(
-        params.gunPitchPivotX !== undefined ? params.gunPitchPivotX : 0.0,
-        params.gunPitchPivotY !== undefined ? params.gunPitchPivotY : 0.65,
-        params.gunPitchPivotZ !== undefined ? params.gunPitchPivotZ : 0.0
+        params.gunPitchPivotX !== undefined ? params.gunPitchPivotX : cfgGunPivot?.[0] ?? 0.0,
+        params.gunPitchPivotY !== undefined ? params.gunPitchPivotY : cfgGunPivot?.[1] ?? 0.65,
+        params.gunPitchPivotZ !== undefined ? params.gunPitchPivotZ : cfgGunPivot?.[2] ?? 0.0
     );
 
     // Compute local positions inside the meshes
@@ -1875,19 +1886,23 @@ function updateMuzzleVisualLocation() {
     const baseWorldMat = modelGroup?.userData.baseWorldMatrix;
 
     if (activeTurretYawPivotVisual && modelGroup) {
+        const activeDroneType = DRONE_SCHEMAS.find(s => s.id === currentTab)?.type;
+        const cfgTurretPivot = activeDroneType !== undefined ? getConfigPivot(activeDroneType, 'turretYawPivot') : undefined;
         const turretPivotModel = new THREE.Vector3(
-            params.turretYawPivotX !== undefined ? params.turretYawPivotX : 0.0, 
-            params.turretYawPivotY !== undefined ? params.turretYawPivotY : 0.45, 
-            params.turretYawPivotZ !== undefined ? params.turretYawPivotZ : -0.1
+            params.turretYawPivotX !== undefined ? params.turretYawPivotX : cfgTurretPivot?.[0] ?? 0.0,
+            params.turretYawPivotY !== undefined ? params.turretYawPivotY : cfgTurretPivot?.[1] ?? 0.45,
+            params.turretYawPivotZ !== undefined ? params.turretYawPivotZ : cfgTurretPivot?.[2] ?? -0.1
         );
         const worldTurretPivot = turretPivotModel.clone().applyMatrix4(modelGroup.matrixWorld);
         activeTurretYawPivotVisual.position.copy(worldTurretPivot);
     }
     if (activeGunPitchPivotVisual && modelGroup && rotateNode && baseWorldMat && rotateNode.userData.baseInvWorldMatrix) {
+        const activeDroneType = DRONE_SCHEMAS.find(s => s.id === currentTab)?.type;
+        const cfgGunPivot = activeDroneType !== undefined ? getConfigPivot(activeDroneType, 'gunPitchPivot') : undefined;
         const gunPivotModel = new THREE.Vector3(
-            params.gunPitchPivotX !== undefined ? params.gunPitchPivotX : 0.0, 
-            params.gunPitchPivotY !== undefined ? params.gunPitchPivotY : 0.65, 
-            params.gunPitchPivotZ !== undefined ? params.gunPitchPivotZ : 0.0
+            params.gunPitchPivotX !== undefined ? params.gunPitchPivotX : cfgGunPivot?.[0] ?? 0.0,
+            params.gunPitchPivotY !== undefined ? params.gunPitchPivotY : cfgGunPivot?.[1] ?? 0.65,
+            params.gunPitchPivotZ !== undefined ? params.gunPitchPivotZ : cfgGunPivot?.[2] ?? 0.0
         );
         const initialWorldGunPivot = gunPivotModel.clone().applyMatrix4(baseWorldMat);
         const localPivotInRotate = initialWorldGunPivot.clone().applyMatrix4(rotateNode.userData.baseInvWorldMatrix);
@@ -3204,10 +3219,11 @@ function applyProceduralModelAnimations(dt: number) {
                 }
                 didRotate = true;
             } else if (child.name === 'Turret') {
+                const cfgTurretPivot = getConfigPivot(type, 'turretYawPivot');
                 tempModelPivot.set(
-                    params.turretYawPivotX !== undefined ? params.turretYawPivotX : 0.0,
-                    params.turretYawPivotY !== undefined ? params.turretYawPivotY : 0.45,
-                    params.turretYawPivotZ !== undefined ? params.turretYawPivotZ : -0.1
+                    params.turretYawPivotX !== undefined ? params.turretYawPivotX : cfgTurretPivot?.[0] ?? 0.0,
+                    params.turretYawPivotY !== undefined ? params.turretYawPivotY : cfgTurretPivot?.[1] ?? 0.45,
+                    params.turretYawPivotZ !== undefined ? params.turretYawPivotZ : cfgTurretPivot?.[2] ?? -0.1
                 );
                 
                 tempLp.copy(tempModelPivot);
@@ -3228,10 +3244,11 @@ function applyProceduralModelAnimations(dt: number) {
                 localMat.copy(child.userData.baseLocalMatrix).multiply(tempRotAroundPivot);
                 didRotate = false;
             } else if (child.name === 'gun') {
+                const cfgGunPivot = getConfigPivot(type, 'gunPitchPivot');
                 tempModelPivot.set(
-                    params.gunPitchPivotX !== undefined ? params.gunPitchPivotX : 0.0,
-                    params.gunPitchPivotY !== undefined ? params.gunPitchPivotY : 0.65,
-                    params.gunPitchPivotZ !== undefined ? params.gunPitchPivotZ : 0.0
+                    params.gunPitchPivotX !== undefined ? params.gunPitchPivotX : cfgGunPivot?.[0] ?? 0.0,
+                    params.gunPitchPivotY !== undefined ? params.gunPitchPivotY : cfgGunPivot?.[1] ?? 0.65,
+                    params.gunPitchPivotZ !== undefined ? params.gunPitchPivotZ : cfgGunPivot?.[2] ?? 0.0
                 );
                 
                 tempLp.copy(tempModelPivot);
