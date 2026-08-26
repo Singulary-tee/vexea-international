@@ -2,7 +2,7 @@ import * as THREE from "three/webgpu";
 import { DS } from "./design-system";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import * as SkeletonUtils from "three/addons/utils/SkeletonUtils.js";
-import { getCachedOrFetchUrl, createConfiguredGLTFLoader } from "./asset-cache";
+import { getCachedOrFetchUrl, createConfiguredGLTFLoader, populateBlobUrlMap } from "./asset-cache";
 import { applyScenicGripPose } from "./weapons/GripSystem";
 import { ClassLoadoutSystem } from "./src/systems/ClassLoadoutSystem";
 import { attachScope, preloadAttachments } from "./weapons/AttachmentSystem";
@@ -420,6 +420,17 @@ class StudioPreviewManagerImpl {
         zIndex: '1',
       });
       this.resizeToContainer();
+
+      // Re-apply mode-specific framing even when the model came from cache,
+      // so MAIN_MENU <-> LOBBY transitions always get correct placement.
+      const activeState = this.getModeState(this.currentMode);
+      if (
+        activeState.lastLoadedModel &&
+        activeState.lastLoadedModel.userData.characterTargetHeight
+      ) {
+        this.applyCharacterModeFraming(activeState.lastLoadedModel.userData.characterTargetHeight as number);
+      }
+
       this.setupInputListeners();
 
       // Dynamically import Dev Placement tools only in local development environments
@@ -534,6 +545,7 @@ class StudioPreviewManagerImpl {
         gltf = await this.pendingGltfPromises.get(glbName);
       } else {
         const loadPromise = (async () => {
+          await populateBlobUrlMap(); // Ensure texture filename map is warm before GLB parse
           const loader = createConfiguredGLTFLoader(undefined, (window as any).renderer);
           const url = await getCachedOrFetchUrl(glbName, "Asset");
           return await loader.loadAsync(url);
@@ -604,44 +616,9 @@ class StudioPreviewManagerImpl {
         model.userData.baseScaleVal = scaleFactor;
         model.userData.centerLocalOffset = new THREE.Vector3(-scaledCenter.x, -scaledBox.min.y, -scaledCenter.z);
 
-        // Trigonometric camera distance & focal target calculation
-        const fovRad = (this.studioCamera.fov * Math.PI) / 180;
-        const padding = 1.15; // 15% vertical margin
-        const distance = (targetHeight / 2) / Math.tan(fovRad / 2) * padding;
-        const targetY = targetHeight * 0.5;
-
-        if (mode === 'LOBBY') {
-          modeState.modelGroup.position.set(0, 0, 0);
-          modeState.modelGroup.rotation.set(0, modeState.rotationY, 0);
-
-          if (this.currentMode === 'LOBBY') {
-            this.studioCamera.position.set(0, targetY, distance);
-            this.studioCamera.lookAt(0, targetY, 0);
-
-            if (this.keyLight) this.keyLight.intensity = 2.5;
-            if (this.rimLight) this.rimLight.intensity = 1.8;
-            if (this.ambientLight) this.ambientLight.intensity = 0.9;
-          }
-        } else {
-          // MAIN_MENU mode
-          const aspect = this.studioCamera.aspect || (window.innerWidth / window.innerHeight);
-          const visibleHeight = 2 * distance * Math.tan(fovRad / 2);
-          const visibleWidth = visibleHeight * aspect;
-          const offsetX = visibleWidth * 0.20;
-
-          modeState.modelGroup.position.set(offsetX, 0, 0);
-          modeState.modelGroup.rotation.set(0, -0.35, 0);
-          modeState.rotationY = -0.35;
-
-          if (this.currentMode === 'MAIN_MENU') {
-            this.studioCamera.position.set(0, targetY, distance);
-            this.studioCamera.lookAt(0, targetY, 0);
-
-            if (this.keyLight) this.keyLight.intensity = 2.2;
-            if (this.rimLight) this.rimLight.intensity = 1.5;
-            if (this.ambientLight) this.ambientLight.intensity = 0.8;
-          }
-        }
+        // Persist framing inputs so attachTo can re-apply mode framing for cached models
+        model.userData.characterTargetHeight = targetHeight;
+        this.applyCharacterModeFraming(targetHeight);
 
         // Setup Animation Mixer
         modeState.mixer = null;
@@ -840,9 +817,47 @@ class StudioPreviewManagerImpl {
     }
   }
 
+  private applyCharacterModeFraming(targetHeight: number): void {
+    const fovRad = (this.studioCamera.fov * Math.PI) / 180;
+    const padding = 1.15; // 15% vertical margin
+    const distance = (targetHeight / 2) / Math.tan(fovRad / 2) * padding;
+    const targetY = targetHeight * 0.5;
+
+    const modelGroup = this.getActiveModelGroup();
+    modelGroup.rotation.set(0, 0, 0);
+
+    if (this.currentMode === 'LOBBY') {
+      modelGroup.position.set(0, 0, 0);
+      this.studioCamera.position.set(0, targetY, distance);
+      this.studioCamera.lookAt(0, targetY, 0);
+      if (this.keyLight) this.keyLight.intensity = 2.5;
+      if (this.rimLight) this.rimLight.intensity = 1.8;
+      if (this.ambientLight) this.ambientLight.intensity = 0.9;
+    } else {
+      // MAIN_MENU mode: offset right, slight yaw
+      const aspect = this.studioCamera.aspect || (window.innerWidth / window.innerHeight);
+      const visibleHeight = 2 * distance * Math.tan(fovRad / 2);
+      const visibleWidth = visibleHeight * aspect;
+      const offsetX = visibleWidth * 0.20;
+
+      modelGroup.position.set(offsetX, 0, 0);
+      modelGroup.rotation.set(0, -0.35, 0);
+      this.studioCamera.position.set(0, targetY, distance);
+      this.studioCamera.lookAt(0, targetY, 0);
+      if (this.keyLight) this.keyLight.intensity = 2.2;
+      if (this.rimLight) this.rimLight.intensity = 1.5;
+      if (this.ambientLight) this.ambientLight.intensity = 0.8;
+    }
+  }
+
   private async loadAndEquipWeaponAlways(characterModel: THREE.Group, weaponKey?: string, skinId?: string): Promise<void> {
+    const modeState = this.getModeState(this.currentMode);
+    const requestId = ++modeState.loadRequestId;
+    const isSuperseded = () =>
+      requestId !== modeState.loadRequestId || modeState.lastLoadedModel !== characterModel;
     try {
       await preloadAttachments();
+      if (isSuperseded()) return;
 
       if (characterModel.userData.activeWeapon) {
         characterModel.userData.activeWeapon.removeFromParent();
@@ -872,6 +887,7 @@ class StudioPreviewManagerImpl {
         gltf = await this.pendingGltfPromises.get(glbName);
       } else {
         const loadPromise = (async () => {
+          await populateBlobUrlMap(); // Ensure texture filename map is warm before GLB parse
           const loader = createConfiguredGLTFLoader();
           const url = await getCachedOrFetchUrl(glbName, "Asset");
           return await loader.loadAsync(url);
@@ -884,6 +900,8 @@ class StudioPreviewManagerImpl {
           this.pendingGltfPromises.delete(glbName);
         }
       }
+      if (isSuperseded()) return;
+
       const weapon = SkeletonUtils.clone(gltf.scene) as THREE.Group;
 
       fixSkinnedMeshBones(weapon, gltf.scene);
@@ -908,6 +926,7 @@ class StudioPreviewManagerImpl {
       ClassLoadoutSystem.applySkin(weapon, currentSkinId);
 
       await attachScope(weapon, "ACOG");
+      if (isSuperseded()) return;
 
       characterModel.userData.activeWeapon = weapon;
 

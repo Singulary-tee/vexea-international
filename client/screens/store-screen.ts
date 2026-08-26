@@ -676,7 +676,7 @@ function open3DSkinPreviewModal(title: string, skin: any, itemKey?: string): voi
     window.removeEventListener('keydown', handleKeyDown);
     overlay.remove();
     const backdrop = document.getElementById('main-menu-3d-backdrop');
-    if (backdrop) {
+    if (backdrop && StudioPreviewManager.getMode() !== 'MAIN_MENU') {
       StudioPreviewManager.attachTo(backdrop, 'MAIN_MENU');
     } else {
       StudioPreviewManager.detach();

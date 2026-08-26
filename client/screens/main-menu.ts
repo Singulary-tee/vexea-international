@@ -3457,7 +3457,7 @@ if (typeof window !== 'undefined') {
   window.addEventListener('show-main-menu', () => {
     refreshCardImages();
     const backdrop = document.getElementById('main-menu-3d-backdrop');
-    if (backdrop) {
+    if (backdrop && StudioPreviewManager.getMode() !== 'MAIN_MENU') {
       StudioPreviewManager.attachTo(backdrop, 'MAIN_MENU');
     }
     renderRightPanel();

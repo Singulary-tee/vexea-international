@@ -861,6 +861,7 @@ export function createConfiguredGLTFLoader(customManager?: THREE.LoadingManager,
         return blobUrlMap.get(fileName)!;
       }
       if (isTexture) {
+        console.warn(`[AssetCache] Texture "${fileName}" missing from blobUrlMap; substituted transparent 1x1 placeholder (mesh will be invisible).`);
         return fallback1x1Url;
       }
     }

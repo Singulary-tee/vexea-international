@@ -3,7 +3,7 @@ import { getDefaultMap, getMapById, MAP_REGISTRY } from "../../shared/maps/map-r
 import { ensureAssetsDownloaded, getCachedOrFetchUrl, getAssetUrl } from "../asset-cache";
 import { IS_DESKTOP } from "../gates/platform.gate";
 import { DS } from "../design-system";
-import { StudioPreviewManager } from "../StudioPreviewManager";
+import { StudioPreviewManager } from "../StudioPreviewManager"; // re-exported for downstream screens; attach owned by screen-manager
 import { getAuth } from "firebase/auth";
 import { getFriendsList, sendLobbyInvite, cancelLobbyInvites } from "../social";
 import { CLASSES, ClassId } from "../../shared/classes";
@@ -198,9 +198,8 @@ export function initLobby() {
     });
     el.appendChild(middleSpacer);
 
-    requestAnimationFrame(() => {
-      StudioPreviewManager.attachTo(middleSpacer, 'LOBBY');
-    });
+    // NOTE: Do not attach StudioPreviewManager here; screen-manager.showLobby()
+    // is the single owner of the LOBBY attach (targets #lobby-3d-backdrop).
 
     // 2. ABSOLUTE UI OVERLAY (Floating HUD Layer with click events enabled for elements)
     const uiOverlay = document.createElement('div');
