@@ -242,6 +242,10 @@ This file is the authoritative index of all directories and source files within 
     *   **`energy-modal.ts`**: Insufficient energy modal (`openInsufficientEnergyModal`, `getEnergyRegenCountdown`, `getMaxFreeEnergy`, `getMatchEnergyCost`) providing 3 actionable CTA pathways (Watch Transmission Ad, Commander Resupply in Store, or Wait for Free Regen) with live countdown calculations and zero-leak DOM lifecycle.
     *   **`faction-screen.ts`**: Faction/INTEL screen displaying operative lore, faction data, contractor dossiers, and intelligence updates.
     *   **`lobby.ts`**: Pre-match staging screen handling class selection, ready toggling, friend invites, and game mode info.
+    *   **`menu-state.ts`**: Single-responsibility shared session state store for main-menu submodules. Owns the user-profile resolution cache (`userProfileCache`) and the registered-user session record (`getRegisteredUserData()` / `setRegisteredUserData()` accessors) so sibling modal modules never circularly import main-menu.
+    *   **`notification.ts`**: Menu toast notification module (`showMenuNotification(msg, type)`). Renders stacked glass toasts into the `vex-menu-notification-container` overlay; styles via design system, auto-dismisses after 4s.
+    *   **`auth-modal.ts`**: Unified authentication/enlistment modal cluster (`openProfileAuthModal`, `showEnlistmentOverlay`, internal `createUnifiedAuthOverlay`). Guest enlistment, email registration/login/logout flow, profile document provisioning and validation through `ValidatorGate`; reports completion via menu notifications and the shared registered-user state.
+    *   **`squad-friends-modal.ts`**: Squad & friends management modal (`openSquadFriendsModal`). FRIENDS / ADD / REQUESTS tabs listing squad members, incoming requests, and lobby invites; codename lookup for friend requests resolves display names against the shared `userProfileCache`.
     *   **`main-menu.ts`**: Central navigation dashboard containing top bar, user profile, energy reserve bar with live countdown ticker, nav links, and action cards (PLAY, UPDATES, INTEL, LOADOUT, FACTION, STORE, CHALLENGES).
     *   **`map_viewer.ts`**: Interactive 3D map viewer for inspecting level architecture and capture zones.
     *   **`matchmaking-overlay.ts`**: Matchmaking waiting overlay box with pre-match countdown display and cancel option.
@@ -771,3 +775,12 @@ Every file change in the VEXEA codebase must follow this strict two-step protoco
 
 
 
+
+---
+### Cycle 2026-08-27-01: Main-Menu Monolith Break-Up Phase 1 — Auth/Friends/Notification Module Extraction
+*   **Target Files:** `client/screens/main-menu.ts`, `client/screens/menu-state.ts` (new), `client/screens/notification.ts` (new), `client/screens/auth-modal.ts` (new), `client/screens/squad-friends-modal.ts` (new), `CODEBASE_INDEX.md`
+*   **Status:** Verified on working tree of codespace `supreme-space-train-7vr496j4wwxxfx5p7` (branch `agent/menu-modularization-1`); awaiting manual merge review.
+*   **Modifications:**
+    *   `client/screens/main-menu.ts`: Reduced from 3471 to 2369 lines (~31%). Extracted `showMenuNotification`, the unified auth/enlistment overlay suite (`createUnifiedAuthOverlay`, `showEnlistmentOverlay`, `openProfileAuthModal`), and `openSquadFriendsModal` into dedicated single-responsibility modules. Moved shared mutable state (`userProfileCache`, `registeredUserData`) into `menu-state.ts` with accessor functions (`getRegisteredUserData()` / `setRegisteredUserData()`); all 58 former direct references rewritten. Window-mirror syncs (`window.registeredUserData`) preserved verbatim. Legacy dynamic-import surface kept stable via re-exports (`export { showMenuNotification }`, `export { openProfileAuthModal }`). No behavioral changes intended.
+    *   New files as indexed above; function bodies moved byte-identical except mechanical state-accessor rewrites.
+*   **Verification:** `tsc --noEmit` passed with 0 errors; full Vitest suite passed (21 files, 107 tests); Playwright E2E probe rerun end-to-end (splash gate → main menu → READY → lobby → return to main menu) with unchanged error profile vs pre-refactor baseline and guest-enlistment overlay confirmed rendering from its new module.

@@ -24,15 +24,20 @@ import { StudioPreviewManager } from "../StudioPreviewManager";
 import { CLASSES } from "../../shared/classes";
 import { resolveDisplayName, sendFriendRequest, getFriendsList, getIncomingRequests, respondToFriendRequest, ensureUsernameMapped, getLobbyInvites, respondToLobbyInvite } from "../social";
 import { bindFullscreenButton } from "../src/ui/fullscreen";
+import { getRegisteredUserData, setRegisteredUserData } from "./menu-state";
+import { showMenuNotification } from "./notification";
+import { openProfileAuthModal, showEnlistmentOverlay } from "./auth-modal";
+import { openSquadFriendsModal } from "./squad-friends-modal";
 
-// In-memory cache to resolve user profiles without N+1 loops
-const userProfileCache = new Map<string, string>();
+// Re-exports preserved for legacy dynamic importers (e.g. stats-screen).
+export { showMenuNotification };
+export { openProfileAuthModal };
+
 
 let styleInjected = false;
 let activeCardId: string | null = null;
 let currentRightPanelMode: 'DEFAULT' | 'MULTIPLAYER' | 'FACTION' | 'INTEL' | 'FEEDBACK' | 'STORE' | 'PROFILE' | 'MAP_EDITOR' | 'PLAY' | 'LOADOUT' = 'DEFAULT';
 let userFaction: string | null = null;
-let registeredUserData: any = null;
 let userSubscriptionUnsubscribe: (() => void) | null = null;
 let offersInterval: any = null;
 let energyRegenInterval: any = null;
@@ -127,17 +132,17 @@ export function initMainMenu() {
 
       userSubscriptionUnsubscribe = onSnapshot(doc(db, 'Users', uid), async (snapshot) => {
         if (snapshot.exists()) {
-          registeredUserData = snapshot.data();
-          (window as any).registeredUserData = registeredUserData;
-          userFaction = registeredUserData.faction || null;
+          setRegisteredUserData(snapshot.data());
+          (window as any).registeredUserData = getRegisteredUserData();
+          userFaction = getRegisteredUserData().faction || null;
 
           const overlay = document.getElementById('vex-unified-auth-modal') || document.getElementById('vex-enlistment-overlay');
           if (overlay) overlay.remove();
 
-          checkDailyRefresh(registeredUserData, doc(db, 'Users', uid));
+          checkDailyRefresh(getRegisteredUserData(), doc(db, 'Users', uid));
           enableLeftColumnMenu(true);
-          if (registeredUserData.displayName) {
-            ensureUsernameMapped(uid, registeredUserData.displayName);
+          if (getRegisteredUserData().displayName) {
+            ensureUsernameMapped(uid, getRegisteredUserData().displayName);
           }
         } else {
           if (!user.isAnonymous) {
@@ -156,7 +161,7 @@ export function initMainMenu() {
               console.warn("Auto-provision profile failed:", err);
             }
           } else {
-            registeredUserData = null;
+            setRegisteredUserData(null);
             (window as any).registeredUserData = null;
             userFaction = null;
             enableLeftColumnMenu(false);
@@ -170,7 +175,7 @@ export function initMainMenu() {
         console.warn("User state subscription failed:", err);
       });
     } else {
-      registeredUserData = null;
+      setRegisteredUserData(null);
       (window as any).registeredUserData = null;
       userFaction = null;
       enableLeftColumnMenu(false);
@@ -580,7 +585,7 @@ export function initMainMenu() {
   crDisplay.title = 'Click to inspect Energy Reserves & Resupply';
   crDisplay.onclick = (e) => {
     e.stopPropagation();
-    openInsufficientEnergyModal(registeredUserData, {
+    openInsufficientEnergyModal(getRegisteredUserData(), {
       onEnergyRefilled: () => updateProfileBox(),
       onNavigateStore: () => setActiveCard('STORE')
     });
@@ -799,10 +804,10 @@ export function initMainMenu() {
   playObj.titleEl.style.fontSize = 'clamp(1.06rem, 12.5cqi, 2.63rem)';
   playCard.onclick = (e) => {
     e.stopPropagation();
-    const currentEnergy = registeredUserData?.energy !== undefined ? registeredUserData.energy : 10;
+    const currentEnergy = getRegisteredUserData()?.energy !== undefined ? getRegisteredUserData().energy : 10;
     const matchCost = getMatchEnergyCost();
     if (currentEnergy < matchCost) {
-      openInsufficientEnergyModal(registeredUserData, {
+      openInsufficientEnergyModal(getRegisteredUserData(), {
         onEnergyRefilled: () => updateProfileBox(),
         onNavigateStore: () => setActiveCard('STORE')
       });
@@ -871,13 +876,13 @@ export function initMainMenu() {
 
   const getMatchesPlayed = (): number => {
     const localCount = parseInt(localStorage.getItem('matchesPlayed') || '0', 10);
-    const cloudCount = registeredUserData?.playedCount || 0;
+    const cloudCount = getRegisteredUserData()?.playedCount || 0;
     return Math.max(localCount, cloudCount);
   };
 
   if (getMatchesPlayed() >= 1) {
     const qmBtn = document.createElement('div');
-    const curEnergy = registeredUserData?.energy !== undefined ? registeredUserData.energy : 10;
+    const curEnergy = getRegisteredUserData()?.energy !== undefined ? getRegisteredUserData().energy : 10;
     const matchCost = getMatchEnergyCost();
     const isLowEnergy = curEnergy < matchCost;
 
@@ -896,9 +901,9 @@ export function initMainMenu() {
     });
     qmBtn.onclick = (e) => {
         e.stopPropagation();
-        const activeEn = registeredUserData?.energy !== undefined ? registeredUserData.energy : 10;
+        const activeEn = getRegisteredUserData()?.energy !== undefined ? getRegisteredUserData().energy : 10;
         if (activeEn < getMatchEnergyCost()) {
-          openInsufficientEnergyModal(registeredUserData, {
+          openInsufficientEnergyModal(getRegisteredUserData(), {
             onEnergyRefilled: () => updateProfileBox(),
             onNavigateStore: () => setActiveCard('STORE')
           });
@@ -1006,7 +1011,7 @@ export function initMainMenu() {
     setActiveCard('INTEL');
   };
 
-  const currentBPXP = registeredUserData?.battlePass || 0;
+  const currentBPXP = getRegisteredUserData()?.battlePass || 0;
   const currentTier = Math.floor(currentBPXP / 10);
   const progressPct = ((currentBPXP % 10) / 10) * 100;
 
@@ -1160,7 +1165,7 @@ export function initMainMenu() {
   challengesHeader.appendChild(challengesTimer);
   challengesPanel.appendChild(challengesHeader);
 
-  const mmStats = registeredUserData?.stats || {};
+  const mmStats = getRegisteredUserData()?.stats || {};
   const challengesData = challengesDataList.slice(0, 3).map((ch: any) => {
     let current = 0;
     if (ch.id === 'ch_drone_kills') {
@@ -1170,7 +1175,7 @@ export function initMainMenu() {
     } else if (ch.id === 'ch_capture_nodes') {
       current = Math.min(ch.target, mmStats.totalObjectiveTimeHeld ? Math.floor(mmStats.totalObjectiveTimeHeld / 60) : 0);
     } else {
-      current = registeredUserData?.challengesProgress?.[ch.id] || 0;
+      current = getRegisteredUserData()?.challengesProgress?.[ch.id] || 0;
     }
     return {
       name: ch.title,
@@ -1319,29 +1324,29 @@ function updateProfileBox() {
   const avatarImg = document.getElementById('profile-avatar-img') as HTMLImageElement | null;
   const xpFill = document.getElementById('profile-xp-fill');
 
-  if (registeredUserData) {
-    profileNameText.textContent = `${registeredUserData.displayName.toUpperCase()}`;
-    const levelNum = registeredUserData.battlePass || 1;
+  if (getRegisteredUserData()) {
+    profileNameText.textContent = `${getRegisteredUserData().displayName.toUpperCase()}`;
+    const levelNum = getRegisteredUserData().battlePass || 1;
     profileRankBadge.textContent = `LVL ${levelNum}`;
     profileRankBadge.style.display = 'block';
     profileNameText.style.color = DS.colors.text;
 
     if (avatarImg) {
-      if (registeredUserData.photoURL) {
-        avatarImg.src = registeredUserData.photoURL;
+      if (getRegisteredUserData().photoURL) {
+        avatarImg.src = getRegisteredUserData().photoURL;
       } else {
         avatarImg.src = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%2523ff4400"><circle cx="12" cy="8" r="4"/><path d="M12 14c-6.1 0-8 4-8 4v2h16v-2s-1.9-4-8-4z"/></svg>';
       }
     }
 
     if (xpFill) {
-      const xp = registeredUserData.xp !== undefined ? registeredUserData.xp : 65;
+      const xp = getRegisteredUserData().xp !== undefined ? getRegisteredUserData().xp : 65;
       const progressPct = Math.min(100, Math.max(15, xp % 100 || 65));
       xpFill.style.height = `${progressPct}%`;
     }
 
-    const creditsVal = registeredUserData.credits !== undefined ? registeredUserData.credits : 100;
-    const energyVal = registeredUserData.energy !== undefined ? registeredUserData.energy : 10;
+    const creditsVal = getRegisteredUserData().credits !== undefined ? getRegisteredUserData().credits : 100;
+    const energyVal = getRegisteredUserData().energy !== undefined ? getRegisteredUserData().energy : 10;
     const maxFree = getMaxFreeEnergy();
     const energyPct = Math.min(100, Math.max(0, (energyVal / maxFree) * 100));
     const isBelowMax = energyVal < maxFree;
@@ -1534,14 +1539,14 @@ function createPanelBlock(label: string, renderContent: (container: HTMLElement)
 
 function updateDefaultPanelStats() {
   const stats = [
-    { key: 'totalMatches', v: registeredUserData ? String(registeredUserData.totalMatches || 0) : '—' },
-    { key: 'totalWins', v: registeredUserData ? String(registeredUserData.totalWins || 0) : '—' },
-    { key: 'winRate', v: registeredUserData ? `${registeredUserData.winRate || 0}%` : '—' },
-    { key: 'totalDroneEliminations', v: registeredUserData ? String(registeredUserData.totalDroneEliminations || 0) : '—' },
-    { key: 'totalDeaths', v: registeredUserData ? String(registeredUserData.totalDeaths || 0) : '—' },
-    { key: 'totalObjectiveTimeHeld', v: registeredUserData ? `${registeredUserData.totalObjectiveTimeHeld || 0}s` : '—' },
-    { key: 'totalRevivesPerformed', v: registeredUserData ? String(registeredUserData.totalRevivesPerformed || 0) : '—' },
-    { key: 'highestIndividualScore', v: registeredUserData ? String(registeredUserData.highestIndividualScore || 0) : '—' }
+    { key: 'totalMatches', v: getRegisteredUserData() ? String(getRegisteredUserData().totalMatches || 0) : '—' },
+    { key: 'totalWins', v: getRegisteredUserData() ? String(getRegisteredUserData().totalWins || 0) : '—' },
+    { key: 'winRate', v: getRegisteredUserData() ? `${getRegisteredUserData().winRate || 0}%` : '—' },
+    { key: 'totalDroneEliminations', v: getRegisteredUserData() ? String(getRegisteredUserData().totalDroneEliminations || 0) : '—' },
+    { key: 'totalDeaths', v: getRegisteredUserData() ? String(getRegisteredUserData().totalDeaths || 0) : '—' },
+    { key: 'totalObjectiveTimeHeld', v: getRegisteredUserData() ? `${getRegisteredUserData().totalObjectiveTimeHeld || 0}s` : '—' },
+    { key: 'totalRevivesPerformed', v: getRegisteredUserData() ? String(getRegisteredUserData().totalRevivesPerformed || 0) : '—' },
+    { key: 'highestIndividualScore', v: getRegisteredUserData() ? String(getRegisteredUserData().highestIndividualScore || 0) : '—' }
   ];
   stats.forEach(s => {
     const el = document.getElementById(`intel-summary-val-${s.key}`);
@@ -1648,16 +1653,16 @@ function renderRightPanel() {
          }, true));
       }
       else if (currentRightPanelMode === 'INTEL') {
-        renderStatsScreen(container, registeredUserData);
+        renderStatsScreen(container, getRegisteredUserData());
       }
       else if (currentRightPanelMode === 'LOADOUT') {
-        renderArmoryScreen(container, registeredUserData);
+        renderArmoryScreen(container, getRegisteredUserData());
       }
       else if (currentRightPanelMode === 'FACTION') {
-        renderFactionScreen(container, registeredUserData);
+        renderFactionScreen(container, getRegisteredUserData());
       }
       else if (currentRightPanelMode === 'STORE') {
-        renderStoreScreen(container, registeredUserData);
+        renderStoreScreen(container, getRegisteredUserData());
       } 
       else if (currentRightPanelMode === 'PLAY') {
         container.style.overflow = 'hidden';
@@ -2039,7 +2044,7 @@ function renderRightPanel() {
         });
 
         deployBtn.onclick = () => {
-          if (registeredUserData && (registeredUserData.energy || 0) < 10) {
+          if (getRegisteredUserData() && (getRegisteredUserData().energy || 0) < 10) {
             showMenuNotification("DEPLOYMENT REJECTED: INSUFFICIENT ENERGY. REFILL DEV CREDITS IN INTEL.", "warning");
             return;
           }
@@ -2160,16 +2165,16 @@ function renderRightPanel() {
        updateDefaultPanelStats();
     }
     else if (currentRightPanelMode === 'INTEL') {
-       renderStatsScreen(container, registeredUserData);
+       renderStatsScreen(container, getRegisteredUserData());
     }
     else if (currentRightPanelMode === 'LOADOUT') {
-       renderArmoryScreen(container, registeredUserData);
+       renderArmoryScreen(container, getRegisteredUserData());
     }
     else if (currentRightPanelMode === 'FACTION') {
-       renderFactionScreen(container, registeredUserData);
+       renderFactionScreen(container, getRegisteredUserData());
     }
     else if (currentRightPanelMode === 'STORE') {
-       renderStoreScreen(container, registeredUserData);
+       renderStoreScreen(container, getRegisteredUserData());
     }
     else if (currentRightPanelMode === 'PLAY') {
        updatePlayTabSelection();
@@ -2308,53 +2313,6 @@ function showArchitecturalAnalysis() {
   });
 }
 
-export function showMenuNotification(msg: string, type: 'info' | 'warning' = 'info') {
-  const container = document.getElementById('vex-menu-notification-container') || document.createElement('div');
-  if (!container.parentElement) {
-    container.id = 'vex-menu-notification-container';
-    Object.assign(container.style, {
-      position: 'absolute',
-      top: 'clamp(2.25rem, 5vh, 3.13rem)',
-      left: '50%',
-      transform: 'translateX(-50%)',
-      zIndex: '4500',
-      display: 'flex',
-      flexDirection: 'column',
-      gap: '8px',
-      pointerEvents: 'none'
-    });
-    document.body.appendChild(container);
-  }
-  
-  const toast = document.createElement('div');
-  toast.className = 'mm-glass';
-  Object.assign(toast.style, {
-    padding: '0.50rem 1.00rem',
-    fontFamily: DS.typography.fontFamily,
-    fontSize: DS.typography.sizes.small,
-    letterSpacing: '2px',
-    color: type === 'warning' ? DS.colors.danger : DS.colors.accent,
-    borderLeft: `3px solid ${type === 'warning' ? DS.colors.danger : DS.colors.accent}`,
-    boxShadow: DS.glass.glowOuter,
-    pointerEvents: 'auto',
-    opacity: '0',
-    transition: 'all 300ms cubic-bezier(0.4,0,0.2,1)',
-    transform: 'translateY(-20px)'
-  });
-  toast.textContent = msg.toUpperCase();
-  container.appendChild(toast);
-  
-  void toast.offsetWidth;
-  toast.style.opacity = '1';
-  toast.style.transform = 'translateY(0)';
-  
-  setTimeout(() => {
-    toast.style.opacity = '0';
-    toast.style.transform = 'translateY(-20px)';
-    setTimeout(() => toast.remove(), 300);
-  }, 4000);
-}
-
 function enableLeftColumnMenu(enabled: boolean) {
   const cards = document.querySelectorAll('.mm-new-card');
   cards.forEach(child => {
@@ -2367,1065 +2325,6 @@ function enableLeftColumnMenu(enabled: boolean) {
       c.style.opacity = '0.3';
     }
   });
-}
-
-function createUnifiedAuthOverlay(db: any, auth: any, defaultTab: 'GUEST' | 'AUTH' = 'GUEST') {
-  const existingModal = document.getElementById('vex-unified-auth-modal') || document.getElementById('vex-enlistment-overlay') || document.getElementById('vex-profile-auth-modal');
-  if (existingModal) existingModal.remove();
-
-  const user = auth.currentUser;
-  let activeTab: 'GUEST' | 'AUTH' = defaultTab;
-
-  const overlay = document.createElement('div');
-  overlay.id = 'vex-unified-auth-modal';
-  Object.assign(overlay.style, {
-    position: 'fixed', inset: '0', zIndex: '5000',
-    background: 'radial-gradient(circle at center, rgba(3, 3, 5, 0.98) 0%, rgba(3, 3, 5, 0.9) 60%, rgba(3, 3, 5, 0.4) 90%, rgba(3, 3, 5, 0) 100%)',
-    backdropFilter: 'blur(15px)',
-    display: 'flex', alignItems: 'center', justifyContent: 'center',
-    padding: '1.00rem',
-    fontFamily: DS.typography.fontFamily, color: DS.colors.text,
-    overflowY: 'auto'
-  });
-
-  const box = document.createElement('div');
-  box.className = 'mm-glass';
-  Object.assign(box.style, {
-    width: 'min(92vw, 42.50rem)',
-    maxHeight: '90vh',
-    overflowY: 'auto',
-    WebkitOverflowScrolling: 'touch',
-    background: 'linear-gradient(180deg, rgba(14, 14, 18, 0.98) 0%, rgba(6, 6, 9, 0.99) 100%)',
-    border: `1px solid rgba(255, 69, 0, 0.25)`,
-    boxShadow: '0 0 35px rgba(0, 0, 0, 0.8), 0 0 15px rgba(255, 69, 0, 0.15)',
-    padding: '1.25rem 1.25rem',
-    position: 'relative',
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '12px',
-    borderRadius: '0px',
-    boxSizing: 'border-box'
-  });
-
-  const closeBtn = document.createElement('button');
-  closeBtn.textContent = '✕';
-  Object.assign(closeBtn.style, {
-    position: 'absolute', top: '0.88rem', right: '1.00rem',
-    background: 'none', border: 'none', color: DS.colors.textMuted,
-    fontSize: DS.typography.sizes.headingSm, cursor: 'pointer', zIndex: '10'
-  });
-  closeBtn.onclick = () => overlay.remove();
-  box.appendChild(closeBtn);
-
-  // Header Branding
-  const branding = document.createElement('div');
-  Object.assign(branding.style, {
-    display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center'
-  });
-
-  const word = document.createElement('div');
-  word.textContent = 'VEXEΛ SECURE PORTAL';
-  Object.assign(word.style, {
-    fontFamily: DS.typography.fontFamilyWordmark,
-    fontSize: DS.typography.sizes.headingMd, fontWeight: '800', letterSpacing: '0.31rem',
-    color: DS.colors.accent
-  });
-  branding.appendChild(word);
-
-  const sub = document.createElement('div');
-  sub.textContent = 'RESTRICTED SYSTEM ACCESS — OPERATIVE IDENTIFICATION';
-  Object.assign(sub.style, {
-    fontFamily: DS.typography.fontFamily,
-    fontSize: DS.typography.sizes.tiny, letterSpacing: '2px', color: DS.colors.textMuted, marginTop: '2px'
-  });
-  branding.appendChild(sub);
-  box.appendChild(branding);
-
-  // Mode Switcher Tabs
-  const navRow = document.createElement('div');
-  Object.assign(navRow.style, {
-    display: 'flex', borderBottom: '1px solid rgba(255, 255, 255, 0.1)', gap: '4px', marginTop: '4px'
-  });
-
-  const tabGuestBtn = document.createElement('button');
-  const tabAuthBtn = document.createElement('button');
-
-  const updateTabStyles = () => {
-    Object.assign(tabGuestBtn.style, {
-      flex: '1', padding: '0.63rem', background: 'none', border: 'none',
-      borderBottom: activeTab === 'GUEST' ? `2px solid ${DS.colors.accent}` : '2px solid transparent',
-      color: activeTab === 'GUEST' ? DS.colors.text : DS.colors.textMuted,
-      fontFamily: DS.typography.fontFamily, fontSize: DS.typography.sizes.small, fontWeight: 'bold',
-      letterSpacing: '1px', cursor: 'pointer', transition: 'all 0.2s'
-    });
-    tabGuestBtn.textContent = '1. GUEST ENLISTMENT';
-
-    Object.assign(tabAuthBtn.style, {
-      flex: '1', padding: '0.63rem', background: 'none', border: 'none',
-      borderBottom: activeTab === 'AUTH' ? `2px solid ${DS.colors.accent}` : '2px solid transparent',
-      color: activeTab === 'AUTH' ? DS.colors.text : DS.colors.textMuted,
-      fontFamily: DS.typography.fontFamily, fontSize: DS.typography.sizes.small, fontWeight: 'bold',
-      letterSpacing: '1px', cursor: 'pointer', transition: 'all 0.2s'
-    });
-    tabAuthBtn.textContent = '2. ACCOUNT ACCESS';
-  };
-
-  navRow.appendChild(tabGuestBtn);
-  navRow.appendChild(tabAuthBtn);
-  box.appendChild(navRow);
-
-  const contentContainer = document.createElement('div');
-  Object.assign(contentContainer.style, { display: 'flex', flexDirection: 'column', gap: '14px' });
-  box.appendChild(contentContainer);
-
-  let pendingAuthAction: (() => Promise<void>) | null = null;
-
-  const renderContent = () => {
-    updateTabStyles();
-    contentContainer.innerHTML = '';
-
-    if (activeTab === 'GUEST') {
-      if (registeredUserData && registeredUserData.displayName) {
-        const activeCard = document.createElement('div');
-        activeCard.className = 'mm-glass';
-        Object.assign(activeCard.style, {
-          padding: '1.00rem', display: 'flex', flexDirection: 'column', gap: '0.50rem',
-          borderLeft: `3px solid ${DS.colors.accent}`
-        });
-        activeCard.innerHTML = `
-          <div style="font-size: ${DS.typography.sizes.tiny}; color:${DS.colors.accent}; letter-spacing:2px; font-weight:bold;">ACTIVE GUEST SESSION</div>
-          <div style="font-size: ${DS.typography.sizes.headingSm}; font-weight:bold; letter-spacing:2px; color:${DS.colors.text};">${registeredUserData.displayName}</div>
-          <div style="font-size: ${DS.typography.sizes.small}; color:${DS.colors.textMuted};">FACTION: <span style="color:#FFF;">${registeredUserData.faction || 'UNAFFILIATED'}</span></div>
-          <div style="font-size: ${DS.typography.sizes.tiny}; color:${DS.colors.textMuted}; line-height:1.4; margin-top:4px;">
-            You are logged in under a guest session. Progress is saved locally. Switch to the Account Access tab to link a permanent Google or Email account.
-          </div>
-        `;
-        contentContainer.appendChild(activeCard);
-      } else {
-        // Enlistment form
-        const inputGroup = document.createElement('div');
-        Object.assign(inputGroup.style, { display: 'flex', flexDirection: 'column', gap: '6px' });
-        
-        const inputLabel = document.createElement('div');
-        inputLabel.textContent = 'CONTRACTOR CODENAME';
-        Object.assign(inputLabel.style, {
-          fontSize: DS.typography.sizes.small, letterSpacing: '2px', color: DS.colors.accent
-        });
-        inputGroup.appendChild(inputLabel);
-        
-        const input = document.createElement('input');
-        input.type = 'text';
-        input.placeholder = 'ENTER CODENAME [3-16 ALPHANUMERIC]';
-        Object.assign(input.style, {
-          width: '100%', padding: '0.63rem 0.75rem', background: 'rgba(0, 0, 0, 0.5)',
-          border: DS.glass.border, color: DS.colors.text, fontFamily: DS.typography.fontFamily,
-          fontSize: DS.typography.sizes.body, letterSpacing: '2px', outline: 'none', textAlign: 'center',
-          boxSizing: 'border-box'
-        });
-        inputGroup.appendChild(input);
-        contentContainer.appendChild(inputGroup);
-
-        const factionLabel = document.createElement('div');
-        factionLabel.textContent = 'FACTION AFFILIATION';
-        Object.assign(factionLabel.style, {
-          fontSize: DS.typography.sizes.small, letterSpacing: '2px', color: DS.colors.textMuted
-        });
-        contentContainer.appendChild(factionLabel);
-
-        const factionsGrid = document.createElement('div');
-        Object.assign(factionsGrid.style, {
-          display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px'
-        });
-
-        let selectedFaction: string | null = null;
-
-        const vibeCard = document.createElement('div');
-        vibeCard.className = 'mm-glass';
-        Object.assign(vibeCard.style, {
-          padding: '0.75rem', cursor: 'pointer', display: 'flex', flexDirection: 'column',
-          alignItems: 'center', textAlign: 'center', transition: 'all 200ms ease'
-        });
-        vibeCard.innerHTML = `
-          <div style="font-size: ${DS.typography.sizes.body}; font-weight:bold; letter-spacing:1px; color:${DS.colors.factions.vibe.primary};">VIBE CO.</div>
-          <div style="font-size: ${DS.typography.sizes.tiny}; letter-spacing:1px; color:${DS.colors.factions.vibe.muted}; margin-top:2px;">SILENT & PRECISE</div>
-        `;
-        vibeCard.onclick = () => {
-          selectedFaction = 'VIBE CO.';
-          vibeCard.style.border = `1px solid ${DS.colors.factions.vibe.primary}`;
-          slopCard.style.border = DS.glass.border;
-        };
-
-        const slopCard = document.createElement('div');
-        slopCard.className = 'mm-glass';
-        Object.assign(slopCard.style, {
-          padding: '0.75rem', cursor: 'pointer', display: 'flex', flexDirection: 'column',
-          alignItems: 'center', textAlign: 'center', transition: 'all 200ms ease'
-        });
-        slopCard.innerHTML = `
-          <div style="font-size: ${DS.typography.sizes.body}; font-weight:bold; letter-spacing:1px; color:${DS.colors.factions.slop.primary};">SLOP INC.</div>
-          <div style="font-size: ${DS.typography.sizes.tiny}; letter-spacing:1px; color:${DS.colors.factions.slop.muted}; margin-top:2px;">BRUTALIST & UTILITY</div>
-        `;
-        slopCard.onclick = () => {
-          selectedFaction = 'SLOP INC.';
-          slopCard.style.border = `1px solid ${DS.colors.factions.slop.primary}`;
-          vibeCard.style.border = DS.glass.border;
-        };
-
-        factionsGrid.appendChild(vibeCard);
-        factionsGrid.appendChild(slopCard);
-        contentContainer.appendChild(factionsGrid);
-
-        const errText = document.createElement('div');
-        Object.assign(errText.style, {
-          fontSize: DS.typography.sizes.small, color: DS.colors.danger, textAlign: 'center', height: '0.88rem'
-        });
-        contentContainer.appendChild(errText);
-
-        const enlistBtn = document.createElement('button');
-        enlistBtn.textContent = 'ENLIST AS GUEST';
-        Object.assign(enlistBtn.style, {
-          width: '100%', padding: '0.75rem', background: DS.colors.accent, color: DS.colors.background,
-          fontFamily: DS.typography.fontFamily, fontSize: DS.typography.sizes.body, fontWeight: 'bold',
-          letterSpacing: '2px', border: 'none', cursor: 'pointer'
-        });
-
-        enlistBtn.onclick = async () => {
-          const codename = input.value.trim().toUpperCase();
-          if (codename.length < 3 || codename.length > 16 || !/^[A-Z0-9]+$/.test(codename)) {
-            errText.textContent = 'ERROR: CODENAME MUST BE 3-16 ALPHANUMERIC CHARS';
-            return;
-          }
-          if (!selectedFaction) {
-            errText.textContent = 'ERROR: FACTION AFFILIATION REQUIRED';
-            return;
-          }
-          enlistBtn.disabled = true;
-          enlistBtn.textContent = 'PROCESSING...';
-          try {
-            if (!auth.currentUser) {
-              const { signInAnonymously } = await import('firebase/auth');
-              await signInAnonymously(auth);
-            }
-            const uid = auth.currentUser.uid;
-            const docData = {
-              displayName: codename,
-              faction: selectedFaction,
-              credits: 500, energy: 10, unlockedItems: [], totalXp: 0, adClaimsToday: 0, lastAdClaimDate: 0,
-              createdAt: serverTimestamp(), dailyRefreshedAt: serverTimestamp(),
-              totalMatches: 0, totalWins: 0, totalDroneEliminations: 0, totalDeaths: 0,
-              score: 0, kills: 0, battlePass: 1
-            };
-            await setDoc(doc(db, 'Users', uid), docData);
-            await ensureUsernameMapped(uid, codename);
-            registeredUserData = docData;
-            showMenuNotification("ENLISTMENT COMPLETE. WELCOME TO VEXEΛ.");
-            overlay.remove();
-          } catch (e: any) {
-            console.warn("Enlistment failed:", e);
-            enlistBtn.disabled = false;
-            enlistBtn.textContent = 'ENLIST AS GUEST';
-            errText.textContent = 'ERROR: TRANSACTION REJECTED BY SYSTEM';
-          }
-        };
-        contentContainer.appendChild(enlistBtn);
-      }
-    } else {
-      // Tab AUTH
-      if (user && !user.isAnonymous) {
-        // Authenticated Profile Card (Section 11 Design Protocol)
-        const profileCard = document.createElement('div');
-        profileCard.className = 'mm-glass';
-        Object.assign(profileCard.style, {
-          padding: '1.00rem', display: 'flex', flexDirection: 'column', gap: '0.75rem',
-          border: `1px solid ${DS.colors.accent}`, background: 'rgba(0, 240, 255, 0.03)'
-        });
-
-        const headerRow = document.createElement('div');
-        Object.assign(headerRow.style, { display: 'flex', alignItems: 'center', justifyContent: 'space-between' });
-
-        const headerTitle = document.createElement('div');
-        const providerName = (user.providerData[0]?.providerId || 'GOOGLE / EMAIL').toUpperCase();
-        headerTitle.innerHTML = `
-          <div style="font-size: ${DS.typography.sizes.tiny}; color:${DS.colors.accent}; letter-spacing:2px; font-weight:bold;">AUTHENTICATED ACCOUNT</div>
-          <div style="font-size: ${DS.typography.sizes.tiny}; color:${DS.colors.textMuted}; margin-top:2px;">PROVIDER: ${providerName}</div>
-        `;
-
-        const statusBadge = document.createElement('div');
-        statusBadge.textContent = '[AUTHENTICATED]';
-        Object.assign(statusBadge.style, {
-          fontSize: DS.typography.sizes.tiny, fontWeight: 'bold', color: '#00FF66', border: '1px solid #00FF66',
-          padding: '2px 0.38rem', background: 'rgba(0, 255, 102, 0.12)', letterSpacing: '1px'
-        });
-
-        headerRow.appendChild(headerTitle);
-        headerRow.appendChild(statusBadge);
-        profileCard.appendChild(headerRow);
-
-        // User Avatar & Info
-        const infoRow = document.createElement('div');
-        Object.assign(infoRow.style, { display: 'flex', alignItems: 'center', gap: '0.75rem', marginTop: '2px' });
-
-        if (user.photoURL) {
-          const img = document.createElement('img');
-          img.src = user.photoURL;
-          img.alt = 'User Avatar';
-          Object.assign(img.style, { width: '2.63rem', height: '2.63rem', borderRadius: '50%', border: `1px solid ${DS.colors.accent}`, flexShrink: '0' });
-          infoRow.appendChild(img);
-        } else {
-          const avatarBadge = document.createElement('div');
-          avatarBadge.textContent = (registeredUserData?.displayName || user.displayName || user.email || 'OP').charAt(0).toUpperCase();
-          Object.assign(avatarBadge.style, {
-            width: '2.63rem', height: '2.63rem', borderRadius: '50%', background: DS.colors.accent,
-            color: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: DS.typography.sizes.headingSm, fontWeight: 'bold', flexShrink: '0'
-          });
-          infoRow.appendChild(avatarBadge);
-        }
-
-        const details = document.createElement('div');
-        Object.assign(details.style, { display: 'flex', flexDirection: 'column', gap: '2px', minWidth: '0' });
-        const nameStr = (registeredUserData?.displayName || user.displayName || user.email?.split('@')[0] || 'OPERATIVE').toUpperCase();
-        details.innerHTML = `
-          <div style="font-size: ${DS.typography.sizes.body}; font-weight:bold; color:${DS.colors.text}; letter-spacing:1px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${nameStr}</div>
-          <div style="font-size: ${DS.typography.sizes.small}; color:${DS.colors.textMuted}; font-family:monospace; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${user.email || user.uid}</div>
-          <div style="font-size: ${DS.typography.sizes.tiny}; color:${DS.colors.textMuted}; margin-top:2px;">FACTION: <span style="color:#FFF; font-weight:bold;">${registeredUserData?.faction || 'VIBE CO.'}</span></div>
-        `;
-        infoRow.appendChild(details);
-        profileCard.appendChild(infoRow);
-
-        // Action Buttons Row
-        const actionsRow = document.createElement('div');
-        Object.assign(actionsRow.style, { display: 'flex', gap: '0.63rem', marginTop: '0.38rem' });
-
-        const logoutBtn = document.createElement('button');
-        logoutBtn.textContent = 'LOG OUT OF ACCOUNT';
-        Object.assign(logoutBtn.style, {
-          flex: '1', padding: '0.63rem', background: 'rgba(255, 68, 0, 0.15)', border: `1px solid ${DS.colors.accent}`,
-          color: DS.colors.accent, fontFamily: DS.typography.fontFamily, fontSize: DS.typography.sizes.small, fontWeight: 'bold',
-          letterSpacing: '1px', cursor: 'pointer', transition: 'all 0.2s'
-        });
-
-        logoutBtn.onclick = async () => {
-          try {
-            const { signOut } = await import('firebase/auth');
-            await signOut(auth);
-            showMenuNotification("LOGGED OUT. RETURNED TO GUEST SESSION.");
-            overlay.remove();
-          } catch (e: any) {
-            console.warn("Logout error:", e);
-            showMenuNotification(`Logout Error: ${e?.message || 'Unable to logout'}`, "warning");
-          }
-        };
-
-        const closeBtn = document.createElement('button');
-        closeBtn.textContent = 'CLOSE OVERLAY';
-        Object.assign(closeBtn.style, {
-          flex: '1', padding: '0.63rem', background: 'rgba(255,255,255,0.08)', border: DS.glass.border,
-          color: DS.colors.text, fontFamily: DS.typography.fontFamily, fontSize: DS.typography.sizes.small, fontWeight: 'bold',
-          letterSpacing: '1px', cursor: 'pointer'
-        });
-        closeBtn.onclick = () => overlay.remove();
-
-        actionsRow.appendChild(logoutBtn);
-        actionsRow.appendChild(closeBtn);
-        profileCard.appendChild(actionsRow);
-
-        contentContainer.appendChild(profileCard);
-        return;
-      }
-
-      if (pendingAuthAction) {
-        // Confirmation prompt for guest progress overwrite
-        const warnBox = document.createElement('div');
-        warnBox.className = 'mm-glass';
-        Object.assign(warnBox.style, {
-          padding: '1.00rem', display: 'flex', flexDirection: 'column', gap: '0.75rem',
-          border: `1px solid ${DS.colors.accent}`, background: 'rgba(255, 68, 0, 0.08)'
-        });
-        warnBox.innerHTML = `
-          <div style="font-size: ${DS.typography.sizes.small}; font-weight:bold; color:${DS.colors.accent}; letter-spacing:1px;">⚠️ OVERWRITE GUEST SESSION WARNING</div>
-          <div style="font-size: ${DS.typography.sizes.small}; color:${DS.colors.text}; line-height:1.5;">
-            Logging into an existing account will end your current guest session <strong style="color:${DS.colors.accent}">${registeredUserData?.displayName || 'GUEST'}</strong> and discard unlinked progress.
-          </div>
-          <div style="font-size: ${DS.typography.sizes.tiny}; color:${DS.colors.textMuted};">Are you sure you want to proceed with account authentication?</div>
-        `;
-
-        const warnBtnRow = document.createElement('div');
-        Object.assign(warnBtnRow.style, { display: 'flex', gap: '10px' });
-
-        const confirmBtn = document.createElement('button');
-        confirmBtn.textContent = 'YES, LOG IN NOW';
-        Object.assign(confirmBtn.style, {
-          flex: '1', padding: '0.63rem', background: DS.colors.accent, color: DS.colors.background,
-          fontFamily: DS.typography.fontFamily, fontSize: DS.typography.sizes.small, fontWeight: 'bold', border: 'none', cursor: 'pointer'
-        });
-
-        const cancelBtn = document.createElement('button');
-        cancelBtn.textContent = 'CANCEL';
-        Object.assign(cancelBtn.style, {
-          flex: '1', padding: '0.63rem', background: 'rgba(255,255,255,0.1)', color: DS.colors.text,
-          fontFamily: DS.typography.fontFamily, fontSize: DS.typography.sizes.small, fontWeight: 'bold', border: DS.glass.border, cursor: 'pointer'
-        });
-
-        confirmBtn.onclick = async () => {
-          const action = pendingAuthAction;
-          pendingAuthAction = null;
-          if (action) await action();
-        };
-
-        cancelBtn.onclick = () => {
-          pendingAuthAction = null;
-          renderContent();
-        };
-
-        warnBtnRow.appendChild(confirmBtn);
-        warnBtnRow.appendChild(cancelBtn);
-        warnBox.appendChild(warnBtnRow);
-        contentContainer.appendChild(warnBox);
-        return;
-      }
-
-      // Status box
-      const statusBox = document.createElement('div');
-      statusBox.className = 'mm-glass';
-      Object.assign(statusBox.style, { padding: '0.63rem 0.75rem', display: 'flex', flexDirection: 'column', gap: '4px' });
-      const currentUid = user ? user.uid : 'NOT_LOGGED_IN';
-      const isAnon = user ? user.isAnonymous : true;
-      const authProvider = isAnon ? 'GUEST SESSION' : (user?.providerData[0]?.providerId || 'EMAIL / PASSWORD');
-      statusBox.innerHTML = `
-        <div style="font-size: ${DS.typography.sizes.tiny}; color:${DS.colors.textMuted}; letter-spacing:1px;">CURRENT USER IDENTIFIER</div>
-        <div style="font-size: ${DS.typography.sizes.small}; font-weight:bold; color:${DS.colors.text}; font-family:monospace; word-break:break-all;">${currentUid}</div>
-        <div style="font-size: ${DS.typography.sizes.tiny}; color:${DS.colors.accent}; font-weight:bold; margin-top:2px;">PROVIDER: ${authProvider.toUpperCase()}</div>
-      `;
-      contentContainer.appendChild(statusBox);
-
-      // Google Auth button
-      const googleBtn = document.createElement('button');
-      googleBtn.innerHTML = `
-        <svg width="16" height="16" viewBox="0 0 24 24" style="vertical-align:middle; margin-right:0.50rem;"><path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17z"/><path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.11-6.72-4.96H1.29v3.15C3.26 21.3 7.31 24 12 24z"/><path fill="#FBBC05" d="M5.28 14.24c-.25-.72-.38-1.49-.38-2.24s.13-1.52.38-2.24V6.61H1.29C.47 8.24 0 10.06 0 12s.47 3.76 1.29 5.39l3.99-3.15z"/><path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.31 0 3.26 2.7 1.29 6.61l3.99 3.15c.95-2.85 3.6-4.96 6.72-4.96z"/></svg>
-        SIGN IN WITH GOOGLE
-      `;
-      Object.assign(googleBtn.style, {
-        width: '100%', padding: '0.69rem', background: '#FFFFFF', color: '#000000',
-        fontFamily: DS.typography.fontFamily, fontSize: DS.typography.sizes.small, fontWeight: 'bold',
-        border: 'none', borderRadius: '0px', cursor: 'pointer', display: 'flex',
-        alignItems: 'center', justifyContent: 'center'
-      });
-
-      const execGoogleAuth = async () => {
-        const wasFullscreen = !!document.fullscreenElement;
-        try {
-          const { GoogleAuthProvider, signInWithPopup } = await import('firebase/auth');
-          const provider = new GoogleAuthProvider();
-          const credential = await signInWithPopup(auth, provider);
-          const loggedUser = credential.user;
-
-          (window as any).vexPlayerUid = loggedUser.uid;
-          const userRef = doc(db, 'Users', loggedUser.uid);
-          const snap = await getDoc(userRef);
-          if (!snap.exists()) {
-            await setDoc(userRef, {
-              displayName: (loggedUser.displayName || loggedUser.email?.split('@')[0] || 'OPERATIVE').toUpperCase(),
-              photoURL: loggedUser.photoURL || null,
-              email: loggedUser.email || null,
-              faction: 'VIBE CO.', credits: 100, energy: 100, score: 0, kills: 0, battlePass: 1,
-              createdAt: serverTimestamp(), dailyRefreshedAt: serverTimestamp(),
-              totalMatches: 0, totalWins: 0, totalDroneEliminations: 0, totalDeaths: 0
-            });
-          }
-          if (wasFullscreen && !document.fullscreenElement) {
-            try { await document.documentElement.requestFullscreen(); } catch (e) {}
-          }
-          showMenuNotification(`SIGNED IN AS ${(loggedUser.displayName || loggedUser.email || 'OPERATIVE').toUpperCase()}`);
-          overlay.remove();
-        } catch (err: any) {
-          console.warn("Google Auth error:", err);
-          showMenuNotification(`SIGN IN ERROR: ${err?.message || 'Unable to authenticate'}`, "warning");
-        }
-      };
-
-      googleBtn.onclick = () => {
-        if (auth.currentUser?.isAnonymous && registeredUserData?.displayName) {
-          pendingAuthAction = execGoogleAuth;
-          renderContent();
-        } else {
-          execGoogleAuth();
-        }
-      };
-      contentContainer.appendChild(googleBtn);
-
-      const divOr = document.createElement('div');
-      divOr.textContent = '— OR USE EMAIL / PASSWORD —';
-      Object.assign(divOr.style, { fontSize: DS.typography.sizes.tiny, color: DS.colors.textMuted, textAlign: 'center' });
-      contentContainer.appendChild(divOr);
-
-      const emailInput = document.createElement('input');
-      emailInput.type = 'email'; emailInput.placeholder = 'EMAIL ADDRESS';
-      Object.assign(emailInput.style, {
-        width: '100%', padding: '0.63rem', background: 'rgba(0,0,0,0.5)', border: DS.glass.border,
-        color: DS.colors.text, fontFamily: DS.typography.fontFamily, fontSize: DS.typography.sizes.small, outline: 'none', boxSizing: 'border-box'
-      });
-
-      const passInput = document.createElement('input');
-      passInput.type = 'password'; passInput.placeholder = 'PASSWORD';
-      Object.assign(passInput.style, {
-        width: '100%', padding: '0.63rem', background: 'rgba(0,0,0,0.5)', border: DS.glass.border,
-        color: DS.colors.text, fontFamily: DS.typography.fontFamily, fontSize: DS.typography.sizes.small, outline: 'none', boxSizing: 'border-box'
-      });
-
-      contentContainer.appendChild(emailInput);
-      contentContainer.appendChild(passInput);
-
-      const btnRow = document.createElement('div');
-      Object.assign(btnRow.style, { display: 'flex', gap: '8px' });
-
-      const loginBtn = document.createElement('button');
-      loginBtn.textContent = 'EMAIL LOGIN';
-      Object.assign(loginBtn.style, {
-        flex: '1', padding: '0.63rem', background: DS.colors.accent, color: DS.colors.background,
-        fontFamily: DS.typography.fontFamily, fontSize: DS.typography.sizes.small, fontWeight: 'bold', border: 'none', cursor: 'pointer'
-      });
-
-      const execEmailLogin = async () => {
-        const email = emailInput.value.trim();
-        const pass = passInput.value;
-
-        const emailCheck = ValidatorGate.validate('email', email);
-        if (!emailCheck.isValid) {
-          showMenuNotification(emailCheck.error || "INVALID EMAIL FORMAT", "warning");
-          return;
-        }
-
-        const passCheck = ValidatorGate.validate('password', pass);
-        if (!passCheck.isValid) {
-          showMenuNotification(passCheck.error || "INVALID PASSWORD FORMAT", "warning");
-          return;
-        }
-
-        try {
-          const { signInWithEmailAndPassword } = await import('firebase/auth');
-          await signInWithEmailAndPassword(auth, emailCheck.sanitizedValue, pass);
-          showMenuNotification("EMAIL LOGIN SUCCESSFUL");
-          overlay.remove();
-        } catch (e: any) {
-          console.warn("Email login failed:", e);
-          showMenuNotification("Authentication Error: Invalid credentials.", "warning");
-        }
-      };
-
-      loginBtn.onclick = () => {
-        if (auth.currentUser?.isAnonymous && registeredUserData?.displayName) {
-          pendingAuthAction = execEmailLogin;
-          renderContent();
-        } else {
-          execEmailLogin();
-        }
-      };
-
-      const registerBtn = document.createElement('button');
-      registerBtn.textContent = 'CREATE ACCOUNT';
-      Object.assign(registerBtn.style, {
-        flex: '1', padding: '0.63rem', background: 'rgba(255,255,255,0.1)', color: DS.colors.text,
-        fontFamily: DS.typography.fontFamily, fontSize: DS.typography.sizes.small, fontWeight: 'bold', border: DS.glass.border, cursor: 'pointer'
-      });
-
-      const execCreateAccount = async () => {
-        const email = emailInput.value.trim();
-        const pass = passInput.value;
-
-        const emailCheck = ValidatorGate.validate('email', email);
-        if (!emailCheck.isValid) {
-          showMenuNotification(emailCheck.error || "INVALID EMAIL FORMAT", "warning");
-          return;
-        }
-
-        const passCheck = ValidatorGate.validate('password', pass);
-        if (!passCheck.isValid) {
-          showMenuNotification(passCheck.error || "INVALID PASSWORD FORMAT", "warning");
-          return;
-        }
-
-        try {
-          const { createUserWithEmailAndPassword } = await import('firebase/auth');
-          const guestData = registeredUserData;
-          const cred = await createUserWithEmailAndPassword(auth, emailCheck.sanitizedValue, pass);
-          const userRef = doc(db, 'Users', cred.user.uid);
-          
-          const newDisplayName = (emailCheck.sanitizedValue.split('@')[0] || 'OPERATIVE').toUpperCase();
-          
-          // Preserve guest progress seamlessly during signup
-          await setDoc(userRef, {
-            displayName: newDisplayName,
-            email: emailCheck.sanitizedValue,
-            faction: guestData?.faction || 'VIBE CO.',
-            credits: guestData?.credits ?? 100,
-            energy: guestData?.energy ?? 100,
-            score: guestData?.score ?? 0,
-            kills: guestData?.kills ?? 0,
-            battlePass: guestData?.battlePass ?? 1,
-            createdAt: serverTimestamp(),
-            dailyRefreshedAt: serverTimestamp(),
-            totalMatches: guestData?.totalMatches ?? 0,
-            totalWins: guestData?.totalWins ?? 0,
-            totalDroneEliminations: guestData?.totalDroneEliminations ?? 0,
-            totalDeaths: guestData?.totalDeaths ?? 0
-          });
-          await ensureUsernameMapped(cred.user.uid, newDisplayName);
-          showMenuNotification("NEW ACCOUNT CREATED — PROGRESS LINKED");
-          overlay.remove();
-        } catch (e: any) {
-          console.warn("Account creation failed:", e);
-          showMenuNotification(`Account Creation Error: ${e?.message || 'Failed to create account'}`, "warning");
-        }
-      };
-
-      // Creating an account directly registers without false guest loss warning
-      registerBtn.onclick = () => {
-        execCreateAccount();
-      };
-
-      btnRow.appendChild(loginBtn);
-      btnRow.appendChild(registerBtn);
-      contentContainer.appendChild(btnRow);
-
-      if (IS_DEV) {
-        const devWipeBtn = document.createElement('button');
-        devWipeBtn.textContent = '[DEV] WIPE GUEST & RESET ONBOARDING';
-        Object.assign(devWipeBtn.style, {
-          width: '100%', padding: '0.63rem', background: DS.colors.danger,
-          border: 'none', color: '#FFFFFF', fontFamily: DS.typography.fontFamily,
-          fontSize: DS.typography.sizes.small, fontWeight: 'bold', cursor: 'pointer', marginTop: '0.63rem'
-        });
-        devWipeBtn.onclick = async () => {
-          if (auth) {
-            try {
-              await auth.signOut();
-            } catch (e) {
-              console.warn("SignOut error during dev wipe:", e);
-            }
-          }
-          localStorage.clear();
-          sessionStorage.clear();
-          window.location.reload();
-        };
-        contentContainer.appendChild(devWipeBtn);
-      }
-    }
-  };
-
-  tabGuestBtn.onclick = () => { activeTab = 'GUEST'; renderContent(); };
-  tabAuthBtn.onclick = () => { activeTab = 'AUTH'; renderContent(); };
-
-  renderContent();
-  overlay.appendChild(box);
-  document.body.appendChild(overlay);
-}
-
-function showEnlistmentOverlay(db: any, auth: any) {
-  const splashEl = document.getElementById('splash-screen');
-  const isSplashActive = splashEl && splashEl.style.display !== 'none' && splashEl.style.opacity !== '0';
-  if ((window as any).interactionStarted && !isSplashActive) {
-    if (!document.getElementById('vex-unified-auth-modal')) {
-      createUnifiedAuthOverlay(db, auth, 'GUEST');
-    }
-  }
-}
-
-export function openProfileAuthModal() {
-  const auth = getAuth();
-  const db = getFirestore();
-  createUnifiedAuthOverlay(db, auth, 'AUTH');
-}
-
-function openSquadFriendsModal() {
-  import('../audio').then(({ audioManager }) => audioManager.play('click'));
-
-  const overlay = document.createElement('div');
-  Object.assign(overlay.style, {
-    position: 'fixed',
-    top: '0', left: '0', width: '100vw', height: '100vh',
-    background: 'radial-gradient(circle at center, rgba(3, 3, 5, 0.98) 0%, rgba(3, 3, 5, 0.9) 60%, rgba(3, 3, 5, 0.4) 90%, rgba(3, 3, 5, 0) 100%)',
-    backdropFilter: 'blur(15px)',
-    zIndex: '4000',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    fontFamily: DS.typography.fontFamily,
-    color: DS.colors.text,
-    animation: 'fade-in 0.25s ease-out'
-  });
-
-  const container = document.createElement('div');
-  container.className = 'mm-glass';
-  Object.assign(container.style, {
-    width: 'min(92vw, 45.00rem)',
-    maxHeight: '90vh',
-    overflowY: 'auto',
-    WebkitOverflowScrolling: 'touch',
-    background: 'linear-gradient(180deg, rgba(12, 12, 15, 0.98) 0%, rgba(6, 6, 8, 0.99) 100%)',
-    border: `1px solid rgba(255, 69, 0, 0.25)`,
-    padding: '1.25rem 1.25rem',
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '12px',
-    borderRadius: '0px',
-    position: 'relative',
-    boxSizing: 'border-box'
-  });
-
-  const closeBtn = document.createElement('div');
-  closeBtn.innerHTML = '✕';
-  Object.assign(closeBtn.style, {
-    position: 'absolute',
-    top: '0.75rem',
-    right: '1.00rem',
-    cursor: 'pointer',
-    fontSize: DS.typography.sizes.headingSm,
-    color: DS.colors.textMuted,
-    transition: 'color 0.2s',
-    fontFamily: 'sans-serif'
-  });
-  closeBtn.onmouseenter = () => { closeBtn.style.color = DS.colors.accent; };
-  closeBtn.onmouseleave = () => { closeBtn.style.color = DS.colors.textMuted; };
-  closeBtn.onclick = () => {
-    import('../audio').then(({ audioManager }) => audioManager.play('click'));
-    overlay.remove();
-  };
-  container.appendChild(closeBtn);
-
-  const title = document.createElement('div');
-  title.textContent = 'FRIENDS MANAGER';
-  Object.assign(title.style, {
-    fontSize: DS.typography.sizes.headingSm,
-    fontWeight: 'bold',
-    letterSpacing: '2px',
-    borderBottom: `2px solid ${DS.colors.accent}`,
-    paddingBottom: '0.38rem',
-    color: DS.colors.text
-  });
-  container.appendChild(title);
-
-  let activeTab = 'FRIENDS';
-  const tabsContainer = document.createElement('div');
-  Object.assign(tabsContainer.style, {
-    display: 'flex',
-    gap: '16px',
-    borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
-    paddingBottom: '0.38rem'
-  });
-
-  const friendsTab = document.createElement('div');
-  friendsTab.textContent = 'MY FRIENDS';
-  const addTab = document.createElement('div');
-  addTab.textContent = 'ADD FRIENDS';
-  const requestsTab = document.createElement('div');
-  requestsTab.textContent = 'INCOMING REQUESTS';
-
-  const styleTab = (tab: HTMLElement, isActive: boolean) => {
-    Object.assign(tab.style, {
-      cursor: 'pointer',
-      fontSize: DS.typography.sizes.small,
-      fontWeight: 'bold',
-      letterSpacing: '1px',
-      color: isActive ? DS.colors.accent : DS.colors.textMuted,
-      transition: 'color 0.2s'
-    });
-  };
-
-  const contentArea = document.createElement('div');
-  Object.assign(contentArea.style, {
-    flex: '1',
-    minHeight: '0',
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '8px',
-    overflow: 'hidden'
-  });
-
-  const renderTabContent = () => {
-    contentArea.innerHTML = '';
-    styleTab(friendsTab, activeTab === 'FRIENDS');
-    styleTab(addTab, activeTab === 'ADD');
-    styleTab(requestsTab, activeTab === 'REQUESTS');
-
-    if (activeTab === 'FRIENDS') {
-      const listContainer = document.createElement('div');
-      Object.assign(listContainer.style, {
-        display: 'flex', flexDirection: 'column', gap: '0.50rem', maxHeight: '17.50rem', overflowY: 'auto', paddingRight: '4px'
-      });
-
-      const refreshFriendsList = async () => {
-        listContainer.innerHTML = '';
-        const auth = getAuth();
-        const myUid = auth.currentUser ? auth.currentUser.uid : null;
-        if (!myUid) {
-          const emptyLabel = document.createElement('div');
-          emptyLabel.textContent = 'MUST BE SIGNED IN TO VIEW FRIENDS';
-          Object.assign(emptyLabel.style, { fontSize: DS.typography.sizes.small, color: DS.colors.textMuted, fontStyle: 'italic', padding: '0.38rem 0' });
-          listContainer.appendChild(emptyLabel);
-          return;
-        }
-
-        const friendsList = await getFriendsList(myUid);
-        const accepted = friendsList.filter(f => f.status === 'accepted');
-        if (accepted.length === 0) {
-          const emptyLabel = document.createElement('div');
-          emptyLabel.textContent = 'NO FRIENDS ADDED YET';
-          Object.assign(emptyLabel.style, { fontSize: DS.typography.sizes.small, color: DS.colors.textMuted, fontStyle: 'italic', padding: '0.38rem 0' });
-          listContainer.appendChild(emptyLabel);
-          return;
-        }
-
-        accepted.forEach(friend => {
-          const friendRow = document.createElement('div');
-          Object.assign(friendRow.style, {
-            display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.50rem 0.75rem', background: 'rgba(255,255,255,0.02)', borderLeft: `2px solid ${DS.colors.accent}`
-          });
-
-          const friendName = friend.displayName || friend.codename || friend.uid;
-          const nameLabel = document.createElement('div');
-          nameLabel.innerHTML = `<span style="font-weight:bold; font-size: ${DS.typography.sizes.body};">${friendName}</span> <span style="font-size: ${DS.typography.sizes.tiny}; color:#44ff44; margin-left:0.50rem;">● ONLINE</span>`;
-          friendRow.appendChild(nameLabel);
-          listContainer.appendChild(friendRow);
-        });
-      };
-
-      refreshFriendsList();
-      contentArea.appendChild(listContainer);
-    } else if (activeTab === 'REQUESTS') {
-      const listContainer = document.createElement('div');
-      Object.assign(listContainer.style, {
-        display: 'flex', flexDirection: 'column', gap: '0.50rem', maxHeight: '17.50rem', overflowY: 'auto', paddingRight: '4px'
-      });
-
-      const refreshIncomingRequestsList = async () => {
-        listContainer.innerHTML = '';
-        const auth = getAuth();
-        const myUid = auth.currentUser ? auth.currentUser.uid : null;
-        if (!myUid) return;
-
-        const [incomingList, lobbyInvitesList] = await Promise.all([
-          getIncomingRequests(myUid),
-          getLobbyInvites(myUid)
-        ]);
-
-        if (incomingList.length === 0 && lobbyInvitesList.length === 0) {
-          const emptyLabel = document.createElement('div');
-          emptyLabel.textContent = 'NO PENDING INCOMING REQUESTS OR LOBBY INVITES';
-          Object.assign(emptyLabel.style, { fontSize: DS.typography.sizes.small, color: DS.colors.textMuted, fontStyle: 'italic', padding: '0.38rem 0' });
-          listContainer.appendChild(emptyLabel);
-          return;
-        }
-
-        const dbInstance = getFirestore();
-
-        // Optimize N+1 Firestore queries via Batch Fetch & Cache (PROPOSED_PLAN.md Issue 3)
-        const uncachedUids = Array.from(new Set(incomingList.map(req => req.senderUid)))
-          .filter(uid => !userProfileCache.has(uid));
-
-        if (uncachedUids.length > 0) {
-          const chunkSize = 30;
-          for (let i = 0; i < uncachedUids.length; i += chunkSize) {
-            const chunk = uncachedUids.slice(i, i + chunkSize);
-            try {
-              const usersQuery = query(
-                collection(dbInstance, "Users"),
-                where(documentId(), "in", chunk)
-              );
-              const querySnapshot = await getDocs(usersQuery);
-              querySnapshot.forEach(userDoc => {
-                const data = userDoc.data();
-                if (data && data.displayName) {
-                  userProfileCache.set(userDoc.id, data.displayName);
-                }
-              });
-            } catch (e) {
-              console.warn("Failed to batch fetch user profiles:", e);
-            }
-          }
-        }
-
-        for (const req of incomingList) {
-          const reqRow = document.createElement('div');
-          Object.assign(reqRow.style, {
-            display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.38rem 0.50rem', background: 'rgba(255,255,255,0.02)'
-          });
-
-          const senderName = userProfileCache.get(req.senderUid) || req.senderUid;
-
-          const nameLabel = document.createElement('div');
-          nameLabel.innerHTML = `<span style="font-weight:bold;">${senderName}</span> <span style="font-size: ${DS.typography.sizes.tiny}; color:#ffaa00; margin-left:0.38rem;">● FRIEND REQUEST</span>`;
-          Object.assign(nameLabel.style, { fontSize: DS.typography.sizes.small });
-          reqRow.appendChild(nameLabel);
-
-          const actionsContainer = document.createElement('div');
-          Object.assign(actionsContainer.style, { display: 'flex', gap: '6px' });
-
-          const acceptBtn = document.createElement('div');
-          acceptBtn.textContent = 'ACCEPT';
-          Object.assign(acceptBtn.style, {
-            fontSize: DS.typography.sizes.tiny, fontWeight: 'bold', color: '#44ff44', cursor: 'pointer', padding: '2px 0.38rem', border: '1px solid #44ff44', borderRadius: '0px'
-          });
-          acceptBtn.onclick = async () => {
-            import('../audio').then(({ audioManager }) => audioManager.play('click'));
-            await respondToFriendRequest(myUid, req.senderUid, true);
-            refreshIncomingRequestsList();
-          };
-
-          const declineBtn = document.createElement('div');
-          declineBtn.textContent = 'DECLINE';
-          Object.assign(declineBtn.style, {
-            fontSize: DS.typography.sizes.tiny, fontWeight: 'bold', color: '#ff4444', cursor: 'pointer', padding: '2px 0.38rem', border: '1px solid #ff4444', borderRadius: '0px'
-          });
-          declineBtn.onclick = async () => {
-            import('../audio').then(({ audioManager }) => audioManager.play('click'));
-            await respondToFriendRequest(myUid, req.senderUid, false);
-            refreshIncomingRequestsList();
-          };
-
-          actionsContainer.appendChild(acceptBtn);
-          actionsContainer.appendChild(declineBtn);
-          reqRow.appendChild(actionsContainer);
-          listContainer.appendChild(reqRow);
-        }
-
-        for (const invite of lobbyInvitesList) {
-          const inviteRow = document.createElement('div');
-          Object.assign(inviteRow.style, {
-            display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.38rem 0.50rem', background: 'rgba(255,69,0,0.05)', borderLeft: `2px solid ${DS.colors.accent}`
-          });
-
-          const nameLabel = document.createElement('div');
-          nameLabel.innerHTML = `<span style="font-weight:bold;">${invite.fromName}</span> <span style="font-size: ${DS.typography.sizes.tiny}; color:${DS.colors.accent}; margin-left:0.38rem;">● LOBBY INVITE</span>`;
-          Object.assign(nameLabel.style, { fontSize: DS.typography.sizes.small });
-          inviteRow.appendChild(nameLabel);
-
-          const actionsContainer = document.createElement('div');
-          Object.assign(actionsContainer.style, { display: 'flex', gap: '6px' });
-
-          const acceptBtn = document.createElement('div');
-          acceptBtn.textContent = 'JOIN LOBBY';
-          Object.assign(acceptBtn.style, {
-            fontSize: DS.typography.sizes.tiny, fontWeight: 'bold', color: '#44ff44', cursor: 'pointer', padding: '2px 0.38rem', border: '1px solid #44ff44', borderRadius: '0px'
-          });
-          acceptBtn.onclick = async () => {
-            import('../audio').then(({ audioManager }) => audioManager.play('click'));
-            overlay.remove();
-            await respondToLobbyInvite(myUid, invite.lobbyId, true);
-          };
-
-          const declineBtn = document.createElement('div');
-          declineBtn.textContent = 'DECLINE';
-          Object.assign(declineBtn.style, {
-            fontSize: DS.typography.sizes.tiny, fontWeight: 'bold', color: '#ff4444', cursor: 'pointer', padding: '2px 0.38rem', border: '1px solid #ff4444', borderRadius: '0px'
-          });
-          declineBtn.onclick = async () => {
-            import('../audio').then(({ audioManager }) => audioManager.play('click'));
-            await respondToLobbyInvite(myUid, invite.lobbyId, false);
-            refreshIncomingRequestsList();
-          };
-
-          actionsContainer.appendChild(acceptBtn);
-          actionsContainer.appendChild(declineBtn);
-          inviteRow.appendChild(actionsContainer);
-          listContainer.appendChild(inviteRow);
-        }
-      };
-
-      refreshIncomingRequestsList();
-      contentArea.appendChild(listContainer);
-    } else {
-      const searchBox = document.createElement('div');
-      Object.assign(searchBox.style, {
-        display: 'flex', gap: '0.50rem', marginBottom: '0.50rem'
-      });
-      const input = document.createElement('input');
-      input.placeholder = 'ENTER CODENAME...';
-      Object.assign(input.style, {
-        flex: '1', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.15)', color: '#FFF', padding: '0.38rem 0.75rem', fontSize: DS.typography.sizes.small, fontFamily: DS.typography.fontFamily, outline: 'none'
-      });
-
-      const addBtn = document.createElement('div');
-      addBtn.textContent = 'ADD';
-      Object.assign(addBtn.style, {
-        background: DS.colors.accent, color: DS.colors.background, padding: '0.38rem 1.00rem', fontWeight: 'bold', fontSize: DS.typography.sizes.small, cursor: 'pointer', display: 'flex', alignItems: 'center'
-      });
-
-      const feedbackMsg = document.createElement('div');
-      Object.assign(feedbackMsg.style, {
-        fontSize: DS.typography.sizes.small, marginBottom: '0.50rem', minHeight: '0.88rem'
-      });
-
-      const handleAddFriend = async () => {
-        const rawName = input.value.trim();
-        if (!rawName) return;
-
-        import('../audio').then(({ audioManager }) => audioManager.play('click'));
-
-        const auth = getAuth();
-        const myUid = auth.currentUser ? auth.currentUser.uid : null;
-        if (!myUid) {
-          feedbackMsg.style.color = DS.colors.danger;
-          feedbackMsg.textContent = 'MUST BE SIGNED IN TO SEND FRIEND REQUESTS';
-          return;
-        }
-
-        feedbackMsg.style.color = DS.colors.textMuted;
-        feedbackMsg.textContent = 'LOOKING UP CODENAME...';
-
-        const { uid: resolvedUid, error: resolveError } = await resolveDisplayName(rawName);
-        if (!resolvedUid) {
-          feedbackMsg.style.color = DS.colors.danger;
-          feedbackMsg.textContent = resolveError || 'No user found with that name';
-          return;
-        }
-
-        feedbackMsg.style.color = DS.colors.textMuted;
-        feedbackMsg.textContent = 'SENDING FRIEND REQUEST...';
-
-        const sendRes = await sendFriendRequest(myUid, resolvedUid);
-        if (sendRes.success) {
-          feedbackMsg.style.color = '#44ff44';
-          feedbackMsg.textContent = 'FRIEND REQUEST SENT!';
-          input.value = '';
-        } else {
-          feedbackMsg.style.color = DS.colors.danger;
-          feedbackMsg.textContent = sendRes.error || 'Failed to send friend request';
-        }
-      };
-
-      input.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') handleAddFriend();
-      });
-      addBtn.onclick = () => handleAddFriend();
-
-      searchBox.appendChild(input);
-      searchBox.appendChild(addBtn);
-      contentArea.appendChild(searchBox);
-      contentArea.appendChild(feedbackMsg);
-    }
-  };
-
-  friendsTab.onclick = () => { activeTab = 'FRIENDS'; renderTabContent(); };
-  addTab.onclick = () => { activeTab = 'ADD'; renderTabContent(); };
-  requestsTab.onclick = () => { activeTab = 'REQUESTS'; renderTabContent(); };
-
-  tabsContainer.appendChild(friendsTab);
-  tabsContainer.appendChild(addTab);
-  tabsContainer.appendChild(requestsTab);
-  container.appendChild(tabsContainer);
-  container.appendChild(contentArea);
-  overlay.appendChild(container);
-
-  overlay.onclick = (e) => {
-    if (e.target === overlay) {
-      import('../audio').then(({ audioManager }) => audioManager.play('click'));
-      overlay.remove();
-    }
-  };
-
-  document.body.appendChild(overlay);
-  renderTabContent();
 }
 
 export function refreshCardImages() {
@@ -3463,9 +2362,8 @@ if (typeof window !== 'undefined') {
     renderRightPanel();
     const auth = getAuth();
     const db = getFirestore();
-    if (auth.currentUser && auth.currentUser.isAnonymous && !registeredUserData) {
+    if (auth.currentUser && auth.currentUser.isAnonymous && !getRegisteredUserData()) {
       showEnlistmentOverlay(db, auth);
     }
   });
 }
-
