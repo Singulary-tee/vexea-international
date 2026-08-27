@@ -12,6 +12,10 @@ export interface ClientDopplerSecrets {
 
 let clientSecrets: ClientDopplerSecrets = {};
 
+// Negative cache: once the server proxy reports no secrets (or the fetch
+// fails), stop re-attempting for the rest of the session.
+let proxyUnavailable = false;
+
 export async function loadClientDopplerSecrets(): Promise<ClientDopplerSecrets> {
   const isAiStudio =
     typeof window !== "undefined" &&
@@ -24,16 +28,30 @@ export async function loadClientDopplerSecrets(): Promise<ClientDopplerSecrets> 
     return clientSecrets;
   }
 
+  if (proxyUnavailable) {
+    return clientSecrets;
+  }
+
   try {
     console.log("[Doppler Client] AI Studio environment detected: Fetching client secrets from server proxy...");
     const response = await fetch("/api/doppler-client-secrets");
 
     if (!response.ok) {
+      proxyUnavailable = true;
       console.warn(`[Doppler Client] Could not load secrets from Doppler server proxy. Status: ${response.status}`);
       return clientSecrets;
     }
 
-    const secrets = (await response.json()) as Record<string, string>;
+    const payload = await response.json();
+
+    // Server explicitly reports no Doppler token configured in this environment
+    if (payload && typeof payload === "object" && (payload as { available?: boolean }).available === false) {
+      proxyUnavailable = true;
+      console.log("[Doppler Client] Server proxy has no Doppler token configured — relying on baked-in environment variables.");
+      return clientSecrets;
+    }
+
+    const secrets = payload as Record<string, string>;
     clientSecrets = secrets;
     console.log(
       `[Doppler Client] Successfully loaded ${Object.keys(secrets).length} client secrets via server proxy.`

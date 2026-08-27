@@ -45,7 +45,10 @@ export function registerApiRoutes(app: Express): void {
       process.env.DOPPLER_TOKEN;
 
     if (!token) {
-      return res.status(400).json({ error: "No Doppler token provided" });
+      // Fail-fast: no Doppler token is configured in this environment.
+      // Return an explicit availability marker instead of an error so clients
+      // can skip secret loading cleanly (no boot-time 400 noise).
+      return res.status(200).json({ available: false });
     }
 
     try {
