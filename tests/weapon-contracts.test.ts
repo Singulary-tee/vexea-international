@@ -5,6 +5,9 @@ import { AUTHORING_REQUIRED_WEAPON_IDS } from '../shared/weapons';
 import { UTILITY_MODEL_KEYS, UTILITIES, createInitialUtilityState } from '../shared/utilities';
 import { UTILITY_ASSET_DETAILS, WEAPON_ASSET_DETAILS } from '../shared/asset-details';
 import { AUDIO_MANIFEST } from '../client/audio-manifest';
+import { MODEL_MANIFEST } from '../client/model-manifest';
+import * as THREE from 'three';
+import { applyViewModelCalibration } from '../client/weapons/viewmodel-calibration';
 
 describe('semantic weapon slot contract', () => {
   it('keeps class primary pools and rifle defaults aligned', () => {
@@ -93,14 +96,41 @@ describe('named utility and asset connector contract', () => {
     }
   });
 
-  it('keeps un-authored identities explicit instead of silently treating them as runtime-ready', () => {
-    expect(AUTHORING_REQUIRED_WEAPON_IDS).toEqual(['smg']);
+  it('registers the textured UMP as the runtime SMG and never routes Player SMG through F90', () => {
+    expect(AUTHORING_REQUIRED_WEAPON_IDS).toEqual([]);
     expect(isRuntimeWeaponId('rifle')).toBe(true);
     expect(isRuntimeWeaponId('pistol')).toBe(true);
-    expect(isRuntimeWeaponId('smg')).toBe(false);
-    expect(WEAPON_ASSET_DETAILS.smg.authored).toBe(false);
-    expect(WEAPON_ASSET_DETAILS.smg.animation).toBeNull();
+    expect(isRuntimeWeaponId('smg')).toBe(true);
+    expect(WEAPON_ASSET_DETAILS.smg.modelKey).toBe('ump-optimized.glb');
+    expect(WEAPON_ASSET_DETAILS.smg.modelKey).not.toBe('f_90-optimized.glb');
+    expect(WEAPON_ASSET_DETAILS.smg.authored).toBe(true);
+    expect(WEAPON_ASSET_DETAILS.smg.animation?.clips).toEqual({
+      equip: 'equip', idle: 'idle', inspect: 'inspect', sprint: 'sprint', fire: 'fire',
+      reload: 'reload', adsEnter: 'ads_enter', adsHold: 'ads_hold', adsExit: 'ads_exit',
+    });
+    expect(WEAPON_ASSET_DETAILS.smg.animation?.nodes).toEqual({
+      root: 'WeaponRoot', gripPrimary: 'GripPrimary', gripSupport: 'GripSupport',
+      muzzle: 'Muzzle', adsReference: 'ADSReference', magazine: 'Magazine',
+    });
+    expect(MODEL_MANIFEST).toContainEqual({
+      key: 'ump-optimized.glb', path: 'Models/Weapons/ump-optimized.glb', category: 'weapons', version: '1.0.0',
+    });
     expect(UTILITY_ASSET_DETAILS['Signal Jammer'].modelKey).toBe('prc152-optimized.glb');
     expect(UTILITY_ASSET_DETAILS['Signal Jammer'].animation?.clips.use).toBe('use');
+  });
+
+  it('applies viewmodel calibration once at the imported scene root', () => {
+    const scene = new THREE.Group();
+    applyViewModelCalibration(scene, {
+      viewModelQuaternion: [-0.5, 0.5, 0.5, 0.5],
+      visualScale: 0.25,
+    });
+    expect(scene.quaternion.x).toBeCloseTo(-0.5);
+    expect(scene.quaternion.y).toBeCloseTo(0.5);
+    expect(scene.quaternion.z).toBeCloseTo(0.5);
+    expect(scene.quaternion.w).toBeCloseTo(0.5);
+    expect(scene.scale.x).toBeCloseTo(0.25);
+    expect(scene.scale.y).toBeCloseTo(0.25);
+    expect(scene.scale.z).toBeCloseTo(0.25);
   });
 });

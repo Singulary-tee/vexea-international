@@ -28,6 +28,7 @@ export const MODEL_MANIFEST: ModelManifestEntry[] = [
   { key: 'attachments-optimized.glb', path: 'Models/Weapons/attachments-optimized.glb', category: 'weapons', version: '1.0.0' },
   { key: 'brn_180-optimized.glb', path: 'Models/Weapons/brn_180-optimized.glb', category: 'weapons', version: '1.0.0' },
   { key: 'f_90-optimized.glb', path: 'Models/Weapons/f_90-optimized.glb', category: 'weapons', version: '1.0.0' },
+  { key: 'ump-optimized.glb', path: 'Models/Weapons/ump-optimized.glb', category: 'weapons', version: '1.0.0' },
   { key: 'hk_51-optimized.glb', path: 'Models/Weapons/hk_51-optimized.glb', category: 'weapons', version: '1.0.0' },
   { key: 'scar_h_mk_17-optimized.glb', path: 'Models/Weapons/scar_h_mk_17-optimized.glb', category: 'weapons', version: '1.0.0' },
   { key: 'scar_l-optimized.glb', path: 'Models/Weapons/scar_l-optimized.glb', category: 'weapons', version: '1.0.0' },
