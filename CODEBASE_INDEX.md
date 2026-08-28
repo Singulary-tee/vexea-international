@@ -366,7 +366,7 @@ This file is the authoritative index of all directories and source files within 
     *   *Glyph replacements:* `class_assault.svg` replaced with the approved double-chevron class glyph; `fullscreen_exit.svg` uses the opposite corner orientation from `fullscreen.svg` for the exit/collapse state (same 112-grid design family).
     *   *Faction marks:* `faction_slopinc.svg` and `faction_vibeco.svg` are white-filled, file-backed faction emblems derived from the approved Slop Inc. and Vibe Co. compositions.
 ---
-### Cycle 2026-08-27-01: Approved Slop Inc. & Vibe Co. Faction SVG Refresh
+### Cycle 2026-08-27-04: Approved Slop Inc. & Vibe Co. Faction SVG Refresh
 *   **Target Files:** `client/public/ui_svgs/faction_slopinc.svg`, `client/public/ui_svgs/faction_vibeco.svg`, `CODEBASE_INDEX.md`
 *   **Status:** Vite build verified; TypeScript check blocked by the sandbox heap limit on branch `manuss-svg-weapon-icons`
 *   **Modifications:** Replaced the existing faction marks with the approved Slop Inc. top-left and Vibe Co. top-right compositions, traced to crisp white-filled SVG paths with transparent backgrounds. Existing asset paths and faction wiring remain unchanged.
@@ -826,7 +826,7 @@ Every file change in the VEXEA codebase must follow this strict two-step protoco
 * **Scope:** Consolidated recurring UI rules into one CSS-first source of truth. The authoritative stylesheet target is `client/src/ui/styles/vexea-ui.css`; the thin vanilla binder target is `client/src/ui/ui-motion.ts`. Settings-tab and navigation-tab underline behavior is one shared measured primitive. Former audit documents are compatibility pointers rather than duplicate contracts.
 * **Scope Exclusions:** No React, CSS-in-JS, JavaScript animation library, screen-local animation stylesheet, main-menu action-card motion, gameplay runtime changes, renderer changes, or networking changes.
 * **Verification planned:** `git diff --check`, documentation-only status review, and confirmation that only docs plus this index entry differ from the prior local commit.
-### Cycle 2026-08-27-01: Weapon-Only First-Person Viewmodel Fallback
+### Cycle 2026-08-27-05: Weapon-Only First-Person Viewmodel Fallback
 * **Target Files:** `shared/asset-details.ts`, `shared/weapons.ts`, `client/model-manifest.ts`, `client/StudioPreviewManager.ts`, `client/weapons_model.ts`, `client/weapons/viewmodel-calibration.ts`, `tests/weapon-contracts.test.ts`, `CODEBASE_INDEX.md`.
 * **Scope:** Replace the Player SMG’s humanoid-only F90 mapping with the verified textured UMP R2 asset; register its measured weapon-local animation/node contract; enable the SMG runtime slot with a provisional performance profile; apply optional source-local viewmodel quaternion and visual scale once during GLB load; preserve existing camera-follow, recoil, sway, Geckos, WebGPU, and third-person hand-pose boundaries.
 * **Explicit Non-Scope:** No third-person character grip authoring, no F90 production removal from humanoid-only routing, no audio/image/VFX/SVG changes, no R2 mutations beyond the already authorized UMP upload, and no loading-orchestrator redesign.
