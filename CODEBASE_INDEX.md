@@ -364,7 +364,14 @@ This file is the authoritative index of all directories and source files within 
     *   *Purpose:* Collection of production-ready SVG icons for the HUD and menu interfaces (aim, reload, sprint, medkit, weapons, etc.).
     *   *New weapon catalogue SVGs (traced silhouettes):* `smg.svg`, `shotgun.svg`, `lmg.svg`, `sniper.svg` — white-filled hardware-accurate silhouettes wired via `shared/asset-details.ts` `WEAPON_ASSET_DETAILS` (`smg`, `shotgun`, `lmg`, `sniper`) and registered in `client/asset-cache.ts` `ALL_UI_SVGS`.
     *   *Glyph replacements:* `class_assault.svg` replaced with the approved double-chevron class glyph; `fullscreen_exit.svg` uses the opposite corner orientation from `fullscreen.svg` for the exit/collapse state (same 112-grid design family).
+    *   *Faction marks:* `faction_slopinc.svg` and `faction_vibeco.svg` are white-filled, file-backed faction emblems derived from the approved Slop Inc. and Vibe Co. compositions.
 ---
+### Cycle 2026-08-27-01: Approved Slop Inc. & Vibe Co. Faction SVG Refresh
+*   **Target Files:** `client/public/ui_svgs/faction_slopinc.svg`, `client/public/ui_svgs/faction_vibeco.svg`, `CODEBASE_INDEX.md`
+*   **Status:** Vite build verified; TypeScript check blocked by the sandbox heap limit on branch `manuss-svg-weapon-icons`
+*   **Modifications:** Replaced the existing faction marks with the approved Slop Inc. top-left and Vibe Co. top-right compositions, traced to crisp white-filled SVG paths with transparent backgrounds. Existing asset paths and faction wiring remain unchanged.
+*   **Verification:** Approved quadrants were traced to white-filled SVGs and visually inspected. `vite build` passed in 18.86s. `tsc --noEmit` was attempted directly and terminated with a Node heap-out-of-memory error in the sandbox; no TypeScript source files changed in this cycle.
+
 ### Cycle 2026-08-21-01: New Weapon Catalogue SVGs & Approved Glyph Replacements
 *   **Target Files:** `client/public/ui_svgs/smg.svg`, `client/public/ui_svgs/shotgun.svg`, `client/public/ui_svgs/lmg.svg`, `client/public/ui_svgs/sniper.svg`, `client/public/ui_svgs/class_assault.svg`, `client/public/ui_svgs/fullscreen_exit.svg`, `client/asset-cache.ts`, `CODEBASE_INDEX.md`
 *   **Status:** Verified & Finalized (delivered on branch `manuss-svg-weapon-icons` for manual merge)
