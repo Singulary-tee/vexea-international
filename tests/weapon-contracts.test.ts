@@ -1,10 +1,57 @@
 import { describe, expect, it } from 'vitest';
 import { CLASSES, getClassWeaponId, isClassWeaponAllowed } from '../shared/classes';
-import { isRuntimeWeaponId } from '../shared/constants';
+import { ASSET_STRUCTURE } from '../shared/asset-structure';
+import { DRONE_CONFIGS, DroneType, isRuntimeWeaponId } from '../shared/constants';
 import { AUTHORING_REQUIRED_WEAPON_IDS } from '../shared/weapons';
 import { UTILITY_MODEL_KEYS, UTILITIES, createInitialUtilityState } from '../shared/utilities';
 import { UTILITY_ASSET_DETAILS, WEAPON_ASSET_DETAILS } from '../shared/asset-details';
 import { AUDIO_MANIFEST } from '../client/audio-manifest';
+import { MODEL_MANIFEST } from '../client/model-manifest';
+import * as THREE from 'three';
+import { applyViewModelCalibration } from '../client/weapons/viewmodel-calibration';
+
+describe('Mixamo player asset contract', () => {
+  it('registers the canonical textured player replacement and all imported rifle/pistol actions', () => {
+    const player = ASSET_STRUCTURE['Player_one-optimized.glb'];
+    expect(player.label).toBe('Mixamo-rigged Player character model');
+    expect(player.materialsCount).toBe(2);
+    expect(player.texturesCount).toBe(5);
+    expect(player.imagesCount).toBe(5);
+    expect(player.skins?.length).toBe(1);
+    expect(player.animations).toHaveLength(24);
+    expect(player.animations.filter((clip) => clip.name.startsWith('rifle_'))).toHaveLength(4);
+    expect(player.animations.filter((clip) => clip.name.startsWith('pistol_'))).toHaveLength(20);
+    expect(player.animations.every((clip) => clip.maxTime > 0)).toBe(true);
+    expect(MODEL_MANIFEST).toContainEqual({
+      key: 'Player_one-optimized.glb',
+      path: 'Models/Entities/Player_one-optimized.glb',
+      category: 'entities',
+      version: '3.0.0',
+    });
+  });
+});
+
+describe('humanoid exact static F90 contract', () => {
+  it('routes the canonical humanoid key to the saved equipped pose without claiming animation tracks', () => {
+    const humanoid = ASSET_STRUCTURE['humanoid-optimized.glb'];
+    expect(humanoid.label).toBe('Humanoid Drone (exact saved F90 equipped pose)');
+    expect(humanoid.materialsCount).toBe(4);
+    expect(humanoid.texturesCount).toBe(12);
+    expect(humanoid.imagesCount).toBe(12);
+    expect(humanoid.animations).toHaveLength(0);
+    expect(humanoid.nodes).toHaveLength(149);
+    expect(humanoid.skins).toHaveLength(2);
+    expect(humanoid.nodes.some((node) => node.name === 'f90')).toBe(true);
+    expect(humanoid.nodes.some((node) => node.name === 'SK_Rif_F90')).toBe(true);
+    expect(DRONE_CONFIGS[DroneType.HUMANOID].animations).toEqual(['hold']);
+    expect(MODEL_MANIFEST).toContainEqual({
+      key: 'humanoid-optimized.glb',
+      path: 'Models/Entities/humanoid-optimized.glb',
+      category: 'entities',
+      version: '2.0.0',
+    });
+  });
+});
 
 describe('semantic weapon slot contract', () => {
   it('keeps class primary pools and rifle defaults aligned', () => {
@@ -93,14 +140,41 @@ describe('named utility and asset connector contract', () => {
     }
   });
 
-  it('keeps un-authored identities explicit instead of silently treating them as runtime-ready', () => {
-    expect(AUTHORING_REQUIRED_WEAPON_IDS).toEqual(['smg']);
+  it('registers the textured UMP as the runtime SMG and never routes Player SMG through F90', () => {
+    expect(AUTHORING_REQUIRED_WEAPON_IDS).toEqual([]);
     expect(isRuntimeWeaponId('rifle')).toBe(true);
     expect(isRuntimeWeaponId('pistol')).toBe(true);
-    expect(isRuntimeWeaponId('smg')).toBe(false);
-    expect(WEAPON_ASSET_DETAILS.smg.authored).toBe(false);
-    expect(WEAPON_ASSET_DETAILS.smg.animation).toBeNull();
+    expect(isRuntimeWeaponId('smg')).toBe(true);
+    expect(WEAPON_ASSET_DETAILS.smg.modelKey).toBe('ump-optimized.glb');
+    expect(WEAPON_ASSET_DETAILS.smg.modelKey).not.toBe('f_90-optimized.glb');
+    expect(WEAPON_ASSET_DETAILS.smg.authored).toBe(true);
+    expect(WEAPON_ASSET_DETAILS.smg.animation?.clips).toEqual({
+      equip: 'equip', idle: 'idle', inspect: 'inspect', sprint: 'sprint', fire: 'fire',
+      reload: 'reload', adsEnter: 'ads_enter', adsHold: 'ads_hold', adsExit: 'ads_exit',
+    });
+    expect(WEAPON_ASSET_DETAILS.smg.animation?.nodes).toEqual({
+      root: 'WeaponRoot', gripPrimary: 'GripPrimary', gripSupport: 'GripSupport',
+      muzzle: 'Muzzle', adsReference: 'ADSReference', magazine: 'Magazine',
+    });
+    expect(MODEL_MANIFEST).toContainEqual({
+      key: 'ump-optimized.glb', path: 'Models/Weapons/ump-optimized.glb', category: 'weapons', version: '1.0.0',
+    });
     expect(UTILITY_ASSET_DETAILS['Signal Jammer'].modelKey).toBe('prc152-optimized.glb');
     expect(UTILITY_ASSET_DETAILS['Signal Jammer'].animation?.clips.use).toBe('use');
+  });
+
+  it('applies viewmodel calibration once at the imported scene root', () => {
+    const scene = new THREE.Group();
+    applyViewModelCalibration(scene, {
+      viewModelQuaternion: [-0.5, 0.5, 0.5, 0.5],
+      visualScale: 0.25,
+    });
+    expect(scene.quaternion.x).toBeCloseTo(-0.5);
+    expect(scene.quaternion.y).toBeCloseTo(0.5);
+    expect(scene.quaternion.z).toBeCloseTo(0.5);
+    expect(scene.quaternion.w).toBeCloseTo(0.5);
+    expect(scene.scale.x).toBeCloseTo(0.25);
+    expect(scene.scale.y).toBeCloseTo(0.25);
+    expect(scene.scale.z).toBeCloseTo(0.25);
   });
 });

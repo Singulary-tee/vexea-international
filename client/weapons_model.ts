@@ -6,6 +6,7 @@ import { WEAPON_ASSET_DETAILS } from "../shared/asset-details";
 import type { WeaponId } from "../shared/weapons";
 import { CAMERA_EFFECTS_CONFIG } from "./src/camera/constants";
 import { getMatch } from "./MatchController";
+import { applyViewModelCalibration } from "./weapons/viewmodel-calibration";
 
 // Zero-GC pre-allocated math variables for frame loop optimization
 const _pos = new THREE.Vector3();
@@ -126,6 +127,11 @@ export async function initPlayerWeapons(scene: THREE.Scene, camera: THREE.Camera
     try {
       const url = await getCachedOrFetchUrl(primaryAsset.modelKey, "Asset");
       const gltf = await loader.loadAsync(url);
+      const primaryStats = getWeaponPerformance(primaryWeaponId) || getWeaponPerformance('rifle')!;
+      applyViewModelCalibration(gltf.scene, {
+        viewModelQuaternion: primaryAsset.viewModelQuaternion,
+        visualScale: primaryStats.visualConfig.visualScale,
+      });
       primaryGroup!.add(gltf.scene);
       primaryMixer = new THREE.AnimationMixer(gltf.scene);
       rifleMixer = primaryMixer;
@@ -207,6 +213,11 @@ export async function initPlayerWeapons(scene: THREE.Scene, camera: THREE.Camera
     try {
       const url = await getCachedOrFetchUrl(secondaryAsset.modelKey, "Asset");
       const gltf = await loader.loadAsync(url);
+      const secondaryStats = getWeaponPerformance(secondaryWeaponId) || getWeaponPerformance('pistol')!;
+      applyViewModelCalibration(gltf.scene, {
+        viewModelQuaternion: secondaryAsset.viewModelQuaternion,
+        visualScale: secondaryStats.visualConfig.visualScale,
+      });
       secondaryGroup!.add(gltf.scene);
       secondaryMixer = new THREE.AnimationMixer(gltf.scene);
       pistolMixer = secondaryMixer;

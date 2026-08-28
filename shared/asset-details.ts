@@ -44,6 +44,8 @@ export interface WeaponAssetDetails {
   };
   animation: WeaponAnimationContract | null;
   authored: boolean;
+  /** Optional source-to-viewmodel rotation applied once when the GLB is loaded. */
+  viewModelQuaternion?: readonly [number, number, number, number];
 }
 
 const STANDARD_WEAPON_CLIPS: WeaponAnimationContract['clips'] = {
@@ -111,6 +113,7 @@ function createCompatibilityAnimationAliases(animation: WeaponAnimationContract)
 
 const RIFLE_ANIMATION = createWeaponAnimationContract([78.764503, 7.600975, 25.293276], true);
 const PISTOL_ANIMATION = createWeaponAnimationContract([0.03113, 0.293643, 0.158911], true);
+const SMG_ANIMATION = createWeaponAnimationContract([7.899324, 0.660313, 3.354116], true);
 const LMG_ANIMATION = createWeaponAnimationContract([2.140608, 19.06014, 5.112448], true);
 const SHOTGUN_ANIMATION = createWeaponAnimationContract([1.18001, 4.159216, 0.845963], false);
 const SNIPER_ANIMATION = createWeaponAnimationContract([4.98094, 0.80619, 1.400133], true);
@@ -138,18 +141,14 @@ export const WEAPON_ASSET_DETAILS: Record<WeaponId, WeaponAssetDetails> = {
     authored: true,
   },
   smg: {
-    modelKey: 'f_90-optimized.glb',
+    modelKey: 'ump-optimized.glb',
     svgPath: '/ui_svgs/smg.svg',
     audio: { fire: 'smg_fire', reload: 'smg_reload' },
-    animations: {
-      idle: 'PLACEHOLDER_SMG_IDLE',
-      walk: 'PLACEHOLDER_SMG_SPRINT',
-      shoot: 'PLACEHOLDER_SMG_FIRE',
-      reload: 'PLACEHOLDER_SMG_RELOAD',
-      draw: 'PLACEHOLDER_SMG_EQUIP',
-    },
-    animation: null,
-    authored: false,
+    animations: createCompatibilityAnimationAliases(SMG_ANIMATION),
+    animation: SMG_ANIMATION,
+    authored: true,
+    // Basis-table verified: source forward -X -> camera -Z and source up +Z -> screen-up +Y.
+    viewModelQuaternion: [-0.5, 0.5, 0.5, 0.5],
   },
   shotgun: {
     modelKey: 'benelli-m4-optimized.glb',

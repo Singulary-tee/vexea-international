@@ -495,7 +495,8 @@ export const DRONE_CONFIGS: Record<DroneType, DroneConfig> = {
     orientationOffset: [0, 0, 0],
     collider: { type: 'capsule', halfHeight: 0.25, radius: 0.47 },
     muzzleOffset: [0.2, 0.8, 0.5],
-    animations: ['walk', 'run', 'shoot'],
+    // Static authored presentation: the exact F90-equipped source has no action tracks.
+    animations: ['hold'],
     // Category 2
     lightPoints: [[-0.5, 0, 0.5], [0.5, 0, 0.5]],
     detonationTriggerRadius: 4,

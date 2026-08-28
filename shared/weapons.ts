@@ -5,7 +5,9 @@
 
 export type WeaponId = 'rifle' | 'pistol' | 'smg' | 'shotgun' | 'lmg' | 'sniper';
 
-export const AUTHORING_REQUIRED_WEAPON_IDS: readonly WeaponId[] = ['smg'];
+// All currently catalogued weapons have a weapon-only first-person fallback.
+// Character hand/arm authoring remains a separate visual milestone.
+export const AUTHORING_REQUIRED_WEAPON_IDS: readonly WeaponId[] = [];
 
 export interface DamageFalloff {
   maxDamageRange: number; // Max damage up to this distance (meters/units)
@@ -164,6 +166,40 @@ export const DETAILED_WEAPONS: Record<string, WeaponPerformance> = {
       },
       reloadDuration: 1.8,
       drawDuration: 0.3
+    }
+  },
+
+  smg: {
+    name: "SMG",
+    fireRateHz: 13,
+    damage: 18,
+    capacity: 30,
+    reserveCapacity: 120,
+    recoilForceUp: 0.06,
+    recoilForceSide: 0.03,
+    recoilRecoveryRate: 10.0,
+    baseSpreadRad: 0.02,
+    maxSpreadRad: 0.09,
+    heatPerShot: 0.012,
+    coolRate: 0.08,
+    camShakeMagnitude: 0.1,
+    camShakeDurationMs: 100,
+    falloff: { maxDamageRange: 18.0, minDamageRange: 55.0, minDamage: 7.0 },
+    adsFovMultipier: 0.75,
+    adsSensitivityMult: 0.65,
+    adsTransitionSpeed: 10.0,
+    swayAmplitude: 0.0035,
+    swaySpeed: 2.8,
+    visualConfig: {
+      hipPosition: [0.03, -0.46, -0.671],
+      adsPosition: [-0.07, -0.40, -0.641],
+      adsTilt: -0.04,
+      muzzleOffset: [0.0, 0.0, -0.5],
+      // 0.90 target length / measured 4.476192-unit UMP root length = 0.201064.
+      visualScale: 0.201064,
+      animations: { idle: "idle", walk: "sprint", shoot: "fire", reload: "reload", draw: "equip" },
+      reloadDuration: 2.3,
+      drawDuration: 0.45
     }
   },
 

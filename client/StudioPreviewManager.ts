@@ -24,7 +24,8 @@ export const AVAILABLE_SKINS: Record<string, WeaponSkin> = {
 const MODEL_KEY_ALIASES: Record<string, string> = {
   rifle: 'scar_l-optimized.glb',
   m4_rifle: 'scar_l-optimized.glb',
-  smg: 'f_90-optimized.glb',
+  smg: 'ump-optimized.glb',
+  ump: 'ump-optimized.glb',
   lmg: 'lmg-rifle-optimized.glb',
   shotgun: 'benelli-m4-optimized.glb',
   sniper: 'pgm-ultima-ratio-optimized.glb',
@@ -872,7 +873,8 @@ class StudioPreviewManagerImpl {
           glbName = MODEL_KEY_ALIASES[weaponKey];
         } else {
           const lower = weaponKey.toLowerCase();
-          if (lower.includes("smg") || lower.includes("f90") || lower.includes("f_90")) glbName = "f_90-optimized.glb";
+          if (lower.includes("smg") || lower.includes("ump")) glbName = "ump-optimized.glb";
+          else if (lower.includes("f90") || lower.includes("f_90")) glbName = "f_90-optimized.glb";
           else if (lower.includes("lmg")) glbName = "lmg-rifle-optimized.glb";
           else if (lower.includes("shotgun") || lower.includes("benelli")) glbName = "benelli-m4-optimized.glb";
           else if (lower.includes("sniper") || lower.includes("pgm")) glbName = "pgm-ultima-ratio-optimized.glb";
