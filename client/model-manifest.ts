@@ -7,8 +7,8 @@ export interface ModelManifestEntry {
 
 export const MODEL_MANIFEST: ModelManifestEntry[] = [
   // Entities
-  { key: 'Player_one-optimized.glb', path: 'Models/Entities/Player_one-optimized.glb', category: 'entities', version: '1.0.0' },
-  { key: 'humanoid-optimized.glb', path: 'Models/Entities/humanoid-optimized.glb', category: 'entities', version: '1.0.0' },
+  { key: 'Player_one-optimized.glb', path: 'Models/Entities/Player_one-optimized.glb', category: 'entities', version: '3.0.0' },
+  { key: 'humanoid-optimized.glb', path: 'Models/Entities/humanoid-optimized.glb', category: 'entities', version: '2.0.0' },
   { key: 'quadcopter_bmb-optimized.glb', path: 'Models/Entities/quadcopter_bmb-optimized.glb', category: 'entities', version: '1.0.0' },
   { key: 'quadcopter_cam-optimized.glb', path: 'Models/Entities/quadcopter_cam-optimized.glb', category: 'entities', version: '1.0.0' },
   { key: 'quadcopter_rifle-optimized.glb', path: 'Models/Entities/quadcopter_rifle-optimized.glb', category: 'entities', version: '1.0.0' },
