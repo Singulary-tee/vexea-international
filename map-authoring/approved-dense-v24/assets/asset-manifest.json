@@ -1,0 +1,149 @@
+{
+  "manifestVersion": "approved-dense-assets-v24",
+  "policy": {
+    "binaryPayloadsCommitted": false,
+    "excludedFromGit": [".hdr", ".glb", ".gltf", ".bin", ".jpg", ".png", ".webp", ".ktx2"],
+    "purpose": "Source-of-record details for reproducing the current VEXEA approved-dense presentation locally without storing large HDRI, GLB, GLTF, binary-buffer, or texture payloads in the repository."
+  },
+  "assets": [
+    {
+      "id": "asset_approved_dense_kloofendal_overcast_pure_sky",
+      "status": "active",
+      "provider": "Poly Haven",
+      "title": "Kloofendal Overcast Pure Sky",
+      "sourceUrl": "https://polyhaven.com/a/kloofendal_overcast_puresky",
+      "license": "CC0",
+      "runtimePath": "/assets/hdri/polyhaven/kloofendal_overcast_puresky_1k.hdr",
+      "expectedPayload": "1K HDR",
+      "role": "Sky-only incoming-rain overcast environment lighting/background.",
+      "verifiedSha256InAuthoringWorkspace": "5f98aa01d43a49cd899299751a978b3e5559a76300198b5dd2d9c68ecc4ad130"
+    },
+    {
+      "id": "asset_approved_dense_forklift",
+      "status": "active",
+      "provider": "Sketchfab",
+      "title": "Warehouse Forklift Gameready",
+      "sourceUrl": "https://sketchfab.com/3d-models/warehouse-forklift-gameready-94e21059f00c4e989c6403ada034516e",
+      "license": "CC-BY-4.0",
+      "runtimePath": "/assets/models/sketchfab/warehouse_forklift_gameready/warehouse_forklift_gameready_1k.glb",
+      "expectedPayload": "Prepared 1K GLB",
+      "placement": {"hardstand": "dense_surface_pressure_yard", "x": 84, "z": 124, "maxHorizontalSpanM": 5.5},
+      "role": "Sourced service-yard forklift occupancy; attribution is required in downstream distribution."
+    },
+    {
+      "id": "asset_approved_dense_generator",
+      "status": "active",
+      "provider": "Poly Haven",
+      "title": "Portable Generator",
+      "sourceUrl": "https://polyhaven.com/a/portable_generator",
+      "license": "CC0",
+      "runtimePath": "/assets/models/polyhaven/portable_generator/portable_generator_1k.gltf",
+      "expectedPayload": "1K GLTF bundle with companion BIN and textures",
+      "placement": {"hardstand": "dense_surface_pressure_yard", "x": 120, "z": 124, "maxHorizontalSpanM": 2.2},
+      "role": "Sourced service-yard generator occupancy."
+    },
+    {
+      "id": "asset_approved_dense_welding_cart",
+      "status": "active",
+      "provider": "Poly Haven",
+      "title": "Portable Welding Cart",
+      "sourceUrl": "https://polyhaven.com/a/portable_welding_cart",
+      "license": "CC0",
+      "runtimePath": "/assets/models/polyhaven/portable_welding_cart/portable_welding_cart_1k.gltf",
+      "expectedPayload": "1K GLTF bundle with companion BIN and textures",
+      "placement": {"hardstand": "dense_surface_pressure_yard", "x": 108, "z": 124, "maxHorizontalSpanM": 3.0},
+      "role": "Sourced service-yard welding-cart occupancy."
+    },
+    {
+      "id": "asset_approved_dense_storage_cart",
+      "status": "active",
+      "provider": "Poly Haven",
+      "title": "Industrial Storage Cart",
+      "sourceUrl": "https://polyhaven.com/a/industrial_storage_cart",
+      "license": "CC0",
+      "runtimePath": "/assets/models/polyhaven/industrial_storage_cart/industrial_storage_cart_1k.gltf",
+      "expectedPayload": "1K GLTF bundle with companion BIN and textures",
+      "placement": {"hardstand": "dense_surface_pressure_yard", "x": 96, "z": 124, "maxHorizontalSpanM": 3.0},
+      "role": "Sourced service-yard storage-cart occupancy."
+    },
+    {
+      "id": "asset_approved_dense_pipe_rack_modules",
+      "status": "active",
+      "provider": "Poly Haven",
+      "title": "Modular Industrial Pipes 01",
+      "sourceUrl": "https://polyhaven.com/a/modular_industrial_pipes_01",
+      "license": "CC0",
+      "runtimePath": "/assets/models/polyhaven/modular_industrial_pipes_01/modular_industrial_pipes_01_2k.gltf",
+      "expectedPayload": "2K GLTF bundle with companion BIN and textures",
+      "role": "Five-module sourced pipe rack assembled on the pressure-yard hardstand with explicit supports and valves."
+    },
+    {
+      "id": "asset_approved_dense_tree_small_02",
+      "status": "active",
+      "provider": "Poly Haven",
+      "title": "Tree Small 02",
+      "sourceUrl": "https://polyhaven.com/a/tree_small_02",
+      "license": "CC0",
+      "runtimePath": "/assets/models/polyhaven/tree_small_02/tree_small_02_1k.gltf",
+      "distanceRuntimePath": "/assets/models/polyhaven/tree_small_02_lod/served_512/tree_small_02_distance_lod_012_512.gltf",
+      "expectedPayload": "1K near GLTF bundle plus served 512 distance-LOD GLTF bundle",
+      "role": "Sourced planted-verge vegetation with prepared LOD sockets; no procedural tree substitute."
+    },
+    {
+      "id": "asset_approved_dense_factory_wall_material",
+      "status": "active",
+      "provider": "Poly Haven",
+      "title": "Factory Wall",
+      "sourceUrl": "https://polyhaven.com/a/factory_wall",
+      "license": "CC0",
+      "runtimePath": "/assets/materials/polyhaven/factory_wall/",
+      "expectedPayload": "2K diffuse, normal, and roughness maps",
+      "role": "Shared PBR facade material for the industrial wall presentation pass."
+    },
+    {
+      "id": "asset_approved_dense_road012a",
+      "status": "active",
+      "provider": "AmbientCG",
+      "title": "Road 012 A",
+      "sourceUrl": "https://ambientcg.com/view?id=Road012",
+      "license": "CC0",
+      "runtimePath": "/assets/materials/ambientcg/road012a/",
+      "expectedPayload": "2K JPG color, normal, and roughness maps",
+      "role": "World-scaled road, service-apron, and hardstand PBR material."
+    },
+    {
+      "id": "asset_approved_dense_dirt_floor_material",
+      "status": "active",
+      "provider": "Poly Haven",
+      "title": "Dirt Floor",
+      "sourceUrl": "https://polyhaven.com/a/dirt_floor",
+      "license": "CC0",
+      "runtimePath": "/assets/materials/polyhaven/dirt_floor/",
+      "expectedPayload": "2K diffuse, normal, and roughness maps",
+      "role": "Industrial dirt/gravel ground PBR variation."
+    },
+    {
+      "id": "asset_approved_dense_park_dirt_material",
+      "status": "active",
+      "provider": "Poly Haven",
+      "title": "Park Dirt",
+      "sourceUrl": "https://polyhaven.com/a/park_dirt",
+      "license": "CC0",
+      "runtimePath": "/assets/materials/polyhaven/park_dirt/",
+      "expectedPayload": "2K diffuse, normal, and roughness maps",
+      "role": "Planted-verge and soil-edge PBR variation."
+    }
+  ],
+  "nonIncludedReferences": [
+    {
+      "title": "Recovered chain-link fence GLTF",
+      "status": "excluded",
+      "reason": "The recovered local payload lacked referenced binary/textures and produced an invalid typed-array error; it is not part of the active approved-dense evidence."
+    },
+    {
+      "title": "Corrugated Steel 009 fallback",
+      "status": "optional",
+      "reason": "Referenced as a guarded fallback in source but not present in the recovered workspace; do not treat it as an active required asset."
+    }
+  ]
+}

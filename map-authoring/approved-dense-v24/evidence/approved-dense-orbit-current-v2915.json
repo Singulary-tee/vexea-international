@@ -1,0 +1,19 @@
+{
+  "url": "http://127.0.0.1:3000/map-authoring.html?approvedDense=1&view=perspective&framing=dense_focus&slice=off&denseDetail=1&denseSky=1&denseTrees=1&denseOccupancy=1&densePiping=1&denseTerrain=1&denseLights=1&denseForecourt=1&denseEdge=1&denseMaterials=1&densePbr=1&solid=1",
+  "errors": [],
+  "cameraBefore": [
+    78.01108870195142,
+    3.0957576675372884,
+    179.97930108969067
+  ],
+  "cameraAfter": [
+    60.634055432069204,
+    3.0957576675372893,
+    166.3022959958461
+  ],
+  "controlsEnabled": true,
+  "perspective": true,
+  "orbitMethodPresent": true,
+  "valid": true,
+  "cameraChanged": true
+}
