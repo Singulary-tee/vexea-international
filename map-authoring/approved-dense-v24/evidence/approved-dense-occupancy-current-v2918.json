@@ -1,0 +1,71 @@
+{
+  "version": "approved-dense-occupancy-v1",
+  "valid": true,
+  "hardstand": {
+    "id": "dense_surface_pressure_yard",
+    "minX": 18,
+    "maxX": 138,
+    "minZ": 107,
+    "maxZ": 221,
+    "topY": 0.14
+  },
+  "normalization": "Each GLB is scaled by maximum horizontal span and translated by measured world bounds so bounds.min.y = 0 before the fixed placement.",
+  "assets": [
+    {
+      "id": "asset_approved_dense_forklift",
+      "x": 84,
+      "z": 124,
+      "maxSpan": 5.5,
+      "minX": 81.25,
+      "maxX": 86.75,
+      "minZ": 121.25,
+      "maxZ": 126.75,
+      "bottomY": 0,
+      "source": "Sketchfab warehouse forklift gameready",
+      "license": "CC-BY-4.0"
+    },
+    {
+      "id": "asset_approved_dense_generator",
+      "x": 120,
+      "z": 124,
+      "maxSpan": 2.2,
+      "minX": 118.9,
+      "maxX": 121.1,
+      "minZ": 122.9,
+      "maxZ": 125.1,
+      "bottomY": 0,
+      "source": "Poly Haven portable generator",
+      "license": "CC0"
+    },
+    {
+      "id": "asset_approved_dense_welding_cart",
+      "x": 108,
+      "z": 124,
+      "maxSpan": 3,
+      "minX": 106.5,
+      "maxX": 109.5,
+      "minZ": 122.5,
+      "maxZ": 125.5,
+      "bottomY": 0,
+      "source": "Poly Haven portable welding cart",
+      "license": "CC0"
+    },
+    {
+      "id": "asset_approved_dense_storage_cart",
+      "x": 96,
+      "z": 124,
+      "maxSpan": 3,
+      "minX": 94.5,
+      "maxX": 97.5,
+      "minZ": 122.5,
+      "maxZ": 125.5,
+      "bottomY": 0,
+      "source": "Poly Haven industrial storage cart",
+      "license": "CC0"
+    }
+  ],
+  "failures": [],
+  "overlaps": [],
+  "review": [],
+  "gameplayImpact": "none; presentation-only occupancy, not cover, route anchor, spawn, kill zone, surveillance, or objective truth"
+}

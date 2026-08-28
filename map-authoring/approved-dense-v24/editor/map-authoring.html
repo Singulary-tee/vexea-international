@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>VEXEA / Map Authoring Bench</title>
+    <link rel="icon" type="image/svg+xml" href="/ui_svgs/eye_full.svg" />
+    <link rel="stylesheet" href="/src/map-authoring/authoring.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="topbar">
+        <div class="brand-lockup">
+          <div class="brand-mark">V</div>
+          <div>
+            <div class="eyebrow">VEXEA / ENVIRONMENT LAB</div>
+            <h1>Map Authoring Bench</h1>
+          </div>
+        </div>
+        <div class="topbar-meta">
+          <span class="status-dot" id="renderer-dot"></span>
+          <span id="renderer-status">INITIALIZING RENDERER</span>
+          <span class="divider"></span>
+              <span>BLOCKOUT 02</span>
+        </div>
+      </header>
+
+      <main class="workspace">
+        <aside class="left-rail panel">
+          <div class="panel-heading">
+            <span>AUTHORING MODES</span>
+            <span class="panel-index">01</span>
+          </div>
+          <div class="tool-grid preset-grid">
+            <button class="tool-button preset-button active" data-preset="site"><span class="tool-icon">⌂</span><span>Site plan</span><small>masses + roads</small></button>
+            <button class="tool-button preset-button" data-preset="gameplay"><span class="tool-icon">◈</span><span>Gameplay</span><small>zones + routes</small></button>
+            <button class="tool-button preset-button" data-preset="slice"><span class="tool-icon">▤</span><span>Vertical slice</span><small>ground + assets</small></button>
+<button class="tool-button preset-button" data-preset="core_approach"><span class="tool-icon">◎</span><span>Core approach</span><small>plant + terminal</small></button>
+          <button class="tool-button preset-button" data-preset="blockout"><span class="tool-icon">⌗</span><span>Full blockout</span><small>tags + orthographic</small></button>
+          <button class="tool-button preset-button" data-preset="systems"><span class="tool-icon">⌁</span><span>Systems audit</span><small>volumes + paths</small></button>
+          </div>
+          <div class="tool-grid">
+            <button class="tool-button active" data-view="perspective"><span class="tool-icon">◫</span><span>Perspective</span></button>
+            <button class="tool-button" data-view="top"><span class="tool-icon">⊞</span><span>Plan view</span></button>
+            <button class="tool-button active" data-toggle="zones"><span class="tool-icon">▱</span><span>Zones</span></button>
+            <button class="tool-button active" data-toggle="masses"><span class="tool-icon">▰</span><span>Building masses</span></button>
+            <button class="tool-button active" data-toggle="connectors"><span class="tool-icon">▬</span><span>Site connectors</span></button>
+            <button class="tool-button active" data-toggle="fabric"><span class="tool-icon">▰</span><span>Site fabric</span></button>
+            <button class="tool-button" data-toggle="paths"><span class="tool-icon">⌁</span><span>Routes</span></button>
+            <button class="tool-button" data-toggle="volumes"><span class="tool-icon">◌</span><span>Deployments</span></button>
+            <button class="tool-button" data-toggle="human"><span class="tool-icon">♙</span><span>Human scale</span></button>
+            <button class="tool-button active" data-toggle="grid"><span class="tool-icon">▦</span><span>Grid</span></button>
+            <button class="tool-button active" data-toggle="assets"><span class="tool-icon">◍</span><span>Sourced assets</span><small>CC0 vertical slice</small></button>
+            <button class="tool-button active" data-toggle="details"><span class="tool-icon">⌗</span><span>Service details</span><small>closure + scale cues</small></button>
+            <button class="tool-button active" data-toggle="blockout"><span class="tool-icon">▣</span><span>Blockout layer</span><small>replaceable geometry</small></button>
+            <button class="tool-button active" data-toggle="blockout-tags"><span class="tool-icon">T</span><span>Blockout tags</span><small>names + replacement</small></button>
+            <button class="tool-button active" data-toggle="xray"><span class="tool-icon">◌</span><span>X-ray mode</span><small>tunnels + volumes</small></button>
+          </div>
+
+          <div class="panel-heading section-heading">
+            <span>SPATIAL RECORDS</span>
+            <span class="panel-index">02</span>
+          </div>
+          <div id="space-list" class="record-list"></div>
+
+          <div class="panel-heading section-heading">
+            <span>VALIDATION</span>
+            <span class="panel-index">03</span>
+          </div>
+          <div id="validation-list" class="validation-list"></div>
+        </aside>
+
+        <section class="viewport-panel">
+          <div class="viewport-toolbar">
+            <div class="toolbar-group">
+              <span class="toolbar-label">REVIEW</span>
+              <span id="review-label" class="toolbar-value">SITE PLAN</span>
+              <span class="divider"></span>
+              <span class="toolbar-label">VIEW</span>
+              <span id="view-label" class="toolbar-value">PLAN VIEW</span>
+            </div>
+            <div class="toolbar-group compact">
+              <span class="legend-chip"><i class="legend-swatch zone"></i> ZONE / gameplay area</span>
+              <span class="legend-chip"><i class="legend-swatch mass"></i> MASS / major building</span>
+              <span class="legend-chip"><i class="legend-swatch connector"></i> CONNECTOR / road or court</span>
+              <span class="legend-chip"><i class="legend-swatch fabric"></i> FABRIC / campus surface</span>
+              <span class="legend-chip"><i class="legend-swatch route"></i> ROUTE / control line</span>
+              <span class="legend-chip"><i class="legend-swatch drone"></i> VOLUME / drone logic</span>
+              <span class="legend-chip"><i class="legend-swatch objective"></i> OBJECTIVE / destination</span>
+              <span class="legend-chip"><i class="legend-swatch asset"></i> ASSET / CC0 vertical slice</span>
+              <span class="legend-chip"><i class="legend-swatch detail"></i> DETAIL / procedural closure</span>
+              <span class="legend-chip"><i class="legend-swatch blockout"></i> BLOCKOUT / replaceable tagged element</span>
+            </div>
+            <div class="toolbar-group toolbar-actions">
+              <button class="mini-button" id="reset-view">RESET VIEW</button>
+              <button class="mini-button" id="inspect-mode">INSPECT MAP</button>
+              <button class="mini-button" id="load-visual-pass" hidden>LOAD VISUAL PASS</button>
+              <button class="mini-button" id="copy-brief">COPY BRIEF</button>
+              <button class="mini-button primary" id="export-spec">EXPORT SPEC</button>
+              <button class="mini-button" id="export-blockout">EXPORT BLOCKOUT</button>
+            </div>
+          </div>
+          <div id="canvas-wrap" class="canvas-wrap">
+            <div id="boot-veil" class="boot-veil">
+              <div class="boot-veil-card">
+                <div class="boot-kicker">VEXEA / AUTHORING PREVIEW</div>
+                <div class="boot-title">BUILDING INTERACTIVE BLOCKOUT</div>
+                <div class="boot-copy">The playable spatial contract is shown first. PBR, HDRI, and sourced reference assets arrive progressively.</div>
+                <div class="boot-meter"><span></span></div>
+                <div id="boot-progress" class="boot-progress">INITIALIZING LIGHTWEIGHT REVIEW MODE</div>
+              </div>
+            </div>
+            <canvas id="authoring-canvas"></canvas>
+            <div class="viewport-hud top-left">
+              <div class="hud-kicker">TOPOLOGY PASS / 02</div>
+              <div class="hud-title" id="viewport-hud-title">THE FAR-END CORE</div>
+              <div class="hud-copy" id="viewport-hud-copy">Review presets separate the map into site plan, gameplay diagram, full tagged blockout, and systems audit. Use the layer toggles when Manus needs a custom diagnostic combination.</div>
+            </div>
+            <div id="readiness-panel" class="readiness-panel" aria-live="polite">
+              <div class="readiness-heading"><span>AUTHORING READINESS</span><span id="readiness-state">BOOT</span></div>
+              <div class="readiness-grid">
+                <div><span>MODE</span><strong id="mode-readout">--</strong></div>
+                <div><span>STARTUP</span><strong id="startup-readout">--</strong></div>
+                <div><span>VISUAL PASS</span><strong id="visual-pass-readout">--</strong></div>
+                <div><span>FRAME</span><strong id="frame-readout">--</strong></div>
+              </div>
+              <div class="readiness-detail" id="readiness-detail">Waiting for renderer milestones.</div>
+            </div>
+            <div class="viewport-hud bottom-left">
+              <span><b>DRAG</b> orbit</span>
+              <span><b>2-FINGER</b> pan</span>
+              <span><b>PINCH</b> zoom</span>
+              <span><b>TAP</b> inspect</span>
+            </div>
+            <div class="viewport-hud mobile-legend">
+              <span><i class="legend-swatch zone"></i> ZONE</span>
+              <span><i class="legend-swatch mass"></i> MASS</span>
+              <span><i class="legend-swatch connector"></i> CONNECTOR</span>
+              <span><i class="legend-swatch fabric"></i> FABRIC</span>
+              <span><i class="legend-swatch route"></i> ROUTE</span>
+              <span><i class="legend-swatch drone"></i> VOLUME</span>
+              <span><i class="legend-swatch objective"></i> OBJECTIVE</span>
+              <span><i class="legend-swatch asset"></i> ASSET</span>
+              <span><i class="legend-swatch detail"></i> DETAIL</span>
+            </div>
+            <div id="selection-reticle" class="selection-reticle hidden"></div>
+          </div>
+        </section>
+
+        <aside class="right-rail panel">
+          <div class="panel-heading">
+            <span>INSPECTOR</span>
+            <span class="panel-index">04</span>
+          </div>
+          <div id="inspector" class="inspector">
+            <div class="empty-inspector">
+              <div class="empty-icon">＋</div>
+              <div class="empty-title">SELECT A RECORD</div>
+              <div class="empty-copy">Click a zone, building mass, site connector, site-fabric surface, route, or gameplay volume. Zones are not buildings.</div>
+            </div>
+          </div>
+
+          <div class="panel-heading section-heading">
+            <span>MAP CONTRACT</span>
+            <span class="panel-index">05</span>
+          </div>
+          <div class="contract-card">
+            <div class="contract-row"><span>World footprint</span><strong>840 × 560 m</strong></div>
+            <div class="contract-row"><span>Objective hold</span><strong>8 sec</strong></div>
+            <div class="contract-row"><span>LLM cadence</span><strong>8 sec</strong></div>
+            <div class="contract-row"><span>Reference human</span><strong>1.80 m</strong></div>
+            <div class="contract-row"><span>Design state</span><strong class="accent-text">GRAYBOX</strong></div>
+          </div>
+          <div class="note-card">
+            <div class="note-label">AUTHOR NOTE</div>
+            <p>This is an internal Manus authoring instrument. It keeps gameplay truth, architectural masses, site fabric, site connectors, routes, and deployment logic separate before final assets are sourced.</p>
+          </div>
+        </aside>
+      </main>
+
+      <footer class="statusbar">
+        <span id="status-message">Ready to author broad shape.</span>
+        <span class="status-right"><span id="selection-count">0 selected</span><span class="divider"></span><span id="fps-readout">-- FPS</span></span>
+      </footer>
+    </div>
+    <script type="module" src="/src/map-authoring/main.ts"></script>
+  </body>
+</html>

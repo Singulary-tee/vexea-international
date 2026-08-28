@@ -1,0 +1,6725 @@
+{
+  "shedVisible": true,
+  "shedWorld": [
+    108,
+    0,
+    44
+  ],
+  "meshCount": 259,
+  "bayEntries": [
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_camera_west_service_bay_shared_grounded_landing",
+      "materialFamily": "CONCRETE",
+      "world": [
+        80.15,
+        0.16,
+        44
+      ],
+      "local": [
+        -27.85,
+        0.16,
+        0
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_camera_west_service_bay_shared_landing_front_edge",
+      "materialFamily": "CONCRETE",
+      "world": [
+        77.78,
+        0.35,
+        44
+      ],
+      "local": [
+        -30.22,
+        0.35,
+        0
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_camera_west_service_bay_1_recessed_reveal",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        82.24,
+        3.045,
+        33
+      ],
+      "local": [
+        -25.76,
+        3.045,
+        -11
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_camera_west_service_bay_1_recessed_rolling_door",
+      "materialFamily": "PAINTED_STEEL",
+      "world": [
+        82.36,
+        3.045,
+        33
+      ],
+      "local": [
+        -25.64,
+        3.045,
+        -11
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_camera_west_service_bay_1_rolling_rib_1",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        82.25999999999999,
+        1,
+        33
+      ],
+      "local": [
+        -25.740000000000002,
+        1,
+        -11
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_camera_west_service_bay_1_rolling_rib_2",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        82.25999999999999,
+        1.72,
+        33
+      ],
+      "local": [
+        -25.740000000000002,
+        1.72,
+        -11
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_camera_west_service_bay_1_rolling_rib_3",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        82.25999999999999,
+        2.44,
+        33
+      ],
+      "local": [
+        -25.740000000000002,
+        2.44,
+        -11
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_camera_west_service_bay_1_rolling_rib_4",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        82.25999999999999,
+        3.16,
+        33
+      ],
+      "local": [
+        -25.740000000000002,
+        3.16,
+        -11
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_camera_west_service_bay_1_rolling_rib_5",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        82.25999999999999,
+        3.88,
+        33
+      ],
+      "local": [
+        -25.740000000000002,
+        3.88,
+        -11
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_camera_west_service_bay_1_rolling_rib_6",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        82.25999999999999,
+        4.6,
+        33
+      ],
+      "local": [
+        -25.740000000000002,
+        4.6,
+        -11
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_camera_west_service_bay_1_jamb_left",
+      "materialFamily": "CONCRETE",
+      "world": [
+        81.9,
+        3.045,
+        28.83
+      ],
+      "local": [
+        -26.1,
+        3.045,
+        -15.17
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_camera_west_service_bay_1_jamb_right",
+      "materialFamily": "CONCRETE",
+      "world": [
+        81.9,
+        3.045,
+        37.17
+      ],
+      "local": [
+        -26.1,
+        3.045,
+        -6.83
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_camera_west_service_bay_1_grounded_threshold_sill",
+      "materialFamily": "CONCRETE",
+      "world": [
+        81.88,
+        0.52,
+        33
+      ],
+      "local": [
+        -26.12,
+        0.52,
+        -11
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_camera_west_service_bay_1_practical_light",
+      "materialFamily": "PAINTED_STEEL",
+      "world": [
+        81.22,
+        5.2,
+        29.95
+      ],
+      "local": [
+        -26.78,
+        5.2,
+        -14.05
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_camera_west_service_bay_2_recessed_reveal",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        82.24,
+        3.045,
+        44
+      ],
+      "local": [
+        -25.76,
+        3.045,
+        0
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_camera_west_service_bay_2_recessed_rolling_door",
+      "materialFamily": "PAINTED_STEEL",
+      "world": [
+        82.36,
+        3.045,
+        44
+      ],
+      "local": [
+        -25.64,
+        3.045,
+        0
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_camera_west_service_bay_2_rolling_rib_1",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        82.25999999999999,
+        1,
+        44
+      ],
+      "local": [
+        -25.740000000000002,
+        1,
+        0
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_camera_west_service_bay_2_rolling_rib_2",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        82.25999999999999,
+        1.72,
+        44
+      ],
+      "local": [
+        -25.740000000000002,
+        1.72,
+        0
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_camera_west_service_bay_2_rolling_rib_3",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        82.25999999999999,
+        2.44,
+        44
+      ],
+      "local": [
+        -25.740000000000002,
+        2.44,
+        0
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_camera_west_service_bay_2_rolling_rib_4",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        82.25999999999999,
+        3.16,
+        44
+      ],
+      "local": [
+        -25.740000000000002,
+        3.16,
+        0
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_camera_west_service_bay_2_rolling_rib_5",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        82.25999999999999,
+        3.88,
+        44
+      ],
+      "local": [
+        -25.740000000000002,
+        3.88,
+        0
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_camera_west_service_bay_2_rolling_rib_6",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        82.25999999999999,
+        4.6,
+        44
+      ],
+      "local": [
+        -25.740000000000002,
+        4.6,
+        0
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_camera_west_service_bay_2_jamb_left",
+      "materialFamily": "CONCRETE",
+      "world": [
+        81.9,
+        3.045,
+        39.83
+      ],
+      "local": [
+        -26.1,
+        3.045,
+        -4.17
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_camera_west_service_bay_2_jamb_right",
+      "materialFamily": "CONCRETE",
+      "world": [
+        81.9,
+        3.045,
+        48.17
+      ],
+      "local": [
+        -26.1,
+        3.045,
+        4.17
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_camera_west_service_bay_2_grounded_threshold_sill",
+      "materialFamily": "CONCRETE",
+      "world": [
+        81.88,
+        0.52,
+        44
+      ],
+      "local": [
+        -26.12,
+        0.52,
+        0
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_camera_west_service_bay_2_practical_light",
+      "materialFamily": "PAINTED_STEEL",
+      "world": [
+        81.22,
+        5.2,
+        40.95
+      ],
+      "local": [
+        -26.78,
+        5.2,
+        -3.05
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_camera_west_service_bay_3_recessed_reveal",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        82.24,
+        3.045,
+        55
+      ],
+      "local": [
+        -25.76,
+        3.045,
+        11
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_camera_west_service_bay_3_recessed_rolling_door",
+      "materialFamily": "PAINTED_STEEL",
+      "world": [
+        82.36,
+        3.045,
+        55
+      ],
+      "local": [
+        -25.64,
+        3.045,
+        11
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_camera_west_service_bay_3_rolling_rib_1",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        82.25999999999999,
+        1,
+        55
+      ],
+      "local": [
+        -25.740000000000002,
+        1,
+        11
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_camera_west_service_bay_3_rolling_rib_2",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        82.25999999999999,
+        1.72,
+        55
+      ],
+      "local": [
+        -25.740000000000002,
+        1.72,
+        11
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_camera_west_service_bay_3_rolling_rib_3",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        82.25999999999999,
+        2.44,
+        55
+      ],
+      "local": [
+        -25.740000000000002,
+        2.44,
+        11
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_camera_west_service_bay_3_rolling_rib_4",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        82.25999999999999,
+        3.16,
+        55
+      ],
+      "local": [
+        -25.740000000000002,
+        3.16,
+        11
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_camera_west_service_bay_3_rolling_rib_5",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        82.25999999999999,
+        3.88,
+        55
+      ],
+      "local": [
+        -25.740000000000002,
+        3.88,
+        11
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_camera_west_service_bay_3_rolling_rib_6",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        82.25999999999999,
+        4.6,
+        55
+      ],
+      "local": [
+        -25.740000000000002,
+        4.6,
+        11
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_camera_west_service_bay_3_jamb_left",
+      "materialFamily": "CONCRETE",
+      "world": [
+        81.9,
+        3.045,
+        50.83
+      ],
+      "local": [
+        -26.1,
+        3.045,
+        6.83
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_camera_west_service_bay_3_jamb_right",
+      "materialFamily": "CONCRETE",
+      "world": [
+        81.9,
+        3.045,
+        59.17
+      ],
+      "local": [
+        -26.1,
+        3.045,
+        15.17
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_camera_west_service_bay_3_grounded_threshold_sill",
+      "materialFamily": "CONCRETE",
+      "world": [
+        81.88,
+        0.52,
+        55
+      ],
+      "local": [
+        -26.12,
+        0.52,
+        11
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_camera_west_service_bay_3_practical_light",
+      "materialFamily": "PAINTED_STEEL",
+      "world": [
+        81.22,
+        5.2,
+        51.95
+      ],
+      "local": [
+        -26.78,
+        5.2,
+        7.95
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_camera_west_service_bay_shared_weather_canopy",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        79.95,
+        5.95,
+        44
+      ],
+      "local": [
+        -28.05,
+        5.95,
+        0
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_camera_west_service_bay_shared_canopy_wall_header",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        81.48,
+        5.58,
+        44
+      ],
+      "local": [
+        -26.52,
+        5.58,
+        0
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_camera_west_service_bay_shared_canopy_grounded_post",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        77.9,
+        3.05,
+        27.8
+      ],
+      "local": [
+        -30.1,
+        3.05,
+        -16.2
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_camera_west_service_bay_shared_canopy_post_foot",
+      "materialFamily": "CONCRETE",
+      "world": [
+        77.9,
+        0.06,
+        27.8
+      ],
+      "local": [
+        -30.1,
+        0.06,
+        -16.2
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_camera_west_service_bay_shared_canopy_grounded_post",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        77.9,
+        3.05,
+        38.6
+      ],
+      "local": [
+        -30.1,
+        3.05,
+        -5.4
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_camera_west_service_bay_shared_canopy_post_foot",
+      "materialFamily": "CONCRETE",
+      "world": [
+        77.9,
+        0.06,
+        38.6
+      ],
+      "local": [
+        -30.1,
+        0.06,
+        -5.4
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_camera_west_service_bay_shared_canopy_grounded_post",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        77.9,
+        3.05,
+        49.4
+      ],
+      "local": [
+        -30.1,
+        3.05,
+        5.4
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_camera_west_service_bay_shared_canopy_post_foot",
+      "materialFamily": "CONCRETE",
+      "world": [
+        77.9,
+        0.06,
+        49.4
+      ],
+      "local": [
+        -30.1,
+        0.06,
+        5.4
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_camera_west_service_bay_shared_canopy_grounded_post",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        77.9,
+        3.05,
+        60.2
+      ],
+      "local": [
+        -30.1,
+        3.05,
+        16.2
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_camera_west_service_bay_shared_canopy_post_foot",
+      "materialFamily": "CONCRETE",
+      "world": [
+        77.9,
+        0.06,
+        60.2
+      ],
+      "local": [
+        -30.1,
+        0.06,
+        16.2
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_camera_west_service_bay_loading_landing_safety_bollard",
+      "materialFamily": "PAINTED_STEEL",
+      "world": [
+        78.78,
+        0.56,
+        27.6
+      ],
+      "local": [
+        -29.22,
+        0.56,
+        -16.4
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_camera_west_service_bay_loading_landing_bollard_cap",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        78.78,
+        1.16,
+        27.6
+      ],
+      "local": [
+        -29.22,
+        1.16,
+        -16.4
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_camera_west_service_bay_loading_landing_safety_bollard",
+      "materialFamily": "PAINTED_STEEL",
+      "world": [
+        78.78,
+        0.56,
+        38.55
+      ],
+      "local": [
+        -29.22,
+        0.56,
+        -5.45
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_camera_west_service_bay_loading_landing_bollard_cap",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        78.78,
+        1.16,
+        38.55
+      ],
+      "local": [
+        -29.22,
+        1.16,
+        -5.45
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_camera_west_service_bay_loading_landing_safety_bollard",
+      "materialFamily": "PAINTED_STEEL",
+      "world": [
+        78.78,
+        0.56,
+        49.45
+      ],
+      "local": [
+        -29.22,
+        0.56,
+        5.45
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_camera_west_service_bay_loading_landing_bollard_cap",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        78.78,
+        1.16,
+        49.45
+      ],
+      "local": [
+        -29.22,
+        1.16,
+        5.45
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_camera_west_service_bay_loading_landing_safety_bollard",
+      "materialFamily": "PAINTED_STEEL",
+      "world": [
+        78.78,
+        0.56,
+        60.4
+      ],
+      "local": [
+        -29.22,
+        0.56,
+        16.4
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_camera_west_service_bay_loading_landing_bollard_cap",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        78.78,
+        1.16,
+        60.4
+      ],
+      "local": [
+        -29.22,
+        1.16,
+        16.4
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_camera_west_service_bay_frontage_downpipe",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        81.56,
+        2.8,
+        27.2
+      ],
+      "local": [
+        -26.44,
+        2.8,
+        -16.8
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_camera_west_service_bay_frontage_downpipe_foot",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        81.56,
+        0.24,
+        27.2
+      ],
+      "local": [
+        -26.44,
+        0.24,
+        -16.8
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_camera_west_service_bay_frontage_downpipe",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        81.56,
+        2.8,
+        38.4
+      ],
+      "local": [
+        -26.44,
+        2.8,
+        -5.6
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_camera_west_service_bay_frontage_downpipe_foot",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        81.56,
+        0.24,
+        38.4
+      ],
+      "local": [
+        -26.44,
+        0.24,
+        -5.6
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_camera_west_service_bay_frontage_downpipe",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        81.56,
+        2.8,
+        49.6
+      ],
+      "local": [
+        -26.44,
+        2.8,
+        5.6
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_camera_west_service_bay_frontage_downpipe_foot",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        81.56,
+        0.24,
+        49.6
+      ],
+      "local": [
+        -26.44,
+        0.24,
+        5.6
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_camera_west_service_bay_frontage_downpipe",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        81.56,
+        2.8,
+        60.8
+      ],
+      "local": [
+        -26.44,
+        2.8,
+        16.8
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_camera_west_service_bay_frontage_downpipe_foot",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        81.56,
+        0.24,
+        60.8
+      ],
+      "local": [
+        -26.44,
+        0.24,
+        16.8
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_camera_west_service_bay_shared_landing_end_handrail",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        78.95,
+        1.22,
+        65.5
+      ],
+      "local": [
+        -29.05,
+        1.22,
+        21.5
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_camera_west_service_bay_shared_landing_end_handrail_post",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        78.95,
+        0.72,
+        63.2
+      ],
+      "local": [
+        -29.05,
+        0.72,
+        19.2
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_camera_west_service_bay_shared_landing_end_handrail_post",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        78.95,
+        0.72,
+        67.8
+      ],
+      "local": [
+        -29.05,
+        0.72,
+        23.8
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_forecourt_camera_dock_bay_1_recessed_opening",
+      "materialFamily": "PAINTED_STEEL",
+      "world": [
+        103.04,
+        3.25,
+        61.519999999999996
+      ],
+      "local": [
+        -4.959999999999999,
+        3.25,
+        17.52
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_forecourt_camera_dock_bay_1_interior_shadow",
+      "materialFamily": "PAINTED_STEEL",
+      "world": [
+        103.04,
+        3.17,
+        61.620000000000005
+      ],
+      "local": [
+        -4.959999999999999,
+        3.17,
+        17.62
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_forecourt_camera_dock_bay_1_rolling_door",
+      "materialFamily": "PAINTED_STEEL",
+      "world": [
+        103.04,
+        5.92,
+        61.78
+      ],
+      "local": [
+        -4.959999999999999,
+        5.92,
+        17.78
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_forecourt_camera_dock_bay_1_rolling_door_rib",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        103.04,
+        5.64,
+        61.870000000000005
+      ],
+      "local": [
+        -4.959999999999999,
+        5.64,
+        17.87
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_forecourt_camera_dock_bay_1_rolling_door_rib",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        103.04,
+        6.119999999999999,
+        61.870000000000005
+      ],
+      "local": [
+        -4.959999999999999,
+        6.119999999999999,
+        17.87
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_forecourt_camera_dock_bay_1_grounded_threshold_sill",
+      "materialFamily": "CONCRETE",
+      "world": [
+        103.04,
+        0.31,
+        61.8
+      ],
+      "local": [
+        -4.959999999999999,
+        0.31,
+        17.8
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_forecourt_camera_dock_bay_1_projecting_frame_jamb_left",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        98.22,
+        3.33,
+        61.82
+      ],
+      "local": [
+        -9.779999999999998,
+        3.33,
+        17.82
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_forecourt_camera_dock_bay_1_projecting_frame_jamb_right",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        107.86,
+        3.33,
+        61.82
+      ],
+      "local": [
+        -0.13999999999999968,
+        3.33,
+        17.82
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_forecourt_camera_dock_bay_1_projecting_frame_header",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        103.04,
+        6.78,
+        61.82
+      ],
+      "local": [
+        -4.959999999999999,
+        6.78,
+        17.82
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_forecourt_camera_dock_bay_2_recessed_opening",
+      "materialFamily": "PAINTED_STEEL",
+      "world": [
+        114.24,
+        3.25,
+        61.519999999999996
+      ],
+      "local": [
+        6.24,
+        3.25,
+        17.52
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_forecourt_camera_dock_bay_2_interior_shadow",
+      "materialFamily": "PAINTED_STEEL",
+      "world": [
+        114.24,
+        3.17,
+        61.620000000000005
+      ],
+      "local": [
+        6.24,
+        3.17,
+        17.62
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_forecourt_camera_dock_bay_2_rolling_door",
+      "materialFamily": "PAINTED_STEEL",
+      "world": [
+        114.24,
+        5.92,
+        61.78
+      ],
+      "local": [
+        6.24,
+        5.92,
+        17.78
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_forecourt_camera_dock_bay_2_rolling_door_rib",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        114.24,
+        5.64,
+        61.870000000000005
+      ],
+      "local": [
+        6.24,
+        5.64,
+        17.87
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_forecourt_camera_dock_bay_2_rolling_door_rib",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        114.24,
+        6.119999999999999,
+        61.870000000000005
+      ],
+      "local": [
+        6.24,
+        6.119999999999999,
+        17.87
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_forecourt_camera_dock_bay_2_grounded_threshold_sill",
+      "materialFamily": "CONCRETE",
+      "world": [
+        114.24,
+        0.31,
+        61.8
+      ],
+      "local": [
+        6.24,
+        0.31,
+        17.8
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_forecourt_camera_dock_bay_2_projecting_frame_jamb_left",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        109.42,
+        3.33,
+        61.82
+      ],
+      "local": [
+        1.4200000000000008,
+        3.33,
+        17.82
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_forecourt_camera_dock_bay_2_projecting_frame_jamb_right",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        119.06,
+        3.33,
+        61.82
+      ],
+      "local": [
+        11.059999999999999,
+        3.33,
+        17.82
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_forecourt_camera_dock_bay_2_projecting_frame_header",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        114.24,
+        6.78,
+        61.82
+      ],
+      "local": [
+        6.24,
+        6.78,
+        17.82
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_forecourt_camera_dock_bay_3_recessed_opening",
+      "materialFamily": "PAINTED_STEEL",
+      "world": [
+        125.44,
+        3.25,
+        61.519999999999996
+      ],
+      "local": [
+        17.439999999999998,
+        3.25,
+        17.52
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_forecourt_camera_dock_bay_3_interior_shadow",
+      "materialFamily": "PAINTED_STEEL",
+      "world": [
+        125.44,
+        3.17,
+        61.620000000000005
+      ],
+      "local": [
+        17.439999999999998,
+        3.17,
+        17.62
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_forecourt_camera_dock_bay_3_rolling_door",
+      "materialFamily": "PAINTED_STEEL",
+      "world": [
+        125.44,
+        5.92,
+        61.78
+      ],
+      "local": [
+        17.439999999999998,
+        5.92,
+        17.78
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_forecourt_camera_dock_bay_3_rolling_door_rib",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        125.44,
+        5.64,
+        61.870000000000005
+      ],
+      "local": [
+        17.439999999999998,
+        5.64,
+        17.87
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_forecourt_camera_dock_bay_3_rolling_door_rib",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        125.44,
+        6.119999999999999,
+        61.870000000000005
+      ],
+      "local": [
+        17.439999999999998,
+        6.119999999999999,
+        17.87
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_forecourt_camera_dock_bay_3_grounded_threshold_sill",
+      "materialFamily": "CONCRETE",
+      "world": [
+        125.44,
+        0.31,
+        61.8
+      ],
+      "local": [
+        17.439999999999998,
+        0.31,
+        17.8
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_forecourt_camera_dock_bay_3_projecting_frame_jamb_left",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        120.62,
+        3.33,
+        61.82
+      ],
+      "local": [
+        12.619999999999997,
+        3.33,
+        17.82
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_forecourt_camera_dock_bay_3_projecting_frame_jamb_right",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        130.26,
+        3.33,
+        61.82
+      ],
+      "local": [
+        22.259999999999998,
+        3.33,
+        17.82
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_forecourt_camera_dock_bay_3_projecting_frame_header",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        125.44,
+        6.78,
+        61.82
+      ],
+      "local": [
+        17.439999999999998,
+        6.78,
+        17.82
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    }
+  ],
+  "entries": [
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_ground_closure",
+      "materialFamily": "CONCRETE",
+      "world": [
+        108,
+        0.18,
+        44
+      ],
+      "local": [
+        0,
+        0.18,
+        0
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_front_closure",
+      "materialFamily": "PAINTED_STEEL",
+      "world": [
+        108,
+        3.75,
+        27.22
+      ],
+      "local": [
+        0,
+        3.75,
+        -16.78
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_rear_closure",
+      "materialFamily": "PAINTED_STEEL",
+      "world": [
+        108,
+        3.75,
+        60.82
+      ],
+      "local": [
+        0,
+        3.75,
+        16.82
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_right_closure",
+      "materialFamily": "PAINTED_STEEL",
+      "world": [
+        133.8,
+        3.75,
+        44
+      ],
+      "local": [
+        25.8,
+        3.75,
+        0
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_left_closure_segment_1",
+      "materialFamily": "PAINTED_STEEL",
+      "world": [
+        82.2,
+        3.75,
+        27.975
+      ],
+      "local": [
+        -25.8,
+        3.75,
+        -16.025
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_left_closure_segment_2",
+      "materialFamily": "PAINTED_STEEL",
+      "world": [
+        82.2,
+        3.75,
+        38.5
+      ],
+      "local": [
+        -25.8,
+        3.75,
+        -5.5
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_left_closure_segment_3",
+      "materialFamily": "PAINTED_STEEL",
+      "world": [
+        82.2,
+        3.75,
+        49.5
+      ],
+      "local": [
+        -25.8,
+        3.75,
+        5.5
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_left_closure_segment_final",
+      "materialFamily": "PAINTED_STEEL",
+      "world": [
+        82.2,
+        3.75,
+        60.025
+      ],
+      "local": [
+        -25.8,
+        3.75,
+        16.025
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_panel_vertical_seam",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        92.4,
+        3.75,
+        26.939999999999998
+      ],
+      "local": [
+        -15.6,
+        3.75,
+        -17.060000000000002
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_panel_vertical_seam",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        102.8,
+        3.75,
+        26.939999999999998
+      ],
+      "local": [
+        -5.199999999999999,
+        3.75,
+        -17.060000000000002
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_panel_vertical_seam",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        113.2,
+        3.75,
+        26.939999999999998
+      ],
+      "local": [
+        5.199999999999999,
+        3.75,
+        -17.060000000000002
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_panel_vertical_seam",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        123.6,
+        3.75,
+        26.939999999999998
+      ],
+      "local": [
+        15.600000000000001,
+        3.75,
+        -17.060000000000002
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_roof_closure",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        108,
+        7.76,
+        44
+      ],
+      "local": [
+        0,
+        7.76,
+        0
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_process_tank_body",
+      "materialFamily": "PAINTED_STEEL",
+      "world": [
+        84,
+        4.4,
+        55
+      ],
+      "local": [
+        -24,
+        4.4,
+        11
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_process_tank_base",
+      "materialFamily": "CONCRETE",
+      "world": [
+        84,
+        0.16,
+        55
+      ],
+      "local": [
+        -24,
+        0.16,
+        11
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_process_tank_band",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        84,
+        1.2,
+        55
+      ],
+      "local": [
+        -24,
+        1.2,
+        11
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_process_tank_band",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        84,
+        4.4,
+        55
+      ],
+      "local": [
+        -24,
+        4.4,
+        11
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_process_tank_band",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        84,
+        7.6,
+        55
+      ],
+      "local": [
+        -24,
+        7.6,
+        11
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_process_tank_top",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        84,
+        8.92,
+        55
+      ],
+      "local": [
+        -24,
+        8.92,
+        11
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_process_tank_vent",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        84.82,
+        9.58,
+        54.75
+      ],
+      "local": [
+        -23.18,
+        9.58,
+        10.75
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_process_tank_service_pipe",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        96,
+        7.35,
+        55
+      ],
+      "local": [
+        -12,
+        7.35,
+        11
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_process_tank_service_pipe_support",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        90.2,
+        3.55,
+        55
+      ],
+      "local": [
+        -17.8,
+        3.55,
+        11
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_process_tank_service_pipe_support",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        100.5,
+        3.55,
+        55
+      ],
+      "local": [
+        -7.5,
+        3.55,
+        11
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_process_tank_access_rail",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        81.28,
+        4.1,
+        55.15
+      ],
+      "local": [
+        -26.72,
+        4.1,
+        11.15
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_process_tank_access_step",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        81.34,
+        1.2,
+        54.6
+      ],
+      "local": [
+        -26.66,
+        1.2,
+        10.6
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_process_tank_access_step",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        81.34,
+        3.5,
+        54.6
+      ],
+      "local": [
+        -26.66,
+        3.5,
+        10.6
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_process_tank_access_step",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        81.34,
+        5.8,
+        54.6
+      ],
+      "local": [
+        -26.66,
+        5.8,
+        10.6
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_process_tank_access_step",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        81.34,
+        8.1,
+        54.6
+      ],
+      "local": [
+        -26.66,
+        8.1,
+        10.6
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_loading_door",
+      "materialFamily": "PAINTED_STEEL",
+      "world": [
+        92.4,
+        2.42,
+        26.77
+      ],
+      "local": [
+        -15.6,
+        2.42,
+        -17.23
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_loading_door_rib",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        92.4,
+        0.62,
+        26.66
+      ],
+      "local": [
+        -15.6,
+        0.62,
+        -17.34
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_loading_door_rib",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        92.4,
+        1.44,
+        26.66
+      ],
+      "local": [
+        -15.6,
+        1.44,
+        -17.34
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_loading_door_rib",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        92.4,
+        2.26,
+        26.66
+      ],
+      "local": [
+        -15.6,
+        2.26,
+        -17.34
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_loading_door_rib",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        92.4,
+        3.08,
+        26.66
+      ],
+      "local": [
+        -15.6,
+        3.08,
+        -17.34
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_loading_door_rib",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        92.4,
+        3.9,
+        26.66
+      ],
+      "local": [
+        -15.6,
+        3.9,
+        -17.34
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_loading_frame",
+      "materialFamily": "CONCRETE",
+      "world": [
+        92.4,
+        2.55,
+        26.97
+      ],
+      "local": [
+        -15.6,
+        2.55,
+        -17.03
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_loading_canopy",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        92.4,
+        4.9,
+        26.22
+      ],
+      "local": [
+        -15.6,
+        4.9,
+        -17.78
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_loading_door",
+      "materialFamily": "PAINTED_STEEL",
+      "world": [
+        123.6,
+        2.42,
+        26.77
+      ],
+      "local": [
+        15.6,
+        2.42,
+        -17.23
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_loading_door_rib",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        123.6,
+        0.62,
+        26.66
+      ],
+      "local": [
+        15.6,
+        0.62,
+        -17.34
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_loading_door_rib",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        123.6,
+        1.44,
+        26.66
+      ],
+      "local": [
+        15.6,
+        1.44,
+        -17.34
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_loading_door_rib",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        123.6,
+        2.26,
+        26.66
+      ],
+      "local": [
+        15.6,
+        2.26,
+        -17.34
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_loading_door_rib",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        123.6,
+        3.08,
+        26.66
+      ],
+      "local": [
+        15.6,
+        3.08,
+        -17.34
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_loading_door_rib",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        123.6,
+        3.9,
+        26.66
+      ],
+      "local": [
+        15.6,
+        3.9,
+        -17.34
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_loading_frame",
+      "materialFamily": "CONCRETE",
+      "world": [
+        123.6,
+        2.55,
+        26.97
+      ],
+      "local": [
+        15.6,
+        2.55,
+        -17.03
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_loading_canopy",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        123.6,
+        4.9,
+        26.22
+      ],
+      "local": [
+        15.6,
+        4.9,
+        -17.78
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_rear_loading_door",
+      "materialFamily": "PAINTED_STEEL",
+      "world": [
+        92.4,
+        2.42,
+        61.269999999999996
+      ],
+      "local": [
+        -15.6,
+        2.42,
+        17.27
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_rear_loading_door_rib",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        92.4,
+        0.62,
+        61.370000000000005
+      ],
+      "local": [
+        -15.6,
+        0.62,
+        17.37
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_rear_loading_door_rib",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        92.4,
+        1.44,
+        61.370000000000005
+      ],
+      "local": [
+        -15.6,
+        1.44,
+        17.37
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_rear_loading_door_rib",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        92.4,
+        2.26,
+        61.370000000000005
+      ],
+      "local": [
+        -15.6,
+        2.26,
+        17.37
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_rear_loading_door_rib",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        92.4,
+        3.08,
+        61.370000000000005
+      ],
+      "local": [
+        -15.6,
+        3.08,
+        17.37
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_rear_loading_door_rib",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        92.4,
+        3.9,
+        61.370000000000005
+      ],
+      "local": [
+        -15.6,
+        3.9,
+        17.37
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_rear_loading_frame",
+      "materialFamily": "CONCRETE",
+      "world": [
+        92.4,
+        2.55,
+        61.07
+      ],
+      "local": [
+        -15.6,
+        2.55,
+        17.07
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_rear_loading_canopy",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        92.4,
+        4.9,
+        61.82
+      ],
+      "local": [
+        -15.6,
+        4.9,
+        17.82
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_rear_loading_door",
+      "materialFamily": "PAINTED_STEEL",
+      "world": [
+        123.6,
+        2.42,
+        61.269999999999996
+      ],
+      "local": [
+        15.6,
+        2.42,
+        17.27
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_rear_loading_door_rib",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        123.6,
+        0.62,
+        61.370000000000005
+      ],
+      "local": [
+        15.6,
+        0.62,
+        17.37
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_rear_loading_door_rib",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        123.6,
+        1.44,
+        61.370000000000005
+      ],
+      "local": [
+        15.6,
+        1.44,
+        17.37
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_rear_loading_door_rib",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        123.6,
+        2.26,
+        61.370000000000005
+      ],
+      "local": [
+        15.6,
+        2.26,
+        17.37
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_rear_loading_door_rib",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        123.6,
+        3.08,
+        61.370000000000005
+      ],
+      "local": [
+        15.6,
+        3.08,
+        17.37
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_rear_loading_door_rib",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        123.6,
+        3.9,
+        61.370000000000005
+      ],
+      "local": [
+        15.6,
+        3.9,
+        17.37
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_rear_loading_frame",
+      "materialFamily": "CONCRETE",
+      "world": [
+        123.6,
+        2.55,
+        61.07
+      ],
+      "local": [
+        15.6,
+        2.55,
+        17.07
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_rear_loading_canopy",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        123.6,
+        4.9,
+        61.82
+      ],
+      "local": [
+        15.6,
+        4.9,
+        17.82
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_camera_west_service_bay_shared_grounded_landing",
+      "materialFamily": "CONCRETE",
+      "world": [
+        80.15,
+        0.16,
+        44
+      ],
+      "local": [
+        -27.85,
+        0.16,
+        0
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_camera_west_service_bay_shared_landing_front_edge",
+      "materialFamily": "CONCRETE",
+      "world": [
+        77.78,
+        0.35,
+        44
+      ],
+      "local": [
+        -30.22,
+        0.35,
+        0
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_camera_west_service_bay_1_recessed_reveal",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        82.24,
+        3.045,
+        33
+      ],
+      "local": [
+        -25.76,
+        3.045,
+        -11
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_camera_west_service_bay_1_recessed_rolling_door",
+      "materialFamily": "PAINTED_STEEL",
+      "world": [
+        82.36,
+        3.045,
+        33
+      ],
+      "local": [
+        -25.64,
+        3.045,
+        -11
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_camera_west_service_bay_1_rolling_rib_1",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        82.25999999999999,
+        1,
+        33
+      ],
+      "local": [
+        -25.740000000000002,
+        1,
+        -11
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_camera_west_service_bay_1_rolling_rib_2",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        82.25999999999999,
+        1.72,
+        33
+      ],
+      "local": [
+        -25.740000000000002,
+        1.72,
+        -11
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_camera_west_service_bay_1_rolling_rib_3",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        82.25999999999999,
+        2.44,
+        33
+      ],
+      "local": [
+        -25.740000000000002,
+        2.44,
+        -11
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_camera_west_service_bay_1_rolling_rib_4",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        82.25999999999999,
+        3.16,
+        33
+      ],
+      "local": [
+        -25.740000000000002,
+        3.16,
+        -11
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_camera_west_service_bay_1_rolling_rib_5",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        82.25999999999999,
+        3.88,
+        33
+      ],
+      "local": [
+        -25.740000000000002,
+        3.88,
+        -11
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_camera_west_service_bay_1_rolling_rib_6",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        82.25999999999999,
+        4.6,
+        33
+      ],
+      "local": [
+        -25.740000000000002,
+        4.6,
+        -11
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_camera_west_service_bay_1_jamb_left",
+      "materialFamily": "CONCRETE",
+      "world": [
+        81.9,
+        3.045,
+        28.83
+      ],
+      "local": [
+        -26.1,
+        3.045,
+        -15.17
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_camera_west_service_bay_1_jamb_right",
+      "materialFamily": "CONCRETE",
+      "world": [
+        81.9,
+        3.045,
+        37.17
+      ],
+      "local": [
+        -26.1,
+        3.045,
+        -6.83
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_camera_west_service_bay_1_grounded_threshold_sill",
+      "materialFamily": "CONCRETE",
+      "world": [
+        81.88,
+        0.52,
+        33
+      ],
+      "local": [
+        -26.12,
+        0.52,
+        -11
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_camera_west_service_bay_1_practical_light",
+      "materialFamily": "PAINTED_STEEL",
+      "world": [
+        81.22,
+        5.2,
+        29.95
+      ],
+      "local": [
+        -26.78,
+        5.2,
+        -14.05
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_camera_west_service_bay_2_recessed_reveal",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        82.24,
+        3.045,
+        44
+      ],
+      "local": [
+        -25.76,
+        3.045,
+        0
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_camera_west_service_bay_2_recessed_rolling_door",
+      "materialFamily": "PAINTED_STEEL",
+      "world": [
+        82.36,
+        3.045,
+        44
+      ],
+      "local": [
+        -25.64,
+        3.045,
+        0
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_camera_west_service_bay_2_rolling_rib_1",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        82.25999999999999,
+        1,
+        44
+      ],
+      "local": [
+        -25.740000000000002,
+        1,
+        0
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_camera_west_service_bay_2_rolling_rib_2",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        82.25999999999999,
+        1.72,
+        44
+      ],
+      "local": [
+        -25.740000000000002,
+        1.72,
+        0
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_camera_west_service_bay_2_rolling_rib_3",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        82.25999999999999,
+        2.44,
+        44
+      ],
+      "local": [
+        -25.740000000000002,
+        2.44,
+        0
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_camera_west_service_bay_2_rolling_rib_4",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        82.25999999999999,
+        3.16,
+        44
+      ],
+      "local": [
+        -25.740000000000002,
+        3.16,
+        0
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_camera_west_service_bay_2_rolling_rib_5",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        82.25999999999999,
+        3.88,
+        44
+      ],
+      "local": [
+        -25.740000000000002,
+        3.88,
+        0
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_camera_west_service_bay_2_rolling_rib_6",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        82.25999999999999,
+        4.6,
+        44
+      ],
+      "local": [
+        -25.740000000000002,
+        4.6,
+        0
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_camera_west_service_bay_2_jamb_left",
+      "materialFamily": "CONCRETE",
+      "world": [
+        81.9,
+        3.045,
+        39.83
+      ],
+      "local": [
+        -26.1,
+        3.045,
+        -4.17
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_camera_west_service_bay_2_jamb_right",
+      "materialFamily": "CONCRETE",
+      "world": [
+        81.9,
+        3.045,
+        48.17
+      ],
+      "local": [
+        -26.1,
+        3.045,
+        4.17
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_camera_west_service_bay_2_grounded_threshold_sill",
+      "materialFamily": "CONCRETE",
+      "world": [
+        81.88,
+        0.52,
+        44
+      ],
+      "local": [
+        -26.12,
+        0.52,
+        0
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_camera_west_service_bay_2_practical_light",
+      "materialFamily": "PAINTED_STEEL",
+      "world": [
+        81.22,
+        5.2,
+        40.95
+      ],
+      "local": [
+        -26.78,
+        5.2,
+        -3.05
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_camera_west_service_bay_3_recessed_reveal",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        82.24,
+        3.045,
+        55
+      ],
+      "local": [
+        -25.76,
+        3.045,
+        11
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_camera_west_service_bay_3_recessed_rolling_door",
+      "materialFamily": "PAINTED_STEEL",
+      "world": [
+        82.36,
+        3.045,
+        55
+      ],
+      "local": [
+        -25.64,
+        3.045,
+        11
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_camera_west_service_bay_3_rolling_rib_1",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        82.25999999999999,
+        1,
+        55
+      ],
+      "local": [
+        -25.740000000000002,
+        1,
+        11
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_camera_west_service_bay_3_rolling_rib_2",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        82.25999999999999,
+        1.72,
+        55
+      ],
+      "local": [
+        -25.740000000000002,
+        1.72,
+        11
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_camera_west_service_bay_3_rolling_rib_3",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        82.25999999999999,
+        2.44,
+        55
+      ],
+      "local": [
+        -25.740000000000002,
+        2.44,
+        11
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_camera_west_service_bay_3_rolling_rib_4",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        82.25999999999999,
+        3.16,
+        55
+      ],
+      "local": [
+        -25.740000000000002,
+        3.16,
+        11
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_camera_west_service_bay_3_rolling_rib_5",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        82.25999999999999,
+        3.88,
+        55
+      ],
+      "local": [
+        -25.740000000000002,
+        3.88,
+        11
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_camera_west_service_bay_3_rolling_rib_6",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        82.25999999999999,
+        4.6,
+        55
+      ],
+      "local": [
+        -25.740000000000002,
+        4.6,
+        11
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_camera_west_service_bay_3_jamb_left",
+      "materialFamily": "CONCRETE",
+      "world": [
+        81.9,
+        3.045,
+        50.83
+      ],
+      "local": [
+        -26.1,
+        3.045,
+        6.83
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_camera_west_service_bay_3_jamb_right",
+      "materialFamily": "CONCRETE",
+      "world": [
+        81.9,
+        3.045,
+        59.17
+      ],
+      "local": [
+        -26.1,
+        3.045,
+        15.17
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_camera_west_service_bay_3_grounded_threshold_sill",
+      "materialFamily": "CONCRETE",
+      "world": [
+        81.88,
+        0.52,
+        55
+      ],
+      "local": [
+        -26.12,
+        0.52,
+        11
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_camera_west_service_bay_3_practical_light",
+      "materialFamily": "PAINTED_STEEL",
+      "world": [
+        81.22,
+        5.2,
+        51.95
+      ],
+      "local": [
+        -26.78,
+        5.2,
+        7.95
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_camera_west_service_bay_shared_weather_canopy",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        79.95,
+        5.95,
+        44
+      ],
+      "local": [
+        -28.05,
+        5.95,
+        0
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_camera_west_service_bay_shared_canopy_wall_header",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        81.48,
+        5.58,
+        44
+      ],
+      "local": [
+        -26.52,
+        5.58,
+        0
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_camera_west_service_bay_shared_canopy_grounded_post",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        77.9,
+        3.05,
+        27.8
+      ],
+      "local": [
+        -30.1,
+        3.05,
+        -16.2
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_camera_west_service_bay_shared_canopy_post_foot",
+      "materialFamily": "CONCRETE",
+      "world": [
+        77.9,
+        0.06,
+        27.8
+      ],
+      "local": [
+        -30.1,
+        0.06,
+        -16.2
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_camera_west_service_bay_shared_canopy_grounded_post",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        77.9,
+        3.05,
+        38.6
+      ],
+      "local": [
+        -30.1,
+        3.05,
+        -5.4
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_camera_west_service_bay_shared_canopy_post_foot",
+      "materialFamily": "CONCRETE",
+      "world": [
+        77.9,
+        0.06,
+        38.6
+      ],
+      "local": [
+        -30.1,
+        0.06,
+        -5.4
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_camera_west_service_bay_shared_canopy_grounded_post",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        77.9,
+        3.05,
+        49.4
+      ],
+      "local": [
+        -30.1,
+        3.05,
+        5.4
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_camera_west_service_bay_shared_canopy_post_foot",
+      "materialFamily": "CONCRETE",
+      "world": [
+        77.9,
+        0.06,
+        49.4
+      ],
+      "local": [
+        -30.1,
+        0.06,
+        5.4
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_camera_west_service_bay_shared_canopy_grounded_post",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        77.9,
+        3.05,
+        60.2
+      ],
+      "local": [
+        -30.1,
+        3.05,
+        16.2
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_camera_west_service_bay_shared_canopy_post_foot",
+      "materialFamily": "CONCRETE",
+      "world": [
+        77.9,
+        0.06,
+        60.2
+      ],
+      "local": [
+        -30.1,
+        0.06,
+        16.2
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_camera_west_service_bay_loading_landing_safety_bollard",
+      "materialFamily": "PAINTED_STEEL",
+      "world": [
+        78.78,
+        0.56,
+        27.6
+      ],
+      "local": [
+        -29.22,
+        0.56,
+        -16.4
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_camera_west_service_bay_loading_landing_bollard_cap",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        78.78,
+        1.16,
+        27.6
+      ],
+      "local": [
+        -29.22,
+        1.16,
+        -16.4
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_camera_west_service_bay_loading_landing_safety_bollard",
+      "materialFamily": "PAINTED_STEEL",
+      "world": [
+        78.78,
+        0.56,
+        38.55
+      ],
+      "local": [
+        -29.22,
+        0.56,
+        -5.45
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_camera_west_service_bay_loading_landing_bollard_cap",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        78.78,
+        1.16,
+        38.55
+      ],
+      "local": [
+        -29.22,
+        1.16,
+        -5.45
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_camera_west_service_bay_loading_landing_safety_bollard",
+      "materialFamily": "PAINTED_STEEL",
+      "world": [
+        78.78,
+        0.56,
+        49.45
+      ],
+      "local": [
+        -29.22,
+        0.56,
+        5.45
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_camera_west_service_bay_loading_landing_bollard_cap",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        78.78,
+        1.16,
+        49.45
+      ],
+      "local": [
+        -29.22,
+        1.16,
+        5.45
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_camera_west_service_bay_loading_landing_safety_bollard",
+      "materialFamily": "PAINTED_STEEL",
+      "world": [
+        78.78,
+        0.56,
+        60.4
+      ],
+      "local": [
+        -29.22,
+        0.56,
+        16.4
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_camera_west_service_bay_loading_landing_bollard_cap",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        78.78,
+        1.16,
+        60.4
+      ],
+      "local": [
+        -29.22,
+        1.16,
+        16.4
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_camera_west_service_bay_frontage_downpipe",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        81.56,
+        2.8,
+        27.2
+      ],
+      "local": [
+        -26.44,
+        2.8,
+        -16.8
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_camera_west_service_bay_frontage_downpipe_foot",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        81.56,
+        0.24,
+        27.2
+      ],
+      "local": [
+        -26.44,
+        0.24,
+        -16.8
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_camera_west_service_bay_frontage_downpipe",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        81.56,
+        2.8,
+        38.4
+      ],
+      "local": [
+        -26.44,
+        2.8,
+        -5.6
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_camera_west_service_bay_frontage_downpipe_foot",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        81.56,
+        0.24,
+        38.4
+      ],
+      "local": [
+        -26.44,
+        0.24,
+        -5.6
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_camera_west_service_bay_frontage_downpipe",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        81.56,
+        2.8,
+        49.6
+      ],
+      "local": [
+        -26.44,
+        2.8,
+        5.6
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_camera_west_service_bay_frontage_downpipe_foot",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        81.56,
+        0.24,
+        49.6
+      ],
+      "local": [
+        -26.44,
+        0.24,
+        5.6
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_camera_west_service_bay_frontage_downpipe",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        81.56,
+        2.8,
+        60.8
+      ],
+      "local": [
+        -26.44,
+        2.8,
+        16.8
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_camera_west_service_bay_frontage_downpipe_foot",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        81.56,
+        0.24,
+        60.8
+      ],
+      "local": [
+        -26.44,
+        0.24,
+        16.8
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_camera_west_service_bay_shared_landing_end_handrail",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        78.95,
+        1.22,
+        65.5
+      ],
+      "local": [
+        -29.05,
+        1.22,
+        21.5
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_camera_west_service_bay_shared_landing_end_handrail_post",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        78.95,
+        0.72,
+        63.2
+      ],
+      "local": [
+        -29.05,
+        0.72,
+        19.2
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_camera_west_service_bay_shared_landing_end_handrail_post",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        78.95,
+        0.72,
+        67.8
+      ],
+      "local": [
+        -29.05,
+        0.72,
+        23.8
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_camera_left_edge_utility_tank_grounded_base",
+      "materialFamily": "CONCRETE",
+      "world": [
+        68,
+        0.14,
+        50
+      ],
+      "local": [
+        -40,
+        0.14,
+        6
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_camera_left_edge_utility_tank_body",
+      "materialFamily": "PAINTED_STEEL",
+      "world": [
+        68,
+        3.08,
+        50
+      ],
+      "local": [
+        -40,
+        3.08,
+        6
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_camera_left_edge_utility_tank_band",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        68,
+        1.35,
+        50
+      ],
+      "local": [
+        -40,
+        1.35,
+        6
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_camera_left_edge_utility_tank_band",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        68,
+        3.05,
+        50
+      ],
+      "local": [
+        -40,
+        3.05,
+        6
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_camera_left_edge_utility_tank_band",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        68,
+        4.75,
+        50
+      ],
+      "local": [
+        -40,
+        4.75,
+        6
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_camera_left_edge_utility_tank_cap",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        68,
+        5.94,
+        50
+      ],
+      "local": [
+        -40,
+        5.94,
+        6
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_camera_left_edge_utility_tank_vent",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        68.62,
+        6.5,
+        49.8
+      ],
+      "local": [
+        -39.38,
+        6.5,
+        5.8
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_camera_left_edge_utility_service_panel",
+      "materialFamily": "PAINTED_STEEL",
+      "world": [
+        70.12,
+        2.35,
+        50
+      ],
+      "local": [
+        -37.88,
+        2.35,
+        6
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_camera_left_edge_utility_guarded_pipe",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        70.7,
+        2.6,
+        51
+      ],
+      "local": [
+        -37.3,
+        2.6,
+        7
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_camera_left_edge_utility_pipe_foot",
+      "materialFamily": "CONCRETE",
+      "world": [
+        70.7,
+        0.09,
+        51
+      ],
+      "local": [
+        -37.3,
+        0.09,
+        7
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_camera_left_edge_utility_warning_tab",
+      "materialFamily": "PAINTED_STEEL",
+      "world": [
+        70.25,
+        2.35,
+        49.24
+      ],
+      "local": [
+        -37.75,
+        2.35,
+        5.24
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_camera_left_edge_utility_transfer_pipe",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        76.6,
+        6.25,
+        50
+      ],
+      "local": [
+        -31.4,
+        6.25,
+        6
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_camera_left_edge_utility_transfer_pipe_support",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        72.4,
+        2.8,
+        50
+      ],
+      "local": [
+        -35.6,
+        2.8,
+        6
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_camera_left_edge_utility_transfer_pipe_support_foot",
+      "materialFamily": "CONCRETE",
+      "world": [
+        72.4,
+        0.07,
+        50
+      ],
+      "local": [
+        -35.6,
+        0.07,
+        6
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_camera_left_edge_utility_transfer_pipe_support",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        78.6,
+        2.8,
+        50
+      ],
+      "local": [
+        -29.4,
+        2.8,
+        6
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_camera_left_edge_utility_transfer_pipe_support_foot",
+      "materialFamily": "CONCRETE",
+      "world": [
+        78.6,
+        0.07,
+        50
+      ],
+      "local": [
+        -29.4,
+        0.07,
+        6
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_camera_left_edge_utility_transfer_pipe_collar",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        71.2,
+        6.25,
+        50
+      ],
+      "local": [
+        -36.8,
+        6.25,
+        6
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_camera_left_edge_utility_transfer_pipe_collar",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        74.4,
+        6.25,
+        50
+      ],
+      "local": [
+        -33.6,
+        6.25,
+        6
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_camera_left_edge_utility_transfer_pipe_collar",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        77.6,
+        6.25,
+        50
+      ],
+      "local": [
+        -30.4,
+        6.25,
+        6
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_clerestory",
+      "materialFamily": "PAINTED_STEEL",
+      "world": [
+        108,
+        5.55,
+        26.77
+      ],
+      "local": [
+        0,
+        5.55,
+        -17.23
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_front_post",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        88.24,
+        3.75,
+        26.64
+      ],
+      "local": [
+        -19.76,
+        3.75,
+        -17.36
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_front_post",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        127.76,
+        3.75,
+        26.64
+      ],
+      "local": [
+        19.76,
+        3.75,
+        -17.36
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_roof_vent",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        121,
+        8.52,
+        44
+      ],
+      "local": [
+        13,
+        8.52,
+        0
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_service_louver",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        95,
+        3.5,
+        26.759999999999998
+      ],
+      "local": [
+        -13,
+        3.5,
+        -17.240000000000002
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_service_louver_slat",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        95,
+        3.1,
+        26.639999999999997
+      ],
+      "local": [
+        -13,
+        3.1,
+        -17.360000000000003
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_service_louver_slat",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        95,
+        3.38,
+        26.639999999999997
+      ],
+      "local": [
+        -13,
+        3.38,
+        -17.360000000000003
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_service_louver_slat",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        95,
+        3.66,
+        26.639999999999997
+      ],
+      "local": [
+        -13,
+        3.66,
+        -17.360000000000003
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_service_louver_slat",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        95,
+        3.9400000000000004,
+        26.639999999999997
+      ],
+      "local": [
+        -13,
+        3.9400000000000004,
+        -17.360000000000003
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_service_louver",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        121,
+        3.5,
+        26.759999999999998
+      ],
+      "local": [
+        13,
+        3.5,
+        -17.240000000000002
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_service_louver_slat",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        121,
+        3.1,
+        26.639999999999997
+      ],
+      "local": [
+        13,
+        3.1,
+        -17.360000000000003
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_service_louver_slat",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        121,
+        3.38,
+        26.639999999999997
+      ],
+      "local": [
+        13,
+        3.38,
+        -17.360000000000003
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_service_louver_slat",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        121,
+        3.66,
+        26.639999999999997
+      ],
+      "local": [
+        13,
+        3.66,
+        -17.360000000000003
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_service_louver_slat",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        121,
+        3.9400000000000004,
+        26.639999999999997
+      ],
+      "local": [
+        13,
+        3.9400000000000004,
+        -17.360000000000003
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_downpipe",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        133.62,
+        4.15,
+        26.779999999999998
+      ],
+      "local": [
+        25.62,
+        4.15,
+        -17.220000000000002
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_service_gantry_post",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        101,
+        3.2,
+        62.92
+      ],
+      "local": [
+        -7,
+        3.2,
+        18.92
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_service_gantry_foot",
+      "materialFamily": "CONCRETE",
+      "world": [
+        101,
+        0.08,
+        62.92
+      ],
+      "local": [
+        -7,
+        0.08,
+        18.92
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_service_gantry_post",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        115,
+        3.2,
+        62.92
+      ],
+      "local": [
+        7,
+        3.2,
+        18.92
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_service_gantry_foot",
+      "materialFamily": "CONCRETE",
+      "world": [
+        115,
+        0.08,
+        62.92
+      ],
+      "local": [
+        7,
+        0.08,
+        18.92
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_service_gantry_header",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        108,
+        6.1,
+        62.92
+      ],
+      "local": [
+        0,
+        6.1,
+        18.92
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_service_gantry_pipe",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        108,
+        1.65,
+        63.14
+      ],
+      "local": [
+        0,
+        1.65,
+        19.14
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_service_gantry_hanger",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        102.8,
+        1.97,
+        63.14
+      ],
+      "local": [
+        -5.2,
+        1.97,
+        19.14
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_service_gantry_hanger",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        108,
+        1.97,
+        63.14
+      ],
+      "local": [
+        0,
+        1.97,
+        19.14
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_service_gantry_hanger",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        113.2,
+        1.97,
+        63.14
+      ],
+      "local": [
+        5.2,
+        1.97,
+        19.14
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_service_gantry_pipe",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        108,
+        3.15,
+        63.14
+      ],
+      "local": [
+        0,
+        3.15,
+        19.14
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_service_gantry_hanger",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        102.8,
+        3.4699999999999998,
+        63.14
+      ],
+      "local": [
+        -5.2,
+        3.4699999999999998,
+        19.14
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_service_gantry_hanger",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        108,
+        3.4699999999999998,
+        63.14
+      ],
+      "local": [
+        0,
+        3.4699999999999998,
+        19.14
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_service_gantry_hanger",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        113.2,
+        3.4699999999999998,
+        63.14
+      ],
+      "local": [
+        5.2,
+        3.4699999999999998,
+        19.14
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_service_gantry_pipe",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        108,
+        4.65,
+        63.14
+      ],
+      "local": [
+        0,
+        4.65,
+        19.14
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_service_gantry_hanger",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        102.8,
+        4.970000000000001,
+        63.14
+      ],
+      "local": [
+        -5.2,
+        4.970000000000001,
+        19.14
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_service_gantry_hanger",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        108,
+        4.970000000000001,
+        63.14
+      ],
+      "local": [
+        0,
+        4.970000000000001,
+        19.14
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_service_gantry_hanger",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        113.2,
+        4.970000000000001,
+        63.14
+      ],
+      "local": [
+        5.2,
+        4.970000000000001,
+        19.14
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_service_gantry_light",
+      "materialFamily": "PAINTED_STEEL",
+      "world": [
+        108,
+        6.45,
+        63.2
+      ],
+      "local": [
+        0,
+        6.45,
+        19.200000000000003
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_forecourt_camera_dock_bay_1_recessed_opening",
+      "materialFamily": "PAINTED_STEEL",
+      "world": [
+        103.04,
+        3.25,
+        61.519999999999996
+      ],
+      "local": [
+        -4.959999999999999,
+        3.25,
+        17.52
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_forecourt_camera_dock_bay_1_interior_shadow",
+      "materialFamily": "PAINTED_STEEL",
+      "world": [
+        103.04,
+        3.17,
+        61.620000000000005
+      ],
+      "local": [
+        -4.959999999999999,
+        3.17,
+        17.62
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_forecourt_camera_dock_bay_1_rolling_door",
+      "materialFamily": "PAINTED_STEEL",
+      "world": [
+        103.04,
+        5.92,
+        61.78
+      ],
+      "local": [
+        -4.959999999999999,
+        5.92,
+        17.78
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_forecourt_camera_dock_bay_1_rolling_door_rib",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        103.04,
+        5.64,
+        61.870000000000005
+      ],
+      "local": [
+        -4.959999999999999,
+        5.64,
+        17.87
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_forecourt_camera_dock_bay_1_rolling_door_rib",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        103.04,
+        6.119999999999999,
+        61.870000000000005
+      ],
+      "local": [
+        -4.959999999999999,
+        6.119999999999999,
+        17.87
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_forecourt_camera_dock_bay_1_grounded_threshold_sill",
+      "materialFamily": "CONCRETE",
+      "world": [
+        103.04,
+        0.31,
+        61.8
+      ],
+      "local": [
+        -4.959999999999999,
+        0.31,
+        17.8
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_forecourt_camera_dock_bay_1_projecting_frame_jamb_left",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        98.22,
+        3.33,
+        61.82
+      ],
+      "local": [
+        -9.779999999999998,
+        3.33,
+        17.82
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_forecourt_camera_dock_bay_1_projecting_frame_jamb_right",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        107.86,
+        3.33,
+        61.82
+      ],
+      "local": [
+        -0.13999999999999968,
+        3.33,
+        17.82
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_forecourt_camera_dock_bay_1_projecting_frame_header",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        103.04,
+        6.78,
+        61.82
+      ],
+      "local": [
+        -4.959999999999999,
+        6.78,
+        17.82
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_forecourt_camera_dock_bay_2_recessed_opening",
+      "materialFamily": "PAINTED_STEEL",
+      "world": [
+        114.24,
+        3.25,
+        61.519999999999996
+      ],
+      "local": [
+        6.24,
+        3.25,
+        17.52
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_forecourt_camera_dock_bay_2_interior_shadow",
+      "materialFamily": "PAINTED_STEEL",
+      "world": [
+        114.24,
+        3.17,
+        61.620000000000005
+      ],
+      "local": [
+        6.24,
+        3.17,
+        17.62
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_forecourt_camera_dock_bay_2_rolling_door",
+      "materialFamily": "PAINTED_STEEL",
+      "world": [
+        114.24,
+        5.92,
+        61.78
+      ],
+      "local": [
+        6.24,
+        5.92,
+        17.78
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_forecourt_camera_dock_bay_2_rolling_door_rib",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        114.24,
+        5.64,
+        61.870000000000005
+      ],
+      "local": [
+        6.24,
+        5.64,
+        17.87
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_forecourt_camera_dock_bay_2_rolling_door_rib",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        114.24,
+        6.119999999999999,
+        61.870000000000005
+      ],
+      "local": [
+        6.24,
+        6.119999999999999,
+        17.87
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_forecourt_camera_dock_bay_2_grounded_threshold_sill",
+      "materialFamily": "CONCRETE",
+      "world": [
+        114.24,
+        0.31,
+        61.8
+      ],
+      "local": [
+        6.24,
+        0.31,
+        17.8
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_forecourt_camera_dock_bay_2_projecting_frame_jamb_left",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        109.42,
+        3.33,
+        61.82
+      ],
+      "local": [
+        1.4200000000000008,
+        3.33,
+        17.82
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_forecourt_camera_dock_bay_2_projecting_frame_jamb_right",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        119.06,
+        3.33,
+        61.82
+      ],
+      "local": [
+        11.059999999999999,
+        3.33,
+        17.82
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_forecourt_camera_dock_bay_2_projecting_frame_header",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        114.24,
+        6.78,
+        61.82
+      ],
+      "local": [
+        6.24,
+        6.78,
+        17.82
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_forecourt_camera_dock_bay_3_recessed_opening",
+      "materialFamily": "PAINTED_STEEL",
+      "world": [
+        125.44,
+        3.25,
+        61.519999999999996
+      ],
+      "local": [
+        17.439999999999998,
+        3.25,
+        17.52
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_forecourt_camera_dock_bay_3_interior_shadow",
+      "materialFamily": "PAINTED_STEEL",
+      "world": [
+        125.44,
+        3.17,
+        61.620000000000005
+      ],
+      "local": [
+        17.439999999999998,
+        3.17,
+        17.62
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_forecourt_camera_dock_bay_3_rolling_door",
+      "materialFamily": "PAINTED_STEEL",
+      "world": [
+        125.44,
+        5.92,
+        61.78
+      ],
+      "local": [
+        17.439999999999998,
+        5.92,
+        17.78
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_forecourt_camera_dock_bay_3_rolling_door_rib",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        125.44,
+        5.64,
+        61.870000000000005
+      ],
+      "local": [
+        17.439999999999998,
+        5.64,
+        17.87
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_forecourt_camera_dock_bay_3_rolling_door_rib",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        125.44,
+        6.119999999999999,
+        61.870000000000005
+      ],
+      "local": [
+        17.439999999999998,
+        6.119999999999999,
+        17.87
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_forecourt_camera_dock_bay_3_grounded_threshold_sill",
+      "materialFamily": "CONCRETE",
+      "world": [
+        125.44,
+        0.31,
+        61.8
+      ],
+      "local": [
+        17.439999999999998,
+        0.31,
+        17.8
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_forecourt_camera_dock_bay_3_projecting_frame_jamb_left",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        120.62,
+        3.33,
+        61.82
+      ],
+      "local": [
+        12.619999999999997,
+        3.33,
+        17.82
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_forecourt_camera_dock_bay_3_projecting_frame_jamb_right",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        130.26,
+        3.33,
+        61.82
+      ],
+      "local": [
+        22.259999999999998,
+        3.33,
+        17.82
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_forecourt_camera_dock_bay_3_projecting_frame_header",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        125.44,
+        6.78,
+        61.82
+      ],
+      "local": [
+        17.439999999999998,
+        6.78,
+        17.82
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_forecourt_camera_dock_three_bay_loading_header",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        114.24,
+        7.08,
+        62.66
+      ],
+      "local": [
+        6.24,
+        7.08,
+        18.66
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_forecourt_camera_dock_grounded_loading_platform",
+      "materialFamily": "CONCRETE",
+      "world": [
+        114.24,
+        0.15,
+        64.44
+      ],
+      "local": [
+        6.24,
+        0.15,
+        20.44
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_forecourt_camera_dock_three_bay_rubber_bumper",
+      "materialFamily": "RUBBER",
+      "world": [
+        114.24,
+        0.78,
+        62.44
+      ],
+      "local": [
+        6.24,
+        0.78,
+        18.44
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_forecourt_camera_dock_three_bay_grounded_wheel_stop",
+      "materialFamily": "PAINTED_STEEL",
+      "world": [
+        114.24,
+        0.4,
+        66.59
+      ],
+      "local": [
+        6.24,
+        0.4,
+        22.590000000000003
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_forecourt_camera_dock_three_bay_threshold_trench_drain",
+      "materialFamily": "DRAIN",
+      "world": [
+        114.24,
+        0.33,
+        67.22
+      ],
+      "local": [
+        6.24,
+        0.33,
+        23.220000000000002
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_forecourt_camera_dock_three_bay_threshold_drain_grate",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        98.94,
+        0.4,
+        67.22
+      ],
+      "local": [
+        -9.06,
+        0.4,
+        23.220000000000002
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_forecourt_camera_dock_three_bay_threshold_drain_grate",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        104.04,
+        0.4,
+        67.22
+      ],
+      "local": [
+        -3.96,
+        0.4,
+        23.220000000000002
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_forecourt_camera_dock_three_bay_threshold_drain_grate",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        109.14,
+        0.4,
+        67.22
+      ],
+      "local": [
+        1.1400000000000006,
+        0.4,
+        23.220000000000002
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_forecourt_camera_dock_three_bay_threshold_drain_grate",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        114.24,
+        0.4,
+        67.22
+      ],
+      "local": [
+        6.24,
+        0.4,
+        23.220000000000002
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_forecourt_camera_dock_three_bay_threshold_drain_grate",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        119.34,
+        0.4,
+        67.22
+      ],
+      "local": [
+        11.340000000000002,
+        0.4,
+        23.220000000000002
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_forecourt_camera_dock_three_bay_threshold_drain_grate",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        124.44,
+        0.4,
+        67.22
+      ],
+      "local": [
+        16.440000000000005,
+        0.4,
+        23.220000000000002
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_forecourt_camera_dock_three_bay_threshold_drain_grate",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        129.54,
+        0.4,
+        67.22
+      ],
+      "local": [
+        21.54,
+        0.4,
+        23.220000000000002
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_forecourt_camera_dock_camera_court_loading_apron",
+      "materialFamily": "CONCRETE",
+      "world": [
+        114.24,
+        0.18,
+        68.44
+      ],
+      "local": [
+        6.24,
+        0.18,
+        24.44
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_forecourt_camera_dock_camera_court_threshold_joint",
+      "materialFamily": "PAINTED_STEEL",
+      "world": [
+        114.24,
+        0.34,
+        66.28999999999999
+      ],
+      "local": [
+        6.24,
+        0.34,
+        22.29
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_forecourt_camera_dock_camera_court_apron_curb_a",
+      "materialFamily": "CONCRETE",
+      "world": [
+        95.52,
+        0.29,
+        68.44
+      ],
+      "local": [
+        -12.479999999999999,
+        0.29,
+        24.44
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_forecourt_camera_dock_camera_court_apron_curb_b",
+      "materialFamily": "CONCRETE",
+      "world": [
+        132.96,
+        0.29,
+        68.44
+      ],
+      "local": [
+        24.96,
+        0.29,
+        24.44
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_forecourt_camera_dock_loading_lane_safety_stripe",
+      "materialFamily": "PAINTED_STEEL",
+      "world": [
+        108.44,
+        0.31,
+        64.44
+      ],
+      "local": [
+        0.4400000000000004,
+        0.31,
+        20.44
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_forecourt_camera_dock_loading_lane_safety_stripe",
+      "materialFamily": "PAINTED_STEEL",
+      "world": [
+        120.03999999999999,
+        0.31,
+        64.44
+      ],
+      "local": [
+        12.04,
+        0.31,
+        20.44
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_forecourt_camera_dock_hero_camera_bay_canopy_post_a",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        95.99,
+        3.65,
+        66.34
+      ],
+      "local": [
+        -12.01,
+        3.65,
+        22.340000000000003
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_forecourt_camera_dock_safety_bollard_a",
+      "materialFamily": "PAINTED_STEEL",
+      "world": [
+        98.14,
+        0.53,
+        62.52
+      ],
+      "local": [
+        -9.860000000000001,
+        0.53,
+        18.520000000000003
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_forecourt_camera_dock_hero_camera_bay_canopy_brace_a",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        96.42,
+        6.45,
+        65.62
+      ],
+      "local": [
+        -11.58,
+        6.45,
+        21.62
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_forecourt_camera_dock_hero_camera_bay_canopy_post_b",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        132.49,
+        3.65,
+        66.34
+      ],
+      "local": [
+        24.490000000000002,
+        3.65,
+        22.340000000000003
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_forecourt_camera_dock_safety_bollard_b",
+      "materialFamily": "PAINTED_STEEL",
+      "world": [
+        130.34,
+        0.53,
+        62.52
+      ],
+      "local": [
+        22.340000000000003,
+        0.53,
+        18.520000000000003
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_forecourt_camera_dock_hero_camera_bay_canopy_brace_b",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        132.06,
+        6.45,
+        65.62
+      ],
+      "local": [
+        24.060000000000002,
+        6.45,
+        21.62
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_forecourt_camera_dock_hero_camera_bay_loading_canopy",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        114.24,
+        7.05,
+        64.79
+      ],
+      "local": [
+        6.24,
+        7.05,
+        20.790000000000003
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_forecourt_camera_dock_practical_wall_light",
+      "materialFamily": "PAINTED_STEEL",
+      "world": [
+        107.74,
+        6.7,
+        61.900000000000006
+      ],
+      "local": [
+        -0.2599999999999998,
+        6.7,
+        17.900000000000002
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_forecourt_camera_dock_practical_wall_light",
+      "materialFamily": "PAINTED_STEEL",
+      "world": [
+        114.24,
+        6.7,
+        61.900000000000006
+      ],
+      "local": [
+        6.24,
+        6.7,
+        17.900000000000002
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_forecourt_camera_dock_practical_wall_light",
+      "materialFamily": "PAINTED_STEEL",
+      "world": [
+        120.74,
+        6.7,
+        61.900000000000006
+      ],
+      "local": [
+        12.74,
+        6.7,
+        17.900000000000002
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_forecourt_utility_hall_personnel_door_frame",
+      "materialFamily": "CONCRETE",
+      "world": [
+        93.44,
+        1.48,
+        61.8
+      ],
+      "local": [
+        -14.560000000000002,
+        1.48,
+        17.8
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_forecourt_utility_hall_personnel_door",
+      "materialFamily": "PAINTED_STEEL",
+      "world": [
+        93.44,
+        1.36,
+        62
+      ],
+      "local": [
+        -14.560000000000002,
+        1.36,
+        18
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_forecourt_connected_utility_hall_full_depth_body",
+      "materialFamily": "PAINTED_STEEL",
+      "world": [
+        87.2,
+        3.2,
+        39.4
+      ],
+      "local": [
+        -20.8,
+        3.2,
+        -4.6
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_forecourt_connected_utility_hall_roof_termination",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        87.2,
+        6.56,
+        39.4
+      ],
+      "local": [
+        -20.8,
+        6.56,
+        -4.6
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_forecourt_connected_utility_hall_recessed_service_door",
+      "materialFamily": "PAINTED_STEEL",
+      "world": [
+        89.136,
+        2.25,
+        36.08
+      ],
+      "local": [
+        -18.864,
+        2.25,
+        -7.92
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_forecourt_connected_utility_hall_service_door_header",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        89.136,
+        4.62,
+        36
+      ],
+      "local": [
+        -18.864,
+        4.62,
+        -8
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_forecourt_connected_process_stack_tank_1",
+      "materialFamily": "PAINTED_STEEL",
+      "world": [
+        106.44,
+        2.3,
+        63.019999999999996
+      ],
+      "local": [
+        -1.56,
+        2.3,
+        19.02
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_forecourt_connected_process_stack_tank_band_1",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        106.44,
+        0.55,
+        63.019999999999996
+      ],
+      "local": [
+        -1.56,
+        0.55,
+        19.02
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_forecourt_connected_process_stack_tank_band_1",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        106.44,
+        4.05,
+        63.019999999999996
+      ],
+      "local": [
+        -1.56,
+        4.05,
+        19.02
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_forecourt_connected_process_stack_tank_cap_1",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        106.44,
+        4.68,
+        63.019999999999996
+      ],
+      "local": [
+        -1.56,
+        4.68,
+        19.02
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_forecourt_connected_process_stack_tank_2",
+      "materialFamily": "PAINTED_STEEL",
+      "world": [
+        114.76,
+        2.75,
+        63.019999999999996
+      ],
+      "local": [
+        6.76,
+        2.75,
+        19.02
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_forecourt_connected_process_stack_tank_band_2",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        114.76,
+        0.55,
+        63.019999999999996
+      ],
+      "local": [
+        6.76,
+        0.55,
+        19.02
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_forecourt_connected_process_stack_tank_band_2",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        114.76,
+        4.95,
+        63.019999999999996
+      ],
+      "local": [
+        6.76,
+        4.95,
+        19.02
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_forecourt_connected_process_stack_tank_cap_2",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        114.76,
+        5.58,
+        63.019999999999996
+      ],
+      "local": [
+        6.76,
+        5.58,
+        19.02
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_forecourt_connected_process_stack_tank_3",
+      "materialFamily": "PAINTED_STEEL",
+      "world": [
+        122.04,
+        2.1,
+        63.019999999999996
+      ],
+      "local": [
+        14.040000000000001,
+        2.1,
+        19.02
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_forecourt_connected_process_stack_tank_band_3",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        122.04,
+        0.55,
+        63.019999999999996
+      ],
+      "local": [
+        14.040000000000001,
+        0.55,
+        19.02
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_forecourt_connected_process_stack_tank_band_3",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        122.04,
+        3.6500000000000004,
+        63.019999999999996
+      ],
+      "local": [
+        14.040000000000001,
+        3.6500000000000004,
+        19.02
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_forecourt_connected_process_stack_tank_cap_3",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        122.04,
+        4.28,
+        63.019999999999996
+      ],
+      "local": [
+        14.040000000000001,
+        4.28,
+        19.02
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_forecourt_connected_process_bridge_upper_run",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        113.72,
+        6.1,
+        63.44
+      ],
+      "local": [
+        5.72,
+        6.1,
+        19.44
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_forecourt_connected_process_bridge_support",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        100.2,
+        2.8,
+        63.44
+      ],
+      "local": [
+        -7.8,
+        2.8,
+        19.44
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_forecourt_connected_process_bridge_support",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        124.64,
+        2.8,
+        63.44
+      ],
+      "local": [
+        16.64,
+        2.8,
+        19.44
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_forecourt_connected_process_transfer_pipe",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        112.16,
+        4.15,
+        63.54
+      ],
+      "local": [
+        4.16,
+        4.15,
+        19.54
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_forecourt_intermediate_service_annex_grounded_base",
+      "materialFamily": "CONCRETE",
+      "world": [
+        129.84,
+        0.16,
+        63.72
+      ],
+      "local": [
+        21.84,
+        0.16,
+        19.72
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_forecourt_intermediate_service_annex_full_depth_body",
+      "materialFamily": "PAINTED_STEEL",
+      "world": [
+        129.84,
+        2.5,
+        63.72
+      ],
+      "local": [
+        21.84,
+        2.5,
+        19.72
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    },
+    {
+      "name": "",
+      "visible": true,
+      "effectiveVisible": true,
+      "ancestorSuppressed": false,
+      "role": "low_shed_forecourt_intermediate_service_annex_roof_termination",
+      "materialFamily": "GALVANIZED_STEEL",
+      "world": [
+        129.84,
+        4.86,
+        63.72
+      ],
+      "local": [
+        21.84,
+        4.86,
+        19.72
+      ],
+      "parent": "slice_pressure_low_service_shed"
+    }
+  ],
+  "errors": [],
+  "postIsolation": {
+    "shedVisible": true,
+    "visibleBays": 94
+  }
+}

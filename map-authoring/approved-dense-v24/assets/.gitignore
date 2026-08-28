@@ -1,0 +1,10 @@
+# Runtime payloads are sourced locally from the provider URLs in asset-manifest.json.
+*.hdr
+*.glb
+*.gltf
+*.bin
+*.jpg
+*.jpeg
+*.png
+*.webp
+*.ktx2

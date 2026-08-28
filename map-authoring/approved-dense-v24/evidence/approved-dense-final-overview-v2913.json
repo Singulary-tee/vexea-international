@@ -1,0 +1,53 @@
+{
+  "url": "http://127.0.0.1:3000/map-authoring.html?approvedDense=1&view=perspective&slice=off&denseDetail=1&denseSky=1&denseTrees=1&denseOccupancy=1&densePiping=1&denseTerrain=1&denseLights=1&denseForecourt=1&denseEdge=1&denseMaterials=1&densePbr=1&solid=1",
+  "camera": [
+    609.9999999999999,
+    509.99999999999994,
+    700.0000000000001
+  ],
+  "target": [
+    -20,
+    2.9999999999999996,
+    -35
+  ],
+  "orthographic": false,
+  "diagnostics": [
+    "APPROVED_DENSE_TERRAIN_RIDGES:OK:4",
+    "APPROVED_DENSE_SERVICE_LIGHTS:OK:3",
+    "APPROVED_DENSE_EDGE_HIERARCHY:OK:13",
+    "APPROVED_DENSE_LOADING_CANOPY:OK:5",
+    "APPROVED_DENSE_PBR:OK",
+    "APPROVED_DENSE_FORECOURT_PBR:OK",
+    "APPROVED_DENSE_GROUND_PBR:OK:117",
+    "HDRI_PURE_SKY_OVERCAST:OK",
+    "APPROVED_DENSE_PIPING:OK:5",
+    "FULL_MAP_TREES:OK",
+    "FULL_MAP_TREES:OK",
+    "APPROVED_DENSE_OCCUPANCY:OK:4"
+  ],
+  "canvas": {
+    "width": 1280,
+    "height": 820,
+    "clientWidth": 1280,
+    "clientHeight": 820
+  },
+  "denseChildren": 42,
+  "rootChildren": 131,
+  "renderer": "WebGPURenderer",
+  "readiness": {
+    "mode": "fast-authoring",
+    "rendererReadyMs": 25,
+    "blockoutReadyMs": 1324,
+    "visualPassReadyMs": null,
+    "averageFrameTimeMs": 224.3,
+    "measuredFps": 4,
+    "firstVisualFrameTimeMs": null,
+    "steadyFrameTimeMs": null,
+    "steadyMeasuredFps": 0
+  },
+  "errors": [],
+  "startedAt": "2026-08-27T17:51:53.651Z",
+  "generatedAt": "2026-08-27T17:54:25.546Z",
+  "captureErrors": [],
+  "valid": true
+}

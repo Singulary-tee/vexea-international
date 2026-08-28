@@ -1,0 +1,33 @@
+{
+  "url": "http://127.0.0.1:3000/map-authoring.html?blockout=1&view=top&tags=0&xray=1&volumes=1",
+  "recordCount": 93,
+  "visibleRecordCount": 93,
+  "kinds": [
+    "BUILDING_MASS",
+    "SURFACE_SEGMENT",
+    "ROUTE_SEGMENT",
+    "COVER",
+    "AIR_ACCESS",
+    "UAV_OPENING",
+    "GROUND_DEPLOYMENT",
+    "KILL_ZONE",
+    "CAMERA_SECTOR",
+    "PLAYER_SPAWN",
+    "TERRAIN_SEGMENT"
+  ],
+  "approximateBuildingOverlapPairs": [
+    [
+      "dense_processing_hall",
+      "dense_service_tower"
+    ],
+    [
+      "dense_yard_utility_stack",
+      "dense_switchgear_03"
+    ]
+  ],
+  "failures": [],
+  "orthographic": true,
+  "controlsEnabled": true,
+  "errors": [],
+  "pass": true
+}
