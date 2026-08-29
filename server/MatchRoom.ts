@@ -54,6 +54,7 @@ import {
   DroneIntelConfig,
   isRuntimeWeaponId
 } from "../shared/constants";
+import { validateEntityAnimationContracts } from "../shared/state-animation-contract";
 import { ChannelAdapter } from "./transport/adapter";
 import { CLASSES, ClassId, getClassWeaponId, isClassWeaponAllowed } from "../shared/classes.js";
 import type { WeaponId } from "../shared/weapons.js";
@@ -492,6 +493,10 @@ export class MatchRoom {
     this.physicsManager.initPhysics();
     this.rapierWorld = this.physicsManager.rapierWorld;
     this.initEntities();
+    const contractValidation = validateEntityAnimationContracts();
+    if (!contractValidation.valid) {
+      console.error("[MatchRoom] Entity animation contract validation errors:", contractValidation.errors);
+    }
     this.commanderMemory = new CommanderMemory(this);
     this.llmCommander = new LLMCommander(this, geminiKey);
     // Phase 1 complete. Simulation loops start in triggerStartMatch()

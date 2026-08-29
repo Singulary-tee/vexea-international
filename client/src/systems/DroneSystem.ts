@@ -1,6 +1,11 @@
 import * as THREE from "three/webgpu";
 import { MatchController } from "../../MatchController";
 import { DroneState, DroneType, DRONE_CONFIGS, PLAYER_RADIUS, PLAYER_TOTAL_HEIGHT } from "../../../shared/constants";
+import {
+  resolvePlayerAnimationState,
+  resolveDroneAnimationState,
+  validateEntityAnimationContracts,
+} from "../../../shared/state-animation-contract";
 import * as SkeletonUtils from "three/addons/utils/SkeletonUtils.js";
 import { createProceduralState, updateProceduralState, applyNodeRotation } from "./DroneProcedural";
 import { fixSkinnedMeshBones } from "../../StudioPreviewManager";
@@ -103,7 +108,14 @@ export class DroneSystem {
     }
   }
 
-  public init() {}
+  public init() {
+    if (typeof process !== "undefined" && process.env && process.env.NODE_ENV !== "production") {
+      const result = validateEntityAnimationContracts();
+      if (!result.valid) {
+        console.warn("[DroneSystem] Contract validation errors:", result.errors);
+      }
+    }
+  }
 
   public step(dt: number) {
     const match = this.match;
@@ -677,6 +689,41 @@ export class DroneSystem {
 
         group.position.lerp(data.pos, 0.15);
         group.rotation.y += (data.yaw - group.rotation.y) * 0.15;
+
+        // Resolve and transition remote player animation state from shared contract
+        if (mixer && (window as any).playerModel?.animations) {
+          const animOutput = resolvePlayerAnimationState({
+            isAlive: data.isAlive,
+            isFiring: data.isFiring,
+            isReloading: data.isReloading,
+            speed,
+            weapon: data.weapon,
+          });
+
+          if (animOutput.kind === "clip") {
+            const targetClipName = animOutput.clipName;
+            const currentClipName = (group as any)._currentClipName;
+            if (currentClipName !== targetClipName) {
+              const newClip = (window as any).playerModel.animations.find((a: any) => a.name === targetClipName) || (window as any).playerModel.animations[0];
+              if (newClip) {
+                const prevAction = (group as any)._currentAction;
+                const newAction = mixer.clipAction(newClip);
+                newAction.reset();
+                if (animOutput.speed !== undefined) newAction.setEffectiveTimeScale(animOutput.speed);
+                if (animOutput.loop === false) {
+                  newAction.setLoop(THREE.LoopOnce, 1);
+                  newAction.clampWhenFinished = !!animOutput.clampWhenFinished;
+                }
+                if (prevAction) {
+                  newAction.crossFadeFrom(prevAction, animOutput.crossFadeDuration ?? 0.2, true);
+                }
+                newAction.play();
+                (group as any)._currentAction = newAction;
+                (group as any)._currentClipName = targetClipName;
+              }
+            }
+          }
+        }
       }
       
       if (mixer) {
