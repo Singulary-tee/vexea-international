@@ -19,40 +19,43 @@ const _droneFireDir = new THREE.Vector3();
 const _droneDeathPos = new THREE.Vector3();
 
 class PositionalAudioPool {
-  private pool: { audio: THREE.PositionalAudio | null; anchor: THREE.Mesh; active: boolean; timeoutId: any }[] = [];
+  private pool: { audio: THREE.PositionalAudio | null; anchor: THREE.Object3D; active: boolean; timeoutId: any }[] = [];
   private max_size = 16;
-  private geom = new THREE.BoxGeometry(0.1, 0.1, 0.1);
-  private mat = new THREE.MeshBasicMaterial({ visible: false });
+  private audioRoot: THREE.Group | null = null;
+
+  public init(scene: THREE.Scene, listener: THREE.AudioListener) {
+    if (this.audioRoot && this.audioRoot.parent === scene) return;
+    this.audioRoot = new THREE.Group();
+    this.audioRoot.name = "PositionalAudioPoolRoot";
+    scene.add(this.audioRoot);
+
+    this.pool = [];
+    for (let i = 0; i < this.max_size; i++) {
+      const anchor = new THREE.Object3D();
+      const audio = new THREE.PositionalAudio(listener);
+      anchor.add(audio);
+      this.audioRoot.add(anchor);
+      this.pool.push({ audio, anchor, active: false, timeoutId: null });
+    }
+  }
 
   public play(scene: THREE.Scene, listener: THREE.AudioListener, buffer: any, mPos: THREE.Vector3, volume: number, playbackRate = 1.0) {
+    if (!this.audioRoot || this.audioRoot.parent !== scene) {
+      this.init(scene, listener);
+    }
+
     let item = this.pool.find(i => !i.active);
-    
-    if (!item && this.pool.length < this.max_size) {
-      const anchor = new THREE.Mesh(this.geom, this.mat);
-      item = { audio: null, anchor, active: true, timeoutId: null };
-      this.pool.push(item);
-    } else if (!item) {
-      // Recycle oldest active item
+    if (!item) {
       item = this.pool.shift()!;
       if (item.timeoutId) clearTimeout(item.timeoutId);
       if (item.audio && item.audio.isPlaying) item.audio.stop();
-      if (item.anchor.parent) scene.remove(item.anchor);
-      item.active = true;
       this.pool.push(item);
     }
 
-    if (item) {
-      item.active = true;
-      if (!item.audio) {
-        item.audio = new THREE.PositionalAudio(listener);
-        item.anchor.add(item.audio);
-      }
-      
-      item.anchor.position.copy(mPos);
-      if (!item.anchor.parent) {
-        scene.add(item.anchor);
-      }
-      
+    item.active = true;
+    item.anchor.position.copy(mPos);
+
+    if (item.audio) {
       item.audio.setBuffer(buffer);
       item.audio.setDistanceModel('linear');
       item.audio.setRefDistance(5);
@@ -63,16 +66,13 @@ class PositionalAudioPool {
       
       if (item.audio.isPlaying) item.audio.stop();
       item.audio.play();
-
-      const currentItem = item;
-      if (item.timeoutId) clearTimeout(item.timeoutId);
-      item.timeoutId = setTimeout(() => {
-        currentItem.active = false;
-        if (currentItem.anchor.parent) {
-          scene.remove(currentItem.anchor);
-        }
-      }, 2000);
     }
+
+    const currentItem = item;
+    if (item.timeoutId) clearTimeout(item.timeoutId);
+    item.timeoutId = setTimeout(() => {
+      currentItem.active = false;
+    }, 2000);
   }
 }
 

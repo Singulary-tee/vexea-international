@@ -5,6 +5,7 @@ import { audioManager } from "../audio";
 import { getDefaultMap } from "../../shared/maps/map-registry";
 import { clientFlagService } from "../flags/flag-service";
 import { FeatureFlagKey } from "../../shared/feature-flags";
+import { bindContentEntry } from "../src/ui/ui-motion";
 
 interface FactionSector {
   id: string;
@@ -48,6 +49,7 @@ export function renderFactionScreen(container: HTMLElement, registeredUserData: 
   ];
 
   const wrap = document.createElement('div');
+  bindContentEntry(wrap, 0);
   Object.assign(wrap.style, {
     display: 'flex',
     flexDirection: 'column',

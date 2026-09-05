@@ -10,6 +10,8 @@ import * as SkeletonUtils from "three/addons/utils/SkeletonUtils.js";
 import { createProceduralState, updateProceduralState, applyNodeRotation } from "./DroneProcedural";
 import { fixSkinnedMeshBones } from "../../StudioPreviewManager";
 import { audioManager } from "../../audio";
+import { applyScenicGripPose } from "../../weapons/GripSystem";
+import { createRemotePlayerWeapon } from "../../weapons_model";
 
 export class DroneSystem {
 
@@ -723,6 +725,26 @@ export class DroneSystem {
               }
             }
           }
+        }
+        // Attach and constrain 3rd-person weapon model using procedural GripSystem (ARCH-14)
+        const currentWeaponType = data.weapon || 'rifle';
+        let remoteWeaponMesh = (group as any)._remoteWeaponMesh as THREE.Group | undefined;
+        const remoteWeaponType = (group as any)._remoteWeaponType;
+
+        if (!remoteWeaponMesh || remoteWeaponType !== currentWeaponType) {
+          if (remoteWeaponMesh) {
+            group.remove(remoteWeaponMesh);
+          }
+          remoteWeaponMesh = createRemotePlayerWeapon(currentWeaponType);
+          if (remoteWeaponMesh) {
+            group.add(remoteWeaponMesh);
+            (group as any)._remoteWeaponMesh = remoteWeaponMesh;
+            (group as any)._remoteWeaponType = currentWeaponType;
+          }
+        }
+
+        if (remoteWeaponMesh && (window as any).playerModel) {
+          applyScenicGripPose(group, remoteWeaponMesh);
         }
       }
       

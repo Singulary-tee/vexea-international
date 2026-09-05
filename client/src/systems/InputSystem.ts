@@ -661,6 +661,10 @@ export class InputSystem {
       } else {
         this.match.playerPos.add(this.match.tempMoveDir.multiplyScalar(targetSpeed * dt));
       }
+
+      if (this.match.simulation) {
+        this.match.simulation.applyDynamicSeparation();
+      }
     }
 
     const currentHalfHeight = inputManager.isCrouching ? PLAYER_CAPSULE_HALF_HEIGHT_CROUCH : PLAYER_CAPSULE_HALF_HEIGHT;

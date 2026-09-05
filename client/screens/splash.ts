@@ -3,6 +3,7 @@ import { getCachedOrFetchUrl, getAssetUrl, populateBlobUrlMap } from "../asset-c
 import { IS_DESKTOP } from "../gates/platform.gate";
 import { DS } from "../design-system";
 import { AUDIO_MANIFEST } from "../audio-manifest";
+import { mountLoadingBarMotion } from "../src/ui/ui-motion";
 
 const SOUNDS_TO_PRELOAD = AUDIO_MANIFEST.filter(e => e.key === 'click' || e.key === 'vexea_theme').map(e => e.path);
 
@@ -176,18 +177,12 @@ export function initSplash() {
       display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', zIndex: '2'
     });
     
-    const loadingBarWrapper = document.createElement('div');
-    Object.assign(loadingBarWrapper.style, {
-      width: '7.50rem', height: '2px', background: DS.colors.surface, overflow: 'hidden',
+    const loadingBarContainer = document.createElement('div');
+    Object.assign(loadingBarContainer.style, {
+      width: '7.50rem',
       borderRadius: '0px'
     });
-
-    const loadingBarInner = document.createElement('div');
-    Object.assign(loadingBarInner.style, {
-      height: '100%', width: '0', background: '#FFFFFF',
-      borderRadius: '0px'
-    });
-    loadingBarWrapper.appendChild(loadingBarInner);
+    const loadingHandle = mountLoadingBarMotion(loadingBarContainer);
 
     const initText = document.createElement('div');
     initText.textContent = 'CHARGING SYSTEM CACHE... 0%';
@@ -196,7 +191,7 @@ export function initSplash() {
       color: DS.colors.textPrimary, textTransform: 'uppercase', opacity: '1', marginTop: '0', height: 'auto'
     });
 
-    contentWrapper.appendChild(loadingBarWrapper);
+    contentWrapper.appendChild(loadingBarContainer);
     contentWrapper.appendChild(initText);
     el.appendChild(contentWrapper);
 
@@ -233,9 +228,9 @@ export function initSplash() {
           console.warn("[Preload] Failed item:", item.name);
         }
         completed++;
-        const percent = Math.floor((completed / total) * 100);
-        loadingBarInner.style.transition = 'width 100ms ease-out';
-        loadingBarInner.style.width = `${Math.floor((completed / total) * 120)}px`;
+        const ratio = completed / total;
+        const percent = Math.floor(ratio * 100);
+        loadingHandle.setProgress(percent);
         initText.textContent = `CHARGING SYSTEM CACHE... ${percent}%`;
       };
 
@@ -260,11 +255,11 @@ export function initSplash() {
         el.style.backgroundImage = `url('${getAssetUrl("splash_screen.webp")}')`;
       }
 
-      loadingBarInner.style.width = '7.50rem';
+      loadingHandle.complete();
 
       setTimeout(() => {
-        loadingBarWrapper.style.transition = 'opacity 200ms';
-        loadingBarWrapper.style.opacity = '0';
+        loadingBarContainer.style.transition = 'opacity 200ms';
+        loadingBarContainer.style.opacity = '0';
       }, 500);
 
       setTimeout(() => {

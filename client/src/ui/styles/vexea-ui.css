@@ -1,0 +1,650 @@
+/* ==========================================================================
+   VEXEA UI Design System & Motion Contract (CSS-First Architecture)
+   Strictly zero arbitrary CSS-in-JS injection. Authoritative shared stylesheet.
+   ========================================================================== */
+
+:root {
+  /* Motion & Interaction Tokens (VEXEA_UI_DESIGN_SYSTEM.md authoritative tokens) */
+  --ui-motion-immediate: 90ms;
+  --ui-motion-response: 180ms;
+  --ui-motion-content: 240ms;
+  --ui-motion-underline: 220ms;
+  --ui-motion-selection-breathe: 2800ms;
+  --ui-motion-faction-edge: 320ms;
+  --ui-motion-value-tween: 220ms;
+  --ui-motion-skeleton-cadence: 2800ms;
+  --ui-motion-trace-cadence: 8000ms;
+  --ui-motion-ease: cubic-bezier(.22, .72, .2, 1);
+  --ui-icon-rest-opacity: 0.55;
+  --ui-icon-active-opacity: 1;
+  --ui-icon-disabled-opacity: 0.24;
+  --ui-control-focus: rgba(241, 242, 239, .72);
+  --ui-control-text: #F1F2EF;
+  --ui-control-muted: rgba(228, 234, 230, .55);
+  --ui-control-track: #343E3D;
+  --ui-control-accent: #C77C3B;
+  --ui-control-thumb: 10px;
+  --ui-control-track-height: 2px;
+  --ui-toggle-width: 30px;
+  --ui-toggle-height: 14px;
+
+  /* Surface and Neutral Palette (Warm/Industrial Neutrals) */
+  --vx-color-bg: #090B0B;
+  --vx-color-surface: #121615;
+  --vx-color-surface-elevated: #1B2120;
+  --vx-color-border-subtle: rgba(225, 229, 227, 0.08);
+  --vx-color-border-medium: rgba(225, 229, 227, 0.16);
+  --vx-color-border-strong: rgba(225, 229, 227, 0.28);
+
+  /* Contrast Whites & Dirty Whites */
+  --vx-color-white: #FFFFFF;
+  --vx-color-dirty-white: #E1E5E3;
+  --vx-color-white-muted: rgba(225, 229, 227, 0.55);
+  --vx-color-text-primary: #F4F5F1;
+  --vx-color-text-secondary: #9FA7A3;
+  --vx-color-text-muted: #646E6A;
+
+  /* Restrained Accents */
+  --vx-color-accent: #FF4500;
+  --vx-color-accent-amber: #C77C3B;
+  --vx-color-accent-olive: #687A60;
+  --vx-color-success: #00FF88;
+
+  /* Typography */
+  --vx-font-sans: 'Rajdhani', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --vx-font-wordmark: 'Orbitron', -apple-system, BlinkMacSystemFont, sans-serif;
+  --vx-font-mono: 'JetBrains Mono', 'Consolas', monospace;
+
+  /* Envelopes & Easing */
+  --vx-ease-standard: cubic-bezier(0.16, 1, 0.3, 1);
+  --vx-ease-out: cubic-bezier(0, 0, 0.2, 1);
+  --vx-ease-in: cubic-bezier(0.4, 0, 1, 1);
+}
+
+/* ==========================================================================
+   Icon Contrast Response Primitive (Grey-default 0.55, white 1.0 on interaction)
+   ========================================================================== */
+.vexea-icon-button {
+  background: transparent;
+  border: none;
+  padding: 4px;
+  margin: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  outline: none;
+  border-radius: 0px !important;
+  user-select: none;
+}
+
+.vexea-icon-button__icon,
+.vexea-icon-clickable,
+[data-ui-icon-clickable="true"] {
+  opacity: var(--ui-icon-rest-opacity, 0.55);
+  filter: brightness(0) invert(1);
+  transition: opacity var(--ui-motion-response, 180ms) var(--ui-motion-ease, cubic-bezier(.22,.72,.2,1)),
+              transform var(--ui-motion-immediate, 90ms) linear;
+  display: block;
+}
+
+.vexea-icon-button:hover .vexea-icon-button__icon,
+.vexea-icon-button:focus-visible .vexea-icon-button__icon,
+.vexea-icon-button[data-ui-state="active"] .vexea-icon-button__icon,
+.vexea-icon-clickable:hover,
+.vexea-icon-clickable:focus-visible,
+[data-ui-icon-clickable="true"]:hover,
+[data-ui-icon-clickable="true"]:focus-visible {
+  opacity: var(--ui-icon-active-opacity, 1.0);
+}
+
+.vexea-icon-button:active .vexea-icon-button__icon,
+.vexea-icon-button[data-ui-state="pressed"] .vexea-icon-button__icon,
+.vexea-icon-clickable:active,
+[data-ui-icon-clickable="true"]:active {
+  opacity: var(--ui-icon-active-opacity, 1.0);
+  transform: translateY(1px);
+}
+
+.vexea-icon-button:disabled .vexea-icon-button__icon,
+.vexea-icon-button[data-ui-disabled="true"] .vexea-icon-button__icon {
+  opacity: var(--ui-icon-disabled-opacity, 0.24);
+  transition: none;
+}
+
+/* ==========================================================================
+   Button Response Primitive
+   ========================================================================== */
+.vexea-btn,
+[data-ui-btn="true"] {
+  position: relative;
+  border-radius: 0px !important;
+  font-family: var(--vx-font-sans);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  transition: background-color 180ms var(--vx-ease-out),
+              border-color 180ms var(--vx-ease-out),
+              color 180ms var(--vx-ease-out),
+              transform 90ms var(--vx-ease-out);
+  cursor: pointer;
+  user-select: none;
+}
+
+.vexea-btn:active,
+[data-ui-btn="true"]:active {
+  transform: translateY(1px);
+  transition-duration: 90ms;
+}
+
+/* ==========================================================================
+   Sliding Tab Underline Primitive (Shared across Main Nav, Settings, Stats, Armory, Store)
+   - 220ms sliding 1px underline
+   ========================================================================== */
+.vexea-tab-row {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  --ui-underline-x: 0px;
+  --ui-underline-width: 0px;
+}
+
+.vexea-tab {
+  background: transparent;
+  border: none;
+  font-family: var(--vx-font-sans, inherit);
+  color: var(--ui-control-muted, rgba(228, 234, 230, 0.55));
+  cursor: pointer;
+  padding: 4px 8px;
+  transition: color var(--ui-motion-response, 180ms) var(--ui-motion-ease, cubic-bezier(.22, .72, .2, 1));
+  user-select: none;
+  white-space: nowrap;
+  outline: none;
+}
+
+.vexea-tab:hover,
+.vexea-tab:focus-visible {
+  color: var(--ui-control-text, #F1F2EF);
+}
+
+.vexea-tab[data-ui-selected="true"],
+.vexea-tab.active {
+  color: var(--ui-control-text, #F1F2EF);
+}
+
+.vexea-tab-underline {
+  position: absolute;
+  left: var(--ui-underline-x, 0px);
+  bottom: 0;
+  width: var(--ui-underline-width, 0px);
+  height: 1px;
+  background: var(--vx-color-accent, #FF4500);
+  transition: left var(--ui-motion-underline, 220ms) var(--ui-motion-ease, cubic-bezier(.22, .72, .2, 1)),
+              width var(--ui-motion-underline, 220ms) var(--ui-motion-ease, cubic-bezier(.22, .72, .2, 1));
+  pointer-events: none;
+  z-index: 2;
+}
+
+/* ==========================================================================
+   Selected Frame & Low-Amplitude Breath
+   ========================================================================== */
+[data-ui-selected="true"] {
+  border-color: var(--vx-color-accent) !important;
+}
+
+.vexea-selected-breath {
+  animation: vexea-selection-breathe 2.8s ease-in-out infinite;
+}
+
+@keyframes vexea-selection-breathe {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(255, 69, 0, 0);
+  }
+  50% {
+    box-shadow: 0 0 12px 1px rgba(255, 69, 0, 0.25);
+  }
+}
+
+/* ==========================================================================
+   Content Settle / Staggered Card Entry
+   ========================================================================== */
+[data-ui-content-transition="enter"] {
+  animation: vexea-content-enter 240ms var(--vx-ease-standard) forwards;
+}
+
+@keyframes vexea-content-enter {
+  0% {
+    opacity: 0;
+    transform: translateY(0.22rem);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ==========================================================================
+   Settings Response: Sliders & Toggles
+   ========================================================================== */
+.vexea-slider-thumb {
+  transition: transform 90ms var(--vx-ease-out);
+}
+
+.vexea-slider-thumb:active {
+  transform: scale(1.35);
+}
+
+.vexea-toggle-track {
+  width: 30px;
+  height: 14px;
+  background-color: var(--vx-color-surface-elevated);
+  border: 1px solid var(--vx-color-border-medium);
+  border-radius: 0px;
+  position: relative;
+  transition: background-color 180ms var(--vx-ease-out), border-color 180ms var(--vx-ease-out);
+  cursor: pointer;
+}
+
+.vexea-toggle-track[data-checked="true"] {
+  background-color: rgba(255, 69, 0, 0.2);
+  border-color: var(--vx-color-accent);
+}
+
+.vexea-toggle-thumb {
+  width: 10px;
+  height: 10px;
+  background-color: var(--vx-color-dirty-white);
+  border-radius: 0px;
+  position: absolute;
+  top: 1px;
+  left: 1px;
+  transition: transform 180ms var(--vx-ease-standard), background-color 180ms var(--vx-ease-out);
+}
+
+.vexea-toggle-track[data-checked="true"] .vexea-toggle-thumb {
+  transform: translateX(16px);
+  background-color: var(--vx-color-accent);
+}
+
+/* ==========================================================================
+   Skeleton Sweep (2.8s low-opacity sweep)
+   ========================================================================== */
+.vexea-skeleton-sweep {
+  position: relative;
+  overflow: hidden;
+  background-color: rgba(225, 229, 227, 0.04);
+}
+
+.vexea-skeleton-sweep::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent 0%, rgba(225, 229, 227, 0.08) 50%, transparent 100%);
+  animation: vexea-skeleton-sweep 2.8s ease-in-out infinite;
+}
+
+@keyframes vexea-skeleton-sweep {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+/* ==========================================================================
+   Background Instrument Trace (8s cadence, opacity <= .04)
+   ========================================================================== */
+.vexea-instrument-trace {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.03;
+  background: repeating-linear-gradient(
+    0deg,
+    rgba(225, 229, 227, 0.1) 0px,
+    rgba(225, 229, 227, 0.1) 1px,
+    transparent 1px,
+    transparent 24px
+  );
+  animation: vexea-trace-sweep 8s linear infinite;
+}
+
+@keyframes vexea-trace-sweep {
+  0% {
+    background-position: 0 0;
+  }
+  100% {
+    background-position: 0 24px;
+  }
+}
+
+/* ==========================================================================
+   MATCHMAKING RADIAL SEQUENCE (Approved long-form contract)
+   - 460ms surface fade
+   - 920ms radial expansion
+   - 18s inner counter-rotation
+   - 9s primary arc orbit
+   - 7s outer-boundary breath
+   - 620ms found lock
+   - 760ms terminal hold
+   - 360ms reverse exit
+   ========================================================================== */
+.vexea-mm-backdrop {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 99999;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(9, 11, 11, 0.92);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  opacity: 0;
+  animation: vexea-mm-fade-in 460ms var(--vx-ease-out) forwards;
+  pointer-events: auto;
+  user-select: none;
+  font-family: var(--vx-font-sans);
+  overflow: hidden;
+  box-sizing: border-box;
+  padding: clamp(8px, 2vh, 20px) clamp(8px, 2vw, 20px);
+}
+
+.vexea-mm-backdrop.vexea-mm-exiting {
+  animation: vexea-mm-fade-out 360ms var(--vx-ease-in) forwards;
+}
+
+.vexea-mm-content-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  max-width: 100vw;
+  max-height: 100vh;
+  gap: clamp(6px, 1.6vh, 14px);
+  box-sizing: border-box;
+}
+
+.vexea-mm-radial-container {
+  position: relative;
+  /* Section 11 Mathematical Guarantee:
+     Constrained by min(44vh, 65vw, 280px).
+     Total height budget = radial (44vh) + status (4vh) + cancel (5vh) + gaps (3.2vh) + padding (4vh) = 60.2vh <= 100vh.
+     Zero vertical overflow on any mobile landscape (e.g. 390px height), portrait, or desktop screen. */
+  width: min(44vh, 65vw, 280px);
+  height: min(44vh, 65vw, 280px);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transform: scale(0.88);
+  animation: vexea-mm-radial-expand 920ms var(--vx-ease-standard) forwards;
+}
+
+.vexea-mm-backdrop.vexea-mm-exiting .vexea-mm-radial-container {
+  animation: vexea-mm-radial-collapse 360ms var(--vx-ease-in) forwards;
+}
+
+.vexea-mm-svg {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  display: block;
+}
+
+/* Primary Moving Arc (9s orbit) */
+.vexea-mm-moving-arc {
+  transform-origin: 50px 50px;
+  animation: vexea-mm-arc-orbit 9s linear infinite;
+}
+
+/* Inner Counter-Rotation Group (18s counter-rotation) */
+.vexea-mm-inner-group {
+  transform-origin: 50px 50px;
+  animation: vexea-mm-inner-counter 18s linear infinite;
+}
+
+/* Outer Boundary Breath (7s breath) */
+.vexea-mm-outer-boundary {
+  animation: vexea-mm-outer-breath 7s ease-in-out infinite;
+}
+
+/* Found Lock Animation (620ms staged event) */
+.vexea-mm-backdrop.vexea-mm-found .vexea-mm-moving-arc {
+  animation: vexea-mm-found-lock 620ms var(--vx-ease-standard) forwards;
+}
+
+.vexea-mm-backdrop.vexea-mm-found .vexea-mm-inner-group {
+  animation-play-state: paused;
+}
+
+.vexea-mm-backdrop.vexea-mm-found .vexea-mm-outer-boundary {
+  stroke: var(--vx-color-accent-amber);
+  opacity: 0.85;
+}
+
+/* Matchmaking Keyframe Definitions */
+@keyframes vexea-mm-fade-in {
+  0% { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+@keyframes vexea-mm-fade-out {
+  0% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+@keyframes vexea-mm-radial-expand {
+  0% { transform: scale(0.88); opacity: 0.2; }
+  100% { transform: scale(1.0); opacity: 1; }
+}
+
+@keyframes vexea-mm-radial-collapse {
+  0% { transform: scale(1.0); opacity: 1; }
+  100% { transform: scale(0.94); opacity: 0; }
+}
+
+@keyframes vexea-mm-arc-orbit {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes vexea-mm-inner-counter {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(-360deg); }
+}
+
+@keyframes vexea-mm-outer-breath {
+  0%, 100% { opacity: 0.26; }
+  50% { opacity: 0.58; }
+}
+
+@keyframes vexea-mm-found-lock {
+  0% {
+    stroke-dasharray: 35 200;
+    stroke: rgba(239, 241, 240, 0.94);
+  }
+  60% {
+    stroke-dasharray: 232.5 0;
+    stroke: var(--vx-color-accent-amber);
+    transform: rotate(360deg);
+  }
+  100% {
+    stroke-dasharray: 232.5 0;
+    stroke: var(--vx-color-accent);
+    transform: rotate(360deg);
+  }
+}
+
+/* ==========================================================================
+   LOADING BAR MOTION (Approved Horizontal Carrier Contract)
+   - Track: 2px splash / 5px match-entry
+   - Fill gradient: #C9D0C8 -> #F4F5F1 -> #C77C3B
+   - Leading head: 1px x 13px
+   - Pass-through sheen: 650ms
+   ========================================================================== */
+.vexea-loading-track {
+  background-color: #202827;
+  position: relative;
+  overflow: visible;
+  border-radius: 0px;
+}
+
+.vexea-loading-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #C9D0C8 0%, #F4F5F1 75%, #C77C3B 100%);
+  position: relative;
+  border-radius: 0px;
+  transition: width 120ms var(--vx-ease-out);
+}
+
+.vexea-loading-head {
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 1px;
+  height: 13px;
+  background-color: #FFFFFF;
+  box-shadow: 0 0 4px rgba(255, 255, 255, 0.6);
+  pointer-events: none;
+}
+
+.vexea-loading-sheen {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 32px;
+  background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.35) 50%, transparent 100%);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.vexea-loading-sheen.vexea-sheen-active {
+  animation: vexea-loading-sheen-pass 650ms var(--vx-ease-standard) forwards;
+}
+
+@keyframes vexea-loading-sheen-pass {
+  0% {
+    left: 0;
+    opacity: 0;
+  }
+  30% {
+    opacity: 0.6;
+  }
+  70% {
+    opacity: 0.6;
+  }
+  100% {
+    left: 100%;
+    opacity: 0;
+  }
+}
+
+/* ==========================================================================
+   BATTLE PASS FULL-SEASON PROGRESSION LINE
+   - 51 tier positions (0..50)
+   - Desktop: Horizontal progression line
+   - Mobile: Vertical progression line (no horizontal scrolling)
+   - Free track & Premium track lanes
+   - Full season reveal: 1,100ms
+   - Premium reveal delay: 220ms
+   ========================================================================== */
+.vexea-bp-container {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  user-select: none;
+  font-family: var(--vx-font-sans);
+}
+
+.vexea-bp-desktop-line {
+  position: relative;
+  width: 100%;
+  height: 1px;
+  background-color: var(--vx-color-border-subtle);
+  margin: 4.5rem 0;
+}
+
+.vexea-bp-desktop-reached {
+  position: absolute;
+  left: 0;
+  top: -1px;
+  height: 3px;
+  background-color: var(--vx-color-accent);
+  transition: width 380ms var(--vx-ease-standard);
+}
+
+.vexea-bp-mobile-spine {
+  position: relative;
+  width: 1px;
+  background-color: var(--vx-color-border-subtle);
+  margin: 0 auto;
+}
+
+.vexea-bp-mobile-reached {
+  position: absolute;
+  top: 0;
+  left: -1px;
+  width: 3px;
+  background-color: var(--vx-color-accent);
+  transition: height 380ms var(--vx-ease-standard);
+}
+
+/* ==========================================================================
+   ACCESSIBILITY: REDUCED MOTION CONTRACT
+   Under prefers-reduced-motion, remove animations, preserve static state.
+   ========================================================================== */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .vexea-mm-backdrop {
+    animation: none !important;
+    opacity: 1 !important;
+  }
+
+  .vexea-mm-radial-container {
+    animation: none !important;
+    transform: scale(1) !important;
+    opacity: 1 !important;
+  }
+
+  .vexea-mm-moving-arc,
+  .vexea-mm-inner-group,
+  .vexea-mm-outer-boundary {
+    animation: none !important;
+  }
+
+  .vexea-loading-sheen {
+    display: none !important;
+  }
+}
+
+.reduced-motion *,
+.reduced-motion *::before,
+.reduced-motion *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+}
+
+.reduced-motion .vexea-mm-moving-arc,
+.reduced-motion .vexea-mm-inner-group,
+.reduced-motion .vexea-mm-outer-boundary {
+  animation: none !important;
+}

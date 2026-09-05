@@ -133,11 +133,16 @@ export class CameraEffectsSystem {
     if (yawDelta > Math.PI) yawDelta -= Math.PI * 2;
     if (yawDelta < -Math.PI) yawDelta += Math.PI * 2;
 
-    const yawVelocity = yawDelta / Math.max(0.001, dt);
+    const rawYawVelocity = yawDelta / Math.max(0.001, dt);
+    const yawVelocity = THREE.MathUtils.clamp(rawYawVelocity, -15.0, 15.0);
     
     // Leaning only applies when moving quickly and not aiming
     const leanFactor = this.currentSpeedBlend * (1.0 - currentAdsLerp);
-    const targetRoll = -yawVelocity * config.TILT.RUN_TILT_STRENGTH * leanFactor;
+    const targetRoll = THREE.MathUtils.clamp(
+      -yawVelocity * config.TILT.RUN_TILT_STRENGTH * leanFactor,
+      -config.TILT.MAX_ROLL,
+      config.TILT.MAX_ROLL
+    );
 
     // Interpolate roll using high-frequency spring physics
     this.cameraRoll += (targetRoll - this.cameraRoll) * Math.min(1.0, dt * config.TILT.RUN_TILT_SPRING);

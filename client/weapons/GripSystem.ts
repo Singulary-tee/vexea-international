@@ -45,6 +45,37 @@ const worldMat = new THREE.Matrix4();
 const invCharMat = new THREE.Matrix4();
 const localMat = new THREE.Matrix4();
 
+// Dedicated bone bind-pose translation cache keyed by bone UUID (ARCH-13)
+const originalBonePositions = new Map<string, THREE.Vector3>();
+
+/**
+ * Restores all cached bones back to their original bind-pose translations and clears the cache.
+ */
+export function resetGripBoneCache(): void {
+  originalBonePositions.clear();
+}
+
+/**
+ * Restores a specific character's bones back to their original bind-pose translations.
+ */
+export function resetCharacterGripBones(character: THREE.Object3D): void {
+  character.traverse((child) => {
+    const orig = originalBonePositions.get(child.uuid);
+    if (orig) {
+      child.position.copy(orig);
+    }
+  });
+}
+
+function getOrCacheOriginalPosition(bone: THREE.Object3D): THREE.Vector3 {
+  let pos = originalBonePositions.get(bone.uuid);
+  if (!pos) {
+    pos = bone.position.clone();
+    originalBonePositions.set(bone.uuid, pos);
+  }
+  return pos;
+}
+
 // Helper to search child bones by case-insensitive name matching
 function findBoneContaining(parent: THREE.Object3D, substring: string): THREE.Object3D | null {
   let found: THREE.Object3D | null = null;
@@ -152,51 +183,57 @@ export function applyScenicGripPose(character: THREE.Object3D, weapon: THREE.Obj
   
   // Apply rotations and positions from config if available (Studio Preview sliders)
   if (rightTop) {
+    const origPos = getOrCacheOriginalPosition(rightTop);
     rightTop.rotation.set(config?.rArmRotX || 0, config?.rArmRotY || 0, config?.rArmRotZ || 0, "XYZ");
-    if (config && 'rArmPosX' in config && rightTop.userData.origPos) {
-      rightTop.position.set(rightTop.userData.origPos.x + config.rArmPosX, rightTop.userData.origPos.y + config.rArmPosY, rightTop.userData.origPos.z + config.rArmPosZ);
-    } else if (rightTop && !rightTop.userData.origPos) {
-      rightTop.userData.origPos = rightTop.position.clone();
+    if (config && 'rArmPosX' in config) {
+      rightTop.position.set(origPos.x + config.rArmPosX, origPos.y + config.rArmPosY, origPos.z + config.rArmPosZ);
+    } else {
+      rightTop.position.copy(origPos);
     }
   }
   if (rightBot) {
+    const origPos = getOrCacheOriginalPosition(rightBot);
     rightBot.rotation.set(config?.rForeArmRotX || 0, config?.rForeArmRotY || 0, config?.rForeArmRotZ || 0, "XYZ");
-    if (config && 'rForeArmPosX' in config && rightBot.userData.origPos) {
-      rightBot.position.set(rightBot.userData.origPos.x + config.rForeArmPosX, rightBot.userData.origPos.y + config.rForeArmPosY, rightBot.userData.origPos.z + config.rForeArmPosZ);
-    } else if (rightBot && !rightBot.userData.origPos) {
-      rightBot.userData.origPos = rightBot.position.clone();
+    if (config && 'rForeArmPosX' in config) {
+      rightBot.position.set(origPos.x + config.rForeArmPosX, origPos.y + config.rForeArmPosY, origPos.z + config.rForeArmPosZ);
+    } else {
+      rightBot.position.copy(origPos);
     }
   }
   if (rightHand) {
+    const origPos = getOrCacheOriginalPosition(rightHand);
     rightHand.rotation.set(config?.rHandRotX || 0, config?.rHandRotY || 0, config?.rHandRotZ || 0, "XYZ");
-    if (config && 'rHandPosX' in config && rightHand.userData.origPos) {
-      rightHand.position.set(rightHand.userData.origPos.x + config.rHandPosX, rightHand.userData.origPos.y + config.rHandPosY, rightHand.userData.origPos.z + config.rHandPosZ);
-    } else if (rightHand && !rightHand.userData.origPos) {
-      rightHand.userData.origPos = rightHand.position.clone();
+    if (config && 'rHandPosX' in config) {
+      rightHand.position.set(origPos.x + config.rHandPosX, origPos.y + config.rHandPosY, origPos.z + config.rHandPosZ);
+    } else {
+      rightHand.position.copy(origPos);
     }
   }
   if (leftTop) {
+    const origPos = getOrCacheOriginalPosition(leftTop);
     leftTop.rotation.set(config?.lArmRotX || 0, config?.lArmRotY || 0, config?.lArmRotZ || 0, "XYZ");
-    if (config && 'lArmPosX' in config && leftTop.userData.origPos) {
-      leftTop.position.set(leftTop.userData.origPos.x + config.lArmPosX, leftTop.userData.origPos.y + config.lArmPosY, leftTop.userData.origPos.z + config.lArmPosZ);
-    } else if (leftTop && !leftTop.userData.origPos) {
-      leftTop.userData.origPos = leftTop.position.clone();
+    if (config && 'lArmPosX' in config) {
+      leftTop.position.set(origPos.x + config.lArmPosX, origPos.y + config.lArmPosY, origPos.z + config.lArmPosZ);
+    } else {
+      leftTop.position.copy(origPos);
     }
   }
   if (leftBot) {
+    const origPos = getOrCacheOriginalPosition(leftBot);
     leftBot.rotation.set(config?.lForeArmRotX || 0, config?.lForeArmRotY || 0, config?.lForeArmRotZ || 0, "XYZ");
-    if (config && 'lForeArmPosX' in config && leftBot.userData.origPos) {
-      leftBot.position.set(leftBot.userData.origPos.x + config.lForeArmPosX, leftBot.userData.origPos.y + config.lForeArmPosY, leftBot.userData.origPos.z + config.lForeArmPosZ);
-    } else if (leftBot && !leftBot.userData.origPos) {
-      leftBot.userData.origPos = leftBot.position.clone();
+    if (config && 'lForeArmPosX' in config) {
+      leftBot.position.set(origPos.x + config.lForeArmPosX, origPos.y + config.lForeArmPosY, origPos.z + config.lForeArmPosZ);
+    } else {
+      leftBot.position.copy(origPos);
     }
   }
   if (leftHand) {
+    const origPos = getOrCacheOriginalPosition(leftHand);
     leftHand.rotation.set(config?.lHandRotX || 0, config?.lHandRotY || 0, config?.lHandRotZ || 0, "XYZ");
-    if (config && 'lHandPosX' in config && leftHand.userData.origPos) {
-      leftHand.position.set(leftHand.userData.origPos.x + config.lHandPosX, leftHand.userData.origPos.y + config.lHandPosY, leftHand.userData.origPos.z + config.lHandPosZ);
-    } else if (leftHand && !leftHand.userData.origPos) {
-      leftHand.userData.origPos = leftHand.position.clone();
+    if (config && 'lHandPosX' in config) {
+      leftHand.position.set(origPos.x + config.lHandPosX, origPos.y + config.lHandPosY, origPos.z + config.lHandPosZ);
+    } else {
+      leftHand.position.copy(origPos);
     }
   }
   if (bodyTop) bodyTop.rotation.set(0, 0, 0);

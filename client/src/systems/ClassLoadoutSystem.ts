@@ -209,14 +209,21 @@ export class ClassLoadoutSystem {
       try {
         const auth = getAuth();
         if (auth.currentUser) {
-          const db = getFirestore();
-          await updateDoc(doc(db, "Users", auth.currentUser.uid), {
-            "armory.itemSkins": saved
+          const res = await fetch("/api/player/item-skins", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              playerId: auth.currentUser.uid,
+              skins: saved
+            })
           });
-          console.log("[ClassLoadoutSystem] Saved equipped item skins to Firestore.");
+          const data = await res.json();
+          if (data.success) {
+            console.log("[ClassLoadoutSystem] Saved equipped item skins via API.");
+          }
         }
       } catch (e) {
-        console.warn("[ClassLoadoutSystem] Debounced skin Firestore write failed:", e);
+        console.warn("[ClassLoadoutSystem] Debounced skin API save failed:", e);
       }
     }, 2000); // 2 seconds debounce
   }

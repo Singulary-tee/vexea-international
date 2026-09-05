@@ -102,6 +102,7 @@ import {
   globalChannels,
   globalServerLogs,
 } from "./index";
+import { DynamicCollisionSystem } from "./physics/DynamicCollisionSystem";
 import { Sentry, recordServerTickDuration, recordServerActiveDrones, recordServerConnectedPlayers, recordSecurityExploit, recordDroneColliderInit } from "./sentry";
 import { archiveMatchEvent } from "./player-data/MatchEventCollector";
 import { PlayerProfileStore } from "./player-data/PlayerProfileStore";
@@ -246,6 +247,7 @@ export interface PlayerState {
     scoreIndividual: number;
   };
   lastFallStartY: number;
+  zone?: ZoneName;
 }
 
 export interface ServerDrone {
@@ -2000,7 +2002,7 @@ export class MatchRoom {
         activeCollisions: (p as any).activeCollisions || [],
       }));
 
-      const devDrones = this.drones.filter(d => d.state !== DroneState.DEAD).map(d => ({
+      const devDrones = (DEBUG_PHYSICS_TICKS || this.devCubeSpawned) ? this.drones.filter(d => d.state !== DroneState.DEAD).map(d => ({
         id: d.id,
         groupId: d.groupId,
         targetX: d.targetX,
@@ -2008,10 +2010,10 @@ export class MatchRoom {
         targetZ: d.targetZ,
         mode: d.mode,
         memory: d.memoryRecords ? Array.from(d.memoryRecords.values()).filter(m => m.confidence > 0).map(m => ({ id: m.entityId, x: m.lastSensedPosition.x, y: m.lastSensedPosition.y, z: m.lastSensedPosition.z, conf: m.confidence })) : []
-      }));
+      })) : undefined;
 
-      let cubeSyncData = null;
-      if (this.devCubeBody && this.devCubeSpawned) {
+      let cubeSyncData = undefined;
+      if ((DEBUG_PHYSICS_TICKS || this.devCubeSpawned) && this.devCubeBody) {
         const t = this.devCubeBody.translation();
         const vel = this.devCubeBody.linvel();
         cubeSyncData = {
@@ -2325,6 +2327,7 @@ export class MatchRoom {
           break;
         }
       }
+      targetPlayer.zone = playerZone;
 
       // Drone detection check LOS
       for (let i = 0; i < this.drones.length; i++) {
@@ -2437,6 +2440,9 @@ export class MatchRoom {
 
     // Drone state updates
     processDroneBehaviors(this.drones, this, 0.0166, nowMs);
+
+    // Dynamic Separation Pass (Player vs Player, Player vs Bot, Player vs Drone)
+    DynamicCollisionSystem.resolve(this.players, this.drones);
 
     // Proximity Mines tick check
 

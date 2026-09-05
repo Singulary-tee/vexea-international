@@ -200,14 +200,22 @@ export class ClassLoadoutPersistence {
       try {
         const auth = getAuth();
         if (auth.currentUser) {
-          const db = getFirestore();
-          await updateDoc(doc(db, "Users", auth.currentUser.uid), {
-            [`armory.loadouts.${classId}`]: items
+          const res = await fetch("/api/player/loadout", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              playerId: auth.currentUser.uid,
+              classId,
+              items
+            })
           });
-          console.log(`[ClassLoadoutPersistence] Saved loadout for ${classId} to Firestore.`);
+          const data = await res.json();
+          if (data.success) {
+            console.log(`[ClassLoadoutPersistence] Saved loadout for ${classId} via API.`);
+          }
         }
       } catch (e) {
-        console.warn("[ClassLoadoutPersistence] Debounced Firestore write failed:", e);
+        console.warn("[ClassLoadoutPersistence] Debounced API loadout save failed:", e);
       }
     }, 2000); // 2 seconds debounce
   }

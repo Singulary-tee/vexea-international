@@ -9,6 +9,7 @@ import { isRuntimeWeaponId } from "../../shared/constants";
 import { UTILITY_DISPLAY_STATS, type UtilityId } from "../../shared/utilities";
 import { WEAPON_ASSET_DETAILS, UTILITY_ASSET_DETAILS } from "../../shared/asset-details";
 import type { WeaponId } from "../../shared/weapons";
+import { bindTabs, bindContentEntry, bindSelection, TabItem } from "../src/ui/ui-motion";
 
 export interface LoadoutSlotItem {
   id: string;
@@ -78,6 +79,7 @@ export function renderArmoryScreen(container: HTMLElement, registeredUserData?: 
 
   // Outer Flex Container
   const wrap = document.createElement('div');
+  bindContentEntry(wrap, 0);
   Object.assign(wrap.style, {
     display: 'flex',
     flexDirection: 'row',
@@ -103,12 +105,14 @@ export function renderArmoryScreen(container: HTMLElement, registeredUserData?: 
 
   // Category Tabs Header - Preset Classes
   const categoryTabsRow = document.createElement('div');
+  categoryTabsRow.className = 'vexea-tab-row';
   Object.assign(categoryTabsRow.style, {
     display: 'flex',
     gap: '2px',
     background: 'transparent',
     border: 'none',
-    padding: '0px'
+    padding: '0px',
+    position: 'relative'
   });
 
   const categories: { id: ClassId; label: string }[] = Object.values(CLASSES).map(c => ({
@@ -116,8 +120,11 @@ export function renderArmoryScreen(container: HTMLElement, registeredUserData?: 
     label: c.id === 'DEMOLITIONS' ? 'DEMO' : c.displayName
   }));
 
+  const armoryTabElements: TabItem[] = [];
   categories.forEach(cat => {
     const tabBtn = document.createElement('button');
+    tabBtn.className = `vexea-tab ${cat.id === activeCategory ? 'active' : ''}`;
+    tabBtn.setAttribute('data-ui-tab', cat.id);
     const isActive = cat.id === activeCategory;
     tabBtn.innerHTML = `
       <div style="display:flex; align-items:center; justify-content:center; gap:3px;">
@@ -129,26 +136,30 @@ export function renderArmoryScreen(container: HTMLElement, registeredUserData?: 
       flex: '1',
       padding: '3px 1px',
       background: 'transparent',
-      color: isActive ? '#FF4500' : '#444444',
       border: 'none',
       fontFamily: DS.typography.fontFamily,
       fontSize: DS.typography.sizes.tiny,
       fontWeight: 'bold',
       letterSpacing: '0px',
-      cursor: 'pointer',
-      transition: 'all 0.15s ease'
+      cursor: 'pointer'
     });
 
-    tabBtn.onclick = () => {
+    categoryTabsRow.appendChild(tabBtn);
+    armoryTabElements.push({ id: cat.id, button: tabBtn });
+  });
+
+  bindTabs(
+    categoryTabsRow,
+    armoryTabElements,
+    activeCategory,
+    (selectedCatId) => {
       audioManager.play('click');
-      activeCategory = cat.id;
-      ClassLoadoutPersistence.setEquippedClass(cat.id);
+      activeCategory = selectedCatId as ClassId;
+      ClassLoadoutPersistence.setEquippedClass(activeCategory);
       selectedItemIdx = 0;
       renderArmoryScreen(container, registeredUserData);
-    };
-
-    categoryTabsRow.appendChild(tabBtn);
-  });
+    }
+  );
   leftCol.appendChild(categoryTabsRow);
 
   const currentList = CATALOG_LOADOUTS[activeCategory] || [];
@@ -190,6 +201,7 @@ function getSlotIconSvg(item: LoadoutSlotItem): string {
     const isSelected = idx === selectedItemIdx;
 
     const itemCard = document.createElement('div');
+    bindSelection(itemCard, isSelected, isSelected);
     Object.assign(itemCard.style, {
       flex: '1',
       aspectRatio: '1',

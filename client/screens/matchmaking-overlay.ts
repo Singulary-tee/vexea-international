@@ -1,5 +1,13 @@
+/**
+ * VEXEA Matchmaking Overlay System
+ * Authoritative CSS-first implementation of the Matchmaking Radial Sequence.
+ * Strictly adheres to VEXEA_UI_ANIMATION_CONTRACT.md.
+ */
+
 import { DS } from "../design-system";
 import { ScreenGate } from "../gates/screen.gate";
+import { createMatchmakingRadialSVG } from "../src/ui/ui-motion";
+import { audioManager } from "../audio";
 
 export interface MatchmakingOverlayOptions {
   mapId: string;
@@ -8,107 +16,143 @@ export interface MatchmakingOverlayOptions {
 
 let overlayContainer: HTMLElement | null = null;
 let countdownOverlayContainer: HTMLElement | null = null;
+let isFoundLocking = false;
 
 export function showMatchmakingOverlay(options: MatchmakingOverlayOptions): void {
   hideMatchmakingOverlay();
+  isFoundLocking = false;
+
+  // Clean up any stale legacy pulse styles from older sessions if present
+  const oldPulseStyle = document.getElementById("mm-pulse-style");
+  if (oldPulseStyle && oldPulseStyle.parentNode) {
+    oldPulseStyle.parentNode.removeChild(oldPulseStyle);
+  }
 
   // Register screen lock in ScreenGate to suppress all underlying UI button interactions
-  ScreenGate.lockScreenGroup('matchmaking');
+  ScreenGate.lockScreenGroup("matchmaking");
 
-  // Full-screen backdrop modal blocker
+  // Fullscreen backdrop
   const backdrop = document.createElement("div");
   backdrop.id = "matchmaking-overlay";
+  backdrop.className = "vexea-mm-backdrop ui-surface";
   backdrop.setAttribute("data-ui-surface", "true");
-  backdrop.classList.add("ui-surface");
-  Object.assign(backdrop.style, {
-    position: "fixed",
-    inset: "0",
-    zIndex: "99999",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    background: "rgba(0, 0, 0, 0.75)",
-    backdropFilter: "blur(8px)",
-    pointerEvents: "auto"
-  });
 
-  // Modal box
-  const el = document.createElement("div");
-  Object.assign(el.style, {
-    background: "radial-gradient(ellipse at center, rgba(18, 18, 18, 0.98) 0%, rgba(8, 8, 8, 0.90) 100%)",
-    border: `1px solid ${DS.colors.accent}`,
-    borderRadius: "0px",
-    padding: "1.50rem 2.25rem",
+  // Content container
+  const contentWrapper = document.createElement("div");
+  contentWrapper.className = "vexea-mm-content-wrapper";
+  Object.assign(contentWrapper.style, {
     display: "flex",
     flexDirection: "column",
     alignItems: "center",
-    gap: "12px",
-    fontFamily: DS.typography.fontFamily,
-    boxShadow: "0 8px 32px rgba(0, 0, 0, 0.9)",
-    pointerEvents: "auto",
-    minWidth: "20.00rem",
-    maxWidth: "90vw"
+    justifyContent: "center",
+    gap: "clamp(6px, 1.6vh, 16px)",
+    position: "relative",
+    zIndex: "2",
+    width: "100%",
+    maxWidth: "100vw",
+    maxHeight: "100vh",
+    boxSizing: "border-box"
   });
 
-  const headerRow = document.createElement("div");
-  Object.assign(headerRow.style, {
+  // Radial Geometry Container (920ms radial expansion, 18s inner counter-rotation, 9s primary arc orbit, 7s outer breath)
+  const radialContainer = document.createElement("div");
+  radialContainer.className = "vexea-mm-radial-container";
+  radialContainer.innerHTML = createMatchmakingRadialSVG();
+
+  // Center Readout overlay inside the radial structure
+  const centerHUD = document.createElement("div");
+  Object.assign(centerHUD.style, {
+    position: "absolute",
+    top: "50%",
+    left: "50%",
+    transform: "translate(-50%, -50%)",
     display: "flex",
+    flexDirection: "column",
     alignItems: "center",
-    gap: "10px"
+    justifyContent: "center",
+    textAlign: "center",
+    pointerEvents: "none",
+    width: "80%"
   });
 
-  const pulseIndicator = document.createElement("div");
-  Object.assign(pulseIndicator.style, {
-    width: "0.63rem",
-    height: "0.63rem",
-    background: DS.colors.accent,
-    borderRadius: "0px",
-    boxShadow: `0 0 8px ${DS.colors.accent}`,
-    animation: "mm-pulse 1.2s infinite ease-in-out"
+  const tagText = document.createElement("div");
+  tagText.textContent = "Q-NET // PROTOCOL";
+  Object.assign(tagText.style, {
+    fontSize: "clamp(0.48rem, 0.9vh, 0.60rem)",
+    fontWeight: "bold",
+    color: "rgba(225, 229, 227, 0.45)",
+    letterSpacing: "0.2em",
+    textTransform: "uppercase",
+    marginBottom: "2px"
   });
+  centerHUD.appendChild(tagText);
 
-  const titleText = document.createElement("div");
-  titleText.textContent = "MATCHMAKING IN PROGRESS";
-  Object.assign(titleText.style, {
-    fontSize: "clamp(0.81rem, 1.8vh, 1.00rem)",
+  const mainTitle = document.createElement("div");
+  mainTitle.id = "mm-overlay-title";
+  mainTitle.textContent = "MATCHMAKING";
+  Object.assign(mainTitle.style, {
+    fontSize: "clamp(0.75rem, 1.8vh, 1.10rem)",
+    fontWeight: "900",
+    color: DS.colors.textPrimary,
+    letterSpacing: "0.15em",
+    textTransform: "uppercase",
+    lineHeight: "1.1"
+  });
+  centerHUD.appendChild(mainTitle);
+
+  const subtitle = document.createElement("div");
+  subtitle.id = "mm-overlay-subtitle";
+  subtitle.textContent = "SEARCHING OPERATIVES";
+  Object.assign(subtitle.style, {
+    fontSize: "clamp(0.50rem, 1.1vh, 0.65rem)",
     fontWeight: "bold",
     color: DS.colors.accent,
-    letterSpacing: "2px",
-    textTransform: "uppercase"
+    letterSpacing: "0.1em",
+    textTransform: "uppercase",
+    marginTop: "4px"
   });
+  centerHUD.appendChild(subtitle);
 
-  headerRow.appendChild(pulseIndicator);
-  headerRow.appendChild(titleText);
-  el.appendChild(headerRow);
+  radialContainer.appendChild(centerHUD);
+  contentWrapper.appendChild(radialContainer);
 
+  // Status Readout Row
   const statusText = document.createElement("div");
   statusText.id = "mm-overlay-status";
   statusText.textContent = `MAP: ${(options.mapId || "FACILITY").toUpperCase()} | QUEUE: 1 / 10 | MIN: 4`;
   Object.assign(statusText.style, {
-    fontSize: "clamp(0.63rem, 1.4vh, 0.75rem)",
+    fontSize: "clamp(0.58rem, 1.2vh, 0.72rem)",
     color: DS.colors.textSecondary,
-    letterSpacing: "1px",
-    textTransform: "uppercase"
+    letterSpacing: "0.1em",
+    textTransform: "uppercase",
+    fontFamily: DS.typography.fontFamily,
+    background: "rgba(18, 22, 21, 0.8)",
+    border: "1px solid rgba(225, 229, 227, 0.12)",
+    padding: "clamp(4px, 0.6vh, 6px) clamp(10px, 1.5vw, 18px)",
+    borderRadius: "0px",
+    flexShrink: "0"
   });
-  el.appendChild(statusText);
+  contentWrapper.appendChild(statusText);
 
+  // Cancel Button
   const cancelBtn = document.createElement("button");
   cancelBtn.id = "mm-overlay-cancel-btn";
+  cancelBtn.className = "vexea-btn";
+  cancelBtn.setAttribute("data-ui-btn", "true");
   cancelBtn.textContent = "CANCEL MATCHMAKING";
   Object.assign(cancelBtn.style, {
-    background: "rgba(255, 69, 0, 0.15)",
+    background: "rgba(255, 69, 0, 0.12)",
     border: `1px solid ${DS.colors.accent}`,
     color: DS.colors.accent,
     fontFamily: DS.typography.fontFamily,
-    fontSize: "clamp(0.69rem, 1.4vh, 0.81rem)",
+    fontSize: "clamp(0.65rem, 1.3vh, 0.78rem)",
     fontWeight: "bold",
-    letterSpacing: "1px",
-    textTransform: "uppercase",
-    padding: "0.38rem 1.25rem",
+    letterSpacing: "0.1em",
+    padding: "clamp(6px, 1.0vh, 10px) clamp(16px, 2.5vw, 24px)",
+    minHeight: "44px",
     cursor: "pointer",
     borderRadius: "0px",
-    marginTop: "4px",
-    transition: "all 0.15s ease-out"
+    flexShrink: "0"
   });
 
   cancelBtn.addEventListener("mouseenter", () => {
@@ -116,36 +160,29 @@ export function showMatchmakingOverlay(options: MatchmakingOverlayOptions): void
     cancelBtn.style.color = "#FFFFFF";
   });
   cancelBtn.addEventListener("mouseleave", () => {
-    cancelBtn.style.background = "rgba(255, 69, 0, 0.15)";
+    cancelBtn.style.background = "rgba(255, 69, 0, 0.12)";
     cancelBtn.style.color = DS.colors.accent;
   });
 
   cancelBtn.addEventListener("click", (e) => {
     e.stopPropagation();
+    if (isFoundLocking) return;
+    audioManager.play("click");
     options.onCancel();
   });
 
-  el.appendChild(cancelBtn);
-
-  if (!document.getElementById("mm-pulse-style")) {
-    const style = document.createElement("style");
-    style.id = "mm-pulse-style";
-    style.textContent = `
-      @keyframes mm-pulse {
-        0% { opacity: 0.3; transform: scale(0.9); }
-        50% { opacity: 1; transform: scale(1.1); }
-        100% { opacity: 0.3; transform: scale(0.9); }
-      }
-    `;
-    document.head.appendChild(style);
-  }
-
-  backdrop.appendChild(el);
+  contentWrapper.appendChild(cancelBtn);
+  backdrop.appendChild(contentWrapper);
   document.body.appendChild(backdrop);
   overlayContainer = backdrop;
 }
 
-export function updateMatchmakingOverlayStatus(data: { mapId?: string; queueSize?: number; minPlayers?: number; maxPlayers?: number }): void {
+export function updateMatchmakingOverlayStatus(data: {
+  mapId?: string;
+  queueSize?: number;
+  minPlayers?: number;
+  maxPlayers?: number;
+}): void {
   const statusText = document.getElementById("mm-overlay-status");
   if (statusText) {
     const mapName = (data.mapId || "FACILITY").toUpperCase();
@@ -156,8 +193,47 @@ export function updateMatchmakingOverlayStatus(data: { mapId?: string; queueSize
   }
 }
 
+/**
+ * Triggers the approved 620ms found lock -> 760ms terminal hold -> 360ms reverse exit sequence.
+ */
+export function animateMatchFound(onComplete: () => void): void {
+  if (!overlayContainer || isFoundLocking) {
+    onComplete();
+    return;
+  }
+  isFoundLocking = true;
+
+  overlayContainer.classList.add("vexea-mm-found");
+
+  const subtitle = document.getElementById("mm-overlay-subtitle");
+  if (subtitle) {
+    subtitle.textContent = "MATCH LOCATED // DEPLOYING";
+    subtitle.style.color = "#00FF88";
+  }
+
+  const cancelBtn = document.getElementById("mm-overlay-cancel-btn");
+  if (cancelBtn) {
+    cancelBtn.style.display = "none";
+  }
+
+  // 620ms found lock + 760ms terminal hold = 1380ms
+  setTimeout(() => {
+    if (!overlayContainer) {
+      onComplete();
+      return;
+    }
+    // 360ms reverse exit
+    overlayContainer.classList.add("vexea-mm-exiting");
+
+    setTimeout(() => {
+      hideMatchmakingOverlay();
+      onComplete();
+    }, 360);
+  }, 1380);
+}
+
 export function hideMatchmakingOverlay(): void {
-  ScreenGate.unlockScreenGroup('matchmaking');
+  ScreenGate.unlockScreenGroup("matchmaking");
   if (overlayContainer && overlayContainer.parentNode) {
     overlayContainer.parentNode.removeChild(overlayContainer);
   }
@@ -166,6 +242,7 @@ export function hideMatchmakingOverlay(): void {
   if (el && el.parentNode) {
     el.parentNode.removeChild(el);
   }
+  isFoundLocking = false;
 }
 
 export function showPreMatchCountdownOverlay(countdownSeconds: number): void {

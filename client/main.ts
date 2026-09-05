@@ -39,6 +39,7 @@ import {
   showMatchmakingOverlay,
   updateMatchmakingOverlayStatus,
   hideMatchmakingOverlay,
+  animateMatchFound,
   showPreMatchCountdownOverlay,
   hidePreMatchCountdownOverlay
 } from "./screens/matchmaking-overlay";
@@ -97,11 +98,7 @@ import {
   smoothstep,
   mix,
 } from "three/tsl";
-import { EffectComposer } from "three/addons/postprocessing/EffectComposer.js";
-import { RenderPass } from "three/addons/postprocessing/RenderPass.js";
-import { ShaderPass } from "three/addons/postprocessing/ShaderPass.js";
 import { initDroneModels } from "./drone_models";
-import { FXAAShader } from "three/addons/shaders/FXAAShader.js";
 import * as BufferGeometryUtils from "three/addons/utils/BufferGeometryUtils.js";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import * as SkeletonUtils from "three/addons/utils/SkeletonUtils.js";
@@ -530,6 +527,7 @@ const initClient = async () => {
   );
   camera.position.set(0, 1.2, 10);
   camera.rotation.order = "YXZ";
+  scene.add(camera);
 
   // MENU State initialization
   const ready = await initFirebase();
@@ -735,9 +733,10 @@ const connectEngineSocket = () => {
           updateMatchmakingOverlayStatus(msg);
         } else if (msg.type === "MATCH_FOUND") {
           console.log("[MATCHMAKING] Server MATCH_FOUND event received:", msg);
-          hideMatchmakingOverlay();
-          screenManager.showGame();
-          startMatchFromMatchFound(msg);
+          animateMatchFound(() => {
+            screenManager.showGame();
+            startMatchFromMatchFound(msg);
+          });
         } else if (msg.type === "PRE_MATCH_COUNTDOWN" || msg.type === "PRE_MATCH_COUNTDOWN_TICK") {
           if (typeof msg.countdownSeconds === "number") {
             showPreMatchCountdownOverlay(msg.countdownSeconds);
@@ -886,17 +885,6 @@ const setup3DStage = async () => {
   renderer.setSize(initWidth, initHeight, false);
   renderer.domElement.style.width = "100%";
   renderer.domElement.style.height = "100%";
-
-  if ((window as any).composer) {
-    (window as any).composer.setSize(window.innerWidth, window.innerHeight);
-    const pixelRatio = renderer.getPixelRatio();
-    if ((window as any).fxaaPass) {
-      (window as any).fxaaPass.material.uniforms["resolution"].value.x =
-        1 / (window.innerWidth * pixelRatio);
-      (window as any).fxaaPass.material.uniforms["resolution"].value.y =
-        1 / (window.innerHeight * pixelRatio);
-    }
-  }
   renderer.setPixelRatio(IS_MOBILE ? Math.min(window.devicePixelRatio, 1.2) : window.devicePixelRatio);
 
   const W = window as any;
@@ -1350,8 +1338,6 @@ const animateFrame = async () => {
     const tLogicEnd = performance.now();
     if ((window as any).isWebGPU && (window as any).renderPipeline) {
       (window as any).renderPipeline.render();
-    } else if ((window as any).fxaaPass && (window as any).fxaaPass.enabled) {
-      (window as any).composer.render();
     } else {
       renderer.render(match.scene, camera);
     }

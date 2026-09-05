@@ -241,31 +241,31 @@ export async function savePlayerStats(playerId: string, matchesPlayed: number, h
 }
 
 export async function lockMatchSession(matchId: string, playerId: string): Promise<boolean> {
-  if (!isFirebaseReady || !db) return false;
-  const pathStr = `matches_in_progress/${matchId}`;
   try {
-    const docRef = doc(db, "matches_in_progress", matchId);
-    await setDoc(docRef, {
-      playerId,
-      createdAt: new Date().toISOString()
+    const res = await fetch("/api/match/lock", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ matchId, playerId })
     });
-    return true;
+    const data = await res.json();
+    return !!data.success;
   } catch (error) {
-    handleFirestoreError(error, OperationType.WRITE, pathStr);
+    console.error("[MatchLock] Failed to lock match session:", error);
     return false;
   }
 }
 
 export async function unlockMatchSession(matchId: string): Promise<boolean> {
-  if (!isFirebaseReady || !db) return false;
-  const pathStr = `matches_in_progress/${matchId}`;
   try {
-    const { deleteDoc } = await import("firebase/firestore");
-    const docRef = doc(db, "matches_in_progress", matchId);
-    await deleteDoc(docRef);
-    return true;
+    const res = await fetch("/api/match/unlock", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ matchId })
+    });
+    const data = await res.json();
+    return !!data.success;
   } catch (error) {
-    handleFirestoreError(error, OperationType.WRITE, pathStr);
+    console.error("[MatchLock] Failed to unlock match session:", error);
     return false;
   }
 }

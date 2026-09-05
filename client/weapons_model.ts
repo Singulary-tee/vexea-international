@@ -16,8 +16,32 @@ const _muzzleWorldPos = new THREE.Vector3();
 
 // Weapon follow slerp tracking state (O(1) allocation)
 let weaponBaseQuat = new THREE.Quaternion();
+const _invCamQuat = new THREE.Quaternion();
+const _localLagQuat = new THREE.Quaternion();
 let isFirstFrame = true;
 
+
+// Pre-cached cloned templates for 3rd-person remote player weapon rendering
+const cachedWeaponScenes = new Map<string, THREE.Group>();
+
+export function createRemotePlayerWeapon(weaponId: WeaponId | string): THREE.Group {
+  const normalizedKey = (weaponId === 'pistol' || weaponId === 'secondary') ? 'pistol' : 'rifle';
+  const template = cachedWeaponScenes.get(normalizedKey) || cachedWeaponScenes.get(weaponId);
+  if (template) {
+    const clone = template.clone(true);
+    clone.name = `RemoteWeapon_${weaponId}`;
+    return clone;
+  }
+  
+  // High-performance static fallback geometry if asset is loading
+  const fallback = new THREE.Group();
+  fallback.name = `RemoteWeapon_Fallback_${weaponId}`;
+  const mat = new THREE.MeshStandardMaterial({ color: 0x222222, roughness: 0.5, metalness: 0.8 });
+  const barrel = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.08, 0.4), mat);
+  barrel.position.set(0, 0, -0.15);
+  fallback.add(barrel);
+  return fallback;
+}
 
 // Weapon Container Group (attached directly to the camera)
 export let weaponsContainer: THREE.Group | null = null;
@@ -102,7 +126,10 @@ export async function initPlayerWeapons(scene: THREE.Scene, camera: THREE.Camera
   isFirstFrame = true;
   weaponsContainer = new THREE.Group();
   weaponsContainer.name = "WeaponsContainer";
-  scene.add(weaponsContainer);
+  camera.add(weaponsContainer);
+  if (!camera.parent) {
+    scene.add(camera);
+  }
 
   primaryGroup = new THREE.Group();
   primaryGroup.name = "PrimaryWeaponModel";
@@ -133,6 +160,8 @@ export async function initPlayerWeapons(scene: THREE.Scene, camera: THREE.Camera
         visualScale: primaryStats.visualConfig.visualScale,
       });
       primaryGroup!.add(gltf.scene);
+      cachedWeaponScenes.set(primaryWeaponId, gltf.scene.clone(true));
+      cachedWeaponScenes.set('rifle', gltf.scene.clone(true));
       primaryMixer = new THREE.AnimationMixer(gltf.scene);
       rifleMixer = primaryMixer;
       
@@ -184,7 +213,6 @@ export async function initPlayerWeapons(scene: THREE.Scene, camera: THREE.Camera
           if (anySkinnedMesh && anySkinnedMesh.skeleton) {
              weaponBone = anySkinnedMesh.skeleton.bones.find((b: any) => b.name.toLowerCase().includes('weapon') || b.name.toLowerCase().includes('gun') || b.name.toLowerCase().includes('muzzle') || b.name.toLowerCase().includes('flash'));
              if (!weaponBone) weaponBone = anySkinnedMesh.skeleton.bones.find((b: any) => b.name.toLowerCase().includes('hand'));
-             if (!weaponBone) weaponBone = anySkinnedMesh.skeleton.bones[anySkinnedMesh.skeleton.bones.length - 1];
           }
           
           muzzleNode = new THREE.Object3D();
@@ -192,6 +220,8 @@ export async function initPlayerWeapons(scene: THREE.Scene, camera: THREE.Camera
           if (weaponBone) {
               weaponBone.add(muzzleNode);
           } else {
+              const offset = (primaryAsset as any).muzzleOffset || { x: 0, y: 0.05, z: -0.6 };
+              muzzleNode.position.set(offset.x, offset.y, offset.z);
               primaryGroup!.add(muzzleNode);
           }
       } else {
@@ -219,6 +249,8 @@ export async function initPlayerWeapons(scene: THREE.Scene, camera: THREE.Camera
         visualScale: secondaryStats.visualConfig.visualScale,
       });
       secondaryGroup!.add(gltf.scene);
+      cachedWeaponScenes.set(secondaryWeaponId, gltf.scene.clone(true));
+      cachedWeaponScenes.set('pistol', gltf.scene.clone(true));
       secondaryMixer = new THREE.AnimationMixer(gltf.scene);
       pistolMixer = secondaryMixer;
 
@@ -265,7 +297,6 @@ export async function initPlayerWeapons(scene: THREE.Scene, camera: THREE.Camera
           if (anySkinnedMesh && anySkinnedMesh.skeleton) {
              weaponBone = anySkinnedMesh.skeleton.bones.find((b: any) => b.name.toLowerCase().includes('weapon') || b.name.toLowerCase().includes('gun') || b.name.toLowerCase().includes('muzzle') || b.name.toLowerCase().includes('flash'));
              if (!weaponBone) weaponBone = anySkinnedMesh.skeleton.bones.find((b: any) => b.name.toLowerCase().includes('hand'));
-             if (!weaponBone) weaponBone = anySkinnedMesh.skeleton.bones[anySkinnedMesh.skeleton.bones.length - 1];
           }
           
           muzzleNode = new THREE.Object3D();
@@ -273,6 +304,8 @@ export async function initPlayerWeapons(scene: THREE.Scene, camera: THREE.Camera
           if (weaponBone) {
               weaponBone.add(muzzleNode);
           } else {
+              const offset = (secondaryAsset as any).muzzleOffset || { x: 0, y: 0.05, z: -0.45 };
+              muzzleNode.position.set(offset.x, offset.y, offset.z);
               secondaryGroup!.add(muzzleNode);
           }
       } else {
@@ -515,7 +548,9 @@ export function updateWeaponsContainer(
   const finalY = baseTargetY + switchYOffset + (weaponVisualState.recoilPitch * 0.12);
   const finalZ = baseTargetZ - weaponVisualState.recoilZ - pullBackZ; 
 
-  weaponsContainer.position.copy(camera.position);
+  if (weaponsContainer.parent !== camera) {
+    camera.add(weaponsContainer);
+  }
   
   // Implement Weapon Follow slerp lag with non-linear snapping drag
   if (isFirstFrame) {
@@ -534,7 +569,12 @@ export function updateWeaponsContainer(
     weaponBaseQuat.slerp(camera.quaternion, t);
   }
   
-  weaponsContainer.quaternion.copy(weaponBaseQuat);
+  // Calculate relative orientation under camera
+  _invCamQuat.copy(camera.quaternion).invert();
+  _localLagQuat.copy(_invCamQuat).multiply(weaponBaseQuat);
+
+  weaponsContainer.position.set(0, 0, 0);
+  weaponsContainer.quaternion.copy(_localLagQuat);
 
   // Apply recoil rotation relative to the camera
   weaponsContainer.rotateX(weaponVisualState.recoilPitch + (swayY * 1.5));

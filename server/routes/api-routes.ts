@@ -11,7 +11,7 @@ import {
   verifyAdReward,
   calculateLevelMetrics
 } from "../../shared/verification/verifier";
-import { db, doc, getDoc, setDoc, updateDoc, runTransaction, increment } from "../index";
+import { db, doc, getDoc, setDoc, updateDoc, deleteDoc, runTransaction, increment } from "../index";
 import { DEFAULT_SHARED_FEATURE_FLAGS, SharedFeatureFlagKey } from "../../shared/feature-flags";
 
 export function registerApiRoutes(app: Express): void {
@@ -525,6 +525,93 @@ export function registerApiRoutes(app: Express): void {
       res.json({ success: true, sectors, globalWarStatus: "active", epoch: 4 });
     } catch (err: any) {
       res.status(500).json({ success: false, error: err.message || err });
+    }
+  });
+
+  app.post("/api/match/lock", async (req, res) => {
+    try {
+      const { matchId, playerId } = req.body;
+      if (!matchId || !playerId) {
+        return res.status(400).json({
+          success: false,
+          error: { code: "INVALID_INPUT", message: "matchId and playerId are required." }
+        });
+      }
+      const docRef = doc(db, "matches_in_progress", matchId);
+      await setDoc(docRef, {
+        playerId,
+        createdAt: new Date().toISOString()
+      });
+      return res.json({ success: true });
+    } catch (err: any) {
+      return res.status(500).json({
+        success: false,
+        error: { code: "SERVER_ERROR", message: err.message || String(err) }
+      });
+    }
+  });
+
+  app.post("/api/match/unlock", async (req, res) => {
+    try {
+      const { matchId } = req.body;
+      if (!matchId) {
+        return res.status(400).json({
+          success: false,
+          error: { code: "INVALID_INPUT", message: "matchId is required." }
+        });
+      }
+      const docRef = doc(db, "matches_in_progress", matchId);
+      await deleteDoc(docRef);
+      return res.json({ success: true });
+    } catch (err: any) {
+      return res.status(500).json({
+        success: false,
+        error: { code: "SERVER_ERROR", message: err.message || String(err) }
+      });
+    }
+  });
+
+  app.post("/api/player/loadout", async (req, res) => {
+    try {
+      const { playerId, classId, items } = req.body;
+      if (!playerId || !classId || !items) {
+        return res.status(400).json({
+          success: false,
+          error: { code: "INVALID_INPUT", message: "playerId, classId, and items are required." }
+        });
+      }
+      const userRef = doc(db, "Users", playerId);
+      await updateDoc(userRef, {
+        [`armory.loadouts.${classId}`]: items
+      });
+      return res.json({ success: true });
+    } catch (err: any) {
+      return res.status(500).json({
+        success: false,
+        error: { code: "SERVER_ERROR", message: err.message || String(err) }
+      });
+    }
+  });
+
+  app.post("/api/player/item-skins", async (req, res) => {
+    try {
+      const { playerId, skins } = req.body;
+      if (!playerId || !skins) {
+        return res.status(400).json({
+          success: false,
+          error: { code: "INVALID_INPUT", message: "playerId, and skins are required." }
+        });
+      }
+      const userRef = doc(db, "Users", playerId);
+      await updateDoc(userRef, {
+        "armory.itemSkins": skins
+      });
+      return res.json({ success: true });
+    } catch (err: any) {
+      return res.status(500).json({
+        success: false,
+        error: { code: "SERVER_ERROR", message: err.message || String(err) }
+      });
     }
   });
 }

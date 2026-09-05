@@ -125,12 +125,17 @@ export class VisualsSystem {
         wasWeaponsContainerPos.copy(weaponsContainer.position);
         wasWeaponsContainerQuat.copy(weaponsContainer.quaternion);
         
-        weaponsContainer.position.copy(camera.position);
-        weaponsContainer.quaternion.copy(camera.quaternion);
-        // Spin 180 degrees around Y (weapons face forward along Z) and translate forward so they are centered in view
-        weaponsContainer.rotateY(Math.PI);
-        weaponsContainer.translateZ(0.8);
-        weaponsContainer.translateY(-0.25);
+        if (weaponsContainer.parent === camera) {
+          weaponsContainer.position.set(0, -0.25, -0.8);
+          weaponsContainer.rotation.set(0, Math.PI, 0);
+        } else {
+          weaponsContainer.position.copy(camera.position);
+          weaponsContainer.quaternion.copy(camera.quaternion);
+          // Spin 180 degrees around Y (weapons face forward along Z) and translate forward so they are centered in view
+          weaponsContainer.rotateY(Math.PI);
+          weaponsContainer.translateZ(0.8);
+          weaponsContainer.translateY(-0.25);
+        }
         weaponsContainer.updateMatrixWorld(true);
       }
       

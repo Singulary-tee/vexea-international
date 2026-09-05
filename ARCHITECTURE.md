@@ -4,6 +4,8 @@
 
 ---
 
+Never accept a resource restrictions without interrogating the requirement's derivation.
+
 ## 1. Core Stack & Infrastructure
 *   **Renderer (Client):** Three.js r184 with TSL (Three Shading Language). We strictly use the WebGPU renderer with `forcewebgl` if/when absolutely necessary for compatibility, and the outdated legacy WebGL renderer is never used. The use of THREE.WebGLRenderer is completely forbidden under any circumstances. No matter what's the issue or what's being fixed or added. This project is strictly designed, developed, and tested using the modern WebGPU pipeline. Under no circumstances should legacy WebGL-specific limitations, outdated APIs, or concepts like "WebGL buffer allocation" be assumed or referenced as primary.
 *   **Physics:** Rapier via WASM.

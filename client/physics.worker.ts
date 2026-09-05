@@ -1,5 +1,4 @@
 import RAPIER from "@dimforge/rapier3d-compat";
-import mapSpec from "../shared/maps/map_1_facility.spec.json";
 import { PLAYER_RADIUS, PLAYER_CAPSULE_HALF_HEIGHT, PLAYER_CAPSULE_HALF_HEIGHT_CROUCH, PLAYER_GRAVITY, PLAYER_JUMP_VELOCITY } from "../shared/constants";
 
 let world: RAPIER.World;
@@ -34,9 +33,6 @@ let localSpeed = 0;
 let localIsJump = false;
 let localIsCrouch = false;
 let localVelY = 0;
-
-let dronesMap: Map<number, { body: RAPIER.RigidBody, collider: RAPIER.Collider }> = new Map();
-const currentDroneIds = new Set<number>();
 
 self.onerror = function(message, source, lineno, colno, error) {
     self.postMessage({
@@ -150,42 +146,6 @@ self.onmessage = async (e) => {
         if (localStepOnceRequested) {
             accumulator += FIXED_TIMESTEP;
             localStepOnceRequested = false;
-        }
-        
-        if (e.data.drones && Array.isArray(e.data.drones)) {
-            currentDroneIds.clear();
-            for (const d of e.data.drones) {
-                currentDroneIds.add(d.id);
-                let droneObj = dronesMap.get(d.id);
-                
-                if (!droneObj) {
-                    let dSizeX = 1.5, dSizeY = 1.5, dSizeZ = 1.5;
-                    const type = d.type;
-                    if (type === 0) { dSizeX = 0.777; dSizeY = 0.204; dSizeZ = 0.596; } // ROTARY_SHOOTER
-                    else if (type === 1) { dSizeX = 0.777; dSizeY = 0.204; dSizeZ = 0.596; } // BOMBER
-                    else if (type === 2) { dSizeX = 0.777; dSizeY = 0.204; dSizeZ = 0.596; } // RECON
-                    else if (type === 3) { dSizeX = 6.435; dSizeY = 1.545; dSizeZ = 13.890; } // FIXED_WING
-                    else if (type === 4) { dSizeX = 1.187; dSizeY = 0.695; dSizeZ = 1.082; } // WHEELED
-                    else if (type === 5) { dSizeX = 0.82; dSizeY = 0.20; dSizeZ = 1.23; } // ROBOT_DOG
-                    else if (type === 6) { dSizeX = 1.0; dSizeY = 2.5; dSizeZ = 1.0; } // HUMANOID
-                    
-                    const bodyDesc = RAPIER.RigidBodyDesc.kinematicPositionBased().setTranslation(d.x, d.y + dSizeY, d.z);
-                    const body = world.createRigidBody(bodyDesc);
-                    const colliderDesc = RAPIER.ColliderDesc.cuboid(dSizeX, dSizeY, dSizeZ);
-                    const collider = world.createCollider(colliderDesc, body);
-                    droneObj = { body, collider };
-                    dronesMap.set(d.id, droneObj);
-                }
-                
-                droneObj.body.setNextKinematicTranslation({ x: d.x, y: d.y + droneObj.collider.halfExtents().y, z: d.z });
-            }
-            
-            for (const [id, droneObj] of dronesMap) {
-                if (!currentDroneIds.has(id)) {
-                    world.removeRigidBody(droneObj.body);
-                    dronesMap.delete(id);
-                }
-            }
         }
         
         while (accumulator >= FIXED_TIMESTEP) {

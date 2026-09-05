@@ -63,18 +63,34 @@ export class LoadingScreen {
 
     // Progress Bar Container
     const progressContainer = document.createElement("div");
+    progressContainer.className = "vexea-loading-track";
     progressContainer.style.width = "clamp(15.00rem, 60vw, 37.50rem)";
-    progressContainer.style.height = "4px";
-    progressContainer.style.backgroundColor = DS.colors.surface;
-    progressContainer.style.marginBottom = "0.31rem";
+    progressContainer.style.height = "5px";
+    progressContainer.style.backgroundColor = "#202827";
+    progressContainer.style.marginBottom = "0.63rem";
     progressContainer.style.borderRadius = "0px";
+    progressContainer.style.position = "relative";
+    progressContainer.style.overflow = "visible";
 
     // Progress Bar Fill
     this.progressBarFill = document.createElement("div");
+    this.progressBarFill.className = "vexea-loading-fill";
     this.progressBarFill.style.width = "0%";
     this.progressBarFill.style.height = "100%";
-    this.progressBarFill.style.backgroundColor = "#FFFFFF";
+    this.progressBarFill.style.background = "linear-gradient(90deg, #C9D0C8 0%, #F4F5F1 75%, #C77C3B 100%)";
     this.progressBarFill.style.borderRadius = "0px";
+    this.progressBarFill.style.position = "relative";
+
+    // Leading Head (1px x 13px)
+    const head = document.createElement("div");
+    head.className = "vexea-loading-head";
+    this.progressBarFill.appendChild(head);
+
+    // Sheen
+    const sheen = document.createElement("div");
+    sheen.className = "vexea-loading-sheen";
+    this.progressBarFill.appendChild(sheen);
+
     progressContainer.appendChild(this.progressBarFill);
     this.overlay.appendChild(progressContainer);
 
@@ -117,10 +133,23 @@ export class LoadingScreen {
     this.phaseLabel.innerText = label;
   }
 
+  private sheenTriggered = false;
+
   setProgress(loaded: number, total: number): void {
     const p = Math.max(0, Math.min(100, (loaded / total) * 100));
     this.progressBarFill.style.width = `${p}%`;
     this.percentageText.innerText = `${Math.floor(p)}%`;
+
+    if (p > 20 && !this.sheenTriggered) {
+      this.sheenTriggered = true;
+      const sheen = this.progressBarFill.querySelector(".vexea-loading-sheen") as HTMLElement | null;
+      if (sheen) {
+        sheen.classList.add("vexea-sheen-active");
+        setTimeout(() => {
+          sheen.classList.remove("vexea-sheen-active");
+        }, 650);
+      }
+    }
   }
 
   destroy(): void {

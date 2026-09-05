@@ -7,8 +7,10 @@ import { IS_DEV } from "../../shared/gates/production.gate";
 import { GAMEMODES } from "../../shared/gamemode-configs";
 import { BP_SEASON_01 } from "../../shared/battle-pass";
 import { calculateLevelMetrics } from "../../shared/verification/verifier";
+import { bindTabs, bindContentEntry, TabItem } from "../src/ui/ui-motion";
 
 let activeStatsSubTab: 'PROFILE' | 'INTEL' | 'BATTLE_PASS' | 'CHALLENGES' | 'LEADERBOARD' = 'PROFILE';
+let statsTabsHandle: { setActive: (id: string) => void; destroy: () => void } | null = null;
 
 export function setActiveStatsSubTab(tab: 'PROFILE' | 'INTEL' | 'BATTLE_PASS' | 'CHALLENGES' | 'LEADERBOARD') {
   activeStatsSubTab = tab;
@@ -136,12 +138,14 @@ export function renderStatsScreen(container: HTMLElement, registeredUserData: an
 
     // Top Sub-Tab Navigation Bar inside STATS
     const navRow = document.createElement('div');
+    navRow.className = 'vexea-tab-row';
     Object.assign(navRow.style, {
       display: 'flex',
-      gap: '12px',
+      gap: 'clamp(6px, 1.2vw, 14px)',
       borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
       paddingBottom: '2px',
-      flexShrink: '0'
+      flexShrink: '0',
+      position: 'relative'
     });
 
     const subTabs: { id: 'PROFILE' | 'INTEL' | 'BATTLE_PASS' | 'CHALLENGES' | 'LEADERBOARD'; label: string }[] = [
@@ -152,34 +156,41 @@ export function renderStatsScreen(container: HTMLElement, registeredUserData: an
       { id: 'LEADERBOARD', label: 'GLOBAL STANDINGS' }
     ];
 
+    const tabElements: TabItem[] = [];
     subTabs.forEach(tab => {
       const btn = document.createElement('button');
-      btn.className = 'stats-subtab-btn';
+      btn.className = `vexea-tab stats-subtab-btn ${tab.id === activeStatsSubTab ? 'active' : ''}`;
       btn.setAttribute('data-tab-id', tab.id);
+      btn.setAttribute('data-ui-tab', tab.id);
       btn.textContent = tab.label;
-      const isActive = tab.id === activeStatsSubTab;
       Object.assign(btn.style, {
-        padding: '2px 1px',
+        padding: '3px 6px',
         background: 'transparent',
-        color: isActive ? DS.colors.accent : 'rgba(255, 255, 255, 0.4)',
         border: 'none',
-        borderBottom: isActive ? `2px solid ${DS.colors.accent}` : '2px solid transparent',
         fontFamily: DS.typography.fontFamily,
         fontSize: DS.typography.sizes.tiny,
         fontWeight: 'bold',
         letterSpacing: '0.8px',
-        cursor: 'pointer',
-        transition: 'all 0.15s ease'
+        cursor: 'pointer'
       });
 
-      btn.onclick = () => {
-        audioManager.play('click');
-        activeStatsSubTab = tab.id;
-        renderStatsScreen(container, registeredUserData);
-      };
-
       navRow.appendChild(btn);
+      tabElements.push({ id: tab.id, button: btn });
     });
+
+    if (statsTabsHandle) {
+      statsTabsHandle.destroy();
+    }
+    statsTabsHandle = bindTabs(
+      navRow,
+      tabElements,
+      activeStatsSubTab,
+      (selectedId) => {
+        audioManager.play('click');
+        activeStatsSubTab = selectedId as any;
+        renderStatsScreen(container, registeredUserData);
+      }
+    );
 
     wrap.appendChild(navRow);
 
@@ -197,20 +208,10 @@ export function renderStatsScreen(container: HTMLElement, registeredUserData: an
     container.appendChild(wrap);
   }
 
-  // Update button active state classes in-place
-  const buttons = wrap.querySelectorAll('.stats-subtab-btn');
-  buttons.forEach(btn => {
-    const tabId = btn.getAttribute('data-tab-id');
-    const isActive = tabId === activeStatsSubTab;
-    Object.assign((btn as HTMLElement).style, {
-      color: isActive ? DS.colors.accent : 'rgba(255, 255, 255, 0.4)',
-      borderBottom: isActive ? `2px solid ${DS.colors.accent}` : '2px solid transparent'
-    });
-  });
-
   const contentBody = wrap.querySelector('.stats-content-body') as HTMLElement;
   if (contentBody) {
     contentBody.innerHTML = '';
+    bindContentEntry(contentBody, 0);
     if (activeStatsSubTab === 'PROFILE') {
       renderProfileView(contentBody, registeredUserData);
     } else if (activeStatsSubTab === 'BATTLE_PASS') {

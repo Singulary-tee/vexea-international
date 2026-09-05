@@ -12,9 +12,10 @@ service cloud.firestore {
       allow read, write: if request.auth != null && request.auth.uid == playerId;
     }
 
-    // Client-side matches_in_progress session locking
+    // Server Authoritative: matches_in_progress session locking (managed via server API)
     match /matches_in_progress/{matchId} {
-      allow read, write: if request.auth != null;
+      allow read: if request.auth != null;
+      allow write: if false;
     }
 
     // Client-side user feedback submission
@@ -22,9 +23,10 @@ service cloud.firestore {
       allow create: if request.auth != null;
     }
 
-    // Server Authoritative: Users scores & outcomes (Synced and certified by server authoritative loops)
+    // Server Authoritative: Users scores, loadouts & outcomes (Managed authoritatively by server endpoints)
     match /Users/{playerId} {
-      allow read, write: if request.auth != null && request.auth.uid == playerId;
+      allow read: if request.auth != null && request.auth.uid == playerId;
+      allow write: if false;
     }
 
     // Friends subcollection: Users/{userId}/friends/{friendId}

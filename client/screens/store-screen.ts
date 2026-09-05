@@ -4,6 +4,7 @@ import { CatalogItem } from "../../shared/verification/types";
 import { audioManager } from "../audio";
 import { StudioPreviewManager, AVAILABLE_SKINS } from "../StudioPreviewManager";
 import { auth } from "../firebase";
+import { bindTabs, bindContentEntry, bindSelection, TabItem } from "../src/ui/ui-motion";
 
 let activeCategoryFilter: 'ALL' | 'cosmetic' | 'blueprint' | 'booster' | 'bundle' | 'resupply' = 'ALL';
 
@@ -74,6 +75,7 @@ export function renderStoreScreen(container: HTMLElement, registeredUserData: an
   container.innerHTML = '';
 
   const wrap = document.createElement('div');
+  bindContentEntry(wrap, 0);
   Object.assign(wrap.style, {
     display: 'flex',
     flexDirection: 'column',
@@ -251,11 +253,13 @@ export function renderStoreScreen(container: HTMLElement, registeredUserData: an
 
   // Top Catalog Navigation Filters
   const filterRow = document.createElement('div');
+  filterRow.className = 'vexea-tab-row';
   Object.assign(filterRow.style, {
     display: 'flex',
-    gap: '8px',
+    gap: '6px',
     alignItems: 'center',
-    flexShrink: '0'
+    flexShrink: '0',
+    position: 'relative'
   });
 
   const filterLabel = document.createElement('div');
@@ -279,32 +283,37 @@ export function renderStoreScreen(container: HTMLElement, registeredUserData: an
     { id: 'bundle', label: 'BUNDLE' }
   ];
 
+  const storeTabElements: TabItem[] = [];
   categories.forEach(cat => {
     const filterBtn = document.createElement('button');
+    filterBtn.className = `vexea-tab ${activeCategoryFilter === cat.id ? 'active' : ''}`;
+    filterBtn.setAttribute('data-ui-tab', cat.id);
     filterBtn.textContent = cat.label;
-    const isFilterActive = activeCategoryFilter === cat.id;
     Object.assign(filterBtn.style, {
       padding: '2px 0.38rem',
-      background: isFilterActive ? 'rgba(255, 255, 255, 0.05)' : 'transparent',
-      color: isFilterActive ? DS.colors.accent : 'rgba(255, 255, 255, 0.4)',
-      border: isFilterActive ? `1px solid ${DS.colors.accent}` : '1px solid transparent',
+      background: 'transparent',
+      border: 'none',
       fontFamily: DS.typography.fontFamily,
       fontSize: DS.typography.sizes.tiny,
       fontWeight: 'bold',
       letterSpacing: '0.8px',
-      borderRadius: '2px',
-      cursor: 'pointer',
-      transition: 'all 0.1s ease-out'
+      cursor: 'pointer'
     });
 
-    filterBtn.onclick = () => {
-      audioManager.play('click');
-      activeCategoryFilter = cat.id;
-      renderStoreScreen(container, registeredUserData);
-    };
-
     filterRow.appendChild(filterBtn);
+    storeTabElements.push({ id: cat.id, button: filterBtn });
   });
+
+  bindTabs(
+    filterRow,
+    storeTabElements,
+    activeCategoryFilter,
+    (selectedFilterId) => {
+      audioManager.play('click');
+      activeCategoryFilter = selectedFilterId as any;
+      renderStoreScreen(container, registeredUserData);
+    }
+  );
 
   rightCol.appendChild(filterRow);
 

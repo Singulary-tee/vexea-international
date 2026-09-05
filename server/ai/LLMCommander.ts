@@ -329,9 +329,19 @@ export class LLMCommander {
       }
     }
 
+    const formatZoneSummaryTuples = (zsMap: Record<string, any> | undefined): string => {
+      if (!zsMap) return "ZONES: none";
+      return "ZONES: " + Object.entries(zsMap).map(([zName, zs]) => {
+        const short = zName.replace("zone_", "");
+        const conf = zs?.confidence !== undefined ? Number(zs.confidence).toFixed(1) : "0.0";
+        const grps = zs?.droneGroups?.length > 0 ? zs.droneGroups.join(",") : "none";
+        return `${short}(c:${conf},g:${grps})`;
+      }).join(" ");
+    };
+
     const compressedContext = this.room.commanderMemory
       ? this.room.commanderMemory.buildCompressedPayload()
-      : `Current Zone Summary: ${JSON.stringify(this.room.zoneSummary)}`;
+      : `Current Zone Summary: ${formatZoneSummaryTuples(this.room.zoneSummary)}`;
     const statePayload = compressedContext;
     const outstandingPayload =
       pendingOrders.length > 0
@@ -923,7 +933,9 @@ Topological graph adjacency (Zones):
 
     const systemInstruction = `You are an automated state-machine log parser and execution analyzer for a group routing and unit allocation system. You are not roleplaying. There is no narrative. Provide clinical, mechanical, objective, and dry explanations for unit group routing, state changes, zone allocations, and resource counts. Answer the inquiry directly using the provided spatial state and recent execution history. Never adopt any persona, roleplay, or larp.`;
 
-    const statePayload = JSON.stringify(this.room.zoneSummary);
+    const statePayload = this.room.commanderMemory
+      ? this.room.commanderMemory.buildCompressedPayload()
+      : "ZONES: " + Object.entries(this.room.zoneSummary || {}).map(([z, s]) => `${z.replace("zone_", "")}(c:${s?.confidence?.toFixed(1) ?? "0.0"},g:${s?.droneGroups?.join(",") || "none"})`).join(" ");
     const historyPayload = JSON.stringify(this.recentExecutionHistory.slice(-5));
 
     const prompt = `CURRENT STATE:\n${statePayload}\n\nRECENT EXECUTION HISTORY:\n${historyPayload}\n\nINQUIRY:\n${question}`;

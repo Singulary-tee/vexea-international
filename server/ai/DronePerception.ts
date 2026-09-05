@@ -1,4 +1,4 @@
-import { DroneType, getDroneMuzzleWorldPosition, DRONE_CONFIGS, INTEL_CONFIGS } from "../../shared/constants";
+import { DroneType, getDroneMuzzleWorldPosition, DRONE_CONFIGS, INTEL_CONFIGS, TOPOLOGY, ZoneName } from "../../shared/constants";
 import type RAPIER from "@dimforge/rapier3d-compat";
 import type { PlayerState, ServerDrone } from "../MatchRoom";
 import { CollisionSystem } from "../../shared/collision";
@@ -13,6 +13,10 @@ export interface PerceptionResult {
   damageConfidence: number;    // 0.85 for damage
   targetPos: { x: number; y: number; z: number };
 }
+
+// Module-level static scratch objects to enforce Zero-GC compliance in 60Hz tick
+const _sensorPos = { x: 0, y: 0, z: 0 };
+const _rDir = { x: 0, y: 0, z: 0 };
 
 /**
  * Calculates sensor optics, FOV angles, raycast LOS obstructions, and acoustic sound perception.
@@ -31,10 +35,13 @@ export function evaluateDronePerception(
   const sightDistance = droneConfig?.detectionRadius ?? conf.sightDistance;
   const visionConeAngle = droneConfig?.fovHalfAngle ? (droneConfig.fovHalfAngle * 2) : conf.visionConeAngle;
 
-  const sensorPos = { x: drone.posX, y: drone.posY + 0.5, z: drone.posZ };
-  const dx = player.posX - sensorPos.x;
-  const dy = (player.posY + 0.5) - sensorPos.y;
-  const dz = player.posZ - sensorPos.z;
+  _sensorPos.x = drone.posX;
+  _sensorPos.y = drone.posY + 0.5;
+  _sensorPos.z = drone.posZ;
+
+  const dx = player.posX - _sensorPos.x;
+  const dy = (player.posY + 0.5) - _sensorPos.y;
+  const dz = player.posZ - _sensorPos.z;
   const dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
 
   // Stage 1: Distance Boundary
@@ -76,11 +83,28 @@ export function evaluateDronePerception(
   // Stage 3: Raycast Line of Sight
   let hasLOS = false;
   if (inDistance && inFOV) {
-    hasLOS = true;
-    const rDir = { x: dx / dist, y: dy / dist, z: dz / dist };
+    // Hierarchical Bounding Box Pre-Filter (ARCH-04):
+    // Never run collisionMap.rayIntersectsAny before testing broad-phase line-of-sight against static zone portals.
+    // If player and drone are separated by multiple non-adjacent zones, raycasting is bypassed entirely.
+    const droneZone = drone.zone;
+    const playerZone = player.zone;
+    const areZonesConnected =
+      !droneZone ||
+      !playerZone ||
+      droneZone === playerZone ||
+      Boolean(TOPOLOGY[droneZone as ZoneName]?.includes(playerZone as ZoneName));
 
-    if (collisionMap && collisionMap.rayIntersectsAny(sensorPos, rDir, dist)) {
+    if (!areZonesConnected) {
       hasLOS = false;
+    } else {
+      hasLOS = true;
+      _rDir.x = dx / dist;
+      _rDir.y = dy / dist;
+      _rDir.z = dz / dist;
+
+      if (collisionMap && collisionMap.rayIntersectsAny(_sensorPos, _rDir, dist)) {
+        hasLOS = false;
+      }
     }
   }
 

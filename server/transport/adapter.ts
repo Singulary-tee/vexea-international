@@ -171,8 +171,7 @@ class SocketIOAdapter implements ServerTransport {
     rawEmitAll(buffer: ArrayBuffer): void {
       const count = this.getConnectedCount();
       if (count > 0) {
-        const serializedPayload = { type: 'raw', data: Array.from(new Uint8Array(buffer)) };
-        this.io.emit('raw', serializedPayload);
+        this.io.emit('raw', Buffer.from(buffer));
       }
     }
   
@@ -208,8 +207,12 @@ class SocketIOChannelAdapter implements ChannelAdapter {
     
     onRaw(callback: (buffer: ArrayBuffer) => void): void {
         this.socket.on('raw', (payload: any) => {
-            if (payload && payload.type === 'raw' && Array.isArray(payload.data)) {
-                 callback(new Uint8Array(payload.data).buffer);
+            if (Buffer.isBuffer(payload)) {
+                callback(payload.buffer.slice(payload.byteOffset, payload.byteOffset + payload.byteLength));
+            } else if (payload instanceof ArrayBuffer) {
+                callback(payload);
+            } else if (payload && payload.type === 'raw' && Array.isArray(payload.data)) {
+                callback(new Uint8Array(payload.data).buffer);
             }
         });
     }
@@ -219,8 +222,7 @@ class SocketIOChannelAdapter implements ChannelAdapter {
     }
     
     rawEmit(buffer: ArrayBuffer): void {
-        const serializedPayload = { type: 'raw', data: Array.from(new Uint8Array(buffer)) };
-        this.socket.emit('raw', serializedPayload);
+        this.socket.emit('raw', Buffer.from(buffer));
     }
 
     removeAllListeners(): void {

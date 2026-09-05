@@ -79,15 +79,6 @@ export function applySettings(s: VexeaSettingsData) {
     document.dispatchEvent(new CustomEvent("VEXEA_GRAPHICS_CHANGED", { detail: s }));
     document.dispatchEvent(new CustomEvent("VEXEA_SETTINGS_CHANGED", { detail: s }));
     
-    // FXAA
-    if (W.fxaaPass) {
-        W.fxaaPass.enabled = s.fxaa;
-        if (W.fxaaPass.material?.uniforms?.resolution?.value) {
-            W.fxaaPass.material.resolution = W.fxaaPass.material.resolution || W.fxaaPass.material.uniforms.resolution.value;
-            W.fxaaPass.material.resolution.set(1 / (window.innerWidth * window.devicePixelRatio), 1 / (window.innerHeight * window.devicePixelRatio));
-        }
-    }
-
     // 4. Audio Volumes via Howler
     const Howler = (window as any).Howler;
     if (Howler) {

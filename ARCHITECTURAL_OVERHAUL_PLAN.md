@@ -18,17 +18,15 @@
   - Socket.IO supports native binary payloads directly: pass `Buffer.from(buffer)` on the server and receive `ArrayBuffer` on the client.
   - Eliminate `Array.from(new Uint8Array(buffer))` completely. Socket.IO engine transmits raw ArrayBuffers over WebSocket with zero JS heap array conversions.
 
-### 1.2 The Hybrid Dual-Stream Desync Vector (State Sync vs. Raw Binary)
-- **Problem:** `MatchRoom.ts` broadcasts **two concurrent network streams** every 50ms:
-  1. `player.channel.rawEmit(packedData)` (binary packed drones & cameras)
-  2. `player.channel.emit("state_sync", { players, devDrones, serverCube, liveZoneSummary, projectiles })` (large JSON tree)
-  `detailedPlayers` inside `state_sync` serializes unrounded floats, strings, and dynamic arrays (`activeCollisions: []`).
+### 1.2 Transport Constraints & Stream Hygiene (Socket.IO Authoritative)
+- **Transport Mandate:** The real transport is strictly Socket.IO. Any references to Geckos.io/UDP in Architecture.md are aspirational and not implemented. Writing custom UDP or speculative secondary binary packet protocols is prohibited.
+- **Problem:** `MatchRoom.ts:2039-2045` broadcasts `player.channel.emit("state_sync", ...)` alongside raw binary packed data every 50ms. `detailedPlayers` inside `state_sync` serializes unrounded floats, static strings, and dynamic arrays (`activeCollisions: []`), alongside debug payloads (`serverCube`, `devDrones`).
 - **Consequences:**
-  - Client state receives drone positions via binary dead-reckoning interpolator, but player states, projectiles, and collision arrays via unoptimized JSON serialization.
-  - At 60Hz physics / 20Hz network tick, this breaks §4 "Strict Binary Serialization: Zero garbage collection (GC). No `JSON.stringify()`."
+  - Redundant JSON allocations and debug properties inflate WebSocket frame sizes across mobile clients.
 - **Architectural Directive:**
-  - Consolidate active projectiles into a compact secondary binary layout or append them to the existing `packedData` buffer.
-  - Strip debugging payloads (`serverCube`, `devDrones`) out of production match sync loops and gate them behind `DEBUG_PHYSICS_TICKS`.
+  - Retain standard Socket.IO event architecture for high-level events, projectiles, and state synchronization. Do not write custom UDP or binary packet layouts for projectiles.
+  - Strip debugging payloads (`serverCube`, `devDrones`) out of production match sync loops behind feature flag `DEBUG_PHYSICS_TICKS`.
+  - Compact `detailedPlayers` serialization to prune redundant static properties and empty dynamic arrays, maintaining low per-tick payload sizes over Socket.IO without violating transport rules.
 
 ### 1.3 `MatchRoom.ts` God-Object (3,457 Lines) Decomposition Architecture
 `MatchRoom` currently violates §13 (No Monoliths) by binding six decoupled lifecycles together:
@@ -137,11 +135,26 @@ graph TD
 1. `match /matches_in_progress/{matchId}`:
    - Current rule: `allow read, write: if request.auth != null;`
    - **Exploit:** Any logged-in player can overwrite, corrupt, or wipe any match room session document in Firestore.
-   - **Fix:** Restrict write permissions to the backend Admin SDK (`allow write: if false;`).
 2. `match /Users/{playerId}`:
    - Current rule: `allow read, write: if request.auth != null && request.auth.uid == playerId;`
-   - **Exploit:** While scoped to the user's UID, allowing direct client writes permits players to forge currency balances (`credits`, `energy`), battle pass tier progress, and match history scores.
-   - **Fix:** Client write access must be disabled (`allow write: if false;`). Player balances, progression, and loadouts must be updated exclusively via server-side authoritative API endpoints (`/api/economy/*`, `/api/match/reward`).
+   - **Exploit:** While scoped to the user's UID, allowing direct client writes permits players to forge currency balances (`credits`, `energy`), battle pass tier progress, and loadout states.
+
+### 5.2 Mandatory Phased Migration Sequence (Pre-Lockdown Prerequisite)
+Directly deploying `allow write: if false;` immediately breaks live client code that performs direct client SDK writes:
+- `client/firebase.ts:248`: `lockMatchSession` writes directly to `matches_in_progress/{matchId}`.
+- `client/src/systems/ClassLoadoutPersistence.ts:204` & `ClassLoadoutSystem.ts:213`: write directly to `Users/{uid}`.
+- `client/social.ts:251`: writes directly to `Users/{uid}`.
+
+To prevent client permission-denied crashes, execution must follow a strict three-phase sequence:
+- **Phase 5.2A (Authoritative Server API Endpoints):**
+  - Implement `POST /api/match/lock` in `server/routes/api-routes.ts` using Firebase Admin SDK (`server/index.ts`) to manage match room session locks.
+  - Implement `POST /api/player/loadout` in `server/routes/api-routes.ts` to validate and persist player class/loadout changes authoritatively.
+  - Ensure profile/friend mutations in `social.ts` use existing server endpoints (`/api/player-profile`).
+- **Phase 5.2B (Client Call Site Migration):**
+  - Update `client/firebase.ts` to call `/api/match/lock` via authenticated `fetch()` instead of direct Firestore `setDoc`.
+  - Update `ClassLoadoutPersistence.ts` and `ClassLoadoutSystem.ts` to call `/api/player/loadout`.
+- **Phase 5.2C (Rules Lockdown):**
+  - Once client-side write calls are fully migrated, deploy `firestore.rules` setting `allow write: if false;` for both `matches_in_progress/{matchId}` and `Users/{playerId}`.
 
 ---
 
@@ -154,9 +167,9 @@ graph TD
 | **ARCH-03** | Combat | Convert hitscan temporal rollback search from linear scan to $O(1)$ ring buffer index lookup | [hitscan.ts](file:///home/Alte/vexea-international/server/combat/hitscan.ts) | **High** (Reduces tick budget during intense combat) |
 | **ARCH-04** | AI Simulation | Stagger perception evaluations and add zone-portal pre-culling for Raycast cover checks | [DronePerception.ts](file:///home/Alte/vexea-international/server/ai/DronePerception.ts)<br>[HumanoidBehavior.ts](file:///home/Alte/vexea-international/server/ai/behavior/behaviors/HumanoidBehavior.ts) | **High** (Prevents server tick-rate drops with >20 drones) |
 | **ARCH-05** | Client Core | Replace `(window as any)` dependency injection with typed `ClientEngineContext` | [MatchController.ts](file:///home/Alte/vexea-international/client/MatchController.ts)<br>`client/src/systems/*` | **Medium** (Prevents runtime race conditions) |
-| **ARCH-06** | Security | Lock down `firestore.rules` for `matches_in_progress` and `Users` collections | [firestore.rules](file:///home/Alte/vexea-international/firestore.rules) | **Critical** (Closes client state tampering exploits) |
+| **ARCH-06** | Security | Phase 1: Implement authoritative server endpoints (`/api/match/lock`, `/api/player/loadout`); Phase 2: Migrate client call sites; Phase 3: Lock down `firestore.rules` | `server/routes/api-routes.ts`<br>`client/firebase.ts`<br>`client/src/systems/ClassLoadoutPersistence.ts`<br>[firestore.rules](file:///home/Alte/vexea-international/firestore.rules) | **Critical** (Closes client state tampering without breaking gameplay) |
 | **ARCH-07** | LLM Engine | Compress `zoneSummary` prompt serialization to dense positional tuples | [LLMCommander.ts](file:///home/Alte/vexea-international/server/ai/LLMCommander.ts) | **Medium** (Cuts token usage & API latency) |
-| **ARCH-08** | Client Physics | Fix `DroneState.DEAD` comparison bug (value `2` vs `5`) in `SimulationSystem` | [SimulationSystem.ts](file:///home/Alte/vexea-international/client/src/systems/SimulationSystem.ts) | **High** (Stops ghost collision blocks on dead drones) |
+| **ARCH-08** | Client Physics | Eliminate drone kinematic colliders and worker messaging from client to enforce Architecture.md Section 1 law | `client/physics.worker.ts`<br>[SimulationSystem.ts](file:///home/Alte/vexea-international/client/src/systems/SimulationSystem.ts) | **High** (Enforces Architecture.md Section 1, saves mobile worker CPU) |
 | **ARCH-09** | Render Pipeline | Remove phantom `EffectComposer`/`fxaaPass` code and align resolution handler to WebGPU/TSL | [main.ts](file:///home/Alte/vexea-international/client/main.ts)<br>[DynamicResolutionSystem.ts](file:///home/Alte/vexea-international/client/src/systems/DynamicResolutionSystem.ts) | **Low** (Removes dead rendering branch & bundle bloat) |
 | **ARCH-10** | Camera Engine | Normalize `yawVelocity` camera banking tilt against delta-time spikes | [CameraEffects.ts](file:///home/Alte/vexea-international/client/src/camera/CameraEffects.ts) | **Medium** (Prevents sudden camera view snaps) |
 | **ARCH-11** | Worker Topology | Remove hardcoded `map_1_facility.spec.json` static import from `physics.worker.ts` | [physics.worker.ts](file:///home/Alte/vexea-international/client/physics.worker.ts) | **High** (Enables multi-map client collisions) |
@@ -170,11 +183,19 @@ graph TD
 
 ## 7. Concrete Client Simulation & Engine Anomalies
 
-### 7.1 `DroneState.DEAD` Enum Mismatch Causing Ghost Collisions
-- **File:** [client/src/systems/SimulationSystem.ts:91](file:///home/Alte/vexea-international/client/src/systems/SimulationSystem.ts#L91)
-- **Problem:** `SimulationSystem.step()` filters drones sent to the physics worker via `if (latest.state !== 2)`. In `shared/constants.ts`, `DroneState.PURSUING = 2` and `DroneState.DEAD = 5`.
-- **Consequence:** Drones actively pursuing players are excluded from collision simulation, whereas dead drones continue to be simulated as solid physical obstacles in client Rapier until despawn.
-- **Fix:** Import `DroneState` from `shared/constants` and compare strictly against `DroneState.DEAD`.
+### 7.1 Client Rapier Drone Collision Elimination (Architecture.md Law Enforcement)
+- **Law Violation:** `ARCHITECTURE.md` Section 1 explicitly dictates:
+  > "Client: Used ONLY for player kinematic character controller and static map geometry. Drones are NOT simulated in client-side Rapier."
+- **Files:** `client/src/systems/SimulationSystem.ts:91-99`, `client/physics.worker.ts:155-189`
+- **Problem:** `SimulationSystem.ts` filters and packages drone coordinates (`dronesData.push({ id, x: latest.posX, y: latest.posY, z: latest.posZ, type: latest.type })`) and sends them to `physics.worker.ts`. In turn, `physics.worker.ts:172-177` creates kinematic rigid bodies and cuboid colliders for each drone in the client Rapier world. Additionally, `SimulationSystem.ts:91` checks `if (latest.state !== 2)` where `2` is `DroneState.PURSUING` rather than `DroneState.DEAD` (`5`), causing pursuing drones to be omitted while dead drones are retained as colliders.
+- **Consequences:**
+  - Simulating drones in client Rapier violates `ARCHITECTURE.md` Section 1 law.
+  - Generates unnecessary message allocations and worker thread overhead on mobile devices.
+  - Causes ghost physical obstacles when colliding with drone positions on client.
+- **Fix (Architecture Compliance):**
+  1. Remove drone collider creation, updating, and removal in `client/physics.worker.ts` (`dronesMap`, `currentDroneIds`, and the `e.data.drones` handling loop).
+  2. Remove drone coordinate packaging and postMessage transmission from `client/src/systems/SimulationSystem.ts`.
+  3. Restrict client Rapier simulation exclusively to the player KCC and static map geometry as required by `ARCHITECTURE.md`.
 
 ### 7.2 Phantom WebGL `EffectComposer` & Postprocessing Residue
 - **Files:** [client/main.ts:1353-1355](file:///home/Alte/vexea-international/client/main.ts#L1353-L1355), [client/src/systems/DynamicResolutionSystem.ts:147-156](file:///home/Alte/vexea-international/client/src/systems/DynamicResolutionSystem.ts#L147-L156), [client/src/settings/state.ts:83-88](file:///home/Alte/vexea-international/client/src/settings/state.ts#L83-L88)

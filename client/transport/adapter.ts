@@ -148,7 +148,12 @@ class SocketIOClientAdapter implements ClientTransport {
         });
 
         this.socket.on("raw", (payload: any) => {
-             if (payload && payload.type === 'raw' && Array.isArray(payload.data)) {
+             if (payload instanceof ArrayBuffer) {
+                 if (this.onRawCb) this.onRawCb(payload);
+             } else if (payload && payload.buffer instanceof ArrayBuffer) {
+                 const ab = payload.buffer.slice(payload.byteOffset, payload.byteOffset + payload.byteLength);
+                 if (this.onRawCb) this.onRawCb(ab);
+             } else if (payload && payload.type === 'raw' && Array.isArray(payload.data)) {
                  const buffer = new Uint8Array(payload.data).buffer;
                  if (this.onRawCb) this.onRawCb(buffer);
              }
@@ -194,8 +199,7 @@ class SocketIOClientAdapter implements ClientTransport {
 
     rawEmit(buffer: ArrayBuffer): void {
         if (this.socket) {
-            const serializedPayload = { type: 'raw', data: Array.from(new Uint8Array(buffer)) };
-            this.socket.emit("raw", serializedPayload);
+            this.socket.emit("raw", buffer);
         }
     }
 

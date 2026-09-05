@@ -6,8 +6,10 @@ import { getSettings, saveSettings, applySettings } from './state';
 import { listCachedFiles, deleteCachedFile, clearCache } from '../../asset-cache';
 import { audioManager } from '../../audio';
 import { isFullscreen, toggleFullscreen } from '../ui/fullscreen';
+import { bindTabs, bindContentEntry, TabItem } from '../ui/ui-motion';
 
 export let overlayEl: HTMLDivElement | null = null;
+let settingsTabsHandle: { setActive: (id: string) => void; destroy: () => void } | null = null;
 let boundListeners: Array<{ el: HTMLElement; type: string; fn: any }> = [];
 let activeTab: string = 'CONTROLS';
 let listeningAction: string | null = null;
@@ -286,6 +288,7 @@ export function openSettingsUI(
     // Top Navigation Tabs Row (inline in header to eliminate unused area)
     const tabsRow = document.createElement('div');
     tabsRow.id = 'settings-sidebar'; // Backward compatibility
+    tabsRow.className = 'vexea-tab-row';
     Object.assign(tabsRow.style, {
         display: 'flex',
         alignItems: 'center',
@@ -293,14 +296,15 @@ export function openSettingsUI(
         scrollbarWidth: 'none',
         height: '100%',
         flex: '1',
-        gap: '12px',
-        marginLeft: '1.25rem'
+        gap: 'clamp(6px, 1vw, 14px)',
+        marginLeft: '1.25rem',
+        position: 'relative'
     });
     header.appendChild(tabsRow);
 
     const closeBtn = document.createElement('button');
     closeBtn.innerText = 'CLOSE';
-    closeBtn.className = 'action-btn';
+    closeBtn.className = 'vexea-btn action-btn';
     Object.assign(closeBtn.style, {
         background: '#27272a',
         borderColor: '#3f3f46',
@@ -348,19 +352,29 @@ export function openSettingsUI(
     tabList.push({ id: 'LEGAL', label: 'LEGAL' });
 
     // Render Tab buttons
+    const tabElements: TabItem[] = [];
     tabList.forEach(t => {
         const btn = document.createElement('button');
-        btn.className = `tab-button ${t.id === activeTab ? 'active' : ''}`;
+        btn.className = `vexea-tab tab-button ${t.id === activeTab ? 'active' : ''}`;
         btn.setAttribute('data-tab', t.id);
+        btn.setAttribute('data-ui-tab', t.id);
         btn.innerText = t.label;
-        bind(btn, 'click', () => {
-            document.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            activeTab = t.id;
-            renderTabContent(activeTab, contentArea, s, onClose);
-        });
         tabsRow.appendChild(btn);
+        tabElements.push({ id: t.id, button: btn });
     });
+
+    if (settingsTabsHandle) {
+        settingsTabsHandle.destroy();
+    }
+    settingsTabsHandle = bindTabs(
+        tabsRow,
+        tabElements,
+        activeTab,
+        (selectedId) => {
+            activeTab = selectedId;
+            renderTabContent(activeTab, contentArea, s, onClose);
+        }
+    );
 
     document.body.appendChild(overlayEl);
 
@@ -378,6 +392,10 @@ export function openSettingsUI(
 
 export function closeSettingsUI(onClose: () => void) {
     if (!overlayEl) return;
+    if (settingsTabsHandle) {
+        settingsTabsHandle.destroy();
+        settingsTabsHandle = null;
+    }
     const quitModal = document.getElementById('quit-confirm-modal');
     if (quitModal) quitModal.remove();
     boundListeners.forEach(l => {
@@ -393,6 +411,7 @@ export function renderTabContent(tabId: string, parent: HTMLDivElement, s: Vexea
     parent.innerHTML = '';
 
     const page = document.createElement('div');
+    bindContentEntry(page, 0);
     page.style.width = '100%';
     page.style.maxWidth = '100%';
     page.style.margin = '0 auto';
@@ -2074,10 +2093,11 @@ function createCyberToggle(
     toggle.className = `cyber-toggle ${checked ? 'active' : ''}`;
 
     const track = document.createElement('div');
-    track.className = 'cyber-toggle-track';
+    track.className = 'vexea-toggle-track cyber-toggle-track';
+    track.setAttribute('data-checked', checked ? 'true' : 'false');
 
     const thumb = document.createElement('div');
-    thumb.className = 'cyber-toggle-thumb';
+    thumb.className = 'vexea-toggle-thumb cyber-toggle-thumb';
 
     track.appendChild(thumb);
     toggle.appendChild(track);
@@ -2085,6 +2105,7 @@ function createCyberToggle(
     let state = checked;
     bind(toggle, 'click', () => {
         state = !state;
+        track.setAttribute('data-checked', state ? 'true' : 'false');
         if (state) {
             toggle.classList.add('active');
         } else {

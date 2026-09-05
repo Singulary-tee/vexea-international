@@ -29,12 +29,13 @@ import { showMenuNotification } from "./notification";
 import { openProfileAuthModal, showEnlistmentOverlay } from "./auth-modal";
 import { openSquadFriendsModal } from "./squad-friends-modal";
 import { showArchitecturalAnalysis } from "./dev-analysis";
+import { bindTabs, TabItem } from "../src/ui/ui-motion";
 
 // Re-exports preserved for legacy dynamic importers (e.g. stats-screen).
 export { showMenuNotification };
 export { openProfileAuthModal };
 
-
+let mainNavTabsHandle: { setActive: (id: string) => void; destroy: () => void } | null = null;
 let styleInjected = false;
 let activeCardId: string | null = null;
 let currentRightPanelMode: 'DEFAULT' | 'MULTIPLAYER' | 'FACTION' | 'INTEL' | 'FEEDBACK' | 'STORE' | 'PROFILE' | 'MAP_EDITOR' | 'PLAY' | 'LOADOUT' = 'DEFAULT';
@@ -419,12 +420,14 @@ export function initMainMenu() {
   // New Navigation Buttons in the top bar in the middle
   const navContainer = document.createElement('div');
   navContainer.id = 'mm-nav-container';
+  navContainer.className = 'vexea-tab-row';
   Object.assign(navContainer.style, {
     display: 'flex',
     alignItems: 'center',
-    gap: 'clamp(10px, 1.6vw, 24px)',
+    gap: 'clamp(6px, 1.2vw, 18px)',
     zIndex: '15',
-    flexShrink: '0'
+    flexShrink: '0',
+    position: 'relative'
   });
 
   const navItems = [
@@ -435,44 +438,41 @@ export function initMainMenu() {
     { id: 'STORE', label: 'STORE' }
   ];
 
+  const tabElements: TabItem[] = [];
   navItems.forEach(item => {
-    const btn = document.createElement('div');
-    btn.className = 'mm-nav-btn';
+    const btn = document.createElement('button');
+    btn.className = 'vexea-tab mm-nav-btn';
     btn.setAttribute('data-id', item.id);
+    btn.setAttribute('data-ui-tab', item.id);
     btn.textContent = item.label;
     Object.assign(btn.style, {
       fontFamily: DS.typography.fontFamily,
       fontSize: 'clamp(0.69rem, 1.2vw, 0.81rem)',
       fontWeight: 'bold',
       letterSpacing: '1.5px',
-      color: item.id === 'DEFAULT' ? DS.colors.accent : 'rgba(255, 255, 255, 0.6)',
       cursor: 'pointer',
-      padding: '4px 0.50rem',
-      borderBottom: item.id === 'DEFAULT' ? `2px solid ${DS.colors.accent}` : '2px solid transparent',
-      transition: 'all 0.2s ease',
+      padding: '4px clamp(6px, 0.8vw, 10px)',
       userSelect: 'none',
-      whiteSpace: 'nowrap'
-    });
-
-    btn.addEventListener('mouseenter', () => {
-      if (currentRightPanelMode !== item.id) {
-        btn.style.color = '#FFFFFF';
-      }
-    });
-
-    btn.addEventListener('mouseleave', () => {
-      if (currentRightPanelMode !== item.id) {
-        btn.style.color = 'rgba(255, 255, 255, 0.6)';
-      }
-    });
-
-    btn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      setActiveCard(item.id);
+      whiteSpace: 'nowrap',
+      background: 'transparent',
+      border: 'none'
     });
 
     navContainer.appendChild(btn);
+    tabElements.push({ id: item.id, button: btn });
   });
+
+  if (mainNavTabsHandle) {
+    mainNavTabsHandle.destroy();
+  }
+  mainNavTabsHandle = bindTabs(
+    navContainer,
+    tabElements,
+    currentRightPanelMode,
+    (selectedId) => {
+      setActiveCard(selectedId);
+    }
+  );
 
   // Center Profile Block: Unified horizontal layout containing avatar, vertical progress bar, and name/lvl
   const profileCenterBox = document.createElement('div');
@@ -606,61 +606,41 @@ export function initMainMenu() {
     padding: '2px 4px'
   });
 
-  // Far Right Utility buttons: Fullscreen, Feedback, Settings
+  // Far Right Utility buttons: Fullscreen, Feedback, Friends, Settings
   const utilityBox = document.createElement('div');
   Object.assign(utilityBox.style, {
-    display: 'flex', alignItems: 'center', gap: 'clamp(10px, 1.4vw, 18px)'
+    display: 'flex', alignItems: 'center', gap: 'clamp(6px, 1.0vw, 14px)'
   });
 
-  const pFullscreen = document.createElement('div');
-  pFullscreen.style.color = DS.colors.textMuted;
-  pFullscreen.style.cursor = 'pointer';
-  pFullscreen.style.display = 'flex';
-  pFullscreen.style.alignItems = 'center';
-  pFullscreen.style.transition = 'color 0.2s';
+  const pFullscreen = document.createElement('button');
+  pFullscreen.className = 'vexea-icon-button';
+  pFullscreen.setAttribute('aria-label', 'Toggle Fullscreen');
   pFullscreen.title = 'Toggle Fullscreen';
-
   bindFullscreenButton(pFullscreen, 1.13);
-
-  pFullscreen.addEventListener('mouseenter', () => { pFullscreen.style.color = DS.colors.text; });
-  pFullscreen.addEventListener('mouseleave', () => { pFullscreen.style.color = DS.colors.textMuted; });
-  const pFeedback = document.createElement('div');
-  pFeedback.innerHTML = `<img src="/ui_svgs/messages.svg" style="width: 1.13rem; height: 1.13rem; filter: brightness(0) invert(1);" alt="Messages" />`;
-  pFeedback.style.color = DS.colors.textMuted;
-  pFeedback.style.cursor = 'pointer';
-  pFeedback.style.display = 'flex';
-  pFeedback.style.alignItems = 'center';
-  pFeedback.style.transition = 'color 0.2s';
-  pFeedback.title = 'Send Feedback';
-  pFeedback.onclick = (e) => { e.stopPropagation(); setActiveCard('FEEDBACK'); };
-  pFeedback.addEventListener('mouseenter', () => { pFeedback.style.color = DS.colors.text; });
-  pFeedback.addEventListener('mouseleave', () => { pFeedback.style.color = DS.colors.textMuted; });
   utilityBox.appendChild(pFullscreen);
 
-  // Add Friends / Party icon right after Feedback
-  const pAddFriends = document.createElement('div');
-  pAddFriends.innerHTML = `<img src="/ui_svgs/add_friend.svg" style="width: 1.13rem; height: 1.13rem; filter: brightness(0) invert(1);" alt="Add Friend" />`;
-  pAddFriends.style.color = DS.colors.textMuted;
-  pAddFriends.style.cursor = 'pointer';
-  pAddFriends.style.display = 'flex';
-  pAddFriends.style.alignItems = 'center';
-  pAddFriends.style.transition = 'color 0.2s';
+  const pAddFriends = document.createElement('button');
+  pAddFriends.className = 'vexea-icon-button';
+  pAddFriends.setAttribute('aria-label', 'Friends');
   pAddFriends.title = 'Friends';
+  pAddFriends.innerHTML = `<img class="vexea-icon-button__icon" src="/ui_svgs/add_friend.svg" style="width: 1.13rem; height: 1.13rem;" alt="Add Friend" />`;
   pAddFriends.onclick = (e) => { e.stopPropagation(); openSquadFriendsModal(); };
-  pAddFriends.addEventListener('mouseenter', () => { pAddFriends.style.color = DS.colors.text; });
-  pAddFriends.addEventListener('mouseleave', () => { pAddFriends.style.color = DS.colors.textMuted; });
   utilityBox.appendChild(pAddFriends);
 
+  const pFeedback = document.createElement('button');
+  pFeedback.className = 'vexea-icon-button';
+  pFeedback.setAttribute('aria-label', 'Send Feedback');
+  pFeedback.title = 'Send Feedback';
+  pFeedback.innerHTML = `<img class="vexea-icon-button__icon" src="/ui_svgs/messages.svg" style="width: 1.13rem; height: 1.13rem;" alt="Messages" />`;
+  pFeedback.onclick = (e) => { e.stopPropagation(); setActiveCard('FEEDBACK'); };
   utilityBox.appendChild(pFeedback);
 
-  const pGear = document.createElement('div');
-  pGear.innerHTML = `<img src="/ui_svgs/settings.svg" style="width: 1.0rem; height: 1.0rem; filter: brightness(0) invert(1);" alt="Settings" />`;
-  pGear.style.color = DS.colors.textMuted;
-  pGear.style.cursor = 'pointer';
+  const pGear = document.createElement('button');
+  pGear.className = 'vexea-icon-button';
+  pGear.setAttribute('aria-label', 'Settings');
   pGear.title = 'Settings';
+  pGear.innerHTML = `<img class="vexea-icon-button__icon" src="/ui_svgs/settings.svg" style="width: 1.0rem; height: 1.0rem;" alt="Settings" />`;
   pGear.onclick = () => { import("../settings").then(({ openSettings }) => openSettings()); };
-  pGear.addEventListener('mouseenter', () => { pGear.style.color = DS.colors.text; });
-  pGear.addEventListener('mouseleave', () => { pGear.style.color = DS.colors.textMuted; });
   utilityBox.appendChild(pGear);
 
   // Left Group: Wordmark far left, with CR&EN centered in the in-between space
@@ -1493,18 +1473,10 @@ function setActiveCard(id: string) {
     }
   }
 
-  // Update active state of top-bar navigation buttons
-  const navBtns = document.querySelectorAll('.mm-nav-btn');
-  navBtns.forEach(btn => {
-    const btnId = btn.getAttribute('data-id');
-    if (btnId === id) {
-      (btn as HTMLElement).style.color = DS.colors.accent;
-      (btn as HTMLElement).style.borderBottom = `2px solid ${DS.colors.accent}`;
-    } else {
-      (btn as HTMLElement).style.color = 'rgba(255, 255, 255, 0.6)';
-      (btn as HTMLElement).style.borderBottom = '2px solid transparent';
-    }
-  });
+  // Update active state of top-bar navigation buttons using sliding underline handle
+  if (mainNavTabsHandle) {
+    mainNavTabsHandle.setActive(id);
+  }
 
   if (id !== 'LOADOUT' && id !== 'STORE') {
     const backdrop = document.getElementById('main-menu-3d-backdrop');

@@ -8,6 +8,9 @@ import { updateDroneMemory, decayDroneMemory, forgetStaleMemory, getMemoryThreeS
 export { getMemoryThreeState, forgetStaleMemory, DECAY_RATE, UNKNOWN_THRESHOLD } from "./DroneMemory";
 export type { MemoryRecord, MemoryThreeState } from "./DroneMemory";
 
+// Zero-GC scratch array to prevent tick-rate allocations
+const _livingPlayersScratch: PlayerState[] = [];
+
 export function processDroneIntelligence(
   nowMs: number,
   drones: ServerDrone[],
@@ -17,10 +20,10 @@ export function processDroneIntelligence(
   dt: number = 0.0166,
   collisionMap: CollisionSystem | null = null
 ) {
-  const livingPlayers: PlayerState[] = [];
+  _livingPlayersScratch.length = 0;
   for (const player of players.values()) {
     if (player.isAlive && player.body) {
-      livingPlayers.push(player);
+      _livingPlayersScratch.push(player);
     }
   }
 
@@ -34,12 +37,23 @@ export function processDroneIntelligence(
     }
     d.playerInFOV = false;
 
-    for (const player of livingPlayers) {
-      const perception = evaluateDronePerception(d, player, nowMs, rapierWorld, RAPIER_MOD, collisionMap);
-      if (perception.detected) {
-        d.playerInFOV = true;
+    // ARCH-04: Non-recon drones staggered across 4 ticks (15Hz evaluation), recon drones staggered across 2 ticks (30Hz)
+    const isRecon = d.type === DroneType.RECON;
+    const staggerMod = isRecon ? 2 : 4;
+    const idVal = d.id as unknown;
+    const idHash = typeof idVal === 'number' ? idVal : (typeof idVal === 'string' && idVal.length > 0 ? (idVal.charCodeAt(idVal.length - 1) || 0) : i);
+
+    for (let pIdx = 0; pIdx < _livingPlayersScratch.length; pIdx++) {
+      const player = _livingPlayersScratch[pIdx];
+      const isHighAlert = d.state === DroneState.ATTACKING || d.state === DroneState.PURSUING || d.playerInFOV;
+      const isTurn = isHighAlert || player.firedThisTick || !d.memoryRecords.has(player.id) || (((idHash + Math.floor(nowMs / 16.66)) % staggerMod) === 0);
+      if (isTurn) {
+        const perception = evaluateDronePerception(d, player, nowMs, rapierWorld, RAPIER_MOD, collisionMap);
+        if (perception.detected) {
+          d.playerInFOV = true;
+        }
+        updateDroneMemory(d, perception, nowMs, dt);
       }
-      updateDroneMemory(d, perception, nowMs, dt);
     }
 
     decayDroneMemory(d, dt);

@@ -1,5 +1,5 @@
 import RAPIER from "@dimforge/rapier3d-compat";
-import { DroneType, DroneState, DRONE_CONFIGS, INTEL_CONFIGS, WAYPOINTS, ZONES } from "../../../../shared/constants";
+import { DroneType, DroneState, DRONE_CONFIGS, INTEL_CONFIGS, WAYPOINTS, ZONES, TOPOLOGY, ZoneName } from "../../../../shared/constants";
 import { BehaviorContext, BehaviorOutput } from "../types";
 import { computeGroundSteering, applyGroundPhysics, checkGrounded } from "../BaseGroundBehavior";
 import { astarPath } from "../../../MatchRoom";
@@ -38,6 +38,7 @@ export function findBestCoverPositionZeroGC(
   let maxScore = -Infinity;
 
   const optimalRange = (intel.engagementMin + intel.engagementMax) / 2;
+  const threatZone = (room.zoneRegistry ? room.zoneRegistry.getZoneAtPosition(threatX, threatZ) : null) as ZoneName | null;
 
   for (let a = 0; a < CANDIDATE_ANGLES; a++) {
     const angle = (a * Math.PI * 2) / CANDIDATE_ANGLES;
@@ -85,20 +86,32 @@ export function findBestCoverPositionZeroGC(
 
       if (!isReachable) continue;
 
-      // 2. Provides cover check using collisionMap
+      // 2. Provides cover check using collisionMap with zone portal pre-culling (ARCH-04)
       const tToCandX = candX - threatX;
       const tToCandY = candY + 0.5 - threatY;
       const tToCandZ = candZ - threatZ;
       const tToCandDist = Math.sqrt(tToCandX * tToCandX + tToCandY * tToCandY + tToCandZ * tToCandZ);
       let providesCover = false;
-      if (tToCandDist > 0.01 && room.collisionMap) {
-        tempRayOrigin.x = threatX;
-        tempRayOrigin.y = threatY;
-        tempRayOrigin.z = threatZ;
-        tempRayDir.x = tToCandX / tToCandDist;
-        tempRayDir.y = tToCandY / tToCandDist;
-        tempRayDir.z = tToCandZ / tToCandDist;
-        providesCover = room.collisionMap.rayIntersectsAny(tempRayOrigin, tempRayDir, tToCandDist);
+      if (tToCandDist > 0.01) {
+        let isZoneOccluded = false;
+        if (threatZone && room.zoneRegistry) {
+          const candZone = room.zoneRegistry.getZoneAtPosition(candX, candZ) as ZoneName | null;
+          if (candZone && candZone !== threatZone && !TOPOLOGY[candZone]?.includes(threatZone)) {
+            isZoneOccluded = true;
+          }
+        }
+
+        if (isZoneOccluded) {
+          providesCover = true;
+        } else if (room.collisionMap) {
+          tempRayOrigin.x = threatX;
+          tempRayOrigin.y = threatY;
+          tempRayOrigin.z = threatZ;
+          tempRayDir.x = tToCandX / tToCandDist;
+          tempRayDir.y = tToCandY / tToCandDist;
+          tempRayDir.z = tToCandZ / tToCandDist;
+          providesCover = room.collisionMap.rayIntersectsAny(tempRayOrigin, tempRayDir, tToCandDist);
+        }
       }
 
       // 3. Scoring

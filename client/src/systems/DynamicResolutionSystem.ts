@@ -142,18 +142,6 @@ export class DynamicResolutionSystem {
     const W = window as any;
     if (W.renderer && typeof W.renderer.setPixelRatio === 'function') {
       W.renderer.setPixelRatio(ratio);
-
-      if (
-        W.fxaaPass &&
-        W.fxaaPass.material &&
-        W.fxaaPass.material.uniforms &&
-        W.fxaaPass.material.uniforms.resolution
-      ) {
-        W.fxaaPass.material.uniforms.resolution.value.set(
-          1 / (window.innerWidth * ratio),
-          1 / (window.innerHeight * ratio)
-        );
-      }
     }
   }
 

@@ -59,7 +59,29 @@ export function processHitscan(
   let distSqMin = 99999;
   let bestHitDrone: any = null;
 
-  for (let i = 0; i < HISTORICAL_SAMPLES_MAX; i++) {
+  const tickDelta = currentRoom.serverTick - targetTick;
+  let targetSlot = -1;
+  if (tickDelta >= 0 && tickDelta < HISTORICAL_SAMPLES_MAX) {
+    const predictedSlot = (currentRoom.historicalAABBIndex - 1 - tickDelta + HISTORICAL_SAMPLES_MAX * 2) % HISTORICAL_SAMPLES_MAX;
+    const baseIdx = predictedSlot * HISTORIC_BLOCK_SIZE;
+    const recTick = currentRoom.historicalAABBHistory[baseIdx];
+    if (recTick > 0 && Math.abs(recTick - targetTick) <= 1) {
+      targetSlot = predictedSlot;
+    } else {
+      const prevSlot = (predictedSlot - 1 + HISTORICAL_SAMPLES_MAX) % HISTORICAL_SAMPLES_MAX;
+      const nextSlot = (predictedSlot + 1) % HISTORICAL_SAMPLES_MAX;
+      if (Math.abs(currentRoom.historicalAABBHistory[prevSlot * HISTORIC_BLOCK_SIZE] - targetTick) <= 1) {
+        targetSlot = prevSlot;
+      } else if (Math.abs(currentRoom.historicalAABBHistory[nextSlot * HISTORIC_BLOCK_SIZE] - targetTick) <= 1) {
+        targetSlot = nextSlot;
+      }
+    }
+  }
+
+  const slotStart = targetSlot !== -1 ? targetSlot : 0;
+  const slotEnd = targetSlot !== -1 ? targetSlot + 1 : HISTORICAL_SAMPLES_MAX;
+
+  for (let i = slotStart; i < slotEnd; i++) {
     const baseIdx = i * HISTORIC_BLOCK_SIZE;
     const recTick = currentRoom.historicalAABBHistory[baseIdx];
     if (recTick > 0 && Math.abs(recTick - targetTick) <= 1) {
