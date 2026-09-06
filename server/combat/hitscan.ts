@@ -47,11 +47,16 @@ export function processHitscan(
     return;
   }
 
+  const history = currentRoom.historicalAABBHistory || (currentRoom as any).combatResolver?.historicalAABBHistory;
+  const historyIdx = currentRoom.historicalAABBIndex ?? (currentRoom as any).combatResolver?.historicalAABBIndex ?? 0;
+  const dronesList = currentRoom.drones || ((currentRoom as any).getDrones ? (currentRoom as any).getDrones() : []);
+  const serverTickVal = currentRoom.serverTick || ((currentRoom as any).getServerTick ? (currentRoom as any).getServerTick() : 0);
+
   const expectedT = Date.now() - pState.ping;
-  let targetTick = currentRoom.serverTick;
+  let targetTick = serverTickVal;
   if (Math.abs(timestamp - expectedT) <= 50) {
     const rewindMs = Math.min(200, Date.now() - timestamp);
-    targetTick = currentRoom.serverTick - Math.floor(rewindMs / 16.66);
+    targetTick = serverTickVal - Math.floor(rewindMs / 16.66);
   } else {
     recordHitscanRejected("lag_compensation_out_of_bounds");
   }
@@ -59,52 +64,53 @@ export function processHitscan(
   let distSqMin = 99999;
   let bestHitDrone: any = null;
 
-  const tickDelta = currentRoom.serverTick - targetTick;
-  let targetSlot = -1;
-  if (tickDelta >= 0 && tickDelta < HISTORICAL_SAMPLES_MAX) {
-    const predictedSlot = (currentRoom.historicalAABBIndex - 1 - tickDelta + HISTORICAL_SAMPLES_MAX * 2) % HISTORICAL_SAMPLES_MAX;
-    const baseIdx = predictedSlot * HISTORIC_BLOCK_SIZE;
-    const recTick = currentRoom.historicalAABBHistory[baseIdx];
-    if (recTick > 0 && Math.abs(recTick - targetTick) <= 1) {
-      targetSlot = predictedSlot;
-    } else {
-      const prevSlot = (predictedSlot - 1 + HISTORICAL_SAMPLES_MAX) % HISTORICAL_SAMPLES_MAX;
-      const nextSlot = (predictedSlot + 1) % HISTORICAL_SAMPLES_MAX;
-      if (Math.abs(currentRoom.historicalAABBHistory[prevSlot * HISTORIC_BLOCK_SIZE] - targetTick) <= 1) {
-        targetSlot = prevSlot;
-      } else if (Math.abs(currentRoom.historicalAABBHistory[nextSlot * HISTORIC_BLOCK_SIZE] - targetTick) <= 1) {
-        targetSlot = nextSlot;
+  if (history) {
+    const tickDelta = serverTickVal - targetTick;
+    let targetSlot = -1;
+    if (tickDelta >= 0 && tickDelta < HISTORICAL_SAMPLES_MAX) {
+      const predictedSlot = (historyIdx - 1 - tickDelta + HISTORICAL_SAMPLES_MAX * 2) % HISTORICAL_SAMPLES_MAX;
+      const baseIdx = predictedSlot * HISTORIC_BLOCK_SIZE;
+      const recTick = history[baseIdx];
+      if (recTick > 0 && Math.abs(recTick - targetTick) <= 1) {
+        targetSlot = predictedSlot;
+      } else {
+        const prevSlot = (predictedSlot - 1 + HISTORICAL_SAMPLES_MAX) % HISTORICAL_SAMPLES_MAX;
+        const nextSlot = (predictedSlot + 1) % HISTORICAL_SAMPLES_MAX;
+        if (Math.abs(history[prevSlot * HISTORIC_BLOCK_SIZE] - targetTick) <= 1) {
+          targetSlot = prevSlot;
+        } else if (Math.abs(history[nextSlot * HISTORIC_BLOCK_SIZE] - targetTick) <= 1) {
+          targetSlot = nextSlot;
+        }
       }
     }
-  }
 
-  const slotStart = targetSlot !== -1 ? targetSlot : 0;
-  const slotEnd = targetSlot !== -1 ? targetSlot + 1 : HISTORICAL_SAMPLES_MAX;
+    const slotStart = targetSlot !== -1 ? targetSlot : 0;
+    const slotEnd = targetSlot !== -1 ? targetSlot + 1 : HISTORICAL_SAMPLES_MAX;
 
-  for (let i = slotStart; i < slotEnd; i++) {
-    const baseIdx = i * HISTORIC_BLOCK_SIZE;
-    const recTick = currentRoom.historicalAABBHistory[baseIdx];
-    if (recTick > 0 && Math.abs(recTick - targetTick) <= 1) {
-      const numDrones = currentRoom.historicalAABBHistory[baseIdx + 1];
-      for (let dIdx = 0; dIdx < numDrones; dIdx++) {
-        const offset = baseIdx + 2 + dIdx * 4;
-        const dId = currentRoom.historicalAABBHistory[offset];
-        const cx = currentRoom.historicalAABBHistory[offset + 1];
-        const cy = currentRoom.historicalAABBHistory[offset + 2];
-        const cz = currentRoom.historicalAABBHistory[offset + 3];
+    for (let i = slotStart; i < slotEnd; i++) {
+      const baseIdx = i * HISTORIC_BLOCK_SIZE;
+      const recTick = history[baseIdx];
+      if (recTick > 0 && Math.abs(recTick - targetTick) <= 1) {
+        const numDrones = history[baseIdx + 1];
+        for (let dIdx = 0; dIdx < numDrones; dIdx++) {
+          const offset = baseIdx + 2 + dIdx * 4;
+          const dId = history[offset];
+          const cx = history[offset + 1];
+          const cy = history[offset + 2];
+          const cz = history[offset + 3];
 
-        const tox = cx - args.origin.x;
-        const toy = cy - args.origin.y;
-        const toz = cz - args.origin.z;
+          const tox = cx - args.origin.x;
+          const toy = cy - args.origin.y;
+          const toz = cz - args.origin.z;
 
-        const t = tox * dirX + toy * dirY + toz * dirZ;
-        if (t > 0) {
-          const px = args.origin.x + dirX * t;
-          const py = args.origin.y + dirY * t;
-          const pz = args.origin.z + dirZ * t;
+          const t = tox * dirX + toy * dirY + toz * dirZ;
+          if (t > 0) {
+            const px = args.origin.x + dirX * t;
+            const py = args.origin.y + dirY * t;
+            const pz = args.origin.z + dirZ * t;
 
-          const hitDrone = currentRoom.drones.find((d) => d.id === dId);
-          if (!hitDrone || hitDrone.state === DroneState.DEAD) continue;
+            const hitDrone = dronesList.find((d: any) => d.id === dId);
+            if (!hitDrone || hitDrone.state === DroneState.DEAD) continue;
 
           // shooter cannot hit themselves (if they were a drone, which they aren't, but safety first)
           if (hitDrone.id.toString() === pState.id) {
@@ -145,6 +151,7 @@ export function processHitscan(
       }
       break;
     }
+  }
   }
 
   if (bestHitDrone) {

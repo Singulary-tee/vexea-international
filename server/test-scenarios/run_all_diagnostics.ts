@@ -2,6 +2,46 @@ import RAPIER from '@dimforge/rapier3d-compat';
 import { MatchRoom } from '../MatchRoom.js';
 import { DroneType, DroneState } from '../../shared/constants.js';
 import { processDroneIntelligence } from '../ai/DroneIntelligence.js';
+import { createMemoryMap } from '../ai/DroneMemory.js';
+
+function clearDroneMemory(drone: any) {
+  if (drone.memoryRecords && typeof drone.memoryRecords.clear === 'function') {
+    drone.memoryRecords.clear();
+  } else {
+    drone.memoryRecords = createMemoryMap();
+  }
+}
+
+function getDroneMemoryRecord(drone: any, entityId: string) {
+  if (!drone.memoryRecords) return undefined;
+  if (typeof drone.memoryRecords.get === 'function') {
+    return drone.memoryRecords.get(entityId);
+  }
+  if (Array.isArray(drone.memoryRecords)) {
+    return drone.memoryRecords.find((r: any) => r.entityId === entityId);
+  }
+  return undefined;
+}
+
+function registerTestPlayer(room: MatchRoom, id: string): PlayerState {
+  const player = room.registerBotPlayer();
+  const oldId = player.id;
+  player.id = id;
+  (room as any).sessionManager.players.delete(oldId);
+  (room as any).sessionManager.players.set(id, player);
+  return player;
+}
+
+function removeTestPlayer(room: MatchRoom, player: PlayerState): void {
+  const rapierWorld = room.rapierWorld;
+  if (player.body && rapierWorld) {
+    try { rapierWorld.removeRigidBody(player.body); } catch (_) {}
+  }
+  if (player.collider) {
+    room.colliderToEntityMap.delete(player.collider.handle);
+  }
+  (room as any).sessionManager.players.delete(player.id);
+}
 
 export async function runAllTests() {
   await RAPIER.init();
@@ -21,8 +61,7 @@ export async function runAllTests() {
   // =========================================================================
   {
     console.log("--- T1: Sight Perception Range ---");
-    const player = room.registerBotPlayer();
-    player.id = "player_t1";
+    const player = registerTestPlayer(room, "player_t1");
     player.posX = 100; player.posY = 5; player.posZ = 100;
     if (player.body) {
       player.body.setTranslation({ x: 100, y: 5, z: 100 }, true);
@@ -52,12 +91,12 @@ export async function runAllTests() {
       }
 
       // Reset memory record
-      drone.memoryRecords = [];
+      clearDroneMemory(drone);
 
       // Run 1 tick
       processDroneIntelligence(Date.now(), room.drones, room.players, room.rapierWorld, RAPIER, 0.0166, room.collisionMap);
 
-      const record = drone.memoryRecords.find(r => r.entityId === player.id);
+      const record = getDroneMemoryRecord(drone, player.id);
       if (record && record.confidence > 0) {
         maxDetectedDistance = dist;
       }
@@ -74,7 +113,7 @@ export async function runAllTests() {
 
     // Clean up
     room.despawnDrone(drone);
-    room.players.delete(player.id);
+    removeTestPlayer(room, player);
   }
 
   // =========================================================================
@@ -82,8 +121,7 @@ export async function runAllTests() {
   // =========================================================================
   {
     console.log("--- T2: Sight Perception FOV ---");
-    const player = room.registerBotPlayer();
-    player.id = "player_t2";
+    const player = registerTestPlayer(room, "player_t2");
 
     room.registerDeveloperSpawner(DroneType.ROTARY_SHOOTER, { x: 100, y: 5, z: 100 });
     const drone = room.drones.find(x => x.state !== DroneState.DEAD && x.type === DroneType.ROTARY_SHOOTER)!;
@@ -110,10 +148,10 @@ export async function runAllTests() {
         player.body.setTranslation({ x: player.posX, y: 5, z: player.posZ }, true);
       }
 
-      drone.memoryRecords = [];
+      clearDroneMemory(drone);
       processDroneIntelligence(Date.now(), room.drones, room.players, room.rapierWorld, RAPIER, 0.0166, room.collisionMap);
 
-      const record = drone.memoryRecords.find(r => r.entityId === player.id);
+      const record = getDroneMemoryRecord(drone, player.id);
       if (record && record.confidence > 0) {
         maxDetectedAngleRad = rad;
       }
@@ -130,7 +168,7 @@ export async function runAllTests() {
     results.push({ id: "T2", name: "Sight Perception FOV", status: pass ? "PASS" : "FAIL", details: `Max angle: ${maxAngleDeg.toFixed(1)}°, expected: 45.0°, delta: ${deltaDeg.toFixed(1)}°` });
 
     room.despawnDrone(drone);
-    room.players.delete(player.id);
+    removeTestPlayer(room, player);
   }
 
   // =========================================================================
@@ -138,8 +176,7 @@ export async function runAllTests() {
   // =========================================================================
   {
     console.log("--- T3: Sight Perception LOS ---");
-    const player = room.registerBotPlayer();
-    player.id = "player_t3";
+    const player = registerTestPlayer(room, "player_t3");
 
     // Setup drone on one side of wall B01 (wall at X = 30)
     // Drone at (15, 5, 200) facing +X (yaw = PI/2, rotY = 0.707, rotW = 0.707)
@@ -158,9 +195,9 @@ export async function runAllTests() {
       player.body.setTranslation({ x: 35, y: 5, z: 200 }, true);
     }
 
-    drone.memoryRecords = [];
+    clearDroneMemory(drone);
     processDroneIntelligence(Date.now(), room.drones, room.players, room.rapierWorld, RAPIER, 0.0166, room.collisionMap);
-    let record = drone.memoryRecords.find(r => r.entityId === player.id);
+    let record = getDroneMemoryRecord(drone, player.id);
     const blockedConf = record ? record.confidence : 0;
 
     // Step 2: Player moves in front of the wall at (25, 5, 200) (unblocked LOS)
@@ -170,7 +207,7 @@ export async function runAllTests() {
     }
 
     processDroneIntelligence(Date.now(), room.drones, room.players, room.rapierWorld, RAPIER, 0.0166, room.collisionMap);
-    record = drone.memoryRecords.find(r => r.entityId === player.id);
+    record = getDroneMemoryRecord(drone, player.id);
     const unblockedConf = record ? record.confidence : 0;
 
     const pass = blockedConf === 0 && unblockedConf > 0;
@@ -180,7 +217,7 @@ export async function runAllTests() {
     results.push({ id: "T3", name: "Sight Perception LOS", status: pass ? "PASS" : "FAIL", details: `Blocked conf: ${blockedConf.toFixed(2)}, Unblocked conf: ${unblockedConf.toFixed(2)}` });
 
     room.despawnDrone(drone);
-    room.players.delete(player.id);
+    removeTestPlayer(room, player);
   }
 
   // =========================================================================
@@ -188,8 +225,7 @@ export async function runAllTests() {
   // =========================================================================
   {
     console.log("--- T4: Damage Reaction ---");
-    const player = room.registerBotPlayer();
-    player.id = "player_t4";
+    const player = registerTestPlayer(room, "player_t4");
     // Out of sight (70m away)
     player.posX = 15; player.posY = 5; player.posZ = 270;
     if (player.body) {
@@ -209,7 +245,7 @@ export async function runAllTests() {
 
     // Step 1 tick of MatchRoom logic
     room.serverTick++;
-    (room as any).updateSystemEntities();
+    room.simulationEngine.tickSimulation();
 
     const modeAfter = drone.mode;
     const targetSet = drone.combatTarget !== null && drone.combatTarget !== undefined;
@@ -221,7 +257,7 @@ export async function runAllTests() {
     results.push({ id: "T4", name: "Damage Reaction", status: pass ? "PASS" : "FAIL", details: `Mode: ${modeBefore} -> ${modeAfter}, Target Set: ${targetSet ? "YES" : "NO"}` });
 
     room.despawnDrone(drone);
-    room.players.delete(player.id);
+    removeTestPlayer(room, player);
   }
 
   // =========================================================================
@@ -229,8 +265,7 @@ export async function runAllTests() {
   // =========================================================================
   {
     console.log("--- T5: Sound Reaction ---");
-    const player = room.registerBotPlayer();
-    player.id = "player_t5";
+    const player = registerTestPlayer(room, "player_t5");
     // Place behind wall at X=30, so no LOS
     player.posX = 35; player.posY = 5; player.posZ = 200;
     if (player.body) {
@@ -245,10 +280,10 @@ export async function runAllTests() {
 
     // Update match entities (which processes sound reaction)
     room.serverTick++;
-    (room as any).updateSystemEntities();
+    room.simulationEngine.tickSimulation();
 
     const modeAfter = drone.mode;
-    const memoryRecord = drone.memoryRecords.find(r => r.entityId === player.id);
+    const memoryRecord = getDroneMemoryRecord(drone, player.id);
     const hasMemory = memoryRecord !== undefined && memoryRecord.confidence > 0;
     const pass = modeAfter === "COMBAT" && hasMemory;
 
@@ -258,7 +293,7 @@ export async function runAllTests() {
     results.push({ id: "T5", name: "Sound Reaction", status: pass ? "PASS" : "FAIL", details: `Mode: ${modeAfter}, Has Memory: ${hasMemory ? "YES" : "NO"}` });
 
     room.despawnDrone(drone);
-    room.players.delete(player.id);
+    removeTestPlayer(room, player);
   }
 
   // =========================================================================
@@ -285,7 +320,7 @@ export async function runAllTests() {
     for (let tick = 1; tick <= 30; tick++) {
       room.serverTick++;
       room.rapierWorld.step();
-      (room as any).updateSystemEntities();
+      room.simulationEngine.tickSimulation();
 
       if (drone.avoidanceState && drone.avoidanceState.active) {
         const dir = drone.avoidanceState.direction;
@@ -309,8 +344,7 @@ export async function runAllTests() {
   // =========================================================================
   {
     console.log("--- T7: State Machine Synchronizer ---");
-    const player = room.registerBotPlayer();
-    player.id = "player_t7";
+    const player = registerTestPlayer(room, "player_t7");
     player.posX = 100; player.posY = 5; player.posZ = 100;
     if (player.body) {
       player.body.setTranslation({ x: 100, y: 5, z: 100 }, true);
@@ -318,16 +352,17 @@ export async function runAllTests() {
 
     room.registerDeveloperSpawner(DroneType.ROTARY_SHOOTER, { x: 100, y: 5, z: 110 });
     const drone = room.drones.find(x => x.state !== DroneState.DEAD && x.type === DroneType.ROTARY_SHOOTER)!;
-    drone.memoryRecords = [];
+    clearDroneMemory(drone);
     drone.damageLog = [];
     drone.rotX = 0; drone.rotY = 1; drone.rotZ = 0; drone.rotW = 0;
     if (drone.body) {
       drone.body.setRotation({ x: 0, y: 1, z: 0, w: 0 }, true);
     }
 
-    // Step 1: Detect player (LOS clear)
-    processDroneIntelligence(Date.now(), room.drones, room.players, room.rapierWorld, RAPIER, 0.0166, room.collisionMap);
-    let record = drone.memoryRecords.find(r => r.entityId === player.id);
+    // Step 1: Detect player (LOS clear) 20 seconds ago
+    const startTime = Date.now() - 20000;
+    processDroneIntelligence(startTime, room.drones, room.players, room.rapierWorld, RAPIER, 0.0166, room.collisionMap);
+    let record = getDroneMemoryRecord(drone, player.id);
     const initialConf = record ? record.confidence : 0;
 
     // Step 2: Set mode to COMBAT manually to simulate combat engagement
@@ -340,18 +375,17 @@ export async function runAllTests() {
       player.body.setTranslation({ x: 500, y: 500, z: 500 }, true);
     }
 
-    // Decay memory for several steps
-    const nowMs = Date.now();
+    // Decay memory over 20 steps up to present time
     for (let step = 1; step <= 20; step++) {
-      processDroneIntelligence(nowMs + step * 1000, room.drones, room.players, room.rapierWorld, RAPIER, 1.0, room.collisionMap);
+      processDroneIntelligence(startTime + step * 1000, room.drones, room.players, room.rapierWorld, RAPIER, 1.0, room.collisionMap);
     }
 
-    record = drone.memoryRecords.find(r => r.entityId === player.id);
+    record = getDroneMemoryRecord(drone, player.id);
     const finalConf = record ? record.confidence : 0;
 
     // Update match entities once after decay to run state transitions
     room.serverTick++;
-    (room as any).updateSystemEntities();
+    room.simulationEngine.tickSimulation();
 
     const modeAfterDecay = drone.mode;
     const targetAfterDecay = drone.combatTarget;
@@ -365,7 +399,7 @@ export async function runAllTests() {
     results.push({ id: "T7", name: "State Machine Synchronizer", status: pass ? "PASS" : "FAIL", details: `Final conf: ${finalConf.toFixed(2)}, Mode after decay: ${modeAfterDecay}, Target after decay: ${targetAfterDecay ? "set" : "cleared"}` });
 
     room.despawnDrone(drone);
-    room.players.delete(player.id);
+    removeTestPlayer(room, player);
   }
 
   // =========================================================================
