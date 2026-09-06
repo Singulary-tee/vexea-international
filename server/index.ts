@@ -29,6 +29,8 @@ import { registerGameplayHandlers } from "./transport/handlers/gameplay-handlers
 import { registerSocialHandlers } from "./transport/handlers/social-handlers";
 import { registerConnectionHandlers } from "./transport/handlers/connection-handlers";
 import { registerApiRoutes } from "./routes/api-routes";
+import { roomAllocator } from "./execution/RoomAllocator";
+import { RoomExecution } from "./execution/RoomExecution";
 import { IS_DEV } from "../shared/gates/production.gate";
 import { closeBenchmarkTelemetry } from "./benchmark/telemetry";
 import "./benchmark/determinism";
@@ -37,6 +39,15 @@ export { IS_DEV }; // Master toggle to easily disable all development cheats/com
 
 dotenv.config();
 
+/**
+ * Global debug log broadcast patch
+ *
+ * NOTE (Architecture / RoomExecution Boundary):
+ * This globalChannels broadcast and console.log interceptor is strictly process-scoped.
+ * It broadcasts console logs generated within the current Node process to active debugging channels.
+ * It will not capture or forward logs from any future out-of-process room backend (e.g. child_process,
+ * worker_threads, or separate machine nodes) without a dedicated distributed log aggregator.
+ */
 export const globalChannels: any[] = [];
 export const globalServerLogs: string[] = [];
 (global as any).serverLogs = globalServerLogs;
@@ -358,6 +369,14 @@ io.onConnection((channel: ChannelAdapter) => {
 
   const getRoom = (): MatchRoom | null => currentRoom || (channel as any).currentRoom || null;
   const getPlayer = (): PlayerState | null => pState || (channel as any).pState || null;
+  const getRoomExecution = (): RoomExecution | null => {
+    if ((channel as any).roomExecution) return (channel as any).roomExecution;
+    const room = getRoom();
+    if (room) {
+      return roomAllocator.getExecution(room.roomId) || null;
+    }
+    return null;
+  };
 
   registerDevCommands(
     channel,
@@ -373,19 +392,20 @@ io.onConnection((channel: ChannelAdapter) => {
     getPlayer,
     matchmaker,
     connectionRegistry,
+    getRoomExecution,
   );
 
   registerGameplayHandlers(
     channel,
     playerId,
-    getRoom,
+    getRoomExecution,
     getPlayer,
   );
 
   registerSocialHandlers(
     channel,
     playerId,
-    getRoom,
+    getRoomExecution,
     getPlayer,
   );
 
@@ -402,12 +422,19 @@ io.onConnection((channel: ChannelAdapter) => {
   channel.onDisconnect(() => {
     matchmaker.removePlayerFromPool(playerId);
     connectionRegistry.unregister(playerId);
-    const room = getRoom();
+    const roomExec = getRoomExecution();
     const p = getPlayer();
-    if (p && room) {
+    if (p && roomExec) {
       const pid = p.id;
       console.log(`Disconnection registered: ${pid}. Starting 75s grace period via room.`);
-      room.handlePlayerDisconnect(pid);
+      roomExec.send(pid, { type: "PLAYER_DISCONNECT" });
+    } else {
+      const room = getRoom();
+      if (p && room) {
+        const pid = p.id;
+        console.log(`Disconnection registered: ${pid}. Starting 75s grace period via room.`);
+        room.handlePlayerDisconnect(pid);
+      }
     }
     const idx = globalChannels.indexOf(channel);
     if (idx !== -1) globalChannels.splice(idx, 1);

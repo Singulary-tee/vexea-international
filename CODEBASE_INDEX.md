@@ -30,6 +30,10 @@ This file is the authoritative index of all directories and source files within 
     *   *Key Functions/Exports:* `initSentry()`, `recordServerTickDuration(ms)`, `recordServerActiveDrones(count)`, `recordServerConnectedPlayers(count)`, `recordLLMLatency(ms, model)`, `recordHitscanRejected(reason)`, `recordSecurityExploit(exploitType, extra)`.
 *   **`combat/` (Server Combat System)**
     *   **`hitscan.ts`**: Standalone hitscan processing module (`processHitscan`). Handles origin verification, historical AABB rewind lag compensation, drone raycasting, damage calculation with falloff, assist tracking, and event broadcasting.
+*   **`execution/` (Server Room Execution Boundary)**
+    *   **`RoomExecution.ts`**: Core async boundary interface (`RoomExecution`), status union (`RoomExecutionStatus`), and strictly typed inbound (`RoomInboundEvent`) and outbound (`RoomOutboundEvent`) message contracts.
+    *   **`InProcessRoomExecution.ts`**: In-process adapter implementing `RoomExecution` around an active `MatchRoom` instance with zero GC overhead.
+    *   **`RoomAllocator.ts`**: Room lifecycle and allocation coordinator (`RoomAllocator`, `roomAllocator`) providing decoupled match acquisition and release without coupling callers directly to concrete in-process room references.
 *   **`dev/` (Server Developer Tools)**
     *   **`dev-commands.ts`**: Developer command registration module (`registerDevCommands`). Registers dev handlers for cheats, bot/drone spawning, physics tuning, credit refills, god mode, infinite ammo, and debug state reporting.
 *   **`flags/` (Server Feature Flags)**

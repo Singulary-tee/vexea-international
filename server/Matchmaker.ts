@@ -4,6 +4,8 @@ import { isRuntimeWeaponId } from "../shared/constants";
 import type { WeaponId } from "../shared/weapons";
 import matchManager from "./MatchManager";
 import { MatchRoom } from "./MatchRoom";
+import { roomAllocator } from "./execution/RoomAllocator";
+import { InProcessRoomExecution } from "./execution/InProcessRoomExecution";
 import { ACTIVE_GAMEMODE } from "../shared/gamemode-configs";
 import { MatchAbuseStore } from "./player-data/MatchAbuseStore";
 
@@ -253,6 +255,11 @@ export class Matchmaker {
       const newPState = targetRoom.registerPlayer(p.reqUid || p.id, p.channel, null, p.classId, p.displayName, p.reqUid, p.primaryWeaponId, p.secondaryWeaponId);
 
       // Notify connection handler that match has formed
+      const bindRoomExecution = (p.channel as any).bindRoomExecution;
+      const execution = roomAllocator.getExecution(matchId) || new InProcessRoomExecution(targetRoom);
+      if (bindRoomExecution && typeof bindRoomExecution === "function") {
+        bindRoomExecution(execution, newPState);
+      }
       const onMatchFormed = (p.channel as any).onMatchFormed;
       if (onMatchFormed && typeof onMatchFormed === "function") {
         onMatchFormed(targetRoom, newPState);

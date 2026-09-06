@@ -2,7 +2,9 @@ import { ChannelAdapter } from "../adapter";
 import { MatchRoom, PlayerState } from "../../MatchRoom";
 import { Matchmaker } from "../../Matchmaker";
 import { ConnectionRegistry } from "../../connection-registry";
-import { matchManager } from "../../MatchManager";
+import { roomAllocator } from "../../execution/RoomAllocator";
+import { RoomExecution } from "../../execution/RoomExecution";
+import { InProcessRoomExecution } from "../../execution/InProcessRoomExecution";
 import { ClassId } from "../../../shared/classes";
 
 export function registerMatchmakingHandlers(
@@ -11,9 +13,15 @@ export function registerMatchmakingHandlers(
   getRoom: () => MatchRoom | null,
   getPlayer: () => PlayerState | null,
   matchmaker: Matchmaker,
-  connectionRegistry: ConnectionRegistry
+  connectionRegistry: ConnectionRegistry,
+  getRoomExecution?: () => RoomExecution | null
 ): void {
-  const handleMatchmakingRequest = (args: any) => {
+  const getExec = (): RoomExecution | null => {
+    if (getRoomExecution) return getRoomExecution();
+    return (channel as any).roomExecution || null;
+  };
+
+  const handleMatchmakingRequest = async (args: any) => {
     const reqUid = args?.uid || playerId;
     const reqMap = args?.mapId || args?.map?.id || "map_1_facility";
     const reqClass = (args?.class || args?.playerClass || "ASSAULT") as ClassId;
@@ -29,26 +37,46 @@ export function registerMatchmakingHandlers(
     if (args?.isDevQuickStart) {
       const devMatchId = args?.matchId || `M_DEV_${Math.floor(Math.random() * 1000000)}`;
       console.log(`[VEXEA SERVER] Dev Quick Start match initialization: ${devMatchId} on map ${reqMap}`);
-      const targetRoom = matchManager.getOrCreateRoom(devMatchId, process.env.GEMINI_API_KEY, reqMap);
+      const execution = await roomAllocator.allocate(devMatchId, process.env.GEMINI_API_KEY, reqMap);
+      const targetRoom = (execution as InProcessRoomExecution).getRoom();
       const curRoom = getRoom();
       const curPState = getPlayer();
       if (curRoom && curPState && curRoom !== targetRoom) {
         curRoom.removePlayer(curPState.id);
       }
+      (channel as any).roomExecution = execution;
       (channel as any).currentRoom = targetRoom;
       const newPState = targetRoom.registerPlayer(playerId, channel, null, reqClass, reqDisplayName, reqUid, reqPrimaryWeaponId, reqSecondaryWeaponId);
       (channel as any).pState = newPState;
-      if ((channel as any).onMatchFormed) {
-        (channel as any).onMatchFormed(targetRoom, newPState);
-      }
+
+      execution.onOutbound((target, event) => {
+        if (target === "broadcast" || target === playerId) {
+          if (event.type === "MATCH_FORMED") {
+            (channel as any).currentRoom = (execution as InProcessRoomExecution).getRoom();
+            (channel as any).roomExecution = execution;
+            (channel as any).pState = event.playerState || newPState;
+          }
+        }
+      });
       return;
     }
 
     // No lobby room to leave. Enter matchmaking pool directly.
-    // Store callback on channel so matchmaker can notify us when match forms.
-    (channel as any).onMatchFormed = (room: MatchRoom, state: PlayerState) => {
-      (channel as any).currentRoom = room;
+    // Replace raw closure with RoomExecution.onOutbound subscription when match forms.
+    (channel as any).bindRoomExecution = (execution: RoomExecution, state: PlayerState) => {
+      (channel as any).roomExecution = execution;
+      (channel as any).currentRoom = (execution as InProcessRoomExecution).getRoom ? (execution as InProcessRoomExecution).getRoom() : null;
       (channel as any).pState = state;
+
+      execution.onOutbound((target, event) => {
+        if (target === "broadcast" || target === playerId) {
+          if (event.type === "MATCH_FORMED") {
+            (channel as any).currentRoom = (execution as InProcessRoomExecution).getRoom ? (execution as InProcessRoomExecution).getRoom() : null;
+            (channel as any).roomExecution = execution;
+            (channel as any).pState = event.playerState || state;
+          }
+        }
+      });
     };
 
     matchmaker.addPlayerToPool(playerId, reqUid, channel, reqMap, reqClass, reqDisplayName, reqPrimaryWeaponId, reqSecondaryWeaponId);
@@ -69,20 +97,31 @@ export function registerMatchmakingHandlers(
   });
 
   channel.on("player_ready", () => {
-    const activeRoom = getRoom();
+    const roomExec = getExec();
     const p = getPlayer();
-    if (activeRoom && p) {
-      activeRoom.setPlayerReady(p.id);
+    if (roomExec && p) {
+      roomExec.send(p.id, { type: "PLAYER_READY" });
+    } else {
+      const activeRoom = getRoom();
+      if (activeRoom && p) {
+        activeRoom.setPlayerReady(p.id);
+      }
     }
   });
 
   channel.on("PLAYER_QUIT", async () => {
     matchmaker.removePlayerFromPool(playerId);
     const p = getPlayer();
-    const room = getRoom();
-    if (p && room) {
+    const roomExec = getExec();
+    if (p && roomExec) {
       console.log(`Player quit mission manually (explicit abandon): ${p.id}`);
-      await room.handlePlayerAbandonment(p.id);
+      await roomExec.send(p.id, { type: "PLAYER_QUIT" });
+    } else {
+      const room = getRoom();
+      if (p && room) {
+        console.log(`Player quit mission manually (explicit abandon): ${p.id}`);
+        await room.handlePlayerAbandonment(p.id);
+      }
     }
     try {
       channel.emit("disconnect", {});

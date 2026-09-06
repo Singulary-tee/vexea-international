@@ -1,0 +1,56 @@
+{
+  "schemaVersion": 1,
+  "id": "socketio-climb-step3",
+  "title": "Socket.IO Climb Step 3: 4 Matches, 4 Players, 16 Bots, 16 Drones, 16 Projectiles",
+  "boundary": "server-process",
+  "transport": "socketio",
+  "server": {
+    "command": ["node", "dist/server/server.cjs"],
+    "buildCommand": ["npm", "run", "build"],
+    "port": 3343,
+    "readinessPath": "/",
+    "env": {}
+  },
+  "map": {
+    "id": "benchmark_synthetic",
+    "mode": "synthetic",
+    "allowFallback": true
+  },
+  "services": {
+    "llm": "disabled",
+    "persistence": "disabled",
+    "observability": "disabled"
+  },
+  "instrumentation": "counters",
+  "workload": {
+    "rooms": 4,
+    "clientsPerRoom": 1,
+    "botsPerRoom": 4,
+    "dronesPerRoom": 4,
+    "projectilesPerRoom": 4,
+    "durationMs": 12000,
+    "warmupMs": 3000,
+    "cooldownMs": 1000,
+    "inputHz": 30,
+    "reliableEventsPerSecond": 2,
+    "firePerSecond": 2,
+    "contact": "persistent",
+    "seed": 3
+  },
+  "budgets": {
+    "maxP95TickMs": 16.6,
+    "minTickRate": 55,
+    "maxDroppedTicks": 0,
+    "maxRssBytes": 1073741824,
+    "maxCpuPercent": 100,
+    "maxP95RttMs": 250,
+    "maxLossRate": 0.01,
+    "maxNetworkBytesPerSecond": 104857600,
+    "headroomPercent": 10
+  },
+  "trials": {
+    "warmups": 1,
+    "repetitions": 1,
+    "confidenceLevel": 0.95
+  }
+}

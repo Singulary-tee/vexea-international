@@ -1,5 +1,14 @@
 import { ChannelAdapter } from "./transport/adapter";
 
+/**
+ * ConnectionRegistry
+ *
+ * NOTE (Architecture / RoomExecution Boundary):
+ * This registry holds direct in-memory references to ChannelAdapter instances within the current
+ * server process. This remains a same-process assumption and will need to be revisited or adapted
+ * with distributed messaging / routing when a non-in-process RoomExecution backend (e.g. child_process,
+ * worker_threads, or multi-node cluster) is introduced.
+ */
 export class ConnectionRegistry {
   private connections = new Map<string, { channel: ChannelAdapter; connectedAt: number }>();
 

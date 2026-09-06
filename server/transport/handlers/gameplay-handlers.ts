@@ -1,13 +1,11 @@
 import { ChannelAdapter } from "../adapter";
-import { MatchRoom, PlayerState, getWeaponReloadTicks } from "../../MatchRoom";
-import { processHitscan } from "../../combat/hitscan";
-import { getWeaponPerformance } from "../../../shared/constants";
-import { recordHitscanRejected } from "../../sentry";
+import { PlayerState } from "../../MatchRoom";
+import { RoomExecution } from "../../execution/RoomExecution";
 
 export function registerGameplayHandlers(
   channel: ChannelAdapter,
   playerId: string,
-  getRoom: () => MatchRoom | null,
+  getRoomExecution: () => RoomExecution | null,
   getPlayer: () => PlayerState | null
 ): void {
   // Raw 20Hz movement input handler
@@ -24,9 +22,15 @@ export function registerGameplayHandlers(
 
       if (seq > p.lastSequence) {
         p.lastSequence = seq;
-        const room = getRoom();
-        if (room) {
-          room.updatePlayerInput(p, inputMask, pitch, yaw);
+        const roomExec = typeof getRoomExecution === "function" ? getRoomExecution() : getRoomExecution;
+        if (roomExec) {
+          roomExec.send(p.id, {
+            type: "INPUT",
+            seq,
+            inputMask,
+            pitch,
+            yaw,
+          });
         } else {
           p.pitch = pitch;
           p.yaw = yaw;
@@ -39,130 +43,49 @@ export function registerGameplayHandlers(
   const handleReliableGameplayEvent = (args: any) => {
     if (!args || typeof args !== "object") return;
 
-    const room = getRoom();
+    const roomExec = typeof getRoomExecution === "function" ? getRoomExecution() : getRoomExecution;
     const p = getPlayer();
-    if (!room || !p) return;
+    if (!roomExec || !p) return;
     if (!p.isAlive) return;
 
     const type = args.type;
-    room.recordPlayerActivity(p);
 
     if (type === "USE_UTILITY") {
       const slot = args.slot as "utility1" | "utility2";
       if (slot) {
-        room.useUtility(p.id, slot);
+        roomExec.send(p.id, { type: "USE_UTILITY", slot });
       }
       return;
     }
 
     if (type === "OBJECTIVE_HOLD") {
-      room.setObjectiveHold(p.id, !!args.holding);
+      roomExec.send(p.id, { type: "OBJECTIVE_HOLD", holding: !!args.holding });
       return;
     }
 
     if (type === "TOGGLE_FIRE_MODE") {
-      const primary = p.weaponState.primary;
-      primary.fireMode = primary.fireMode === "auto" ? "burst" : "auto";
-      p.channel.emit("reliable_event", {
-        type: "FIRE_MODE_CHANGED",
-        mode: primary.fireMode,
-      });
+      roomExec.send(p.id, { type: "TOGGLE_FIRE_MODE" });
       return;
     }
 
     if (type === "RELOAD") {
       const slot = args.weaponSlot as "primary" | "secondary";
-      if (!slot) return;
-      const wState = p.weaponState[slot];
-      const wDef = getWeaponPerformance(wState.weaponId);
-      if (!wDef) return;
-      const reloadTicks = getWeaponReloadTicks(wState.weaponId);
-
-      if (!wState.isReloading && wState.currentMag < wDef.capacity && wState.reserve > 0) {
-        wState.isReloading = true;
-        wState.reloadTimer = reloadTicks;
+      if (slot) {
+        roomExec.send(p.id, { type: "RELOAD", weaponSlot: slot });
       }
-      p.channel.emit("reliable_event", {
-        type: "AMMO_STATE",
-        primary: p.weaponState.primary,
-        secondary: p.weaponState.secondary,
-      });
       return;
     }
 
     if (type === "CANCEL_RELOAD") {
       const slot = args.weaponSlot as "primary" | "secondary";
-      if (!slot) return;
-      const wState = p.weaponState[slot];
-      if (wState.isReloading) {
-        wState.isReloading = false;
-        wState.reloadTimer = 0;
+      if (slot) {
+        roomExec.send(p.id, { type: "CANCEL_RELOAD", weaponSlot: slot });
       }
-      p.channel.emit("reliable_event", {
-        type: "AMMO_STATE",
-        primary: p.weaponState.primary,
-        secondary: p.weaponState.secondary,
-      });
       return;
     }
 
     if (type === "FIRE") {
-      const slot = args.weaponSlot as "primary" | "secondary";
-      if (slot !== "primary" && slot !== "secondary") return;
-      const wState = p.weaponState[slot];
-      const weaponStats = getWeaponPerformance(wState.weaponId);
-      if (!weaponStats) return;
-      const reloadTicks = getWeaponReloadTicks(wState.weaponId);
-
-      if (wState.currentMag <= 0) {
-        if (!wState.isReloading && wState.reserve > 0) {
-          wState.isReloading = true;
-          wState.reloadTimer = reloadTicks;
-          p.channel.emit("reliable_event", {
-            type: "AMMO_STATE",
-            primary: p.weaponState.primary,
-            secondary: p.weaponState.secondary,
-          });
-        }
-        return;
-      }
-      if (wState.isReloading) return;
-
-      const now = Date.now();
-      const allowedInterval = 1000 / weaponStats.fireRateHz;
-
-      let leakyUpdate = Math.max(
-        0,
-        wState.leakyBucket -
-          (now - wState.lastConfirmedShotT) / allowedInterval,
-      );
-
-      if (leakyUpdate < weaponStats.capacity) {
-        wState.leakyBucket = leakyUpdate + 1;
-        wState.lastConfirmedShotT = now;
-        p.firedThisTick = true;
-
-        if (p.infiniteAmmo) {
-          wState.currentMag = weaponStats.capacity;
-        } else {
-          wState.currentMag--;
-        }
-
-        if (wState.currentMag === 0 && wState.reserve > 0 && !p.infiniteAmmo) {
-          wState.isReloading = true;
-          wState.reloadTimer = reloadTicks;
-        }
-
-        p.channel.emit("reliable_event", {
-          type: "AMMO_STATE",
-          primary: p.weaponState.primary,
-          secondary: p.weaponState.secondary,
-        });
-
-        processHitscan(p, room, channel, args);
-      } else {
-        recordHitscanRejected("rate_limit_exceeded");
-      }
+      roomExec.send(p.id, { type: "FIRE", ...args });
       return;
     }
   };
