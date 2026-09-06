@@ -22,6 +22,7 @@ import {
 } from "../../shared/constants";
 import { ACTIVE_GAMEMODE } from "../../shared/gamemode-configs.js";
 import { MatchAbuseStore } from "../player-data/MatchAbuseStore";
+import { benchmarkCounter } from "../benchmark/telemetry";
 
 export interface PlayerSessionManagerContext {
   getRapierWorld: () => RAPIER.World | null;
@@ -327,6 +328,7 @@ export class PlayerSessionManager {
     pState.botFireCooldown = 0;
     pState.botAimYaw = 0;
     pState.botAimPitch = 0;
+    benchmarkCounter("bots.spawned");
     return pState;
   }
 

@@ -35,6 +35,7 @@ import {
   C4_RADIUS,
 } from "../../shared/utilities";
 import { CollisionSystem } from "../../shared/collision";
+import { benchmarkCounter } from "../benchmark/telemetry";
 
 export interface CombatResolverContext {
   getPlayers: () => Map<string, PlayerState>;
@@ -111,6 +112,7 @@ export class CombatResolver {
       this.projDist[pIdx] = 0;
       this.projEnemy[pIdx] = isEnemy ? 1 : 0;
       this.projSourceId[pIdx] = sourceId;
+      benchmarkCounter("projectiles.spawned");
 
       const p = this.context.getPlayers().get(sourceId);
       if (p) {

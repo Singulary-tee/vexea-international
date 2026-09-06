@@ -12,13 +12,14 @@ export interface ChannelAdapter {
   onDisconnect(callback: () => void): void;
   on(event: string, callback: (data: unknown) => void): void;
   onRaw(callback: (buffer: ArrayBuffer) => void): void;
-  emit(event: string, data: unknown): void;
+  emit(event: string, data: unknown, options?: { reliable?: boolean }): void;
   rawEmit(buffer: ArrayBuffer): void;
   removeAllListeners(): void;
 }
 
 export interface ServerTransport {
   listen(port: number, server?: HttpServer): void;
+  close(): void;
   onConnection(callback: (channel: ChannelAdapter) => void): void;
   rawEmitAll(buffer: ArrayBuffer): void;
   reliableEmitAll(event: string, data: unknown): void;
@@ -64,6 +65,10 @@ class GeckosAdapter implements ServerTransport {
     });
   }
 
+  close(): void {
+    this.io?.close?.();
+  }
+
   onConnection(callback: (channel: ChannelAdapter) => void): void {
     this.onConnectionCallback = callback;
   }
@@ -82,7 +87,7 @@ class GeckosAdapter implements ServerTransport {
   reliableEmitAll(event: string, data: unknown): void {
     for (const channel of this.connections.values()) {
       try {
-         channel.emit(event, data);
+         channel.emit(event, data, { reliable: true });
       } catch(e) {}
     }
   }
@@ -118,12 +123,13 @@ class GeckosChannelAdapter implements ChannelAdapter {
   
   onRaw(callback: (buffer: ArrayBuffer) => void): void {
       this.channel.onRaw((msg) => {
-          callback(msg as ArrayBuffer);
+          const buffer = toArrayBuffer(msg);
+          if (buffer) callback(buffer);
       });
   }
   
-  emit(event: string, data: unknown): void {
-      this.channel.emit(event, data);
+  emit(event: string, data: unknown, options?: { reliable?: boolean }): void {
+      this.channel.emit(event, data, geckosEmitOptions(event, options));
   }
   
   rawEmit(buffer: ArrayBuffer): void {
@@ -162,6 +168,10 @@ class SocketIOAdapter implements ServerTransport {
           this.onConnectionCallback(wrappedChannel);
         }
       });
+    }
+
+    close(): void {
+      this.io?.close();
     }
   
     onConnection(callback: (channel: ChannelAdapter) => void): void {
@@ -217,7 +227,7 @@ class SocketIOChannelAdapter implements ChannelAdapter {
         });
     }
     
-    emit(event: string, data: unknown): void {
+    emit(event: string, data: unknown, _options?: { reliable?: boolean }): void {
         this.socket.emit(event, data);
     }
     
@@ -228,4 +238,18 @@ class SocketIOChannelAdapter implements ChannelAdapter {
     removeAllListeners(): void {
         this.socket.removeAllListeners();
     }
+}
+
+export function geckosEmitOptions(event: string, options?: { reliable?: boolean }): { reliable: boolean } | undefined {
+    if (options?.reliable !== undefined) return { reliable: options.reliable };
+    return event === "reliable_event" ? { reliable: true } : undefined;
+}
+
+export function toArrayBuffer(value: unknown): ArrayBuffer | undefined {
+    if (value instanceof ArrayBuffer) return value.slice(0);
+    if (Buffer.isBuffer(value)) return Uint8Array.from(value).buffer;
+    if (ArrayBuffer.isView(value)) {
+        return Uint8Array.from(new Uint8Array(value.buffer, value.byteOffset, value.byteLength)).buffer;
+    }
+    return undefined;
 }

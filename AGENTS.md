@@ -6,11 +6,11 @@
 ## Core Project Skills
 
 Always reference and adhere to the guidelines in these primary skill documents when working on relevant tasks:
-1. Meta-Skill & Engineering Workflows: `skills/system_skills/using-agent-skills/SKILL.md`
-2. Multiplayer & Networking Architecture: `skills/system_skills/multiplayer-game/SKILL.md`
-3. Physics Worker & Simulation: `skills/system_skills/rapier-physics-worker/SKILL.md`
-4. WebGPU & Three.js TSL Shaders: `skills/system_skills/webgpu-claude-skill-main/skills/webgpu-threejs-tsl/SKILL.md`
-5. Ponytail Minimal Engineering & Optimization: `skills/system_skills/ponytail/SKILL.md`
+1. Meta-Skill & Engineering Workflows: `.agents/skills/using-agent-skills/SKILL.md`
+2. Multiplayer & Networking Architecture: `.agents/skills/multiplayer-game/SKILL.md`
+3. Physics Worker & Simulation: `.agents/skills/rapier-physics-worker/SKILL.md`
+4. WebGPU & Three.js TSL Shaders: `.agents/skills/webgpu-claude-skill-main/skills/webgpu-threejs-tsl/SKILL.md`
+5. Ponytail Minimal Engineering & Optimization: `.agents/skills/ponytail/SKILL.md`
 
 ## Ponytail (Lazy Senior Dev Mode)
 

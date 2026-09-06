@@ -11,7 +11,7 @@ export function registerDevCommands(
   getRoom: () => MatchRoom | null,
   getPlayer: () => PlayerState | null
 ): void {
-  if (!IS_DEV) return;
+  if (!IS_DEV && process.env.VEXEA_BENCHMARK_CONTROL !== "true") return;
 
   channel.on("dev_spawn_bots", (args: any) => {
     const currentRoom = getRoom();
@@ -105,6 +105,27 @@ export function registerDevCommands(
     const pos = (args.x !== undefined && args.y !== undefined && args.z !== undefined) ? 
       { x: Number(args.x), y: Number(args.y), z: Number(args.z) } : undefined;
     currentRoom.registerDeveloperSpawner(type, pos);
+  });
+
+  channel.on("benchmark_spawn_projectiles", (args: any) => {
+    if (process.env.VEXEA_BENCHMARK_CONTROL !== "true") return;
+    const currentRoom = getRoom();
+    const pState = getPlayer();
+    if (!currentRoom || !pState) return;
+    const count = Math.max(0, Math.min(200, Math.floor(Number(args?.count) || 0)));
+    for (let i = 0; i < count; i += 1) {
+      currentRoom.spawnServerProjectile(
+        pState.posX,
+        pState.posY,
+        pState.posZ,
+        Math.sin(pState.yaw + i * 0.05),
+        0,
+        Math.cos(pState.yaw + i * 0.05),
+        false,
+        1,
+        pState.id,
+      );
+    }
   });
 
   channel.on("dev_clear_drones", () => {

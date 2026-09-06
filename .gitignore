@@ -2,6 +2,7 @@ node_modules/
 build/
 dist/
 coverage/
+.benchmark-artifacts/
 .DS_Store
 *.log
 .env*
