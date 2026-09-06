@@ -1,21 +1,22 @@
-/**
- * VEXEA Determinism & Seed Configuration
- */
-
 let globalSeed = 1337;
 
 export function setDeterminismSeed(seed: number): void {
-  globalSeed = seed;
+  globalSeed = seed >>> 0;
 }
 
 export function getDeterminismSeed(): number {
   return globalSeed;
 }
 
-// Simple Mulberry32 PRNG for deterministic random values during benchmarking
 export function pseudoRandom(): number {
-  let t = (globalSeed += 0x6d2b79f5);
-  t = Math.imul(t ^ (t >>> 15), t | 1);
-  t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-  return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  let value = (globalSeed += 0x6d2b79f5);
+  value = Math.imul(value ^ (value >>> 15), value | 1);
+  value ^= value + Math.imul(value ^ (value >>> 7), value | 61);
+  return ((value ^ (value >>> 14)) >>> 0) / 4294967296;
+}
+
+const configuredSeed = Number(process.env.VEXEA_BENCHMARK_SEED);
+if (Number.isInteger(configuredSeed)) {
+  setDeterminismSeed(configuredSeed);
+  Math.random = pseudoRandom;
 }
