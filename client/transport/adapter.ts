@@ -85,16 +85,19 @@ class GeckosClientAdapter implements ClientTransport {
     }
 
     on(event: string, callback: (data: unknown) => void): void {
+        if (!this.eventCallbacks) {
+            this.eventCallbacks = new Map();
+        }
         if (!this.eventCallbacks.has(event)) {
              this.eventCallbacks.set(event, []);
              if (this.channel) {
                  this.channel.on(event, (data) => {
-                     const cbs = this.eventCallbacks.get(event) || [];
+                     const cbs = this.eventCallbacks?.get(event) || [];
                      for (const cb of cbs) cb(data);
                  });
              }
         }
-        this.eventCallbacks.get(event)!.push(callback);
+        this.eventCallbacks.get(event)?.push(callback);
     }
 
     onRaw(callback: (buffer: ArrayBuffer) => void): void {
@@ -175,16 +178,19 @@ class SocketIOClientAdapter implements ClientTransport {
     }
 
     on(event: string, callback: (data: unknown) => void): void {
+        if (!this.eventCallbacks) {
+            this.eventCallbacks = new Map();
+        }
         if (!this.eventCallbacks.has(event)) {
              this.eventCallbacks.set(event, []);
              if (this.socket) {
                  this.socket.on(event, (data) => {
-                     const cbs = this.eventCallbacks.get(event) || [];
+                     const cbs = this.eventCallbacks?.get(event) || [];
                      for (const cb of cbs) cb(data);
                  });
              }
         }
-        this.eventCallbacks.get(event)!.push(callback);
+        this.eventCallbacks.get(event)?.push(callback);
     }
 
     onRaw(callback: (buffer: ArrayBuffer) => void): void {

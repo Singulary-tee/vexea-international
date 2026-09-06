@@ -8,6 +8,7 @@ import { getCachedOrFetchUrl, blobUrlMap, createConfiguredGLTFLoader } from '../
 import { texture, uv, normalMap, uniform, parallaxUV } from 'three/tsl';
 import { getSettings } from '../../settings';
 import { DS } from '../../design-system';
+import { engineContext } from '../../context/ClientEngineContext';
 
 export interface MapSpec {
   id: string;
@@ -68,7 +69,7 @@ export class MapLoader {
       return url;
     });
 
-    const loader = createConfiguredGLTFLoader(manager, (window as any).renderer);
+    const loader = createConfiguredGLTFLoader(manager, engineContext.renderer || (window as any).renderer);
 
     let loaded = 0;
     const total = uniqueMeshes.size;
@@ -134,7 +135,10 @@ export class MapLoader {
         }
         
         // Ensure standard attributes only, or match them. For simple merging we drop morph targets etc if any.
-        zoneGeometries.get(zoneId)!.push({ geom: bGeom, mat: Array.isArray(mesh.material) ? mesh.material[0] : mesh.material });
+        const list = zoneGeometries.get(zoneId);
+        if (list) {
+          list.push({ geom: bGeom, mat: Array.isArray(mesh.material) ? mesh.material[0] : mesh.material });
+        }
     };
 
     const traverseAndCollect = (group: THREE.Group, zoneId: string) => {
@@ -181,8 +185,10 @@ export class MapLoader {
       // Group by material uuid to safely merge
       const matGroups = new Map<string, {geoms: THREE.BufferGeometry[], mat: THREE.Material}>();
       for (const g of geoms) {
-          const matId = g.mat.uuid;
-          if (!matGroups.has(matId)) matGroups.set(matId, { geoms: [], mat: g.mat });
+          if (!g || !g.geom) continue;
+          const mat = g.mat || new THREE.MeshStandardMaterial({ color: 0x888888 });
+          const matId = mat.uuid;
+          if (!matGroups.has(matId)) matGroups.set(matId, { geoms: [], mat });
           matGroups.get(matId)!.geoms.push(g.geom);
       }
 
@@ -273,27 +279,15 @@ export class MapLoader {
     this.scene.add(groundMesh);
     this.mergedMeshes.push(groundMesh);
 
-    // HDR skybox
-    try {
-      const skyboxUrl = await getCachedOrFetchUrl('qwantani_dusk_2_puresky_4k.hdr', 'Asset');
-      if (skyboxUrl) {
-        const rgbeLoader = new HDRLoader();
-        rgbeLoader.load(skyboxUrl, (texture) => {
-          texture.mapping = THREE.EquirectangularReflectionMapping;
-          this.scene.background = texture;
-          this.scene.environment = texture;
-          
-          const fogNear = 80;
-          const fogFar = 400;
-          this.scene.fog = new THREE.Fog(0x8899aa, fogNear, fogFar);
+    // Background and Fog setup
+    this.scene.background = new THREE.Color(0x181c24);
+    const fogNear = 80;
+    const fogFar = 400;
+    this.scene.fog = new THREE.Fog(0x181c24, fogNear, fogFar);
 
-          if ((this.scene as any).fogNode) {
-            (this.scene as any).fogNode = null;
-          }
-          console.log('[ENV DEBUG] Environment setup complete. Skybox loaded: true', 'Fog near/far:', fogNear, fogFar);
-        }, undefined, () => {});
-      }
-    } catch (e) {}
+    if ((this.scene as any).fogNode) {
+      (this.scene as any).fogNode = null;
+    }
 
     // Ambient + directional light simulating dusk HDR
     const ambient = new THREE.AmbientLight(0xE8E8E8, 0.4);

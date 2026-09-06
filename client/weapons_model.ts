@@ -24,6 +24,59 @@ let isFirstFrame = true;
 // Pre-cached cloned templates for 3rd-person remote player weapon rendering
 const cachedWeaponScenes = new Map<string, THREE.Group>();
 
+/**
+ * Standardized socket resolver using shared/asset-details.ts contracts (ARCH-16)
+ */
+export function resolveWeaponSocket(
+  weaponScene: THREE.Object3D,
+  weaponId: WeaponId | string,
+  socketType: "muzzle" | "adsReference" | "gripPrimary" | "gripSupport" | "magazine"
+): { node: THREE.Object3D; isProcedural: boolean } {
+  const normalizedId = (weaponId as WeaponId) in WEAPON_ASSET_DETAILS ? (weaponId as WeaponId) : 'rifle';
+  const details = WEAPON_ASSET_DETAILS[normalizedId];
+  const targetName = details?.animation?.nodes?.[socketType];
+
+  if (targetName) {
+    const found = weaponScene.getObjectByName(targetName);
+    if (found) {
+      return { node: found, isProcedural: false };
+    }
+  }
+
+  // Check standard direct names
+  const directNames = [
+    socketType === 'muzzle' ? 'Muzzle' : socketType === 'adsReference' ? 'ADSReference' : 'GripPrimary',
+    socketType.toLowerCase()
+  ];
+  for (const name of directNames) {
+    const found = weaponScene.getObjectByName(name);
+    if (found) {
+      return { node: found, isProcedural: false };
+    }
+  }
+
+  // Standardized fallback creation based on measuredSize
+  let dynamicNode = weaponScene.getObjectByName(`Dynamic_${socketType}`);
+  if (!dynamicNode) {
+    dynamicNode = new THREE.Object3D();
+    dynamicNode.name = `Dynamic_${socketType}`;
+
+    const stats = getWeaponPerformance(normalizedId) || getWeaponPerformance('rifle')!;
+    if (socketType === 'muzzle') {
+      const offset = stats.visualConfig.muzzleOffset;
+      dynamicNode.position.set(offset[0], offset[1], offset[2]);
+    } else if (socketType === 'adsReference') {
+      const offset = stats.visualConfig.adsPosition;
+      dynamicNode.position.set(offset[0], offset[1], offset[2]);
+    } else {
+      dynamicNode.position.set(0, -0.05, -0.1);
+    }
+    weaponScene.add(dynamicNode);
+  }
+
+  return { node: dynamicNode, isProcedural: true };
+}
+
 export function createRemotePlayerWeapon(weaponId: WeaponId | string): THREE.Group {
   const normalizedKey = (weaponId === 'pistol' || weaponId === 'secondary') ? 'pistol' : 'rifle';
   const template = cachedWeaponScenes.get(normalizedKey) || cachedWeaponScenes.get(weaponId);
@@ -198,40 +251,10 @@ export async function initPlayerWeapons(scene: THREE.Scene, camera: THREE.Camera
           }
       });
 
-      // Prefer the measured authored anchor, then retain legacy name fallbacks.
-      const primaryMuzzleName = primaryAsset.animation?.nodes.muzzle;
-      let muzzleNode = (primaryMuzzleName ? gltf.scene.getObjectByName(primaryMuzzleName) : undefined)
-        || gltf.scene.getObjectByName('Muzzle')
-        || gltf.scene.getObjectByName('muzzle');
-      let isProcedural = false;
-      if (!muzzleNode) {
-          isProcedural = true;
-          let anySkinnedMesh: any = null;
-          gltf.scene.traverse((c: any) => { if (c.isSkinnedMesh) anySkinnedMesh = c; });
-          
-          let weaponBone: any = null;
-          if (anySkinnedMesh && anySkinnedMesh.skeleton) {
-             weaponBone = anySkinnedMesh.skeleton.bones.find((b: any) => b.name.toLowerCase().includes('weapon') || b.name.toLowerCase().includes('gun') || b.name.toLowerCase().includes('muzzle') || b.name.toLowerCase().includes('flash'));
-             if (!weaponBone) weaponBone = anySkinnedMesh.skeleton.bones.find((b: any) => b.name.toLowerCase().includes('hand'));
-          }
-          
-          muzzleNode = new THREE.Object3D();
-          muzzleNode.name = "DynamicMuzzle";
-          if (weaponBone) {
-              weaponBone.add(muzzleNode);
-          } else {
-              const offset = (primaryAsset as any).muzzleOffset || { x: 0, y: 0.05, z: -0.6 };
-              muzzleNode.position.set(offset.x, offset.y, offset.z);
-              primaryGroup!.add(muzzleNode);
-          }
-      } else {
-          const dummy = new THREE.Object3D();
-          dummy.name = "DynamicMuzzle";
-          muzzleNode.add(dummy);
-          muzzleNode = dummy;
-      }
-      (primaryGroup as any).muzzleNode = muzzleNode;
-      (primaryGroup as any).isProceduralMuzzle = isProcedural;
+      // Resolve muzzle socket using standardized contract (ARCH-16)
+      const primarySocket = resolveWeaponSocket(gltf.scene, primaryWeaponId, "muzzle");
+      (primaryGroup as any).muzzleNode = primarySocket.node;
+      (primaryGroup as any).isProceduralMuzzle = primarySocket.isProcedural;
       console.log(`[WEAPONS] Primary ${primaryWeaponId} loaded, animations:`, Object.keys(primaryActions));
     } catch (e) {
       console.error(`[WEAPONS] Failed to load primary ${primaryWeaponId}:`, e);
@@ -283,39 +306,10 @@ export async function initPlayerWeapons(scene: THREE.Scene, camera: THREE.Camera
           }
       });
 
-      const secondaryMuzzleName = secondaryAsset.animation?.nodes.muzzle;
-      let muzzleNode = (secondaryMuzzleName ? gltf.scene.getObjectByName(secondaryMuzzleName) : undefined)
-        || gltf.scene.getObjectByName('Muzzle')
-        || gltf.scene.getObjectByName('muzzle');
-      let isProcedural = false;
-      if (!muzzleNode) {
-          isProcedural = true;
-          let anySkinnedMesh: any = null;
-          gltf.scene.traverse((c: any) => { if (c.isSkinnedMesh) anySkinnedMesh = c; });
-          
-          let weaponBone: any = null;
-          if (anySkinnedMesh && anySkinnedMesh.skeleton) {
-             weaponBone = anySkinnedMesh.skeleton.bones.find((b: any) => b.name.toLowerCase().includes('weapon') || b.name.toLowerCase().includes('gun') || b.name.toLowerCase().includes('muzzle') || b.name.toLowerCase().includes('flash'));
-             if (!weaponBone) weaponBone = anySkinnedMesh.skeleton.bones.find((b: any) => b.name.toLowerCase().includes('hand'));
-          }
-          
-          muzzleNode = new THREE.Object3D();
-          muzzleNode.name = "DynamicMuzzle";
-          if (weaponBone) {
-              weaponBone.add(muzzleNode);
-          } else {
-              const offset = (secondaryAsset as any).muzzleOffset || { x: 0, y: 0.05, z: -0.45 };
-              muzzleNode.position.set(offset.x, offset.y, offset.z);
-              secondaryGroup!.add(muzzleNode);
-          }
-      } else {
-          const dummy = new THREE.Object3D();
-          dummy.name = "DynamicMuzzle";
-          muzzleNode.add(dummy);
-          muzzleNode = dummy;
-      }
-      (secondaryGroup as any).muzzleNode = muzzleNode;
-      (secondaryGroup as any).isProceduralMuzzle = isProcedural;
+      // Resolve secondary muzzle socket using standardized contract (ARCH-16)
+      const secondarySocket = resolveWeaponSocket(gltf.scene, secondaryWeaponId, "muzzle");
+      (secondaryGroup as any).muzzleNode = secondarySocket.node;
+      (secondaryGroup as any).isProceduralMuzzle = secondarySocket.isProcedural;
       console.log(`[WEAPONS] Secondary ${secondaryWeaponId} loaded, animations:`, Object.keys(secondaryActions));
     } catch (e) {
       console.error(`[WEAPONS] Failed to load secondary ${secondaryWeaponId}:`, e);

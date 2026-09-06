@@ -151,6 +151,7 @@ import {
 // State Tracker
 import { createClientTransport, ClientTransport } from "./transport/adapter";
 import { getMatch, createNewMatch, clearMatch } from "./MatchController";
+import { engineContext } from "./context/ClientEngineContext";
 
 let channel: ClientTransport | null = null;
 export function getSocketChannel() { 
@@ -528,6 +529,7 @@ const initClient = async () => {
   camera.position.set(0, 1.2, 10);
   camera.rotation.order = "YXZ";
   scene.add(camera);
+  engineContext.setCamera(camera);
 
   // MENU State initialization
   const ready = await initFirebase();
@@ -826,6 +828,7 @@ const setup3DStage = async () => {
       forceWebGL: forceWebGL,
       alpha: true,
     });
+    engineContext.setRenderer(renderer);
     (window as any).renderer = renderer;
     await renderer.init();
     initKTX2Support(renderer);
@@ -853,6 +856,7 @@ const setup3DStage = async () => {
           forceWebGL: true,
           alpha: true,
         });
+        engineContext.setRenderer(renderer);
         (window as any).renderer = renderer;
         await renderer.init();
         initKTX2Support(renderer);
@@ -1235,6 +1239,10 @@ const animateFrame = async () => {
       const _d0 = performance.now();
       match.drones.step(dt);
       (window as any).devSubsystems.droneInterp = performance.now() - _d0;
+    }
+
+    if (match.remotePlayers) {
+      match.remotePlayers.step(dt);
     }
 
     // Render cameras

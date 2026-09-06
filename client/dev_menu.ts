@@ -1036,7 +1036,8 @@ function renderPanel() {
         if (clearBtn) {
             clearBtn.addEventListener('click', () => {
                 if (activeChannel) activeChannel.emit("dev_clear_drones", {});
-                if (getMatch()?.droneJitterMap) getMatch()?.droneJitterMap.clear();
+                const match = getMatch();
+                if (match?.droneJitterMap) match.droneJitterMap.clear();
             });
         }
         const botsBtn = document.getElementById('dev-spawn-bots');
@@ -1892,8 +1893,9 @@ function renderPanel() {
                 if (activeChannel) {
                     activeChannel.emit("dev_nuke_drones", {});
                 }
-                if (getMatch()?.droneJitterMap) {
-                    getMatch()?.droneJitterMap.clear();
+                const match = getMatch();
+                if (match?.droneJitterMap) {
+                    match.droneJitterMap.clear();
                 }
             };
         }
@@ -2092,8 +2094,9 @@ function renderPanel() {
                     }
                 }
             }
-            if (getMatch()?.droneJitterMap) {
-                for (const [id, buffer] of getMatch()?.droneJitterMap?.entries()) {
+            const match = getMatch();
+            if (match?.droneJitterMap) {
+                for (const [id, buffer] of match.droneJitterMap.entries()) {
                     if (buffer.count > 0) {
                         const head = buffer.states[(buffer.head - 1 + 3) % 3];
                         if (head.state === 5) continue;
@@ -2213,8 +2216,9 @@ function setupNavEvents() {
                 const worldZ = (cy - navPanY) / scale - offZ;
                 
                 let clickedDrone = null;
-                if (getMatch()?.droneJitterMap) {
-                    for (const [id, buffer] of getMatch()?.droneJitterMap?.entries()) {
+                const match = getMatch();
+                if (match?.droneJitterMap) {
+                    for (const [id, buffer] of match.droneJitterMap.entries()) {
                         if (buffer.count > 0) {
                             const head = buffer.states[(buffer.head - 1 + 3) % 3];
                             if (head.state === 5) continue;
@@ -2232,9 +2236,9 @@ function setupNavEvents() {
                     
                     // Determine which zone it is in physically
                     lastInspectedZoneId = null;
-                    if (getMatch()?.droneJitterMap && getMatch()?.droneJitterMap.has(clickedDrone)) {
-                        const buffer = getMatch()?.droneJitterMap.get(clickedDrone)!;
-                        if (buffer.count > 0) {
+                    if (match?.droneJitterMap && match.droneJitterMap.has(clickedDrone)) {
+                        const buffer = match.droneJitterMap.get(clickedDrone);
+                        if (buffer && buffer.count > 0) {
                             const head = buffer.states[(buffer.head - 1 + 3) % 3];
                             for (const [zoneName, bound] of Object.entries(ZONE_BOUNDS)) {
                                 if (Math.abs(head.posX - bound.center.x) <= bound.halfSize.x && 
@@ -2310,8 +2314,9 @@ function drawAINav() {
     let stuckCount = 0;
     const now = performance.now();
 
-    if (getMatch()?.droneJitterMap) {
-        for (const [id, buffer] of getMatch()?.droneJitterMap?.entries()) {
+    const match = getMatch();
+    if (match?.droneJitterMap) {
+        for (const [id, buffer] of match.droneJitterMap.entries()) {
             if (buffer.count > 0) {
                 const head = buffer.states[(buffer.head - 1 + 3) % 3];
                 if (head.state === 5) continue; // DEAD
@@ -2448,8 +2453,9 @@ function drawAINav() {
         let targetOutliersCount = 0;
         let outlierList = "";
         
-        if (getMatch()?.droneJitterMap) {
-            for (const buffer of getMatch()?.droneJitterMap?.values()) {
+        const match = getMatch();
+        if (match?.droneJitterMap) {
+            for (const buffer of match.droneJitterMap.values()) {
                 if (buffer.count > 0) {
                     const head = buffer.states[(buffer.head - 1 + 3) % 3] as any;
                     if ((head.state === 2 || head.state === 3) && head.targetX !== undefined && head.targetZ !== undefined) {
@@ -2505,8 +2511,9 @@ function drawZones() {
             let groupsDisplay = "None";
             if (liveData.droneGroups && liveData.droneGroups.length > 0) {
                 const groupCounts = new Map<string, number>();
-                if (getMatch()?.droneJitterMap) {
-                    for (const buffer of getMatch()?.droneJitterMap?.values()) {
+                const match = getMatch();
+                if (match?.droneJitterMap) {
+                    for (const buffer of match.droneJitterMap.values()) {
                         if (buffer.count > 0) {
                             const head = buffer.states[(buffer.head - 1 + 3) % 3] as any;
                             if (head.groupId && liveData.droneGroups.includes(head.groupId)) {

@@ -7,6 +7,7 @@ import { audioManager } from "../../audio";
 import { initDroneModels } from "../../drone_models";
 import { initPlayerWeapons } from "../../weapons_model";
 import * as THREE from "three/webgpu";
+import { engineContext } from "../../context/ClientEngineContext";
 
 export async function orchestrateMatchLoad(
   mapEntry: MapRegistryEntry,
@@ -82,7 +83,7 @@ export async function orchestrateMatchLoad(
   loadingScreen.setPhase('LOADING COMBAT ASSETS');
   loadingScreen.setProgress(0, 3);
   try {
-    const renderer = (window as any).renderer;
+    const renderer = engineContext.renderer || (window as any).renderer;
     const gltfLoader = createConfiguredGLTFLoader(undefined, renderer);
 
     // 1. Character model
@@ -92,6 +93,7 @@ export async function orchestrateMatchLoad(
         (gltf) => {
           const playerModel = gltf.scene;
           (playerModel as any).animations = gltf.animations;
+          engineContext.setPlayerModel(playerModel);
           (window as any).playerModel = playerModel;
           playerModel.traverse((child) => {
             if ((child as any).isMesh) {
@@ -115,7 +117,7 @@ export async function orchestrateMatchLoad(
     loadingScreen.setProgress(2, 3);
 
     // 3. Player weapon models
-    const activeCamera = camera || (window as any).camera;
+    const activeCamera = camera || engineContext.camera || (window as any).camera;
     if (activeCamera) {
       await initPlayerWeapons(targetScene, activeCamera);
     }

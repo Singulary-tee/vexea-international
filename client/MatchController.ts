@@ -9,6 +9,7 @@ import { SimulationSystem } from "./src/systems/SimulationSystem";
 import { CombatSystem } from "./src/systems/CombatSystem";
 import { InputSystem } from "./src/systems/InputSystem";
 import { DroneSystem } from "./src/systems/DroneSystem";
+import { RemotePlayerSystem } from "./src/systems/RemotePlayerSystem";
 import { DiagnosisSystem } from "./src/systems/DiagnosisSystem";
 import { HUDSystem } from "./src/systems/HUDSystem";
 import { VisualsSystem } from "./src/systems/VisualsSystem";
@@ -19,6 +20,7 @@ import { LLMObjectiveSystem } from "./src/systems/LLMObjectiveSystem";
 import { ChatHUDSystem } from "./src/systems/ChatHUDSystem";
 import { DamageIndicators } from "./src/vfx/DamageIndicators";
 import { audioManager } from "./audio";
+import { ClientEngineContext, engineContext } from "./context/ClientEngineContext";
 
 
 export interface NetworkDroneState {
@@ -129,6 +131,7 @@ export class MatchController {
   public combat: CombatSystem | null = null;
   public input: InputSystem | null = null;
   public drones: DroneSystem | null = null;
+  public remotePlayers: RemotePlayerSystem | null = null;
   public diagnosis: DiagnosisSystem | null = null;
   public hud: HUDSystem | null = null;
   public chatHUD: ChatHUDSystem | null = null;
@@ -237,7 +240,10 @@ export class MatchController {
   public tempZeroScale = new THREE.Vector3(0, 0, 0);
   public tempZeroPos = new THREE.Vector3(0, -9999, 0);
 
-  constructor() {
+  public context: ClientEngineContext;
+
+  constructor(context: ClientEngineContext = engineContext) {
+    this.context = context;
     this.scene = new THREE.Scene();
   }
 
@@ -256,9 +262,11 @@ export class MatchController {
     this.input = new InputSystem(this, this.scene.userData.camera as THREE.PerspectiveCamera);
     this.input.init();
     this.drones = new DroneSystem(this);
+    this.remotePlayers = new RemotePlayerSystem(this);
     this.diagnosis = new DiagnosisSystem(this);
     this.diagnosis.init();
     this.drones.init();
+    this.remotePlayers.init();
     this.hud = new HUDSystem(this);
     this.hud.init();
     this.chatHUD = new ChatHUDSystem(this);
@@ -325,6 +333,7 @@ export class MatchController {
     this.scene.background = null;
     this.scene.environment = null;
     this.scene.fog = null;
+    this.context.buildingColliders = [];
     (window as any).buildingColliders = [];
 
     // 4. Clear collections to free memory
@@ -392,6 +401,11 @@ export class MatchController {
         this.drones = null;
     }
 
+    if (this.remotePlayers) {
+        this.remotePlayers.destroy();
+        this.remotePlayers = null;
+    }
+
     if (this.combat) {
         this.combat = null;
     }
@@ -425,17 +439,19 @@ export function getMatch(): MatchController | null {
   return currentMatch;
 }
 
-export function createNewMatch(): MatchController {
+export function createNewMatch(context: ClientEngineContext = engineContext): MatchController {
   if (currentMatch) {
     currentMatch.stop();
   }
-  currentMatch = new MatchController();
+  currentMatch = new MatchController(context);
+  context.setActiveMatch(currentMatch);
   return currentMatch;
 }
 
 export function clearMatch() {
     if (currentMatch) {
         currentMatch.stop();
+        currentMatch.context.setActiveMatch(null);
         currentMatch = null;
     }
 }

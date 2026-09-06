@@ -97,9 +97,20 @@ function countSquadMatesWithinRange(drone: any, range: number): number {
   return count;
 }
 
+function getPlayerFromRoom(room: any, playerId: string): any {
+  if (!room || !playerId) return null;
+  if (typeof room.getPlayers === "function") {
+    const playersMap = room.getPlayers();
+    return playersMap ? playersMap.get(playerId) || null : null;
+  }
+  if (room.players && typeof room.players.get === "function") {
+    return room.players.get(playerId) || null;
+  }
+  return null;
+}
+
 function getPlayerVelEma(playerId: string): { x: number; y: number; z: number } | null {
-  if (!reusableCtx.room || !reusableCtx.room.players) return null;
-  const p = reusableCtx.room.players.get(playerId);
+  const p = getPlayerFromRoom(reusableCtx.room, playerId);
   if (!p) return null;
   tempVelEma.x = p.velEmaX || 0;
   tempVelEma.y = p.velEmaY || 0;
@@ -474,7 +485,7 @@ export function processDroneBehaviors(drones: any[], room: any, dt: number = 0.0
         const dz = targetPos.z - muzzle.z;
         const dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
 
-        const targetPlayerInstance = drone.combatTarget ? room.players.get(drone.combatTarget.entityId) : null;
+        const targetPlayerInstance = drone.combatTarget ? getPlayerFromRoom(room, drone.combatTarget.entityId) : null;
         const velX = targetPlayerInstance ? targetPlayerInstance.velEmaX : 0;
         const velY = targetPlayerInstance ? targetPlayerInstance.velEmaY : 0;
         const velZ = targetPlayerInstance ? targetPlayerInstance.velEmaZ : 0;

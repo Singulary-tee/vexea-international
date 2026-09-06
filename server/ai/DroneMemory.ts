@@ -64,7 +64,7 @@ export function createMemoryMap(initial?: Iterable<[string, MemoryRecord]> | Mem
           return undefined;
         }
       }
-      const val = Reflect.get(target, prop, receiver);
+      const val = Reflect.get(target, prop, target);
       if (typeof val === 'function') {
         return val.bind(target);
       }

@@ -1,4 +1,5 @@
 import * as THREE from "three/webgpu";
+import { WEAPON_ASSET_DETAILS } from "../../shared/asset-details";
 
 // Preallocated scratch vectors to achieve completely zero-allocation updates inside the render loop
 const tempPTrigger = new THREE.Vector3();
@@ -89,15 +90,46 @@ function findBoneContaining(parent: THREE.Object3D, substring: string): THREE.Ob
 }
 
 /**
+ * Standardized helper to find socket bone using authored contract nodes from shared/asset-details.ts (ARCH-16)
+ */
+export function findWeaponSocketNode(weapon: THREE.Object3D, socketKey: "muzzle" | "adsReference" | "gripPrimary" | "gripSupport" | "root"): THREE.Object3D | null {
+  // Check exact names from contracts
+  for (const wKey of Object.keys(WEAPON_ASSET_DETAILS)) {
+    const details = WEAPON_ASSET_DETAILS[wKey as any];
+    if (details?.animation?.nodes) {
+      const nodeName = details.animation.nodes[socketKey];
+      if (nodeName) {
+        const found = weapon.getObjectByName(nodeName);
+        if (found) return found;
+      }
+    }
+  }
+
+  // Fallback to standard names
+  const directNameMap: Record<string, string[]> = {
+    muzzle: ["Muzzle", "tag_muzzle", "muzzle"],
+    adsReference: ["ADSReference", "exps3_socket", "sdr_socket", "atac_socket", "optic_socket"],
+    gripPrimary: ["GripPrimary", "tag_trigger", "tag_grip", "grip"],
+    gripSupport: ["GripSupport", "tag_foregrip", "foregrip"],
+    root: ["WeaponRoot", "root"]
+  };
+
+  const names = directNameMap[socketKey] || [];
+  for (const name of names) {
+    const found = weapon.getObjectByName(name) || findBoneContaining(weapon, name);
+    if (found) return found;
+  }
+  return null;
+}
+
+/**
  * Extrapolates the right hand grip center procedurally using the weapon's trigger structure.
  */
 export function calculateRightGripWorld(weapon: THREE.Object3D, targetOut: THREE.Vector3): void {
-  const triggerNode = findBoneContaining(weapon, "tag_trigger") && !findBoneContaining(weapon, "tag_trigger_end")
-    ? findBoneContaining(weapon, "tag_trigger")
-    : null;
+  const triggerNode = findWeaponSocketNode(weapon, "gripPrimary");
   const triggerEndNode = findBoneContaining(weapon, "tag_trigger_end");
-  const muzzleNode = findBoneContaining(weapon, "tag_muzzle");
-  const scopeNode = findBoneContaining(weapon, "exps3_socket") || findBoneContaining(weapon, "sdr_socket");
+  const muzzleNode = findWeaponSocketNode(weapon, "muzzle");
+  const scopeNode = findWeaponSocketNode(weapon, "adsReference");
 
   // Fetch world positions or use default local offsets mapped to world coordinates if bones are missing
   if (triggerNode) {
@@ -182,61 +214,63 @@ export function applyScenicGripPose(character: THREE.Object3D, weapon: THREE.Obj
   const bodyTop = findBoneContaining(character, "body_top2") || findBoneContaining(character, "Spine2");
   
   // Apply rotations and positions from config if available (Studio Preview sliders)
-  if (rightTop) {
-    const origPos = getOrCacheOriginalPosition(rightTop);
-    rightTop.rotation.set(config?.rArmRotX || 0, config?.rArmRotY || 0, config?.rArmRotZ || 0, "XYZ");
-    if (config && 'rArmPosX' in config) {
-      rightTop.position.set(origPos.x + config.rArmPosX, origPos.y + config.rArmPosY, origPos.z + config.rArmPosZ);
-    } else {
-      rightTop.position.copy(origPos);
+  if (config) {
+    if (rightTop) {
+      const origPos = getOrCacheOriginalPosition(rightTop);
+      rightTop.rotation.set(config.rArmRotX || 0, config.rArmRotY || 0, config.rArmRotZ || 0, "XYZ");
+      if ('rArmPosX' in config) {
+        rightTop.position.set(origPos.x + config.rArmPosX, origPos.y + config.rArmPosY, origPos.z + config.rArmPosZ);
+      } else {
+        rightTop.position.copy(origPos);
+      }
     }
-  }
-  if (rightBot) {
-    const origPos = getOrCacheOriginalPosition(rightBot);
-    rightBot.rotation.set(config?.rForeArmRotX || 0, config?.rForeArmRotY || 0, config?.rForeArmRotZ || 0, "XYZ");
-    if (config && 'rForeArmPosX' in config) {
-      rightBot.position.set(origPos.x + config.rForeArmPosX, origPos.y + config.rForeArmPosY, origPos.z + config.rForeArmPosZ);
-    } else {
-      rightBot.position.copy(origPos);
+    if (rightBot) {
+      const origPos = getOrCacheOriginalPosition(rightBot);
+      rightBot.rotation.set(config.rForeArmRotX || 0, config.rForeArmRotY || 0, config.rForeArmRotZ || 0, "XYZ");
+      if ('rForeArmPosX' in config) {
+        rightBot.position.set(origPos.x + config.rForeArmPosX, origPos.y + config.rForeArmPosY, origPos.z + config.rForeArmPosZ);
+      } else {
+        rightBot.position.copy(origPos);
+      }
     }
-  }
-  if (rightHand) {
-    const origPos = getOrCacheOriginalPosition(rightHand);
-    rightHand.rotation.set(config?.rHandRotX || 0, config?.rHandRotY || 0, config?.rHandRotZ || 0, "XYZ");
-    if (config && 'rHandPosX' in config) {
-      rightHand.position.set(origPos.x + config.rHandPosX, origPos.y + config.rHandPosY, origPos.z + config.rHandPosZ);
-    } else {
-      rightHand.position.copy(origPos);
+    if (rightHand) {
+      const origPos = getOrCacheOriginalPosition(rightHand);
+      rightHand.rotation.set(config.rHandRotX || 0, config.rHandRotY || 0, config.rHandRotZ || 0, "XYZ");
+      if ('rHandPosX' in config) {
+        rightHand.position.set(origPos.x + config.rHandPosX, origPos.y + config.rHandPosY, origPos.z + config.rHandPosZ);
+      } else {
+        rightHand.position.copy(origPos);
+      }
     }
-  }
-  if (leftTop) {
-    const origPos = getOrCacheOriginalPosition(leftTop);
-    leftTop.rotation.set(config?.lArmRotX || 0, config?.lArmRotY || 0, config?.lArmRotZ || 0, "XYZ");
-    if (config && 'lArmPosX' in config) {
-      leftTop.position.set(origPos.x + config.lArmPosX, origPos.y + config.lArmPosY, origPos.z + config.lArmPosZ);
-    } else {
-      leftTop.position.copy(origPos);
+    if (leftTop) {
+      const origPos = getOrCacheOriginalPosition(leftTop);
+      leftTop.rotation.set(config.lArmRotX || 0, config.lArmRotY || 0, config.lArmRotZ || 0, "XYZ");
+      if ('lArmPosX' in config) {
+        leftTop.position.set(origPos.x + config.lArmPosX, origPos.y + config.lArmPosY, origPos.z + config.lArmPosZ);
+      } else {
+        leftTop.position.copy(origPos);
+      }
     }
-  }
-  if (leftBot) {
-    const origPos = getOrCacheOriginalPosition(leftBot);
-    leftBot.rotation.set(config?.lForeArmRotX || 0, config?.lForeArmRotY || 0, config?.lForeArmRotZ || 0, "XYZ");
-    if (config && 'lForeArmPosX' in config) {
-      leftBot.position.set(origPos.x + config.lForeArmPosX, origPos.y + config.lForeArmPosY, origPos.z + config.lForeArmPosZ);
-    } else {
-      leftBot.position.copy(origPos);
+    if (leftBot) {
+      const origPos = getOrCacheOriginalPosition(leftBot);
+      leftBot.rotation.set(config.lForeArmRotX || 0, config.lForeArmRotY || 0, config.lForeArmRotZ || 0, "XYZ");
+      if ('lForeArmPosX' in config) {
+        leftBot.position.set(origPos.x + config.lForeArmPosX, origPos.y + config.lForeArmPosY, origPos.z + config.lForeArmPosZ);
+      } else {
+        leftBot.position.copy(origPos);
+      }
     }
-  }
-  if (leftHand) {
-    const origPos = getOrCacheOriginalPosition(leftHand);
-    leftHand.rotation.set(config?.lHandRotX || 0, config?.lHandRotY || 0, config?.lHandRotZ || 0, "XYZ");
-    if (config && 'lHandPosX' in config) {
-      leftHand.position.set(origPos.x + config.lHandPosX, origPos.y + config.lHandPosY, origPos.z + config.lHandPosZ);
-    } else {
-      leftHand.position.copy(origPos);
+    if (leftHand) {
+      const origPos = getOrCacheOriginalPosition(leftHand);
+      leftHand.rotation.set(config.lHandRotX || 0, config.lHandRotY || 0, config.lHandRotZ || 0, "XYZ");
+      if ('lHandPosX' in config) {
+        leftHand.position.set(origPos.x + config.lHandPosX, origPos.y + config.lHandPosY, origPos.z + config.lHandPosZ);
+      } else {
+        leftHand.position.copy(origPos);
+      }
     }
+    if (bodyTop) bodyTop.rotation.set(0, 0, 0);
   }
-  if (bodyTop) bodyTop.rotation.set(0, 0, 0);
 
   // Update character matrices so bone world positions are exact for this frame
   character.updateMatrixWorld(true);

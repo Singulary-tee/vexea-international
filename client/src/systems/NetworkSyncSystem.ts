@@ -642,41 +642,47 @@ export class NetworkSyncSystem {
 
   private handleStateSync(json: any) {
     const match = this.match;
+    if (!json) return;
     
     // Sync other players
-    for (const p of json.players) {
-      if (p.id !== match.localPlayerId) {
-        if (!match.remotePlayersTargetData.has(p.id)) {
-          match.remotePlayersTargetData.set(p.id, {
-            pos: new THREE.Vector3(p.posX, p.posY, p.posZ),
-            yaw: p.yaw,
-            pitch: 0,
-            hp: p.hp,
-            isAlive: p.isAlive,
-            isFiring: p.isFiring,
-            isReloading: p.isReloading,
-            weapon: p.currentWeapon
-          });
-        } else {
-          const data = match.remotePlayersTargetData.get(p.id)!;
-          data.pos.set(p.posX, p.posY, p.posZ);
-          data.yaw = p.yaw;
-          data.hp = p.hp;
-          data.isAlive = p.isAlive;
-          data.isFiring = p.isFiring;
-          data.isReloading = p.isReloading;
-          data.weapon = p.currentWeapon;
+    if (Array.isArray(json.players)) {
+      for (const p of json.players) {
+        if (!p || !p.id) continue;
+        if (p.id !== match.localPlayerId) {
+          if (!match.remotePlayersTargetData.has(p.id)) {
+            match.remotePlayersTargetData.set(p.id, {
+              pos: new THREE.Vector3(p.posX || 0, p.posY || 0, p.posZ || 0),
+              yaw: p.yaw || 0,
+              pitch: 0,
+              hp: p.hp ?? 100,
+              isAlive: p.isAlive ?? true,
+              isFiring: !!p.isFiring,
+              isReloading: !!p.isReloading,
+              weapon: p.currentWeapon || 'rifle'
+            });
+          } else {
+            const data = match.remotePlayersTargetData.get(p.id);
+            if (data) {
+              data.pos.set(p.posX || 0, p.posY || 0, p.posZ || 0);
+              data.yaw = p.yaw || 0;
+              data.hp = p.hp ?? 100;
+              data.isAlive = p.isAlive ?? true;
+              data.isFiring = !!p.isFiring;
+              data.isReloading = !!p.isReloading;
+              data.weapon = p.currentWeapon || 'rifle';
+            }
+          }
         }
       }
-    }
 
-    // Sync local player stats from server authoritative state
-    const clientMatchMe = json.players.find((p: any) => p.id === match.localPlayerId);
-    if (clientMatchMe) {
-      match.playerHP = clientMatchMe.hp;
-      match.playerScore = clientMatchMe.score;
-      (window as any).serverPlayerCollisions = clientMatchMe.activeCollisions || [];
-      if (match.hud) match.hud.updateHUD();
+      // Sync local player stats from server authoritative state
+      const clientMatchMe = json.players.find((p: any) => p && p.id === match.localPlayerId);
+      if (clientMatchMe) {
+        match.playerHP = clientMatchMe.hp ?? 100;
+        match.playerScore = clientMatchMe.score ?? 0;
+        (window as any).serverPlayerCollisions = clientMatchMe.activeCollisions || [];
+        if (match.hud) match.hud.updateHUD();
+      }
     }
 
     // Timer update
