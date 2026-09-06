@@ -1,0 +1,56 @@
+{
+  "schemaVersion": 1,
+  "id": "geckos-baseline",
+  "title": "Geckos synthetic authoritative baseline",
+  "boundary": "server-process",
+  "transport": "geckos",
+  "server": {
+    "command": ["node", "dist/server/server.cjs"],
+    "buildCommand": ["npm", "run", "build"],
+    "port": 3320,
+    "readinessPath": "/",
+    "env": {}
+  },
+  "map": {
+    "id": "benchmark_synthetic",
+    "mode": "synthetic",
+    "allowFallback": true
+  },
+  "services": {
+    "llm": "disabled",
+    "persistence": "disabled",
+    "observability": "disabled"
+  },
+  "instrumentation": "counters",
+  "workload": {
+    "rooms": 1,
+    "clientsPerRoom": 1,
+    "botsPerRoom": 0,
+    "dronesPerRoom": 0,
+    "projectilesPerRoom": 0,
+    "durationMs": 30000,
+    "warmupMs": 5000,
+    "cooldownMs": 2000,
+    "inputHz": 20,
+    "reliableEventsPerSecond": 0,
+    "firePerSecond": 0,
+    "contact": "none",
+    "seed": 1
+  },
+  "budgets": {
+    "maxP95TickMs": 16.6,
+    "minTickRate": 55,
+    "maxDroppedTicks": 0,
+    "maxRssBytes": 1073741824,
+    "maxCpuPercent": 100,
+    "maxP95RttMs": 250,
+    "maxLossRate": 0.01,
+    "maxNetworkBytesPerSecond": 104857600,
+    "headroomPercent": 10
+  },
+  "trials": {
+    "warmups": 1,
+    "repetitions": 3,
+    "confidenceLevel": 0.95
+  }
+}
