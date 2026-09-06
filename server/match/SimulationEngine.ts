@@ -40,6 +40,7 @@ import {
 } from "../sentry";
 import { CollisionSystem } from "../../shared/collision";
 import { OutOfBoundsEnforcer } from "../map/OutOfBoundsEnforcer";
+import { benchmarkCounter, benchmarkTimer } from "../benchmark/telemetry";
 
 export interface SimulationEngineContext {
   getRapierWorld: () => RAPIER.World | null;
@@ -218,6 +219,7 @@ export class SimulationEngine {
     if (!rapierWorld) return;
 
     const tickStart = Date.now();
+    benchmarkCounter("simulation.ticks");
     let preCubePos = { x: 0, y: 0, z: 0 };
     let preCubeVel = { x: 0, y: 0, z: 0 };
     if (this.devCubeBody && this.devCubeSpawned) {
@@ -672,7 +674,9 @@ export class SimulationEngine {
       this.updateSystemEntities();
     }
 
-    recordServerTickDuration(Date.now() - tickStart);
+    const durationMs = Date.now() - tickStart;
+    benchmarkTimer("simulation.tick", durationMs);
+    recordServerTickDuration(durationMs);
   }
 
   private updateSystemEntities(): void {

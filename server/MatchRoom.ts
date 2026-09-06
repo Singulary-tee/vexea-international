@@ -45,6 +45,7 @@ import { CombatResolver } from "./match/CombatResolver";
 import { SwarmLifecycle } from "./match/SwarmLifecycle";
 import { PlayerSessionManager } from "./match/PlayerSessionManager";
 import { NetworkBroadcaster } from "./match/NetworkBroadcaster";
+import { benchmarkCounter, benchmarkEvent, benchmarkGauge, benchmarkTimer } from "./benchmark/telemetry";
 
 export type {
   PlayerState,
@@ -261,6 +262,12 @@ export class MatchRoom {
     }
 
     this.commanderMemory = new CommanderMemory(this);
+    benchmarkCounter("rooms.created");
+    benchmarkEvent("room_created", {
+      roomId: this.roomId,
+      mapId: this.mapId,
+      mapSpecLoaded: Boolean(this.specJson),
+    });
 
     if (geminiKey) {
       try {
@@ -352,12 +359,24 @@ export class MatchRoom {
   }
 
   private initMapConfig(): void {
+    if (this.mapId === "benchmark_synthetic") {
+      this.specJson = {
+        id: "benchmark_synthetic",
+        version: "1",
+        playerSpawn: { position: { x: 0, y: 0, z: 120 } },
+        buildings: [],
+      };
+      this.zoneRegistry = new ZoneRegistry();
+      this.outOfBoundsEnforcer = new OutOfBoundsEnforcer();
+      this.collisionMap = new CollisionSystem();
+      return;
+    }
     const mapDef = getMapById(this.mapId);
     this.zoneRegistry = new ZoneRegistry();
     this.outOfBoundsEnforcer = new OutOfBoundsEnforcer();
     this.collisionMap = new CollisionSystem();
 
-    const specPath = (mapDef as any)?.specPath || "specs/map_1_facility.json";
+    const specPath = (mapDef as any)?.specFile || "specs/map_1_facility.json";
     try {
       if (fs.existsSync(path.resolve(specPath))) {
         const specRaw = fs.readFileSync(path.resolve(specPath), "utf-8");
@@ -481,7 +500,7 @@ export class MatchRoom {
     requestedPrimaryWeaponId?: string,
     requestedSecondaryWeaponId?: string
   ): PlayerState {
-    return this.sessionManager.registerPlayer(
+    const player = this.sessionManager.registerPlayer(
       playerId,
       channel,
       stats,
@@ -491,6 +510,8 @@ export class MatchRoom {
       requestedPrimaryWeaponId,
       requestedSecondaryWeaponId
     );
+    benchmarkCounter("players.registered");
+    return player;
   }
 
   public registerBotPlayer(): PlayerState {
@@ -759,11 +780,14 @@ export class MatchRoom {
     const PHYSICS_TIMESTEP = 1000000000n / PHYSICS_TICK_RATE;
     let lastPhysicsTime = process.hrtime.bigint();
     let physicsAccumulator = 0n;
+    const schedulerInterval = 5_000_000n;
 
     this.physicsInterval = setInterval(() => {
       const now = process.hrtime.bigint();
       let elapsed = now - lastPhysicsTime;
       lastPhysicsTime = now;
+      benchmarkCounter("simulation.scheduler_callbacks");
+      benchmarkTimer("simulation.scheduler_lateness", Math.max(0, Number(elapsed - schedulerInterval) / 1e6));
 
       if (this.simulationEngine.devPhysicsPaused) {
         elapsed = 0n;
@@ -781,14 +805,33 @@ export class MatchRoom {
         this.simulationEngine.devPhysicsStepOnceRequested = false;
       }
 
-      if (physicsAccumulator > PHYSICS_TIMESTEP * 10n) {
-        physicsAccumulator = PHYSICS_TIMESTEP * 10n;
+      const maxAccumulator = PHYSICS_TIMESTEP * 10n;
+      if (physicsAccumulator > maxAccumulator) {
+        const discardedTime = physicsAccumulator - maxAccumulator;
+        benchmarkCounter("simulation.dropped_ticks", Number(discardedTime / PHYSICS_TIMESTEP));
+        benchmarkCounter("simulation.discarded_time_ms", Number(discardedTime) / 1e6);
+        physicsAccumulator = maxAccumulator;
       }
 
+      let catchUpSteps = 0;
       while (physicsAccumulator >= PHYSICS_TIMESTEP) {
         this.simulationEngine.tickSimulation();
         physicsAccumulator -= PHYSICS_TIMESTEP;
+        catchUpSteps += 1;
       }
+      if (catchUpSteps > 1) benchmarkCounter("simulation.catch_up_steps", catchUpSteps - 1);
+      benchmarkGauge("simulation.accumulator_ms", Number(physicsAccumulator) / 1e6);
+      benchmarkGauge("entities.players", this.sessionManager.players.size);
+      let clientCount = 0;
+      let botCount = 0;
+      for (const player of this.sessionManager.players.values()) {
+        if (player.isBot) botCount += 1;
+        else clientCount += 1;
+      }
+      benchmarkGauge("entities.clients", clientCount);
+      benchmarkGauge("entities.bots", botCount);
+      benchmarkGauge("entities.drones", this.swarmLifecycle.drones.filter((drone) => drone.state !== DroneState.DEAD).length);
+      benchmarkGauge("entities.projectiles", this.combatResolver.projActive.reduce((sum, active) => sum + active, 0));
     }, 5);
 
     // AI timing loop (8s)
@@ -880,6 +923,8 @@ export class MatchRoom {
     if (this.isShutdown) return;
     this.isShutdown = true;
     this.matchActive = false;
+    benchmarkCounter("rooms.shutdown");
+    benchmarkEvent("room_shutdown", { roomId: this.roomId });
 
     if (this.physicsInterval) clearInterval(this.physicsInterval);
     if (this.syncInterval) clearInterval(this.syncInterval);

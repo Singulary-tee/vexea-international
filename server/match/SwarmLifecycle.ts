@@ -15,6 +15,7 @@ import {
   PLAYER_CENTER_OFFSET,
 } from "../../shared/constants";
 import { recordDroneColliderInit } from "../sentry";
+import { benchmarkCounter } from "../benchmark/telemetry";
 
 export interface SwarmLifecycleContext {
   getRapierWorld: () => RAPIER.World | null;
@@ -414,6 +415,7 @@ export class SwarmLifecycle {
         d.groupId = "G_DEV";
         d.cooldown = 40;
         this.initDronePhysics(d);
+        benchmarkCounter("drones.spawned");
 
         spawned = true;
         this.context.broadcastReliableEvent({

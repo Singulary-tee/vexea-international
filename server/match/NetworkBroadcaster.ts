@@ -11,6 +11,10 @@ import {
 } from "./types";
 import { DroneState } from "../../shared/constants";
 import { ACTIVE_GAMEMODE } from "../../shared/gamemode-configs.js";
+import {
+  benchmarkCounter,
+  benchmarkInstrumentationEnabled,
+} from "../benchmark/telemetry";
 
 export class NetworkBroadcaster {
   public preallocatedBuffer = new ArrayBuffer(CONST_BUFFER_SIZE);
@@ -24,6 +28,10 @@ export class NetworkBroadcaster {
     evt: any
   ): void {
     const json = JSON.stringify(evt);
+    if (benchmarkInstrumentationEnabled()) {
+      benchmarkCounter("network.reliable.events", players.size);
+      benchmarkCounter("network.reliable.bytes", Buffer.byteLength(json) * players.size);
+    }
     for (const p of players.values()) {
       try {
         p.channel.emit("reliable_event", JSON.parse(json));
@@ -138,6 +146,25 @@ export class NetworkBroadcaster {
       isAlive: p.isAlive,
       activeCollisions: (p as any).activeCollisions || [],
     }));
+
+    if (benchmarkInstrumentationEnabled()) {
+      const stateBytes = Buffer.byteLength(JSON.stringify({
+        type: "state_sync",
+        tick: serverTick,
+        projectiles: activeProj,
+        players: detailedPlayers,
+        serverCube: cubeSyncData,
+        devDrones,
+        liveZoneSummary: zoneSummary,
+      }));
+      benchmarkCounter("network.raw.messages", players.size * 2);
+      benchmarkCounter(
+        "network.raw.bytes",
+        (packedData.byteLength + this.playerSyncBuffer.byteLength) * players.size,
+      );
+      benchmarkCounter("network.state_sync.messages", players.size);
+      benchmarkCounter("network.state_sync.bytes", stateBytes * players.size);
+    }
 
     for (const player of players.values()) {
       try {

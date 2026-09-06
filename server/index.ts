@@ -20,6 +20,7 @@ import { createTransport, ChannelAdapter } from "./transport/adapter";
 export type { ChannelAdapter };
 import { connectionRegistry } from "./connection-registry";
 import { MatchRoom, PlayerState } from "./MatchRoom";
+import { matchManager } from "./MatchManager";
 import { serverFlagService } from "./flags/flag-service";
 import { matchmaker } from "./Matchmaker";
 import { registerDevCommands } from "./dev/dev-commands";
@@ -29,6 +30,8 @@ import { registerSocialHandlers } from "./transport/handlers/social-handlers";
 import { registerConnectionHandlers } from "./transport/handlers/connection-handlers";
 import { registerApiRoutes } from "./routes/api-routes";
 import { IS_DEV } from "../shared/gates/production.gate";
+import { closeBenchmarkTelemetry } from "./benchmark/telemetry";
+import "./benchmark/determinism";
 
 export { IS_DEV }; // Master toggle to easily disable all development cheats/commands on the server for production.
 
@@ -258,7 +261,7 @@ export async function runTransaction(
 }
 
 // Garbage Collector for MatchInProgress sessions
-setInterval(
+const matchProgressGcInterval = setInterval(
   async () => {
     try {
       const q = query(
@@ -308,8 +311,27 @@ app.use((req, res, next) => {
   next();
 });
 
-const PORT = (process.env.NODE_ENV === "production" && process.env.PORT) ? parseInt(process.env.PORT, 10) : 3000;
+const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
 const io = createTransport();
+
+let shuttingDown = false;
+async function shutdownServer(): Promise<void> {
+  if (shuttingDown) return;
+  shuttingDown = true;
+  clearInterval(matchProgressGcInterval);
+  matchmaker.shutdown();
+  matchManager.shutdownAll();
+  io.close();
+  await new Promise<void>((resolve) => server.close(() => resolve()));
+  await closeBenchmarkTelemetry();
+}
+
+process.once("SIGTERM", () => {
+  shutdownServer().finally(() => process.exit(0));
+});
+process.once("SIGINT", () => {
+  shutdownServer().finally(() => process.exit(0));
+});
 
 app.use(express.json({ limit: "10mb" }));
 

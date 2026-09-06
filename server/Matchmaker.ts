@@ -124,6 +124,15 @@ export class Matchmaker {
     return this.queue.filter((p) => p.mapId === mapId).length;
   }
 
+  public shutdown(): void {
+    if (this.poolInterval) clearInterval(this.poolInterval);
+    for (const pending of this.pendingMatches.values()) {
+      if (pending.countdownTimer) clearInterval(pending.countdownTimer);
+    }
+    this.pendingMatches.clear();
+    this.queue = [];
+  }
+
   private evaluateAllPools(): void {
     const maps = new Set(this.queue.map((p) => p.mapId));
     maps.forEach((mapId) => this.evaluatePool(mapId));

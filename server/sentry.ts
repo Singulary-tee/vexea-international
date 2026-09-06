@@ -6,6 +6,7 @@ import { serverFlagService } from "./flags/flag-service";
 let isSentryInitialized = false;
 
 export async function initSentry(): Promise<void> {
+  if (process.env.VEXEA_BENCHMARK_DISABLE_SENTRY === "true") return;
   const isEnabled = await serverFlagService.getBoolean(ServerFeatureFlagKey.SENTRY_SERVER_ENABLED, undefined, true);
   if (!isEnabled) {
     console.log("[Sentry Server] Disabled via feature flag.");
@@ -55,6 +56,7 @@ initSentry().catch((e) => console.warn("[Sentry Server] Async initialization err
  * Real-time Server Metrics Helpers
  */
 export async function recordServerTickDuration(durationMs: number): Promise<void> {
+  if (process.env.VEXEA_BENCHMARK_DISABLE_SENTRY === "true" || !isSentryInitialized) return;
   const enabled = await serverFlagService.getBoolean(ServerFeatureFlagKey.SENTRY_SERVER_METRICS_ENABLED, undefined, true);
   if (!enabled || !isSentryInitialized) return;
   try {
@@ -63,6 +65,7 @@ export async function recordServerTickDuration(durationMs: number): Promise<void
 }
 
 export async function recordServerActiveDrones(count: number): Promise<void> {
+  if (process.env.VEXEA_BENCHMARK_DISABLE_SENTRY === "true" || !isSentryInitialized) return;
   const enabled = await serverFlagService.getBoolean(ServerFeatureFlagKey.SENTRY_SERVER_METRICS_ENABLED, undefined, true);
   if (!enabled || !isSentryInitialized) return;
   try {
@@ -71,6 +74,7 @@ export async function recordServerActiveDrones(count: number): Promise<void> {
 }
 
 export async function recordServerConnectedPlayers(count: number): Promise<void> {
+  if (process.env.VEXEA_BENCHMARK_DISABLE_SENTRY === "true" || !isSentryInitialized) return;
   const enabled = await serverFlagService.getBoolean(ServerFeatureFlagKey.SENTRY_SERVER_METRICS_ENABLED, undefined, true);
   if (!enabled || !isSentryInitialized) return;
   try {
@@ -79,6 +83,7 @@ export async function recordServerConnectedPlayers(count: number): Promise<void>
 }
 
 export async function recordServerLLMLatency(latencyMs: number, model: string): Promise<void> {
+  if (process.env.VEXEA_BENCHMARK_DISABLE_SENTRY === "true" || !isSentryInitialized) return;
   const enabled = await serverFlagService.getBoolean(ServerFeatureFlagKey.SENTRY_SERVER_METRICS_ENABLED, undefined, true);
   if (!enabled || !isSentryInitialized) return;
   try {
@@ -87,6 +92,7 @@ export async function recordServerLLMLatency(latencyMs: number, model: string): 
 }
 
 export async function recordHitscanRejected(reason: string): Promise<void> {
+  if (process.env.VEXEA_BENCHMARK_DISABLE_SENTRY === "true" || !isSentryInitialized) return;
   const enabled = await serverFlagService.getBoolean(ServerFeatureFlagKey.SENTRY_SERVER_METRICS_ENABLED, undefined, true);
   if (!enabled || !isSentryInitialized) return;
   try {

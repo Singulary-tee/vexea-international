@@ -63,6 +63,11 @@ class MatchManager {
   public getRoomCount(): number {
     return this.activeRooms.size;
   }
+
+  public shutdownAll(): void {
+    for (const room of this.activeRooms.values()) room.shutdown();
+    this.activeRooms.clear();
+  }
 }
 
 export const matchManager = new MatchManager();
