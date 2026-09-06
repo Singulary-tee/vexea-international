@@ -391,7 +391,35 @@ This file is the authoritative index of all directories and source files within 
 ### 1.6 Test Suite (`/tests`)
 
 *   **`tests/`**
-    *   *Purpose:* Comprehensive suite of unit and integration tests using Vitest. Covers `MatchManager`, `MatchRoom`, `Physics`, `Collision`, `Economy`, `LLMCommander`, and `DroneIntel` logic to ensure architectural stability.
+    *   *Purpose:* Comprehensive suite of unit and integration tests using Vitest (including `MatchManager`, `MatchRoom`, `Physics`, `Collision`, `Economy`, `LLMCommander`, `DroneIntel`, benchmark tests, and weapon contracts) to ensure architectural stability.
+
+### 1.7 Benchmarks Space (`/benchmarks`)
+
+*   **`benchmarks/`**
+    *   *Purpose:* Performance benchmarking suite for transport protocols and match workloads.
+    *   *Key Files:*
+        *   `profiles/geckos-baseline.json`, `profiles/socketio-baseline.json`: Baseline performance profiles.
+        *   `src/artifacts.ts`, `src/cli.ts`, `src/client-transport.ts`, `src/client-worker.ts`, `src/metrics.ts`, `src/process.ts`, `src/runner.ts`, `src/scenario-driver.ts`, `src/scenario.ts`, `src/types.ts`, `src/validate.ts`, `src/workload.ts`: Scenario runner, metrics collection, and transport validation utilities.
+
+### 1.8 Map Authoring Space (`/map-authoring`)
+
+*   **`map-authoring/`**
+    *   *Purpose:* Level authoring and density validation data for map design.
+    *   *Key Files/Subdirectories:*
+        *   `approved-dense-v24/`: Approved dense blockout specification, editor binaries, evidence captures, and validation scripts (`validate-approved-dense-blockout-v1.mjs`, etc.).
+
+### 1.9 Documentation Space (`/docs/vexea`)
+
+*   **`docs/vexea/`**
+    *   *Purpose:* Comprehensive design systems, VFX contracts, UI motion specifications, and implementation prompts.
+    *   *Key Files:*
+        *   `README.md`: Documentation root index.
+        *   `VEXEA_GAMEPLAY_VFX_CONTRACT.md`, `VEXEA_UI_ANIMATION_CONTRACT.md`, `VEXEA_UI_DESIGN_SYSTEM.md`, `VEXEA_UI_DESIGN_SYSTEM_INTERACTIONS.md`, `VEXEA_UI_LOADING_BATTLEPASS_CONTRACT.md`, `VEXEA_APPROVED_MOTION_LANGUAGE.md`, `VEXEA_BP_LOADING_REFRESH_BRIEF.md`, `VEXEA_SETTINGS_MOTION_AUDIT.md`, `VEXEA_UI_SVG_AND_CLICKABLE_AUDIT.md`, `GEMINI_VEXEA_VFX_UI_IMPLEMENTATION_PROMPT.md`, `contract_calibration_review.md`, `research_motion_sources.md`.
+
+### 1.10 Agent Skills Space (`/.agents/skills`)
+
+*   **`.agents/skills/`**
+    *   *Purpose:* Agent skills and reference libraries providing domain-specific guidance (e.g., multiplayer game architecture, webgpu/three.js tsl shaders, idea refinement, frontend UI engineering, etc.).
 
 ### Cycle 2026-08-12-01: VEXEA Monetization Overhaul Phase 1 — Dual-Currency System & Server-Authoritative Economy
 *   **Target Files:** `shared/catalog.json`, `shared/verification/types.ts`, `shared/verification/verifier.ts`, `server/data/economy-service.ts`, `server/routes/api-routes.ts`, `client/screens/store-screen.ts`, `shared/feature-flags.ts`, `client/screens/main-menu.ts`, `CODEBASE_INDEX.md`
