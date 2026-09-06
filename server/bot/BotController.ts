@@ -49,8 +49,9 @@ export function processBotTick(player: PlayerState, room: MatchRoom, dt: number)
   bNearestY = 0;
   bNearestZ = 0;
 
-  for (let i = 0; i < room.drones.length; i++) {
-    const d = room.drones[i];
+  const drones = room.drones || ((room as any).getDrones ? (room as any).getDrones() : []);
+  for (let i = 0; i < drones.length; i++) {
+    const d = drones[i];
     if (d.state === DroneState.DEAD) continue;
     bDx = d.posX - player.posX;
     bDy = d.posY - player.posY;
