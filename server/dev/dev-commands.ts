@@ -1,3 +1,4 @@
+import { RoomExecution } from "../execution/RoomExecution";
 import { ChannelAdapter } from "../transport/adapter";
 import { MatchRoom, PlayerState } from "../MatchRoom";
 import { IS_DEV } from "../../shared/gates/production.gate";
@@ -9,14 +10,23 @@ export function registerDevCommands(
   channel: ChannelAdapter,
   db: any,
   getRoom: () => MatchRoom | null,
-  getPlayer: () => PlayerState | null
+  getPlayer: () => PlayerState | null,
+  getRoomExecution?: () => RoomExecution | null
 ): void {
   if (!IS_DEV && process.env.VEXEA_BENCHMARK_CONTROL !== "true") return;
 
   channel.on("dev_spawn_bots", (args: any) => {
+    console.log(`[DEV] Received dev_spawn_bots request, count: ${args?.count}`);
+    const roomExec = getRoomExecution?.();
+    if (roomExec) {
+      console.log(`[DEV] Forwarding spawnBots to room execution ${roomExec.roomId}`);
+      roomExec.spawnBots(typeof args?.count === "number" ? args.count : 3);
+      return;
+    }
     const currentRoom = getRoom();
     if (!currentRoom) return;
     const count = typeof args.count === "number" ? args.count : 3;
+    console.log(`[DEV] Direct spawnTestBots in-process for room ${currentRoom.roomId}, count: ${count}`);
     currentRoom.spawnTestBots(count);
   });
 
@@ -99,6 +109,11 @@ export function registerDevCommands(
   });
 
   channel.on("dev_spawn_drone", (args: any) => {
+    const roomExec = getRoomExecution?.();
+    if (roomExec) {
+      roomExec.send("broadcast", { type: "DEV_SPAWN_DRONE", args });
+      return;
+    }
     const currentRoom = getRoom();
     if (!currentRoom) return;
     const type = typeof args.type === "number" ? args.type : Number(args.type);
@@ -109,8 +124,13 @@ export function registerDevCommands(
 
   channel.on("benchmark_spawn_projectiles", (args: any) => {
     if (process.env.VEXEA_BENCHMARK_CONTROL !== "true") return;
-    const currentRoom = getRoom();
+    const roomExec = getRoomExecution?.();
     const pState = getPlayer();
+    if (roomExec && pState) {
+      roomExec.send(pState.id, { type: "BENCHMARK_SPAWN_PROJECTILES", args });
+      return;
+    }
+    const currentRoom = getRoom();
     if (!currentRoom || !pState) return;
     const count = Math.max(0, Math.min(200, Math.floor(Number(args?.count) || 0)));
     for (let i = 0; i < count; i += 1) {
@@ -158,7 +178,40 @@ export function registerDevCommands(
     }
   });
 
+  channel.on("dev_spawn_drone", (args: any) => {
+    const roomExec = getRoomExecution?.();
+    if (roomExec) {
+      console.log(`[DEV] Forwarding spawnDrones to room execution ${roomExec.roomId}`);
+      roomExec.spawnDrones(1, args?.type || 4);
+      return;
+    }
+    const room = getRoom();
+    if (room) {
+      console.log(`[DEV] Direct spawnDrone in-process for room ${room.roomId}`);
+      room.spawnDrone(args?.type || 4);
+    }
+  });
+
+  channel.on("benchmark_spawn_projectiles", (args: any) => {
+    const roomExec = getRoomExecution?.();
+    if (roomExec) {
+      console.log(`[DEV] Forwarding spawnProjectiles to room execution ${roomExec.roomId}`);
+      roomExec.spawnProjectiles(typeof args?.count === "number" ? args.count : 10);
+      return;
+    }
+    const room = getRoom();
+    if (room) {
+      console.log(`[DEV] Direct spawnServerProjectileBatch in-process for room ${room.roomId}`);
+      room.spawnServerProjectileBatch(args?.count || 10);
+    }
+  });
+
   channel.on("dev_toggle_llm", (args: any) => {
+    const roomExec = getRoomExecution?.();
+    if (roomExec) {
+      roomExec.send("broadcast", { type: "DEV_TOGGLE_LLM", args });
+      return;
+    }
     const currentRoom = getRoom();
     if (!currentRoom) return;
     currentRoom.llmCommanderDisabled = !!args?.disabled;

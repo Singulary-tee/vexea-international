@@ -30,7 +30,7 @@ export const HISTORICAL_SAMPLES_MAX = 120;
 export const BASE_DETECTION_DISTANCE = 3.0;
 export const DETECTION_TIME_HORIZON = 0.5;
 export const MIN_AVOIDANCE_TICKS = 30;
-export const HISTORIC_BLOCK_SIZE = 2 + 50 * 4; // MAX_DRONES is 50
+export const HISTORIC_BLOCK_SIZE = 2 + MAX_DRONES * 4;
 export const DEBUG_PHYSICS_TICKS = false;
 
 export type WeaponSlot = "primary" | "secondary";

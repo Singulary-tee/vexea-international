@@ -383,6 +383,7 @@ io.onConnection((channel: ChannelAdapter) => {
     db,
     getRoom,
     getPlayer,
+    getRoomExecution,
   );
 
   registerMatchmakingHandlers(

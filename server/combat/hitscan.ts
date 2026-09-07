@@ -21,30 +21,42 @@ export function processHitscan(
   channel: ChannelAdapter,
   args: any
 ): void {
-  const slot = args.weaponSlot as "primary" | "secondary";
+  const slot = args?.weaponSlot as "primary" | "secondary";
   const isPrimary = slot === "primary";
-  const dirX = args.direction.x;
-  const dirY = args.direction.y;
-  const dirZ = args.direction.z;
-  const timestamp = args.timestamp;
+
+  const originX = typeof args?.origin?.x === "number" ? args.origin.x : pState.posX;
+  const originY = typeof args?.origin?.y === "number" ? args.origin.y : pState.posY + 1.6;
+  const originZ = typeof args?.origin?.z === "number" ? args.origin.z : pState.posZ;
+  const originObj = { x: originX, y: originY, z: originZ };
+
+  const defaultDirX = Math.sin(pState.yaw || 0) * Math.cos(pState.pitch || 0);
+  const defaultDirY = Math.sin(pState.pitch || 0);
+  const defaultDirZ = Math.cos(pState.yaw || 0) * Math.cos(pState.pitch || 0);
+
+  const dirX = typeof args?.direction?.x === "number" ? args.direction.x : defaultDirX;
+  const dirY = typeof args?.direction?.y === "number" ? args.direction.y : defaultDirY;
+  const dirZ = typeof args?.direction?.z === "number" ? args.direction.z : defaultDirZ;
+  const timestamp = typeof args?.timestamp === "number" ? args.timestamp : Date.now();
   const now = Date.now();
 
   // Hitscan Origin Verification
-  const dx = args.origin.x - pState.posX;
-  const dy = args.origin.y - pState.posY;
-  const dz = args.origin.z - pState.posZ;
-  const originDistSq = dx * dx + dy * dy + dz * dz;
-  const maxAllowedDeviation = 4.0; // 2.0 meters squared (2.0 * 2.0 = 4.0)
+  if (args?.origin && typeof args.origin.x === "number") {
+    const dx = originX - pState.posX;
+    const dy = originY - (pState.posY + 1.6);
+    const dz = originZ - pState.posZ;
+    const originDistSq = dx * dx + dy * dy + dz * dz;
+    const maxAllowedDeviation = 4.0; // 2.0 meters squared (2.0 * 2.0 = 4.0)
 
-  if (originDistSq > maxAllowedDeviation) {
-    console.warn(`[Hitscan Verification] Rejected shot from player ${pState.id}: Origin deviation too high (${Math.sqrt(originDistSq).toFixed(2)}m > 2.0m)`);
-    recordHitscanRejected("origin_deviation_out_of_bounds");
-    recordSecurityExploit("origin_spoofing", { 
-      playerId: pState.id, 
-      origin: args.origin, 
-      expected: { x: pState.posX, y: pState.posY, z: pState.posZ } 
-    });
-    return;
+    if (originDistSq > maxAllowedDeviation) {
+      console.warn(`[Hitscan Verification] Rejected shot from player ${pState.id}: Origin deviation too high (${Math.sqrt(originDistSq).toFixed(2)}m > 2.0m)`);
+      recordHitscanRejected("origin_deviation_out_of_bounds");
+      recordSecurityExploit("origin_spoofing", { 
+        playerId: pState.id, 
+        origin: args.origin, 
+        expected: { x: pState.posX, y: pState.posY, z: pState.posZ } 
+      });
+      return;
+    }
   }
 
   const history = currentRoom.historicalAABBHistory || (currentRoom as any).combatResolver?.historicalAABBHistory;
@@ -99,15 +111,15 @@ export function processHitscan(
           const cy = history[offset + 2];
           const cz = history[offset + 3];
 
-          const tox = cx - args.origin.x;
-          const toy = cy - args.origin.y;
-          const toz = cz - args.origin.z;
+          const tox = cx - originX;
+          const toy = cy - originY;
+          const toz = cz - originZ;
 
           const t = tox * dirX + toy * dirY + toz * dirZ;
           if (t > 0) {
-            const px = args.origin.x + dirX * t;
-            const py = args.origin.y + dirY * t;
-            const pz = args.origin.z + dirZ * t;
+            const px = originX + dirX * t;
+            const py = originY + dirY * t;
+            const pz = originZ + dirZ * t;
 
             const hitDrone = dronesList.find((d: any) => d.id === dId);
             if (!hitDrone || hitDrone.state === DroneState.DEAD) continue;
@@ -158,7 +170,7 @@ export function processHitscan(
     if (
       currentRoom.collisionMap &&
       currentRoom.collisionMap.rayIntersectsAny(
-        args.origin,
+        originObj,
         { x: dirX, y: dirY, z: dirZ },
         distSqMin
       )
@@ -219,17 +231,17 @@ export function processHitscan(
         );
       }
 
-      const impactX = args.origin.x + dirX * distSqMin;
-      const impactY = args.origin.y + dirY * distSqMin;
-      const impactZ = args.origin.z + dirZ * distSqMin;
+      const impactX = originX + dirX * distSqMin;
+      const impactY = originY + dirY * distSqMin;
+      const impactZ = originZ + dirZ * distSqMin;
 
       pState.channel.emit("reliable_event", {
         type: "HIT_CONFIRMED",
         droneId: bestHitDrone.id,
         droneHp: 0,
-        originX: args.origin.x,
-        originY: args.origin.y,
-        originZ: args.origin.z,
+        originX,
+        originY,
+        originZ,
         impactX,
         impactY,
         impactZ,
@@ -240,17 +252,17 @@ export function processHitscan(
         zone: bestHitDrone.zone,
       });
     } else {
-      const impactX = args.origin.x + dirX * distSqMin;
-      const impactY = args.origin.y + dirY * distSqMin;
-      const impactZ = args.origin.z + dirZ * distSqMin;
+      const impactX = originX + dirX * distSqMin;
+      const impactY = originY + dirY * distSqMin;
+      const impactZ = originZ + dirZ * distSqMin;
 
       pState.channel.emit("reliable_event", {
         type: "HIT_CONFIRMED",
         droneId: bestHitDrone.id,
         droneHp: bestHitDrone.hp,
-        originX: args.origin.x,
-        originY: args.origin.y,
-        originZ: args.origin.z,
+        originX,
+        originY,
+        originZ,
         impactX,
         impactY,
         impactZ,
@@ -268,7 +280,7 @@ export function processHitscan(
 
     if (currentRoom.rapierWorld) {
       const ray = new RAPIER.Ray(
-        { x: args.origin.x, y: args.origin.y, z: args.origin.z },
+        originObj,
         { x: dirX, y: dirY, z: dirZ }
       );
       const hit = currentRoom.rapierWorld.castRay(
@@ -278,18 +290,18 @@ export function processHitscan(
         RAPIER.QueryFilterFlags.EXCLUDE_DYNAMIC
       );
       if (hit) {
-        impactX = args.origin.x + args.direction.x * hit.timeOfImpact;
-        impactY = args.origin.y + args.direction.y * hit.timeOfImpact;
-        impactZ = args.origin.z + args.direction.z * hit.timeOfImpact;
+        impactX = originX + dirX * hit.timeOfImpact;
+        impactY = originY + dirY * hit.timeOfImpact;
+        impactZ = originZ + dirZ * hit.timeOfImpact;
       } else {
-        impactX = args.origin.x + args.direction.x * 80;
-        impactY = args.origin.y + args.direction.y * 80;
-        impactZ = args.origin.z + args.direction.z * 80;
+        impactX = originX + dirX * 80;
+        impactY = originY + dirY * 80;
+        impactZ = originZ + dirZ * 80;
       }
     } else {
-      impactX = args.origin.x + args.direction.x * 80;
-      impactY = args.origin.y + args.direction.y * 80;
-      impactZ = args.origin.z + args.direction.z * 80;
+      impactX = originX + dirX * 80;
+      impactY = originY + dirY * 80;
+      impactZ = originZ + dirZ * 80;
     }
 
     if (
@@ -302,9 +314,9 @@ export function processHitscan(
     ) {
       pState.channel.emit("reliable_event", {
         type: "HIT_ENVIRONMENT",
-        originX: args.origin.x,
-        originY: args.origin.y,
-        originZ: args.origin.z,
+        originX,
+        originY,
+        originZ,
         impactX,
         impactY,
         impactZ,

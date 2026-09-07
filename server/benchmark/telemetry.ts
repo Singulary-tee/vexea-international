@@ -101,8 +101,12 @@ function p95(values: number[]): number {
 }
 
 function write(record: Record<string, unknown>): void {
-  if (!stream) return;
-  stream.write(`${JSON.stringify(record)}\n`);
+  if (!outputPath) return;
+  try {
+    appendFileSync(outputPath, `${JSON.stringify(record)}\n`);
+  } catch {
+    // Suppress filesystem write errors during benchmark teardown
+  }
 }
 
 function recordMetric(entry: MetricEntry): void {
@@ -144,9 +148,19 @@ export function benchmarkCounter(name: string, value = 1): void {
   recordMetric({ type: "counter", name, value, timestamp: Date.now() });
 }
 
-export function benchmarkGauge(name: string, value: number): void {
+export function benchmarkGauge(name: string, value: number, sourceId?: string): void {
   if (!enabled || !Number.isFinite(value)) return;
-  gauges.set(name, value);
+  if (sourceId) {
+    let roomMap = workerGauges.get(sourceId);
+    if (!roomMap) {
+      roomMap = new Map<string, number>();
+      workerGauges.set(sourceId, roomMap);
+    }
+    roomMap.set(name, value);
+    recomputeAggregatedGauges();
+  } else {
+    gauges.set(name, value);
+  }
   recordMetric({ type: "gauge", name, value, timestamp: Date.now() });
 }
 

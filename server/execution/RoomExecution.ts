@@ -36,6 +36,9 @@ export interface RoomExecution {
   // This is what allows a future out-of-process backend to implement the same interface
   // without a second migration.
   send(playerId: string | "broadcast", event: RoomInboundEvent): Promise<void>;
+  spawnBots(count: number): Promise<void>;
+  spawnDrones(count: number, type?: number): Promise<void>;
+  spawnProjectiles(count: number): Promise<void>;
   onOutbound(callback: (playerId: string | "broadcast", event: RoomOutboundEvent) => void): void;
   getStatus(): Promise<RoomExecutionStatus>;
   terminate(reason: string): Promise<void>;

@@ -31,6 +31,19 @@ export type ParentToChildMessage =
       playerId: string;
     }
   | {
+      type: "spawn_bots";
+      count: number;
+    }
+  | {
+      type: "spawn_drones";
+      count: number;
+      droneType?: number;
+    }
+  | {
+      type: "spawn_projectiles";
+      count: number;
+    }
+  | {
       type: "terminate";
       reason?: string;
     };

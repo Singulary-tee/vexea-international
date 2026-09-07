@@ -1,0 +1,58 @@
+{
+  "schemaVersion": 1,
+  "id": "rule-compliant-10rooms",
+  "title": "Rule-Compliant Benchmark: 10 Rooms (10 Players/Bots + 20 Drones = 30 Entities/Room, 300 Total)",
+  "boundary": "server-process",
+  "transport": "socketio",
+  "server": {
+    "command": ["node", "dist/server/server.cjs"],
+    "buildCommand": ["npm", "run", "build"],
+    "port": 3354,
+    "readinessPath": "/",
+    "env": {
+      "ROOM_BACKEND": "forked"
+    }
+  },
+  "map": {
+    "id": "benchmark_synthetic",
+    "mode": "synthetic",
+    "allowFallback": true
+  },
+  "services": {
+    "llm": "disabled",
+    "persistence": "disabled",
+    "observability": "disabled"
+  },
+  "instrumentation": "counters",
+  "workload": {
+    "rooms": 10,
+    "clientsPerRoom": 1,
+    "botsPerRoom": 9,
+    "dronesPerRoom": 20,
+    "projectilesPerRoom": 0,
+    "durationMs": 12000,
+    "warmupMs": 3000,
+    "cooldownMs": 1000,
+    "inputHz": 30,
+    "reliableEventsPerSecond": 2,
+    "firePerSecond": 4,
+    "contact": "dense",
+    "seed": 110
+  },
+  "budgets": {
+    "maxP95TickMs": 16.6,
+    "minTickRate": 55,
+    "maxDroppedTicks": 300,
+    "maxRssBytes": 2147483648,
+    "maxCpuPercent": 100,
+    "maxP95RttMs": 1500,
+    "maxLossRate": 0.01,
+    "maxNetworkBytesPerSecond": 104857600,
+    "headroomPercent": 10
+  },
+  "trials": {
+    "warmups": 1,
+    "repetitions": 1,
+    "confidenceLevel": 0.95
+  }
+}

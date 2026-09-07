@@ -1,4 +1,4 @@
-import { db, doc, getDoc, setDoc } from "../index";
+import { db, doc, getDoc, setDoc } from "../db/firestore-bridge";
 
 export interface MatchAbuseRecord {
   offenseCount: number;

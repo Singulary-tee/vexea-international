@@ -83,9 +83,13 @@ function getOrCreateChannel(playerId: string): ChildChannelAdapter {
   return ch;
 }
 
+const rapierPromise = RAPIER.init().catch((err) => {
+  console.error("[room-worker] Failed to eagerly initialize Rapier WASM:", err);
+});
+
 async function handleInit(msg: Extract<ParentToChildMessage, { type: "init" }>) {
   try {
-    await RAPIER.init();
+    await rapierPromise;
     const room = new MatchRoom(msg.roomId, msg.geminiKey, msg.mapId);
     currentRoom = room;
 
@@ -150,7 +154,7 @@ async function handleInbound(msg: Extract<ParentToChildMessage, { type: "inbound
   const playerId = msg.playerId;
   const event = msg.event;
 
-  if (playerId === "broadcast" || event.type === "CHAT_MESSAGE" || event.type === "QUICK_COMM") {
+  if (playerId === "broadcast" || event.type === "CHAT_MESSAGE" || event.type === "QUICK_COMM" || event.type.startsWith("DEV_")) {
     if (event.type === "CHAT_MESSAGE") {
       const message = event.message;
       if (message && typeof message === "string" && message.trim().length > 0) {
@@ -207,6 +211,28 @@ async function handleInbound(msg: Extract<ParentToChildMessage, { type: "inbound
           });
         }
       }
+      return;
+    }
+
+    if (event.type === "DEV_SPAWN_BOTS") {
+      const args = event.args || {};
+      const count = typeof args.count === "number" ? args.count : 3;
+      room.spawnTestBots(count);
+      return;
+    }
+
+    if (event.type === "DEV_SPAWN_DRONE") {
+      const args = event.args || {};
+      const type = typeof args.type === "number" ? args.type : Number(args.type);
+      const pos = (args.x !== undefined && args.y !== undefined && args.z !== undefined) ? 
+        { x: Number(args.x), y: Number(args.y), z: Number(args.z) } : undefined;
+      room.registerDeveloperSpawner(type, pos);
+      return;
+    }
+
+    if (event.type === "DEV_TOGGLE_LLM") {
+      const args = event.args || {};
+      room.llmCommanderDisabled = !!args?.disabled;
       return;
     }
   }
@@ -424,6 +450,25 @@ async function handleInbound(msg: Extract<ParentToChildMessage, { type: "inbound
       }
       break;
     }
+    case "BENCHMARK_SPAWN_PROJECTILES": {
+      if (process.env.VEXEA_BENCHMARK_CONTROL !== "true") break;
+      const args = event.args || {};
+      const count = Math.max(0, Math.min(200, Math.floor(Number(args?.count) || 0)));
+      for (let i = 0; i < count; i += 1) {
+        room.spawnServerProjectile(
+          p.posX,
+          p.posY,
+          p.posZ,
+          Math.sin(p.yaw + i * 0.05),
+          0,
+          Math.cos(p.yaw + i * 0.05),
+          false,
+          1,
+          p.id,
+        );
+      }
+      break;
+    }
   }
 }
 
@@ -452,6 +497,26 @@ process.on("message", async (msg: ParentToChildMessage) => {
       break;
     case "remove_player":
       await handleRemovePlayer(msg);
+      break;
+    case "spawn_bots":
+      if (currentRoom) {
+        console.log(`[WORKER] Explicit spawn_bots received: ${msg.count}`);
+        currentRoom.spawnTestBots(msg.count);
+      }
+      break;
+    case "spawn_drones":
+      if (currentRoom) {
+        console.log(`[WORKER] Explicit spawn_drones received: ${msg.count}`);
+        for (let i = 0; i < msg.count; i++) {
+          currentRoom.spawnDrone(msg.droneType || 4);
+        }
+      }
+      break;
+    case "spawn_projectiles":
+      if (currentRoom) {
+        console.log(`[WORKER] Explicit spawn_projectiles received: ${msg.count}`);
+        currentRoom.spawnServerProjectileBatch(msg.count);
+      }
       break;
     case "inbound":
       await handleInbound(msg);

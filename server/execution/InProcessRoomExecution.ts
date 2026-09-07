@@ -262,6 +262,20 @@ export class InProcessRoomExecution implements RoomExecution {
     }
   }
 
+  public async spawnBots(count: number): Promise<void> {
+    this.room.spawnTestBots(count);
+  }
+
+  public async spawnDrones(count: number, type?: number): Promise<void> {
+    for (let i = 0; i < count; i++) {
+      this.room.spawnDrone(type || 4);
+    }
+  }
+
+  public async spawnProjectiles(count: number): Promise<void> {
+    this.room.spawnServerProjectileBatch(count);
+  }
+
   public async getStatus(): Promise<RoomExecutionStatus> {
     return this.status;
   }

@@ -1,0 +1,57 @@
+{
+  "schemaVersion": 1,
+  "id": "debug-1room",
+  "title": "Debug 1 Room",
+  "boundary": "server-process",
+  "transport": "socketio",
+  "server": {
+    "command": ["npx", "tsx", "server/index.ts"],
+    "port": 3354,
+    "readinessPath": "/",
+    "env": {
+      "ROOM_BACKEND": "forked"
+    }
+  },
+  "map": {
+    "id": "benchmark_synthetic",
+    "mode": "synthetic",
+    "allowFallback": true
+  },
+  "services": {
+    "llm": "disabled",
+    "persistence": "disabled",
+    "observability": "disabled"
+  },
+  "instrumentation": "off",
+  "workload": {
+    "rooms": 1,
+    "clientsPerRoom": 1,
+    "botsPerRoom": 2,
+    "dronesPerRoom": 2,
+    "projectilesPerRoom": 2,
+    "durationMs": 5000,
+    "warmupMs": 2000,
+    "cooldownMs": 1000,
+    "inputHz": 20,
+    "reliableEventsPerSecond": 1,
+    "firePerSecond": 0.5,
+    "contact": "none",
+    "seed": 42
+  },
+  "budgets": {
+    "maxP95TickMs": 15,
+    "minTickRate": 55,
+    "maxDroppedTicks": 10,
+    "maxRssBytes": 2147483648,
+    "maxCpuPercent": 100,
+    "maxP95RttMs": 50,
+    "maxLossRate": 0.05,
+    "maxNetworkBytesPerSecond": 10485760,
+    "headroomPercent": 10
+  },
+  "trials": {
+    "warmups": 0,
+    "repetitions": 1,
+    "confidenceLevel": 0.95
+  }
+}

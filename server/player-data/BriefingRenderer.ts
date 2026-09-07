@@ -1,4 +1,4 @@
-import { db, doc, getDoc, setDoc } from "../index";
+import { db, doc, getDoc, setDoc } from "../db/firestore-bridge";
 import { PlayerGameProfile } from "./PlayerProfileStore";
 import { AdapterFactory } from "../ai/adapters/AdapterFactory";
 import { ServerFeatureFlagKey, getServerFlagValue } from "../flags/server-flags";

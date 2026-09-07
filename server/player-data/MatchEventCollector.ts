@@ -1,4 +1,4 @@
-import { db, doc, setDoc } from "../index";
+import { db, doc, setDoc } from "../db/firestore-bridge";
 import type { MatchRoom } from "../MatchRoom";
 
 export interface PlayerMatchArchiveStats {

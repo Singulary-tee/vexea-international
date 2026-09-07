@@ -8,6 +8,7 @@ import {
   DroneType,
   BehaviorProfile,
   DRONE_CONFIGS,
+  MAX_DRONES,
 } from "../../shared/constants";
 import { ACTIVE_GAMEMODE } from "../../shared/gamemode-configs.js";
 import { ServerDrone } from "../MatchRoom";
@@ -21,7 +22,7 @@ import { AdapterFactory } from "./adapters/AdapterFactory";
 import { StrategyBriefStore } from "./strategy/StrategyBriefStore";
 import { Posture } from "./GroupTacticalState";
 
-const MAX_DRONES = 40; // Hardcoded from MatchRoom
+// Use shared MAX_DRONES
 
 const COMMANDER_TOOLS: CommanderTool[] = [
   {
@@ -237,6 +238,10 @@ export class LLMCommander {
   }
 
   public async executeLLMStep() {
+    if (process.env.VEXEA_BENCHMARK_CONTROL === "true") {
+      this.room.offlineSystemFallbackAI();
+      return;
+    }
     if (!this.adapter) {
       await this.initAdapter();
     }

@@ -96,7 +96,9 @@ export class LocalExecutionHost implements ExecutionHost {
         onShutdown: (id) => this.handleRoomTermination(id),
       });
       this.executions.set(roomId, forkedExec);
-      return forkedExec.waitUntilReady().then(() => forkedExec);
+
+      forkedExec.start();
+      return Promise.resolve(forkedExec);
     }
 
     const room = matchManager.getOrCreateRoom(

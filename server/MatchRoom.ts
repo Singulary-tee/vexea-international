@@ -678,6 +678,22 @@ export class MatchRoom {
     this.swarmLifecycle.initDronePhysics(d);
   }
 
+  public spawnDrone(type: number): boolean {
+    return this.swarmLifecycle.registerDeveloperSpawner(type);
+  }
+
+  public spawnServerProjectileBatch(count: number): void {
+    for (let i = 0; i < count; i++) {
+      this.spawnServerProjectile(
+        0, 10, 0, // x, y, z
+        0, -1, 0, // dirX, dirY, dirZ
+        true, // isEnemy
+        10, // damage
+        "benchmark-source" // sourceId
+      );
+    }
+  }
+
   public despawnDrone(d: ServerDrone): void {
     this.swarmLifecycle.despawnDrone(d);
   }
@@ -782,8 +798,13 @@ export class MatchRoom {
     let physicsAccumulator = 0n;
     const schedulerInterval = 5_000_000n;
 
+    let isFirstCallback = true;
     this.physicsInterval = setInterval(() => {
       const now = process.hrtime.bigint();
+      if (isFirstCallback) {
+        isFirstCallback = false;
+        lastPhysicsTime = now;
+      }
       let elapsed = now - lastPhysicsTime;
       lastPhysicsTime = now;
       benchmarkCounter("simulation.scheduler_callbacks");
@@ -821,17 +842,17 @@ export class MatchRoom {
       }
       if (catchUpSteps > 1) benchmarkCounter("simulation.catch_up_steps", catchUpSteps - 1);
       benchmarkGauge("simulation.accumulator_ms", Number(physicsAccumulator) / 1e6);
-      benchmarkGauge("entities.players", this.sessionManager.players.size);
+      benchmarkGauge("entities.players", this.sessionManager.players.size, this.roomId);
       let clientCount = 0;
       let botCount = 0;
       for (const player of this.sessionManager.players.values()) {
         if (player.isBot) botCount += 1;
         else clientCount += 1;
       }
-      benchmarkGauge("entities.clients", clientCount);
-      benchmarkGauge("entities.bots", botCount);
-      benchmarkGauge("entities.drones", this.swarmLifecycle.drones.filter((drone) => drone.state !== DroneState.DEAD).length);
-      benchmarkGauge("entities.projectiles", this.combatResolver.projActive.reduce((sum, active) => sum + active, 0));
+      benchmarkGauge("entities.clients", clientCount, this.roomId);
+      benchmarkGauge("entities.bots", botCount, this.roomId);
+      benchmarkGauge("entities.drones", this.swarmLifecycle.drones.filter((drone) => drone.state !== DroneState.DEAD).length, this.roomId);
+      benchmarkGauge("entities.projectiles", this.combatResolver.projActive.reduce((sum, active) => sum + active, 0), this.roomId);
     }, 5);
 
     // AI timing loop (8s)

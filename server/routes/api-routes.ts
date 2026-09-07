@@ -11,7 +11,7 @@ import {
   verifyAdReward,
   calculateLevelMetrics
 } from "../../shared/verification/verifier";
-import { db, doc, getDoc, setDoc, updateDoc, deleteDoc, runTransaction, increment } from "../index";
+import { db, doc, getDoc, setDoc, updateDoc, deleteDoc, runTransaction, increment } from "../db/firestore-bridge";
 import { DEFAULT_SHARED_FEATURE_FLAGS, SharedFeatureFlagKey } from "../../shared/feature-flags";
 
 export function registerApiRoutes(app: Express): void {

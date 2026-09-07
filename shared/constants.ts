@@ -79,7 +79,7 @@ export enum DroneType {
 }
 
 // Numerical limits and Network constraints
-export const MAX_DRONES = 50;
+export const MAX_DRONES = 100;
 export const MAX_CAMERAS = 20;
 export const CAMERA_MAX_HP = 50;
 export const PLAYER_MAX_HP = 100;

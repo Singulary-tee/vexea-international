@@ -60,12 +60,17 @@ export function resolveWorkerPath(): { scriptPath: string; execArgv: string[] } 
 
   for (const candidate of candidates) {
     if (fs.existsSync(candidate)) {
-      const execArgv = [...process.execArgv];
+      let execArgv = [...process.execArgv];
       if (candidate.endsWith(".ts")) {
         const hasLoader = execArgv.some((arg) => arg.includes("tsx") || arg.includes("ts-node"));
         if (!hasLoader) {
           execArgv.push("--import", "tsx");
         }
+      } else {
+        // Strip tsx-specific imports and loaders when spawning pre-compiled javascript
+        execArgv = execArgv.filter((arg) => {
+          return !arg.includes("tsx") && !arg.includes("ts-node") && arg !== "--import";
+        });
       }
       return { scriptPath: candidate, execArgv };
     }
@@ -85,6 +90,7 @@ export class ForkedRoomExecution implements RoomExecution {
   private options: ForkedRoomExecutionOptions;
   private childPid: number | null = null;
   private isExplicitTermination = false;
+  private pendingMessages: ParentToChildMessage[] = [];
 
   constructor(roomId: string, options: ForkedRoomExecutionOptions = {}) {
     this.roomId = roomId;
@@ -94,7 +100,10 @@ export class ForkedRoomExecution implements RoomExecution {
       this.readyResolve = resolve;
       this.readyReject = reject;
     });
+  }
 
+  public start(): void {
+    if (this.child) return;
     this.spawnWorker();
   }
 
@@ -201,6 +210,12 @@ export class ForkedRoomExecution implements RoomExecution {
         this.childPid = msg.pid || this.child?.pid || null;
         this.status = "active";
         this.readyResolve();
+        if (this.child && this.child.connected) {
+          for (const queuedMsg of this.pendingMessages) {
+            this.child.send(queuedMsg);
+          }
+        }
+        this.pendingMessages = [];
         break;
       }
       case "status": {
@@ -287,15 +302,46 @@ export class ForkedRoomExecution implements RoomExecution {
   }
 
   public async send(playerId: string | "broadcast", event: RoomInboundEvent): Promise<void> {
+    const msg: ParentToChildMessage = {
+      type: "inbound",
+      playerId,
+      event,
+    };
+    if (this.status === "starting") {
+      this.pendingMessages.push(msg);
+      return;
+    }
     if (this.status !== "active") {
       return;
     }
     if (this.child && this.child.connected) {
-      const msg: ParentToChildMessage = {
-        type: "inbound",
-        playerId,
-        event,
-      };
+      this.child.send(msg);
+    }
+  }
+
+  public async spawnBots(count: number): Promise<void> {
+    const msg: ParentToChildMessage = { type: "spawn_bots", count };
+    if (this.status === "starting") {
+      this.pendingMessages.push(msg);
+    } else if (this.child && this.child.connected) {
+      this.child.send(msg);
+    }
+  }
+
+  public async spawnDrones(count: number, type?: number): Promise<void> {
+    const msg: ParentToChildMessage = { type: "spawn_drones", count, droneType: type };
+    if (this.status === "starting") {
+      this.pendingMessages.push(msg);
+    } else if (this.child && this.child.connected) {
+      this.child.send(msg);
+    }
+  }
+
+  public async spawnProjectiles(count: number): Promise<void> {
+    const msg: ParentToChildMessage = { type: "spawn_projectiles", count };
+    if (this.status === "starting") {
+      this.pendingMessages.push(msg);
+    } else if (this.child && this.child.connected) {
       this.child.send(msg);
     }
   }
@@ -308,26 +354,34 @@ export class ForkedRoomExecution implements RoomExecution {
     primaryWeaponId?: string,
     secondaryWeaponId?: string
   ): Promise<void> {
+    const msg: ParentToChildMessage = {
+      type: "register_player",
+      playerId,
+      classId,
+      displayName,
+      reqUid,
+      primaryWeaponId,
+      secondaryWeaponId,
+    };
+    if (this.status === "starting") {
+      this.pendingMessages.push(msg);
+      return;
+    }
     if (this.child && this.child.connected) {
-      const msg: ParentToChildMessage = {
-        type: "register_player",
-        playerId,
-        classId,
-        displayName,
-        reqUid,
-        primaryWeaponId,
-        secondaryWeaponId,
-      };
       this.child.send(msg);
     }
   }
 
   public async removePlayer(playerId: string): Promise<void> {
+    const msg: ParentToChildMessage = {
+      type: "remove_player",
+      playerId,
+    };
+    if (this.status === "starting") {
+      this.pendingMessages.push(msg);
+      return;
+    }
     if (this.child && this.child.connected) {
-      const msg: ParentToChildMessage = {
-        type: "remove_player",
-        playerId,
-      };
       this.child.send(msg);
     }
   }
