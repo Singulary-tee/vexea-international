@@ -5,6 +5,7 @@ import { ConnectionRegistry } from "../../connection-registry";
 import { roomAllocator } from "../../execution/RoomAllocator";
 import { RoomExecution } from "../../execution/RoomExecution";
 import { InProcessRoomExecution } from "../../execution/InProcessRoomExecution";
+import { ForkedRoomExecution } from "../../execution/ForkedRoomExecution";
 import { ClassId } from "../../../shared/classes";
 
 export function registerMatchmakingHandlers(
@@ -38,7 +39,8 @@ export function registerMatchmakingHandlers(
       const devMatchId = args?.matchId || `M_DEV_${Math.floor(Math.random() * 1000000)}`;
       console.log(`[VEXEA SERVER] Dev Quick Start match initialization: ${devMatchId} on map ${reqMap}`);
       const execution = await roomAllocator.allocate(devMatchId, process.env.GEMINI_API_KEY, reqMap);
-      const targetRoom = (execution as InProcessRoomExecution).getRoom();
+      const isForked = execution instanceof ForkedRoomExecution;
+      const targetRoom = isForked ? null : (execution as InProcessRoomExecution).getRoom();
       const curRoom = getRoom();
       const curPState = getPlayer();
       if (curRoom && curPState && curRoom !== targetRoom) {
@@ -46,15 +48,46 @@ export function registerMatchmakingHandlers(
       }
       (channel as any).roomExecution = execution;
       (channel as any).currentRoom = targetRoom;
-      const newPState = targetRoom.registerPlayer(playerId, channel, null, reqClass, reqDisplayName, reqUid, reqPrimaryWeaponId, reqSecondaryWeaponId);
-      (channel as any).pState = newPState;
+
+      let initialPState: any = null;
+      if (isForked) {
+        await (execution as ForkedRoomExecution).registerPlayer(
+          playerId,
+          reqClass,
+          reqDisplayName,
+          reqUid,
+          reqPrimaryWeaponId,
+          reqSecondaryWeaponId
+        );
+        initialPState = {
+          id: playerId,
+          reqUid,
+          displayName: reqDisplayName || playerId,
+          classId: reqClass,
+          isAlive: true,
+          lastSequence: 0,
+        };
+        (channel as any).pState = initialPState;
+      } else if (targetRoom) {
+        initialPState = targetRoom.registerPlayer(playerId, channel, null, reqClass, reqDisplayName, reqUid, reqPrimaryWeaponId, reqSecondaryWeaponId);
+        (channel as any).pState = initialPState;
+      }
+
+      if ((channel as any).isPlayerReady) {
+        execution.send(playerId, { type: "PLAYER_READY" });
+        if (targetRoom) {
+          targetRoom.setPlayerReady(playerId);
+        }
+      }
 
       execution.onOutbound((target, event) => {
         if (target === "broadcast" || target === playerId) {
           if (event.type === "MATCH_FORMED") {
-            (channel as any).currentRoom = (execution as InProcessRoomExecution).getRoom();
+            if (!isForked) {
+              (channel as any).currentRoom = (execution as InProcessRoomExecution).getRoom();
+            }
             (channel as any).roomExecution = execution;
-            (channel as any).pState = event.playerState || newPState;
+            (channel as any).pState = event.playerState || initialPState;
           }
         }
       });
@@ -97,10 +130,13 @@ export function registerMatchmakingHandlers(
   });
 
   channel.on("player_ready", () => {
+    (channel as any).isPlayerReady = true;
     const roomExec = getExec();
     const p = getPlayer();
     if (roomExec && p) {
       roomExec.send(p.id, { type: "PLAYER_READY" });
+    } else if (roomExec) {
+      roomExec.send(playerId, { type: "PLAYER_READY" });
     } else {
       const activeRoom = getRoom();
       if (activeRoom && p) {

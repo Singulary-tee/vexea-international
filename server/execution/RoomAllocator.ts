@@ -1,25 +1,56 @@
 import { RoomExecution } from "./RoomExecution";
 import { InProcessRoomExecution } from "./InProcessRoomExecution";
+import { ForkedRoomExecution } from "./ForkedRoomExecution";
 import { matchManager } from "../MatchManager";
 
+export type RoomExecutionBackendType = "in-process" | "isolated" | "forked";
+
 export class RoomAllocator {
-  private executions: Map<string, InProcessRoomExecution> = new Map();
+  private executions: Map<string, RoomExecution> = new Map();
+  private backendType: RoomExecutionBackendType =
+    (process.env.ROOM_BACKEND as RoomExecutionBackendType) || "in-process";
+
+  public setBackend(backend: RoomExecutionBackendType): void {
+    this.backendType = backend;
+  }
+
+  public getBackend(): RoomExecutionBackendType {
+    return this.backendType;
+  }
 
   /**
    * Allocates or retrieves an execution instance for the designated matchId.
    */
-  public async allocate(matchId: string, geminiKey?: string, mapId?: string): Promise<RoomExecution> {
+  public async allocate(
+    matchId: string,
+    geminiKey?: string,
+    mapId?: string,
+    overrideBackend?: RoomExecutionBackendType
+  ): Promise<RoomExecution> {
     let execution = this.executions.get(matchId);
     if (!execution) {
-      const room = matchManager.getOrCreateRoom(matchId, geminiKey, mapId);
-      execution = new InProcessRoomExecution(room);
-      this.executions.set(matchId, execution);
+      const backend = overrideBackend || this.backendType;
 
-      const prevShutdown = room.onShutdown;
-      room.onShutdown = (id: string) => {
-        this.executions.delete(id);
-        if (prevShutdown) prevShutdown(id);
-      };
+      if (backend === "isolated" || backend === "forked") {
+        const forkedExec = new ForkedRoomExecution(matchId, {
+          geminiKey,
+          mapId,
+          onCrash: (id) => this.release(id),
+          onShutdown: (id) => this.release(id),
+        });
+        await forkedExec.waitUntilReady();
+        execution = forkedExec;
+      } else {
+        const room = matchManager.getOrCreateRoom(matchId, geminiKey, mapId);
+        execution = new InProcessRoomExecution(room);
+        const prevShutdown = room.onShutdown;
+        room.onShutdown = (id: string) => {
+          this.executions.delete(id);
+          if (prevShutdown) prevShutdown(id);
+        };
+      }
+
+      this.executions.set(matchId, execution);
     }
     return execution;
   }
@@ -42,7 +73,13 @@ export class RoomAllocator {
     const execution = this.executions.get(roomId);
     if (execution) {
       this.executions.delete(roomId);
-      matchManager.deleteRoom(roomId);
+      if (execution instanceof InProcessRoomExecution) {
+        matchManager.deleteRoom(roomId);
+      } else if (execution instanceof ForkedRoomExecution) {
+        if (execution.currentStatus !== "crashed") {
+          execution.terminate("RELEASED");
+        }
+      }
     }
   }
 }

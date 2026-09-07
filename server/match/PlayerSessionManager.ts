@@ -99,7 +99,7 @@ export class PlayerSessionManager {
   public registerPlayer(
     playerId: string,
     channel: ChannelAdapter,
-    stats: any,
+    stats?: any,
     playerClass?: ClassId,
     displayName?: string,
     reqUid?: string,

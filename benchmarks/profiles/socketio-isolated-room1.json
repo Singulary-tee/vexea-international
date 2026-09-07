@@ -1,0 +1,58 @@
+{
+  "schemaVersion": 1,
+  "id": "socketio-isolated-room1",
+  "title": "Socket.IO Isolated Room: 1 Match (Forked Process)",
+  "boundary": "server-process",
+  "transport": "socketio",
+  "server": {
+    "command": ["node", "dist/server/server.cjs"],
+    "buildCommand": ["npm", "run", "build"],
+    "port": 3350,
+    "readinessPath": "/",
+    "env": {
+      "ROOM_BACKEND": "isolated"
+    }
+  },
+  "map": {
+    "id": "benchmark_synthetic",
+    "mode": "synthetic",
+    "allowFallback": true
+  },
+  "services": {
+    "llm": "disabled",
+    "persistence": "disabled",
+    "observability": "disabled"
+  },
+  "instrumentation": "counters",
+  "workload": {
+    "rooms": 1,
+    "clientsPerRoom": 1,
+    "botsPerRoom": 0,
+    "dronesPerRoom": 0,
+    "projectilesPerRoom": 0,
+    "durationMs": 12000,
+    "warmupMs": 3000,
+    "cooldownMs": 1000,
+    "inputHz": 20,
+    "reliableEventsPerSecond": 0,
+    "firePerSecond": 0,
+    "contact": "none",
+    "seed": 40
+  },
+  "budgets": {
+    "maxP95TickMs": 16.6,
+    "minTickRate": 55,
+    "maxDroppedTicks": 0,
+    "maxRssBytes": 1073741824,
+    "maxCpuPercent": 100,
+    "maxP95RttMs": 250,
+    "maxLossRate": 0.01,
+    "maxNetworkBytesPerSecond": 104857600,
+    "headroomPercent": 10
+  },
+  "trials": {
+    "warmups": 0,
+    "repetitions": 1,
+    "confidenceLevel": 0.95
+  }
+}

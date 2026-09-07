@@ -442,6 +442,7 @@ io.onConnection((channel: ChannelAdapter) => {
 });
 
 const serveApp = async () => {
+  if (process.env.IS_ROOM_WORKER === "true") return;
   // Load production secrets from Doppler if DOPPLER_TOKEN is provided
   await loadDopplerSecrets();
 

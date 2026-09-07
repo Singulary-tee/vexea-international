@@ -29,7 +29,38 @@ let gcObserver: PerformanceObserver | undefined;
 let flushInterval: NodeJS.Timeout | undefined;
 let closePromise: Promise<void> | undefined;
 
-if (telemetryConfigured && outputPath) {
+const isWorker = process.env.IS_ROOM_WORKER === "true";
+const workerRoomId = process.env.ROOM_ID;
+
+function flushWorkerTelemetry(): void {
+  const timerOutput: Record<string, { count: number; sumMs: number; maxMs: number; p95Ms: number; samples: number[] }> = {};
+  for (const [name, bucket] of timers) {
+    timerOutput[name] = {
+      count: bucket.count,
+      sumMs: bucket.sumMs,
+      maxMs: bucket.maxMs,
+      p95Ms: p95(bucket.samples),
+      samples: [...bucket.samples],
+    };
+    bucket.count = 0;
+    bucket.sumMs = 0;
+    bucket.maxMs = 0;
+    bucket.samples.length = 0;
+  }
+
+  if (process.send) {
+    process.send({
+      type: "telemetry",
+      roomId: workerRoomId,
+      counters: Object.fromEntries(counters),
+      gauges: Object.fromEntries(gauges),
+      timers: timerOutput,
+    });
+  }
+  counters.clear();
+}
+
+if (telemetryConfigured) {
   eventLoopDelay.enable();
   if (mode === "full") {
     gcObserver = new PerformanceObserver((list) => {
@@ -40,10 +71,17 @@ if (telemetryConfigured && outputPath) {
     });
     gcObserver.observe({ entryTypes: ["gc"] });
   }
-  stream = createWriteStream(outputPath, { flags: "a", encoding: "utf8" });
-  flushInterval = setInterval(flushBenchmarkTelemetry, 1000);
-  flushInterval.unref();
-  process.once("beforeExit", flushBenchmarkTelemetry);
+
+  if (isWorker) {
+    flushInterval = setInterval(flushWorkerTelemetry, 1000);
+    flushInterval.unref();
+    process.once("beforeExit", flushWorkerTelemetry);
+  } else if (outputPath) {
+    stream = createWriteStream(outputPath, { flags: "a", encoding: "utf8" });
+    flushInterval = setInterval(flushBenchmarkTelemetry, 1000);
+    flushInterval.unref();
+    process.once("beforeExit", flushBenchmarkTelemetry);
+  }
 }
 
 function p95(values: number[]): number {
@@ -119,7 +157,84 @@ export function benchmarkEvent(name: string, details: unknown = {}): void {
     ? details as Record<string, unknown>
     : { details };
   recordMetric({ type: "event", name, value: 1, timestamp: Date.now(), details });
-  write({ type: "event", timestampMs: Date.now(), name, ...fields });
+  if (isWorker && process.send) {
+    process.send({
+      type: "benchmark_event",
+      event: { type: "event", timestampMs: Date.now(), name, ...fields },
+    });
+  } else {
+    write({ type: "event", timestampMs: Date.now(), name, ...fields });
+  }
+}
+
+export function writeBenchmarkEventRecord(record: Record<string, unknown>): void {
+  write(record);
+}
+
+const workerGauges = new Map<string, Map<string, number>>();
+
+function recomputeAggregatedGauges(): void {
+  const entitySums = new Map<string, number>();
+  for (const [, roomGauges] of workerGauges) {
+    for (const [name, val] of roomGauges) {
+      if (name.startsWith("entities.")) {
+        entitySums.set(name, (entitySums.get(name) || 0) + val);
+      } else {
+        gauges.set(name, val);
+      }
+    }
+  }
+  for (const [name, sum] of entitySums) {
+    gauges.set(name, sum);
+  }
+}
+
+export function removeWorkerTelemetry(sourceId: string): void {
+  workerGauges.delete(sourceId);
+  recomputeAggregatedGauges();
+}
+
+export function recordRemoteTelemetry(
+  remoteCounters?: Record<string, number>,
+  remoteGauges?: Record<string, number>,
+  remoteTimers?: Record<string, { count: number; sumMs: number; maxMs: number; p95Ms: number; samples: number[] }>,
+  sourceId?: string
+): void {
+  if (remoteCounters) {
+    for (const [name, val] of Object.entries(remoteCounters)) {
+      counters.set(name, (counters.get(name) || 0) + val);
+      totalCounters.set(name, (totalCounters.get(name) || 0) + val);
+    }
+  }
+  if (remoteGauges) {
+    if (sourceId) {
+      let roomMap = workerGauges.get(sourceId);
+      if (!roomMap) {
+        roomMap = new Map<string, number>();
+        workerGauges.set(sourceId, roomMap);
+      }
+      for (const [name, val] of Object.entries(remoteGauges)) {
+        roomMap.set(name, val);
+      }
+      recomputeAggregatedGauges();
+    } else {
+      for (const [name, val] of Object.entries(remoteGauges)) {
+        gauges.set(name, val);
+      }
+    }
+  }
+  if (remoteTimers) {
+    for (const [name, bucket] of Object.entries(remoteTimers)) {
+      const existing = timers.get(name) || { count: 0, sumMs: 0, maxMs: 0, samples: [] };
+      existing.count += bucket.count;
+      existing.sumMs += bucket.sumMs;
+      existing.maxMs = Math.max(existing.maxMs, bucket.maxMs);
+      if (bucket.samples) {
+        existing.samples.push(...bucket.samples);
+      }
+      timers.set(name, existing);
+    }
+  }
 }
 
 export function getBenchmarkMetrics(): MetricEntry[] {
