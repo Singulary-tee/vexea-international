@@ -6,6 +6,7 @@ import { RoomInboundEvent, RoomOutboundEvent } from "./RoomExecution";
 import { getWeaponPerformance } from "../../shared/constants";
 import { processHitscan } from "../combat/hitscan";
 import { recordHitscanRejected } from "../sentry";
+import "../benchmark/telemetry";
 
 let currentRoom: MatchRoom | null = null;
 const channels = new Map<string, ChildChannelAdapter>();

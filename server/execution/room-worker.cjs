@@ -7813,7 +7813,6 @@ var MatchManager = class {
   }
 };
 var matchManager = new MatchManager();
-var MatchManager_default = matchManager;
 
 // shared/classes.ts
 var CLASSES = {
@@ -8407,12 +8406,21 @@ function flushWorkerTelemetry() {
     bucket.maxMs = 0;
     bucket.samples.length = 0;
   }
+  const memory = process.memoryUsage();
+  const usage = process.resourceUsage();
+  const workerGauges2 = new Map(gauges);
+  workerGauges2.set("worker.pid", process.pid);
+  workerGauges2.set("worker.rss_bytes", memory.rss);
+  workerGauges2.set("worker.heap_used_bytes", memory.heapUsed);
+  workerGauges2.set("worker.heap_total_bytes", memory.heapTotal);
+  workerGauges2.set("worker.cpu_user_ms", usage.userCPUTime / 1e3);
+  workerGauges2.set("worker.cpu_system_ms", usage.systemCPUTime / 1e3);
   if (process.send) {
     process.send({
       type: "telemetry",
       roomId: workerRoomId,
       counters: Object.fromEntries(counters),
-      gauges: Object.fromEntries(gauges),
+      gauges: Object.fromEntries(workerGauges2),
       timers: timerOutput
     });
   }
@@ -8512,10 +8520,16 @@ function writeBenchmarkEventRecord(record) {
 var workerGauges = /* @__PURE__ */ new Map();
 function recomputeAggregatedGauges() {
   const entitySums = /* @__PURE__ */ new Map();
-  for (const [, roomGauges] of workerGauges) {
+  let totalWorkerRss = 0;
+  for (const [sourceId, roomGauges] of workerGauges) {
     for (const [name, val] of roomGauges) {
       if (name.startsWith("entities.")) {
         entitySums.set(name, (entitySums.get(name) || 0) + val);
+      } else if (name.startsWith("worker.")) {
+        gauges.set(`workers.${sourceId}.${name.slice(7)}`, val);
+        if (name === "worker.rss_bytes") {
+          totalWorkerRss += val;
+        }
       } else {
         gauges.set(name, val);
       }
@@ -8524,6 +8538,8 @@ function recomputeAggregatedGauges() {
   for (const [name, sum] of entitySums) {
     gauges.set(name, sum);
   }
+  gauges.set("workers.total_rss_bytes", totalWorkerRss);
+  gauges.set("workers.active_count", workerGauges.size);
 }
 function removeWorkerTelemetry(sourceId) {
   workerGauges.delete(sourceId);
@@ -9241,7 +9257,7 @@ var Matchmaker = class {
       this.formMatch(matchedGroup, mapId, botCount);
     }
   }
-  formMatch(group, mapId, botCount = 0) {
+  async formMatch(group, mapId, botCount = 0) {
     const matchId = `M_POOL_${Date.now()}_${Math.floor(Math.random() * 1e4)}`;
     if (botCount > 0) {
       console.log(
@@ -9252,14 +9268,14 @@ var Matchmaker = class {
         `[MATCHMAKER] Forming match "${matchId}" on map "${mapId}" with ${group.length} real human players (no bots).`
       );
     }
-    const targetRoom = MatchManager_default.getOrCreateRoom(
-      matchId,
-      process.env.GEMINI_API_KEY,
-      mapId
-    );
-    for (let i = 0; i < botCount; i++) {
-      if (typeof targetRoom.registerBotPlayer === "function") {
-        targetRoom.registerBotPlayer();
+    const execution = await roomAllocator.allocate(matchId, process.env.GEMINI_API_KEY, mapId);
+    const isForked = execution instanceof ForkedRoomExecution;
+    const targetRoom = isForked ? null : execution.getRoom();
+    if (targetRoom) {
+      for (let i = 0; i < botCount; i++) {
+        if (typeof targetRoom.registerBotPlayer === "function") {
+          targetRoom.registerBotPlayer();
+        }
       }
     }
     const pendingGroup = {
@@ -9275,13 +9291,16 @@ var Matchmaker = class {
     this.pendingMatches.set(matchId, pendingGroup);
     group.forEach((p) => {
       const prevRoom = p.channel.currentRoom;
-      if (prevRoom && prevRoom !== targetRoom) {
+      if (prevRoom && prevRoom !== targetRoom && targetRoom) {
         prevRoom.removePlayer(p.reqUid || p.id);
       }
+      p.channel.roomExecution = execution;
       p.channel.currentRoom = targetRoom;
-      const newPState = targetRoom.registerPlayer(p.reqUid || p.id, p.channel, null, p.classId, p.displayName, p.reqUid, p.primaryWeaponId, p.secondaryWeaponId);
+      let newPState = null;
+      if (targetRoom) {
+        newPState = targetRoom.registerPlayer(p.reqUid || p.id, p.channel, null, p.classId, p.displayName, p.reqUid, p.primaryWeaponId, p.secondaryWeaponId);
+      }
       const bindRoomExecution = p.channel.bindRoomExecution;
-      const execution = roomAllocator.getExecution(matchId) || new InProcessRoomExecution(targetRoom);
       if (bindRoomExecution && typeof bindRoomExecution === "function") {
         bindRoomExecution(execution, newPState);
       }

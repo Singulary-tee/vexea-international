@@ -3,9 +3,10 @@ import { ClassId, CLASSES, getClassWeaponId, isClassWeaponAllowed } from "../sha
 import { isRuntimeWeaponId } from "../shared/constants";
 import type { WeaponId } from "../shared/weapons";
 import matchManager from "./MatchManager";
-import { MatchRoom } from "./MatchRoom";
+import { MatchRoom, PlayerState } from "./MatchRoom";
 import { roomAllocator } from "./execution/RoomAllocator";
 import { InProcessRoomExecution } from "./execution/InProcessRoomExecution";
+import { ForkedRoomExecution } from "./execution/ForkedRoomExecution";
 import { ACTIVE_GAMEMODE } from "../shared/gamemode-configs";
 import { MatchAbuseStore } from "./player-data/MatchAbuseStore";
 
@@ -206,7 +207,7 @@ export class Matchmaker {
     }
   }
 
-  private formMatch(group: QueuedPlayer[], mapId: string, botCount: number = 0): void {
+  private async formMatch(group: QueuedPlayer[], mapId: string, botCount: number = 0): Promise<void> {
     const matchId = `M_POOL_${Date.now()}_${Math.floor(Math.random() * 10000)}`;
     if (botCount > 0) {
       console.log(
@@ -218,23 +219,24 @@ export class Matchmaker {
       );
     }
 
-    const targetRoom = matchManager.getOrCreateRoom(
-      matchId,
-      process.env.GEMINI_API_KEY,
-      mapId,
-    );
+    const allocPromise = roomAllocator.allocate(matchId, process.env.GEMINI_API_KEY, mapId);
+    const immediateExec = roomAllocator.getExecution(matchId);
+    const isForked = immediateExec instanceof ForkedRoomExecution;
+    const targetRoom = (!isForked && immediateExec instanceof InProcessRoomExecution) ? immediateExec.getRoom() : null;
 
-    // Register bot players if fallback triggered
-    for (let i = 0; i < botCount; i++) {
-      if (typeof targetRoom.registerBotPlayer === "function") {
-        targetRoom.registerBotPlayer();
+    if (targetRoom) {
+      // Register bot players if fallback triggered
+      for (let i = 0; i < botCount; i++) {
+        if (typeof targetRoom.registerBotPlayer === "function") {
+          targetRoom.registerBotPlayer();
+        }
       }
     }
 
     const pendingGroup: PendingMatchGroup = {
       matchId,
       mapId,
-      room: targetRoom,
+      room: targetRoom as any,
       players: group,
       loadingComplete: new Set<string>(),
       countdownTimer: null,
@@ -247,18 +249,21 @@ export class Matchmaker {
     // Register players in target room & send loading instruction
     group.forEach((p) => {
       const prevRoom = (p.channel as any).currentRoom;
-      if (prevRoom && prevRoom !== targetRoom) {
+      if (prevRoom && prevRoom !== targetRoom && targetRoom) {
         prevRoom.removePlayer(p.reqUid || p.id);
       }
 
+      (p.channel as any).roomExecution = immediateExec;
       (p.channel as any).currentRoom = targetRoom;
-      const newPState = targetRoom.registerPlayer(p.reqUid || p.id, p.channel, null, p.classId, p.displayName, p.reqUid, p.primaryWeaponId, p.secondaryWeaponId);
+      let newPState: PlayerState | null = null;
+      if (targetRoom) {
+        newPState = targetRoom.registerPlayer(p.reqUid || p.id, p.channel, null, p.classId, p.displayName, p.reqUid, p.primaryWeaponId, p.secondaryWeaponId);
+      }
 
       // Notify connection handler that match has formed
       const bindRoomExecution = (p.channel as any).bindRoomExecution;
-      const execution = roomAllocator.getExecution(matchId) || new InProcessRoomExecution(targetRoom);
-      if (bindRoomExecution && typeof bindRoomExecution === "function") {
-        bindRoomExecution(execution, newPState);
+      if (bindRoomExecution && typeof bindRoomExecution === "function" && immediateExec) {
+        bindRoomExecution(immediateExec, newPState);
       }
       const onMatchFormed = (p.channel as any).onMatchFormed;
       if (onMatchFormed && typeof onMatchFormed === "function") {
@@ -281,6 +286,9 @@ export class Matchmaker {
         this.startPreMatchCountdown(pending);
       }
     }, 6000);
+
+    // Wait for full allocation if async
+    await allocPromise;
   }
 
   public signalPlayerLoadingComplete(matchId: string, playerId: string): void {

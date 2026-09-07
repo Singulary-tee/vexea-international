@@ -48,12 +48,22 @@ function flushWorkerTelemetry(): void {
     bucket.samples.length = 0;
   }
 
+  const memory = process.memoryUsage();
+  const usage = process.resourceUsage();
+  const workerGauges = new Map(gauges);
+  workerGauges.set("worker.pid", process.pid);
+  workerGauges.set("worker.rss_bytes", memory.rss);
+  workerGauges.set("worker.heap_used_bytes", memory.heapUsed);
+  workerGauges.set("worker.heap_total_bytes", memory.heapTotal);
+  workerGauges.set("worker.cpu_user_ms", usage.userCPUTime / 1000);
+  workerGauges.set("worker.cpu_system_ms", usage.systemCPUTime / 1000);
+
   if (process.send) {
     process.send({
       type: "telemetry",
       roomId: workerRoomId,
       counters: Object.fromEntries(counters),
-      gauges: Object.fromEntries(gauges),
+      gauges: Object.fromEntries(workerGauges),
       timers: timerOutput,
     });
   }
@@ -175,10 +185,16 @@ const workerGauges = new Map<string, Map<string, number>>();
 
 function recomputeAggregatedGauges(): void {
   const entitySums = new Map<string, number>();
-  for (const [, roomGauges] of workerGauges) {
+  let totalWorkerRss = 0;
+  for (const [sourceId, roomGauges] of workerGauges) {
     for (const [name, val] of roomGauges) {
       if (name.startsWith("entities.")) {
         entitySums.set(name, (entitySums.get(name) || 0) + val);
+      } else if (name.startsWith("worker.")) {
+        gauges.set(`workers.${sourceId}.${name.slice(7)}`, val);
+        if (name === "worker.rss_bytes") {
+          totalWorkerRss += val;
+        }
       } else {
         gauges.set(name, val);
       }
@@ -187,6 +203,8 @@ function recomputeAggregatedGauges(): void {
   for (const [name, sum] of entitySums) {
     gauges.set(name, sum);
   }
+  gauges.set("workers.total_rss_bytes", totalWorkerRss);
+  gauges.set("workers.active_count", workerGauges.size);
 }
 
 export function removeWorkerTelemetry(sourceId: string): void {

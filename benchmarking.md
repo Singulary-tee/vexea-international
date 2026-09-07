@@ -1,0 +1,3 @@
+# Benchmarking Guidelines
+
+Never benchmark an empty, near-empty, or artificially trivial room for performance evaluation. Performance benchmarks must contain at least 30 active entities per room, with no more than 10 player entities. The workload must include representative physics, AI, networking, and projectile/combat activity where those systems are enabled. Every benchmark must report component-level telemetry sufficient to distinguish orchestration/process overhead from simulation, AI, physics, networking, projectile, and other significant costs. A benchmark that does not exercise a practically representative room must be explicitly classified as an infrastructure/smoke test and must not be used for capacity or architectural conclusions.

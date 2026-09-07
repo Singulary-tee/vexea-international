@@ -295,7 +295,9 @@ export function measureTrial(trial: BenchmarkTrialResult, rooms = 1): TrialMeasu
   add("cpu.process_percent", processCpuPercent(trial.process, window), "%");
 
   const activeProcess = processInWindow(trial.process, window);
-  add("memory.rss_bytes", maxDefined(maxProcess(activeProcess, "rssBytes"), maxTelemetryProcess(activeTelemetry, "rssBytes")), "bytes");
+  const orchestratorRss = maxDefined(maxProcess(activeProcess, "rssBytes"), maxTelemetryProcess(activeTelemetry, "rssBytes"));
+  add("memory.rss_bytes", orchestratorRss, "bytes");
+  add("memory.orchestrator_rss_bytes", orchestratorRss, "bytes");
   add("memory.heap_used_bytes", maxDefined(maxProcess(activeProcess, "heapUsedBytes"), maxTelemetryProcess(activeTelemetry, "heapUsedBytes")), "bytes");
   add("memory.heap_total_bytes", maxDefined(maxProcess(activeProcess, "heapTotalBytes"), maxTelemetryProcess(activeTelemetry, "heapTotalBytes")), "bytes");
   add("memory.heap_limit_bytes", maxDefined(maxProcess(activeProcess, "heapLimitBytes"), maxTelemetryProcess(activeTelemetry, "heapLimitBytes")), "bytes");
@@ -303,6 +305,44 @@ export function measureTrial(trial: BenchmarkTrialResult, rooms = 1): TrialMeasu
   add("memory.array_buffers_bytes", maxDefined(maxProcess(activeProcess, "arrayBuffersBytes"), maxTelemetryProcess(activeTelemetry, "arrayBuffersBytes")), "bytes");
   add("memory.native_bytes", maxDefined(maxProcess(activeProcess, "nativeBytes"), maxTelemetryProcess(activeTelemetry, "nativeBytes")), "bytes");
   add("memory.cgroup_bytes", maxDefined(maxProcess(activeProcess, "cgroupMemoryBytes"), maxTelemetryProcess(activeTelemetry, "cgroupMemoryBytes")), "bytes");
+
+  const workerIds = new Set<string>();
+  for (const sample of activeTelemetry) {
+    if (sample.gauges) {
+      for (const key of Object.keys(sample.gauges)) {
+        if (key.startsWith("workers.") && key.endsWith(".rss_bytes") && key !== "workers.total_rss_bytes") {
+          const parts = key.split(".");
+          if (parts.length === 3) {
+            workerIds.add(parts[1]);
+          }
+        }
+      }
+    }
+  }
+
+  let workerRssTotal = 0;
+  for (const wId of workerIds) {
+    const rss = maxGauge(activeTelemetry, `workers.${wId}.rss_bytes`);
+    const pid = maxGauge(activeTelemetry, `workers.${wId}.pid`);
+    if (rss !== undefined) {
+      add(`memory.worker.${wId}.rss_bytes`, rss, "bytes");
+      workerRssTotal += rss;
+    }
+    if (pid !== undefined) {
+      add(`worker.${wId}.pid`, pid, "pid");
+    }
+  }
+
+  const maxSampledTotalWorkerRss = maxGauge(activeTelemetry, "workers.total_rss_bytes");
+  if (workerRssTotal === 0 && maxSampledTotalWorkerRss !== undefined) {
+    workerRssTotal = maxSampledTotalWorkerRss;
+  }
+
+  add("memory.worker_rss_total_bytes", workerRssTotal, "bytes");
+  const totalHostRss = (orchestratorRss || 0) + workerRssTotal;
+  add("memory.total_host_rss_bytes", totalHostRss, "bytes");
+  const activeRoomCount = Math.max(1, workerIds.size, rooms);
+  add("memory.worker_rss_per_room_bytes", workerRssTotal / activeRoomCount, "bytes");
 
   const eventLoop = activeTelemetry
     .map((sample) => sample.eventLoop?.utilization)

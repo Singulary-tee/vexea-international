@@ -30,10 +30,15 @@ This file is the authoritative index of all directories and source files within 
     *   *Key Functions/Exports:* `initSentry()`, `recordServerTickDuration(ms)`, `recordServerActiveDrones(count)`, `recordServerConnectedPlayers(count)`, `recordLLMLatency(ms, model)`, `recordHitscanRejected(reason)`, `recordSecurityExploit(exploitType, extra)`.
 *   **`combat/` (Server Combat System)**
     *   **`hitscan.ts`**: Standalone hitscan processing module (`processHitscan`). Handles origin verification, historical AABB rewind lag compensation, drone raycasting, damage calculation with falloff, assist tracking, and event broadcasting.
-*   **`execution/` (Server Room Execution Boundary)**
+*   **`execution/` (Server Room Execution & Placement Hierarchy)**
+    *   **`ExecutionHost.ts`**: Core execution host interface (`ExecutionHost`), operational metrics (`ExecutionHostMetrics`), allocation options (`RoomAllocationOptions`), and backend type definitions (`RoomExecutionBackendType`).
+    *   **`LocalExecutionHost.ts`**: Concrete execution host (`LocalExecutionHost`) managing room capacity, slot tracking, and lifecycle for both in-process and forked-process execution modes on the local machine.
     *   **`RoomExecution.ts`**: Core async boundary interface (`RoomExecution`), status union (`RoomExecutionStatus`), and strictly typed inbound (`RoomInboundEvent`) and outbound (`RoomOutboundEvent`) message contracts.
     *   **`InProcessRoomExecution.ts`**: In-process adapter implementing `RoomExecution` around an active `MatchRoom` instance with zero GC overhead.
-    *   **`RoomAllocator.ts`**: Room lifecycle and allocation coordinator (`RoomAllocator`, `roomAllocator`) providing decoupled match acquisition and release without coupling callers directly to concrete in-process room references.
+    *   **`ForkedRoomExecution.ts`**: Forked-process adapter implementing `RoomExecution` with OS process isolation, IPC message passing, and crash detection.
+    *   **`RoomAllocator.ts`**: Host-aware room allocator coordinator (`RoomAllocator`, `roomAllocator`) selecting eligible execution hosts (least-loaded / capacity matching) and managing room placement across hosts.
+    *   **`protocol.ts`**: IPC message protocol definitions (`ParentToChildMessage`, `ChildToParentMessage`) for forked room worker communication.
+    *   **`room-worker.ts`**: Dedicated room worker child process script hosting an isolated `MatchRoom` simulation.
 *   **`dev/` (Server Developer Tools)**
     *   **`dev-commands.ts`**: Developer command registration module (`registerDevCommands`). Registers dev handlers for cheats, bot/drone spawning, physics tuning, credit refills, god mode, infinite ammo, and debug state reporting.
 *   **`flags/` (Server Feature Flags)**
