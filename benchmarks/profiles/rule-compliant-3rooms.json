@@ -10,7 +10,8 @@
     "port": 3353,
     "readinessPath": "/",
     "env": {
-      "ROOM_BACKEND": "forked"
+      "ROOM_BACKEND": "forked",
+      "VEXEA_BENCHMARK_CONTROL": "true"
     }
   },
   "map": {
