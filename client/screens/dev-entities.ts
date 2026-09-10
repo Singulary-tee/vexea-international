@@ -3352,6 +3352,7 @@ function applyProceduralModelAnimations(dt: number) {
             }
         }
         child.matrix.copy(localMat);
+        child.matrixWorldNeedsUpdate = true;
     });
     
     activeGLBModel.updateMatrixWorld(true);

@@ -1,0 +1,2870 @@
+{
+  "run1": {
+    "summary": {
+      "schemaVersion": 1,
+      "profileId": "rule-compliant-1room",
+      "boundary": "server-process",
+      "transport": "socketio",
+      "trials": 1,
+      "validTrials": 1,
+      "metrics": {
+        "tick.p95_ms": {
+          "unit": "ms",
+          "count": 1,
+          "median": 5,
+          "p95": 5,
+          "max": 5,
+          "confidence95": [
+            5,
+            5
+          ]
+        },
+        "tick.rate_hz": {
+          "unit": "Hz",
+          "count": 1,
+          "median": 60.074525129510135,
+          "p95": 60.074525129510135,
+          "max": 60.074525129510135,
+          "confidence95": [
+            60.074525129510135,
+            60.074525129510135
+          ]
+        },
+        "tick.rate_per_room_hz": {
+          "unit": "Hz",
+          "count": 1,
+          "median": 60.074525129510135,
+          "p95": 60.074525129510135,
+          "max": 60.074525129510135,
+          "confidence95": [
+            60.074525129510135,
+            60.074525129510135
+          ]
+        },
+        "tick.dropped": {
+          "unit": "ticks",
+          "count": 1,
+          "median": 0,
+          "p95": 0,
+          "max": 0,
+          "confidence95": [
+            0,
+            0
+          ]
+        },
+        "tick.catch_up_steps": {
+          "unit": "steps",
+          "count": 1,
+          "median": 0,
+          "p95": 0,
+          "max": 0,
+          "confidence95": [
+            0,
+            0
+          ]
+        },
+        "tick.discarded_time_ms": {
+          "unit": "ms",
+          "count": 1,
+          "median": 0,
+          "p95": 0,
+          "max": 0,
+          "confidence95": [
+            0,
+            0
+          ]
+        },
+        "cpu.process_percent": {
+          "unit": "%",
+          "count": 1,
+          "median": 10.27164685908319,
+          "p95": 10.27164685908319,
+          "max": 10.27164685908319,
+          "confidence95": [
+            10.27164685908319,
+            10.27164685908319
+          ]
+        },
+        "memory.rss_bytes": {
+          "unit": "bytes",
+          "count": 1,
+          "median": 256040960,
+          "p95": 256040960,
+          "max": 256040960,
+          "confidence95": [
+            256040960,
+            256040960
+          ]
+        },
+        "memory.orchestrator_rss_bytes": {
+          "unit": "bytes",
+          "count": 1,
+          "median": 256040960,
+          "p95": 256040960,
+          "max": 256040960,
+          "confidence95": [
+            256040960,
+            256040960
+          ]
+        },
+        "memory.heap_used_bytes": {
+          "unit": "bytes",
+          "count": 1,
+          "median": 66978296,
+          "p95": 66978296,
+          "max": 66978296,
+          "confidence95": [
+            66978296,
+            66978296
+          ]
+        },
+        "memory.heap_total_bytes": {
+          "unit": "bytes",
+          "count": 1,
+          "median": 92753920,
+          "p95": 92753920,
+          "max": 92753920,
+          "confidence95": [
+            92753920,
+            92753920
+          ]
+        },
+        "memory.heap_limit_bytes": {
+          "unit": "bytes",
+          "count": 1,
+          "median": 3271557120,
+          "p95": 3271557120,
+          "max": 3271557120,
+          "confidence95": [
+            3271557120,
+            3271557120
+          ]
+        },
+        "memory.external_bytes": {
+          "unit": "bytes",
+          "count": 1,
+          "median": 7180021,
+          "p95": 7180021,
+          "max": 7180021,
+          "confidence95": [
+            7180021,
+            7180021
+          ]
+        },
+        "memory.array_buffers_bytes": {
+          "unit": "bytes",
+          "count": 1,
+          "median": 2088111,
+          "p95": 2088111,
+          "max": 2088111,
+          "confidence95": [
+            2088111,
+            2088111
+          ]
+        },
+        "memory.native_bytes": {
+          "unit": "bytes",
+          "count": 1,
+          "median": 184499248,
+          "p95": 184499248,
+          "max": 184499248,
+          "confidence95": [
+            184499248,
+            184499248
+          ]
+        },
+        "memory.worker.benchmark-rule-compliant-1room-1-0.rss_bytes": {
+          "unit": "bytes",
+          "count": 1,
+          "median": 295124992,
+          "p95": 295124992,
+          "max": 295124992,
+          "confidence95": [
+            295124992,
+            295124992
+          ]
+        },
+        "worker.benchmark-rule-compliant-1room-1-0.pid": {
+          "unit": "pid",
+          "count": 1,
+          "median": 1264,
+          "p95": 1264,
+          "max": 1264,
+          "confidence95": [
+            1264,
+            1264
+          ]
+        },
+        "memory.worker_rss_total_bytes": {
+          "unit": "bytes",
+          "count": 1,
+          "median": 295124992,
+          "p95": 295124992,
+          "max": 295124992,
+          "confidence95": [
+            295124992,
+            295124992
+          ]
+        },
+        "memory.total_host_rss_bytes": {
+          "unit": "bytes",
+          "count": 1,
+          "median": 551165952,
+          "p95": 551165952,
+          "max": 551165952,
+          "confidence95": [
+            551165952,
+            551165952
+          ]
+        },
+        "memory.worker_rss_per_room_bytes": {
+          "unit": "bytes",
+          "count": 1,
+          "median": 295124992,
+          "p95": 295124992,
+          "max": 295124992,
+          "confidence95": [
+            295124992,
+            295124992
+          ]
+        },
+        "event_loop.utilization": {
+          "unit": "ratio",
+          "count": 1,
+          "median": 0.08104505432433308,
+          "p95": 0.08104505432433308,
+          "max": 0.08104505432433308,
+          "confidence95": [
+            0.08104505432433308,
+            0.08104505432433308
+          ]
+        },
+        "event_loop.delay_p95_ms": {
+          "unit": "ms",
+          "count": 1,
+          "median": 11.616255,
+          "p95": 11.616255,
+          "max": 11.616255,
+          "confidence95": [
+            11.616255,
+            11.616255
+          ]
+        },
+        "event_loop.delay_max_ms": {
+          "unit": "ms",
+          "count": 1,
+          "median": 26.034175,
+          "p95": 26.034175,
+          "max": 26.034175,
+          "confidence95": [
+            26.034175,
+            26.034175
+          ]
+        },
+        "scheduler.lateness_max_ms": {
+          "unit": "ms",
+          "count": 1,
+          "median": 14.94265,
+          "p95": 14.94265,
+          "max": 14.94265,
+          "confidence95": [
+            14.94265,
+            14.94265
+          ]
+        },
+        "gc.collections": {
+          "unit": "collections",
+          "count": 1,
+          "median": 0,
+          "p95": 0,
+          "max": 0,
+          "confidence95": [
+            0,
+            0
+          ]
+        },
+        "network.logical_bytes_per_second": {
+          "unit": "bytes/s",
+          "count": 1,
+          "median": 162910.26495584068,
+          "p95": 162910.26495584068,
+          "max": 162910.26495584068,
+          "confidence95": [
+            162910.26495584068,
+            162910.26495584068
+          ]
+        },
+        "network.wire_bytes_per_second": {
+          "unit": "bytes/s",
+          "count": 1,
+          "median": 163979.42009665055,
+          "p95": 163979.42009665055,
+          "max": 163979.42009665055,
+          "confidence95": [
+            163979.42009665055,
+            163979.42009665055
+          ]
+        },
+        "network.rtt_p95_ms": {
+          "unit": "ms",
+          "count": 1,
+          "median": 1,
+          "p95": 1,
+          "max": 1,
+          "confidence95": [
+            1,
+            1
+          ]
+        },
+        "network.loss_rate": {
+          "unit": "ratio",
+          "count": 1,
+          "median": 0,
+          "p95": 0,
+          "max": 0,
+          "confidence95": [
+            0,
+            0
+          ]
+        },
+        "network.disconnects": {
+          "unit": "events",
+          "count": 1,
+          "median": 0,
+          "p95": 0,
+          "max": 0,
+          "confidence95": [
+            0,
+            0
+          ]
+        },
+        "network.errors": {
+          "unit": "events",
+          "count": 1,
+          "median": 0,
+          "p95": 0,
+          "max": 0,
+          "confidence95": [
+            0,
+            0
+          ]
+        },
+        "workload.state_sync_messages": {
+          "unit": "messages",
+          "count": 1,
+          "median": 2180,
+          "p95": 2180,
+          "max": 2180,
+          "confidence95": [
+            2180,
+            2180
+          ]
+        },
+        "workload.reliable_messages": {
+          "unit": "messages",
+          "count": 1,
+          "median": 420,
+          "p95": 420,
+          "max": 420,
+          "confidence95": [
+            420,
+            420
+          ]
+        },
+        "workload.raw_bytes": {
+          "unit": "bytes",
+          "count": 1,
+          "median": 7211440,
+          "p95": 7211440,
+          "max": 7211440,
+          "confidence95": [
+            7211440,
+            7211440
+          ]
+        },
+        "workload.realized.rooms": {
+          "unit": "entities",
+          "count": 1,
+          "median": 1,
+          "p95": 1,
+          "max": 1,
+          "confidence95": [
+            1,
+            1
+          ]
+        },
+        "workload.active.rooms": {
+          "unit": "entities",
+          "count": 1,
+          "median": 1,
+          "p95": 1,
+          "max": 1,
+          "confidence95": [
+            1,
+            1
+          ]
+        },
+        "workload.realized.players": {
+          "unit": "entities",
+          "count": 1,
+          "median": 1,
+          "p95": 1,
+          "max": 1,
+          "confidence95": [
+            1,
+            1
+          ]
+        },
+        "workload.active.players": {
+          "unit": "entities",
+          "count": 1,
+          "median": 1,
+          "p95": 1,
+          "max": 1,
+          "confidence95": [
+            1,
+            1
+          ]
+        },
+        "workload.realized.bots": {
+          "unit": "entities",
+          "count": 1,
+          "median": 9,
+          "p95": 9,
+          "max": 9,
+          "confidence95": [
+            9,
+            9
+          ]
+        },
+        "workload.active.bots": {
+          "unit": "entities",
+          "count": 1,
+          "median": 9,
+          "p95": 9,
+          "max": 9,
+          "confidence95": [
+            9,
+            9
+          ]
+        },
+        "workload.realized.drones": {
+          "unit": "entities",
+          "count": 1,
+          "median": 40,
+          "p95": 40,
+          "max": 40,
+          "confidence95": [
+            40,
+            40
+          ]
+        },
+        "workload.active.drones": {
+          "unit": "entities",
+          "count": 1,
+          "median": 40,
+          "p95": 40,
+          "max": 40,
+          "confidence95": [
+            40,
+            40
+          ]
+        },
+        "workload.realized.projectiles": {
+          "unit": "entities",
+          "count": 1,
+          "median": 36,
+          "p95": 36,
+          "max": 36,
+          "confidence95": [
+            36,
+            36
+          ]
+        },
+        "workload.active.projectiles": {
+          "unit": "entities",
+          "count": 1,
+          "median": 0,
+          "p95": 0,
+          "max": 0,
+          "confidence95": [
+            0,
+            0
+          ]
+        },
+        "workload.rooms.created": {
+          "unit": "entities",
+          "count": 1,
+          "median": 1,
+          "p95": 1,
+          "max": 1,
+          "confidence95": [
+            1,
+            1
+          ]
+        },
+        "workload.players.registered": {
+          "unit": "entities",
+          "count": 1,
+          "median": 1,
+          "p95": 1,
+          "max": 1,
+          "confidence95": [
+            1,
+            1
+          ]
+        },
+        "workload.bots.spawned": {
+          "unit": "entities",
+          "count": 1,
+          "median": 9,
+          "p95": 9,
+          "max": 9,
+          "confidence95": [
+            9,
+            9
+          ]
+        },
+        "workload.drones.spawned": {
+          "unit": "entities",
+          "count": 1,
+          "median": 40,
+          "p95": 40,
+          "max": 40,
+          "confidence95": [
+            40,
+            40
+          ]
+        },
+        "workload.projectiles.spawned": {
+          "unit": "entities",
+          "count": 1,
+          "median": 36,
+          "p95": 36,
+          "max": 36,
+          "confidence95": [
+            36,
+            36
+          ]
+        }
+      },
+      "slo": {
+        "passed": true,
+        "failures": []
+      }
+    },
+    "outputDir": "/app/applet/.benchmark-artifacts/diagnostics-1788906509449"
+  },
+  "run2": {
+    "summary": {
+      "schemaVersion": 1,
+      "profileId": "rule-compliant-2rooms",
+      "boundary": "server-process",
+      "transport": "socketio",
+      "trials": 1,
+      "validTrials": 1,
+      "metrics": {
+        "tick.p95_ms": {
+          "unit": "ms",
+          "count": 1,
+          "median": 6,
+          "p95": 6,
+          "max": 6,
+          "confidence95": [
+            6,
+            6
+          ]
+        },
+        "tick.rate_hz": {
+          "unit": "Hz",
+          "count": 1,
+          "median": 120.1053874806941,
+          "p95": 120.1053874806941,
+          "max": 120.1053874806941,
+          "confidence95": [
+            120.1053874806941,
+            120.1053874806941
+          ]
+        },
+        "tick.rate_per_room_hz": {
+          "unit": "Hz",
+          "count": 1,
+          "median": 60.05269374034705,
+          "p95": 60.05269374034705,
+          "max": 60.05269374034705,
+          "confidence95": [
+            60.05269374034705,
+            60.05269374034705
+          ]
+        },
+        "tick.dropped": {
+          "unit": "ticks",
+          "count": 1,
+          "median": 0,
+          "p95": 0,
+          "max": 0,
+          "confidence95": [
+            0,
+            0
+          ]
+        },
+        "tick.catch_up_steps": {
+          "unit": "steps",
+          "count": 1,
+          "median": 0,
+          "p95": 0,
+          "max": 0,
+          "confidence95": [
+            0,
+            0
+          ]
+        },
+        "tick.discarded_time_ms": {
+          "unit": "ms",
+          "count": 1,
+          "median": 0,
+          "p95": 0,
+          "max": 0,
+          "confidence95": [
+            0,
+            0
+          ]
+        },
+        "cpu.process_percent": {
+          "unit": "%",
+          "count": 1,
+          "median": 9.333899024183284,
+          "p95": 9.333899024183284,
+          "max": 9.333899024183284,
+          "confidence95": [
+            9.333899024183284,
+            9.333899024183284
+          ]
+        },
+        "memory.rss_bytes": {
+          "unit": "bytes",
+          "count": 1,
+          "median": 260947968,
+          "p95": 260947968,
+          "max": 260947968,
+          "confidence95": [
+            260947968,
+            260947968
+          ]
+        },
+        "memory.orchestrator_rss_bytes": {
+          "unit": "bytes",
+          "count": 1,
+          "median": 260947968,
+          "p95": 260947968,
+          "max": 260947968,
+          "confidence95": [
+            260947968,
+            260947968
+          ]
+        },
+        "memory.heap_used_bytes": {
+          "unit": "bytes",
+          "count": 1,
+          "median": 60354336,
+          "p95": 60354336,
+          "max": 60354336,
+          "confidence95": [
+            60354336,
+            60354336
+          ]
+        },
+        "memory.heap_total_bytes": {
+          "unit": "bytes",
+          "count": 1,
+          "median": 93016064,
+          "p95": 93016064,
+          "max": 93016064,
+          "confidence95": [
+            93016064,
+            93016064
+          ]
+        },
+        "memory.heap_limit_bytes": {
+          "unit": "bytes",
+          "count": 1,
+          "median": 3271557120,
+          "p95": 3271557120,
+          "max": 3271557120,
+          "confidence95": [
+            3271557120,
+            3271557120
+          ]
+        },
+        "memory.external_bytes": {
+          "unit": "bytes",
+          "count": 1,
+          "median": 6193930,
+          "p95": 6193930,
+          "max": 6193930,
+          "confidence95": [
+            6193930,
+            6193930
+          ]
+        },
+        "memory.array_buffers_bytes": {
+          "unit": "bytes",
+          "count": 1,
+          "median": 1106960,
+          "p95": 1106960,
+          "max": 1106960,
+          "confidence95": [
+            1106960,
+            1106960
+          ]
+        },
+        "memory.native_bytes": {
+          "unit": "bytes",
+          "count": 1,
+          "median": 199430224,
+          "p95": 199430224,
+          "max": 199430224,
+          "confidence95": [
+            199430224,
+            199430224
+          ]
+        },
+        "memory.worker.benchmark-rule-compliant-2rooms-1-0.rss_bytes": {
+          "unit": "bytes",
+          "count": 1,
+          "median": 287834112,
+          "p95": 287834112,
+          "max": 287834112,
+          "confidence95": [
+            287834112,
+            287834112
+          ]
+        },
+        "worker.benchmark-rule-compliant-2rooms-1-0.pid": {
+          "unit": "pid",
+          "count": 1,
+          "median": 1317,
+          "p95": 1317,
+          "max": 1317,
+          "confidence95": [
+            1317,
+            1317
+          ]
+        },
+        "memory.worker.benchmark-rule-compliant-2rooms-1-1.rss_bytes": {
+          "unit": "bytes",
+          "count": 1,
+          "median": 297320448,
+          "p95": 297320448,
+          "max": 297320448,
+          "confidence95": [
+            297320448,
+            297320448
+          ]
+        },
+        "worker.benchmark-rule-compliant-2rooms-1-1.pid": {
+          "unit": "pid",
+          "count": 1,
+          "median": 1318,
+          "p95": 1318,
+          "max": 1318,
+          "confidence95": [
+            1318,
+            1318
+          ]
+        },
+        "memory.worker_rss_total_bytes": {
+          "unit": "bytes",
+          "count": 1,
+          "median": 585154560,
+          "p95": 585154560,
+          "max": 585154560,
+          "confidence95": [
+            585154560,
+            585154560
+          ]
+        },
+        "memory.total_host_rss_bytes": {
+          "unit": "bytes",
+          "count": 1,
+          "median": 846102528,
+          "p95": 846102528,
+          "max": 846102528,
+          "confidence95": [
+            846102528,
+            846102528
+          ]
+        },
+        "memory.worker_rss_per_room_bytes": {
+          "unit": "bytes",
+          "count": 1,
+          "median": 292577280,
+          "p95": 292577280,
+          "max": 292577280,
+          "confidence95": [
+            292577280,
+            292577280
+          ]
+        },
+        "event_loop.utilization": {
+          "unit": "ratio",
+          "count": 1,
+          "median": 0.0904085086555754,
+          "p95": 0.0904085086555754,
+          "max": 0.0904085086555754,
+          "confidence95": [
+            0.0904085086555754,
+            0.0904085086555754
+          ]
+        },
+        "event_loop.delay_p95_ms": {
+          "unit": "ms",
+          "count": 1,
+          "median": 11.829247,
+          "p95": 11.829247,
+          "max": 11.829247,
+          "confidence95": [
+            11.829247,
+            11.829247
+          ]
+        },
+        "event_loop.delay_max_ms": {
+          "unit": "ms",
+          "count": 1,
+          "median": 21.446655,
+          "p95": 21.446655,
+          "max": 21.446655,
+          "confidence95": [
+            21.446655,
+            21.446655
+          ]
+        },
+        "scheduler.lateness_max_ms": {
+          "unit": "ms",
+          "count": 1,
+          "median": 13.440499,
+          "p95": 13.440499,
+          "max": 13.440499,
+          "confidence95": [
+            13.440499,
+            13.440499
+          ]
+        },
+        "gc.collections": {
+          "unit": "collections",
+          "count": 1,
+          "median": 0,
+          "p95": 0,
+          "max": 0,
+          "confidence95": [
+            0,
+            0
+          ]
+        },
+        "network.logical_bytes_per_second": {
+          "unit": "bytes/s",
+          "count": 1,
+          "median": 325801.76651945675,
+          "p95": 325801.76651945675,
+          "max": 325801.76651945675,
+          "confidence95": [
+            325801.76651945675,
+            325801.76651945675
+          ]
+        },
+        "network.wire_bytes_per_second": {
+          "unit": "bytes/s",
+          "count": 1,
+          "median": 327994.4171319057,
+          "p95": 327994.4171319057,
+          "max": 327994.4171319057,
+          "confidence95": [
+            327994.4171319057,
+            327994.4171319057
+          ]
+        },
+        "network.rtt_p95_ms": {
+          "unit": "ms",
+          "count": 1,
+          "median": 2,
+          "p95": 2,
+          "max": 2,
+          "confidence95": [
+            2,
+            2
+          ]
+        },
+        "network.loss_rate": {
+          "unit": "ratio",
+          "count": 1,
+          "median": 0,
+          "p95": 0,
+          "max": 0,
+          "confidence95": [
+            0,
+            0
+          ]
+        },
+        "network.disconnects": {
+          "unit": "events",
+          "count": 1,
+          "median": 0,
+          "p95": 0,
+          "max": 0,
+          "confidence95": [
+            0,
+            0
+          ]
+        },
+        "network.errors": {
+          "unit": "events",
+          "count": 1,
+          "median": 0,
+          "p95": 0,
+          "max": 0,
+          "confidence95": [
+            0,
+            0
+          ]
+        },
+        "workload.state_sync_messages": {
+          "unit": "messages",
+          "count": 1,
+          "median": 4350,
+          "p95": 4350,
+          "max": 4350,
+          "confidence95": [
+            4350,
+            4350
+          ]
+        },
+        "workload.reliable_messages": {
+          "unit": "messages",
+          "count": 1,
+          "median": 1030,
+          "p95": 1030,
+          "max": 1030,
+          "confidence95": [
+            1030,
+            1030
+          ]
+        },
+        "workload.raw_bytes": {
+          "unit": "bytes",
+          "count": 1,
+          "median": 14389800,
+          "p95": 14389800,
+          "max": 14389800,
+          "confidence95": [
+            14389800,
+            14389800
+          ]
+        },
+        "workload.realized.rooms": {
+          "unit": "entities",
+          "count": 1,
+          "median": 2,
+          "p95": 2,
+          "max": 2,
+          "confidence95": [
+            2,
+            2
+          ]
+        },
+        "workload.active.rooms": {
+          "unit": "entities",
+          "count": 1,
+          "median": 2,
+          "p95": 2,
+          "max": 2,
+          "confidence95": [
+            2,
+            2
+          ]
+        },
+        "workload.realized.players": {
+          "unit": "entities",
+          "count": 1,
+          "median": 2,
+          "p95": 2,
+          "max": 2,
+          "confidence95": [
+            2,
+            2
+          ]
+        },
+        "workload.active.players": {
+          "unit": "entities",
+          "count": 1,
+          "median": 2,
+          "p95": 2,
+          "max": 2,
+          "confidence95": [
+            2,
+            2
+          ]
+        },
+        "workload.realized.bots": {
+          "unit": "entities",
+          "count": 1,
+          "median": 18,
+          "p95": 18,
+          "max": 18,
+          "confidence95": [
+            18,
+            18
+          ]
+        },
+        "workload.active.bots": {
+          "unit": "entities",
+          "count": 1,
+          "median": 18,
+          "p95": 18,
+          "max": 18,
+          "confidence95": [
+            18,
+            18
+          ]
+        },
+        "workload.realized.drones": {
+          "unit": "entities",
+          "count": 1,
+          "median": 80,
+          "p95": 80,
+          "max": 80,
+          "confidence95": [
+            80,
+            80
+          ]
+        },
+        "workload.active.drones": {
+          "unit": "entities",
+          "count": 1,
+          "median": 80,
+          "p95": 80,
+          "max": 80,
+          "confidence95": [
+            80,
+            80
+          ]
+        },
+        "workload.realized.projectiles": {
+          "unit": "entities",
+          "count": 1,
+          "median": 111,
+          "p95": 111,
+          "max": 111,
+          "confidence95": [
+            111,
+            111
+          ]
+        },
+        "workload.active.projectiles": {
+          "unit": "entities",
+          "count": 1,
+          "median": 1,
+          "p95": 1,
+          "max": 1,
+          "confidence95": [
+            1,
+            1
+          ]
+        },
+        "workload.rooms.created": {
+          "unit": "entities",
+          "count": 1,
+          "median": 2,
+          "p95": 2,
+          "max": 2,
+          "confidence95": [
+            2,
+            2
+          ]
+        },
+        "workload.players.registered": {
+          "unit": "entities",
+          "count": 1,
+          "median": 2,
+          "p95": 2,
+          "max": 2,
+          "confidence95": [
+            2,
+            2
+          ]
+        },
+        "workload.bots.spawned": {
+          "unit": "entities",
+          "count": 1,
+          "median": 18,
+          "p95": 18,
+          "max": 18,
+          "confidence95": [
+            18,
+            18
+          ]
+        },
+        "workload.drones.spawned": {
+          "unit": "entities",
+          "count": 1,
+          "median": 80,
+          "p95": 80,
+          "max": 80,
+          "confidence95": [
+            80,
+            80
+          ]
+        },
+        "workload.projectiles.spawned": {
+          "unit": "entities",
+          "count": 1,
+          "median": 111,
+          "p95": 111,
+          "max": 111,
+          "confidence95": [
+            111,
+            111
+          ]
+        }
+      },
+      "slo": {
+        "passed": true,
+        "failures": []
+      }
+    },
+    "outputDir": "/app/applet/.benchmark-artifacts/diagnostics-1788906530050"
+  },
+  "run3": {
+    "summary": {
+      "schemaVersion": 1,
+      "profileId": "rule-compliant-3rooms",
+      "boundary": "server-process",
+      "transport": "socketio",
+      "trials": 1,
+      "validTrials": 1,
+      "metrics": {
+        "tick.p95_ms": {
+          "unit": "ms",
+          "count": 1,
+          "median": 8,
+          "p95": 8,
+          "max": 8,
+          "confidence95": [
+            8,
+            8
+          ]
+        },
+        "tick.rate_hz": {
+          "unit": "Hz",
+          "count": 1,
+          "median": 181.51245228140337,
+          "p95": 181.51245228140337,
+          "max": 181.51245228140337,
+          "confidence95": [
+            181.51245228140337,
+            181.51245228140337
+          ]
+        },
+        "tick.rate_per_room_hz": {
+          "unit": "Hz",
+          "count": 1,
+          "median": 60.50415076046779,
+          "p95": 60.50415076046779,
+          "max": 60.50415076046779,
+          "confidence95": [
+            60.50415076046779,
+            60.50415076046779
+          ]
+        },
+        "tick.dropped": {
+          "unit": "ticks",
+          "count": 1,
+          "median": 31,
+          "p95": 31,
+          "max": 31,
+          "confidence95": [
+            31,
+            31
+          ]
+        },
+        "tick.catch_up_steps": {
+          "unit": "steps",
+          "count": 1,
+          "median": 125,
+          "p95": 125,
+          "max": 125,
+          "confidence95": [
+            125,
+            125
+          ]
+        },
+        "tick.discarded_time_ms": {
+          "unit": "ms",
+          "count": 1,
+          "median": 571.656473,
+          "p95": 571.656473,
+          "max": 571.656473,
+          "confidence95": [
+            571.656473,
+            571.656473
+          ]
+        },
+        "cpu.process_percent": {
+          "unit": "%",
+          "count": 1,
+          "median": 7.88424883035869,
+          "p95": 7.88424883035869,
+          "max": 7.88424883035869,
+          "confidence95": [
+            7.88424883035869,
+            7.88424883035869
+          ]
+        },
+        "memory.rss_bytes": {
+          "unit": "bytes",
+          "count": 1,
+          "median": 259145728,
+          "p95": 259145728,
+          "max": 259145728,
+          "confidence95": [
+            259145728,
+            259145728
+          ]
+        },
+        "memory.orchestrator_rss_bytes": {
+          "unit": "bytes",
+          "count": 1,
+          "median": 259145728,
+          "p95": 259145728,
+          "max": 259145728,
+          "confidence95": [
+            259145728,
+            259145728
+          ]
+        },
+        "memory.heap_used_bytes": {
+          "unit": "bytes",
+          "count": 1,
+          "median": 56132272,
+          "p95": 56132272,
+          "max": 56132272,
+          "confidence95": [
+            56132272,
+            56132272
+          ]
+        },
+        "memory.heap_total_bytes": {
+          "unit": "bytes",
+          "count": 1,
+          "median": 92753920,
+          "p95": 92753920,
+          "max": 92753920,
+          "confidence95": [
+            92753920,
+            92753920
+          ]
+        },
+        "memory.heap_limit_bytes": {
+          "unit": "bytes",
+          "count": 1,
+          "median": 3271557120,
+          "p95": 3271557120,
+          "max": 3271557120,
+          "confidence95": [
+            3271557120,
+            3271557120
+          ]
+        },
+        "memory.external_bytes": {
+          "unit": "bytes",
+          "count": 1,
+          "median": 5398245,
+          "p95": 5398245,
+          "max": 5398245,
+          "confidence95": [
+            5398245,
+            5398245
+          ]
+        },
+        "memory.array_buffers_bytes": {
+          "unit": "bytes",
+          "count": 1,
+          "median": 295495,
+          "p95": 295495,
+          "max": 295495,
+          "confidence95": [
+            295495,
+            295495
+          ]
+        },
+        "memory.native_bytes": {
+          "unit": "bytes",
+          "count": 1,
+          "median": 196757082,
+          "p95": 196757082,
+          "max": 196757082,
+          "confidence95": [
+            196757082,
+            196757082
+          ]
+        },
+        "memory.worker.benchmark-rule-compliant-3rooms-1-1.rss_bytes": {
+          "unit": "bytes",
+          "count": 1,
+          "median": 276570112,
+          "p95": 276570112,
+          "max": 276570112,
+          "confidence95": [
+            276570112,
+            276570112
+          ]
+        },
+        "worker.benchmark-rule-compliant-3rooms-1-1.pid": {
+          "unit": "pid",
+          "count": 1,
+          "median": 1410,
+          "p95": 1410,
+          "max": 1410,
+          "confidence95": [
+            1410,
+            1410
+          ]
+        },
+        "memory.worker.benchmark-rule-compliant-3rooms-1-0.rss_bytes": {
+          "unit": "bytes",
+          "count": 1,
+          "median": 290627584,
+          "p95": 290627584,
+          "max": 290627584,
+          "confidence95": [
+            290627584,
+            290627584
+          ]
+        },
+        "worker.benchmark-rule-compliant-3rooms-1-0.pid": {
+          "unit": "pid",
+          "count": 1,
+          "median": 1409,
+          "p95": 1409,
+          "max": 1409,
+          "confidence95": [
+            1409,
+            1409
+          ]
+        },
+        "memory.worker.benchmark-rule-compliant-3rooms-1-2.rss_bytes": {
+          "unit": "bytes",
+          "count": 1,
+          "median": 285777920,
+          "p95": 285777920,
+          "max": 285777920,
+          "confidence95": [
+            285777920,
+            285777920
+          ]
+        },
+        "worker.benchmark-rule-compliant-3rooms-1-2.pid": {
+          "unit": "pid",
+          "count": 1,
+          "median": 1416,
+          "p95": 1416,
+          "max": 1416,
+          "confidence95": [
+            1416,
+            1416
+          ]
+        },
+        "memory.worker_rss_total_bytes": {
+          "unit": "bytes",
+          "count": 1,
+          "median": 852975616,
+          "p95": 852975616,
+          "max": 852975616,
+          "confidence95": [
+            852975616,
+            852975616
+          ]
+        },
+        "memory.total_host_rss_bytes": {
+          "unit": "bytes",
+          "count": 1,
+          "median": 1112121344,
+          "p95": 1112121344,
+          "max": 1112121344,
+          "confidence95": [
+            1112121344,
+            1112121344
+          ]
+        },
+        "memory.worker_rss_per_room_bytes": {
+          "unit": "bytes",
+          "count": 1,
+          "median": 284325205.3333333,
+          "p95": 284325205.3333333,
+          "max": 284325205.3333333,
+          "confidence95": [
+            284325205.3333333,
+            284325205.3333333
+          ]
+        },
+        "event_loop.utilization": {
+          "unit": "ratio",
+          "count": 1,
+          "median": 0.1706137709029192,
+          "p95": 0.1706137709029192,
+          "max": 0.1706137709029192,
+          "confidence95": [
+            0.1706137709029192,
+            0.1706137709029192
+          ]
+        },
+        "event_loop.delay_p95_ms": {
+          "unit": "ms",
+          "count": 1,
+          "median": 27.901951,
+          "p95": 27.901951,
+          "max": 27.901951,
+          "confidence95": [
+            27.901951,
+            27.901951
+          ]
+        },
+        "event_loop.delay_max_ms": {
+          "unit": "ms",
+          "count": 1,
+          "median": 61.276159,
+          "p95": 61.276159,
+          "max": 61.276159,
+          "confidence95": [
+            61.276159,
+            61.276159
+          ]
+        },
+        "scheduler.lateness_max_ms": {
+          "unit": "ms",
+          "count": 1,
+          "median": 330.535335,
+          "p95": 330.535335,
+          "max": 330.535335,
+          "confidence95": [
+            330.535335,
+            330.535335
+          ]
+        },
+        "gc.collections": {
+          "unit": "collections",
+          "count": 1,
+          "median": 0,
+          "p95": 0,
+          "max": 0,
+          "confidence95": [
+            0,
+            0
+          ]
+        },
+        "network.logical_bytes_per_second": {
+          "unit": "bytes/s",
+          "count": 1,
+          "median": 449465.9166666667,
+          "p95": 449465.9166666667,
+          "max": 449465.9166666667,
+          "confidence95": [
+            449465.9166666667,
+            449465.9166666667
+          ]
+        },
+        "network.wire_bytes_per_second": {
+          "unit": "bytes/s",
+          "count": 1,
+          "median": 452588.9166666667,
+          "p95": 452588.9166666667,
+          "max": 452588.9166666667,
+          "confidence95": [
+            452588.9166666667,
+            452588.9166666667
+          ]
+        },
+        "network.rtt_p95_ms": {
+          "unit": "ms",
+          "count": 1,
+          "median": 12.666666666666666,
+          "p95": 12.666666666666666,
+          "max": 12.666666666666666,
+          "confidence95": [
+            12.666666666666666,
+            12.666666666666666
+          ]
+        },
+        "network.loss_rate": {
+          "unit": "ratio",
+          "count": 1,
+          "median": 0,
+          "p95": 0,
+          "max": 0,
+          "confidence95": [
+            0,
+            0
+          ]
+        },
+        "network.disconnects": {
+          "unit": "events",
+          "count": 1,
+          "median": 0,
+          "p95": 0,
+          "max": 0,
+          "confidence95": [
+            0,
+            0
+          ]
+        },
+        "network.errors": {
+          "unit": "events",
+          "count": 1,
+          "median": 0,
+          "p95": 0,
+          "max": 0,
+          "confidence95": [
+            0,
+            0
+          ]
+        },
+        "workload.state_sync_messages": {
+          "unit": "messages",
+          "count": 1,
+          "median": 6180,
+          "p95": 6180,
+          "max": 6180,
+          "confidence95": [
+            6180,
+            6180
+          ]
+        },
+        "workload.reliable_messages": {
+          "unit": "messages",
+          "count": 1,
+          "median": 1440,
+          "p95": 1440,
+          "max": 1440,
+          "confidence95": [
+            1440,
+            1440
+          ]
+        },
+        "workload.raw_bytes": {
+          "unit": "bytes",
+          "count": 1,
+          "median": 20443440,
+          "p95": 20443440,
+          "max": 20443440,
+          "confidence95": [
+            20443440,
+            20443440
+          ]
+        },
+        "workload.realized.rooms": {
+          "unit": "entities",
+          "count": 1,
+          "median": 3,
+          "p95": 3,
+          "max": 3,
+          "confidence95": [
+            3,
+            3
+          ]
+        },
+        "workload.active.rooms": {
+          "unit": "entities",
+          "count": 1,
+          "median": 3,
+          "p95": 3,
+          "max": 3,
+          "confidence95": [
+            3,
+            3
+          ]
+        },
+        "workload.realized.players": {
+          "unit": "entities",
+          "count": 1,
+          "median": 3,
+          "p95": 3,
+          "max": 3,
+          "confidence95": [
+            3,
+            3
+          ]
+        },
+        "workload.active.players": {
+          "unit": "entities",
+          "count": 1,
+          "median": 3,
+          "p95": 3,
+          "max": 3,
+          "confidence95": [
+            3,
+            3
+          ]
+        },
+        "workload.realized.bots": {
+          "unit": "entities",
+          "count": 1,
+          "median": 27,
+          "p95": 27,
+          "max": 27,
+          "confidence95": [
+            27,
+            27
+          ]
+        },
+        "workload.active.bots": {
+          "unit": "entities",
+          "count": 1,
+          "median": 27,
+          "p95": 27,
+          "max": 27,
+          "confidence95": [
+            27,
+            27
+          ]
+        },
+        "workload.realized.drones": {
+          "unit": "entities",
+          "count": 1,
+          "median": 120,
+          "p95": 120,
+          "max": 120,
+          "confidence95": [
+            120,
+            120
+          ]
+        },
+        "workload.active.drones": {
+          "unit": "entities",
+          "count": 1,
+          "median": 120,
+          "p95": 120,
+          "max": 120,
+          "confidence95": [
+            120,
+            120
+          ]
+        },
+        "workload.realized.projectiles": {
+          "unit": "entities",
+          "count": 1,
+          "median": 154,
+          "p95": 154,
+          "max": 154,
+          "confidence95": [
+            154,
+            154
+          ]
+        },
+        "workload.active.projectiles": {
+          "unit": "entities",
+          "count": 1,
+          "median": 1,
+          "p95": 1,
+          "max": 1,
+          "confidence95": [
+            1,
+            1
+          ]
+        },
+        "workload.rooms.created": {
+          "unit": "entities",
+          "count": 1,
+          "median": 3,
+          "p95": 3,
+          "max": 3,
+          "confidence95": [
+            3,
+            3
+          ]
+        },
+        "workload.players.registered": {
+          "unit": "entities",
+          "count": 1,
+          "median": 3,
+          "p95": 3,
+          "max": 3,
+          "confidence95": [
+            3,
+            3
+          ]
+        },
+        "workload.bots.spawned": {
+          "unit": "entities",
+          "count": 1,
+          "median": 27,
+          "p95": 27,
+          "max": 27,
+          "confidence95": [
+            27,
+            27
+          ]
+        },
+        "workload.drones.spawned": {
+          "unit": "entities",
+          "count": 1,
+          "median": 120,
+          "p95": 120,
+          "max": 120,
+          "confidence95": [
+            120,
+            120
+          ]
+        },
+        "workload.projectiles.spawned": {
+          "unit": "entities",
+          "count": 1,
+          "median": 154,
+          "p95": 154,
+          "max": 154,
+          "confidence95": [
+            154,
+            154
+          ]
+        }
+      },
+      "slo": {
+        "passed": true,
+        "failures": []
+      }
+    },
+    "outputDir": "/app/applet/.benchmark-artifacts/diagnostics-1788906550705"
+  },
+  "run3InProcess": {
+    "summary": {
+      "schemaVersion": 1,
+      "profileId": "rule-compliant-3rooms-inprocess",
+      "boundary": "server-process",
+      "transport": "socketio",
+      "trials": 1,
+      "validTrials": 1,
+      "metrics": {
+        "tick.p95_ms": {
+          "unit": "ms",
+          "count": 1,
+          "median": 3,
+          "p95": 3,
+          "max": 3,
+          "confidence95": [
+            3,
+            3
+          ]
+        },
+        "tick.rate_hz": {
+          "unit": "Hz",
+          "count": 1,
+          "median": 179.88552739165985,
+          "p95": 179.88552739165985,
+          "max": 179.88552739165985,
+          "confidence95": [
+            179.88552739165985,
+            179.88552739165985
+          ]
+        },
+        "tick.rate_per_room_hz": {
+          "unit": "Hz",
+          "count": 1,
+          "median": 59.96184246388662,
+          "p95": 59.96184246388662,
+          "max": 59.96184246388662,
+          "confidence95": [
+            59.96184246388662,
+            59.96184246388662
+          ]
+        },
+        "tick.dropped": {
+          "unit": "ticks",
+          "count": 1,
+          "median": 0,
+          "p95": 0,
+          "max": 0,
+          "confidence95": [
+            0,
+            0
+          ]
+        },
+        "tick.catch_up_steps": {
+          "unit": "steps",
+          "count": 1,
+          "median": 0,
+          "p95": 0,
+          "max": 0,
+          "confidence95": [
+            0,
+            0
+          ]
+        },
+        "tick.discarded_time_ms": {
+          "unit": "ms",
+          "count": 1,
+          "median": 0,
+          "p95": 0,
+          "max": 0,
+          "confidence95": [
+            0,
+            0
+          ]
+        },
+        "cpu.process_percent": {
+          "unit": "%",
+          "count": 1,
+          "median": 55.09805586212752,
+          "p95": 55.09805586212752,
+          "max": 55.09805586212752,
+          "confidence95": [
+            55.09805586212752,
+            55.09805586212752
+          ]
+        },
+        "memory.rss_bytes": {
+          "unit": "bytes",
+          "count": 1,
+          "median": 317190144,
+          "p95": 317190144,
+          "max": 317190144,
+          "confidence95": [
+            317190144,
+            317190144
+          ]
+        },
+        "memory.orchestrator_rss_bytes": {
+          "unit": "bytes",
+          "count": 1,
+          "median": 317190144,
+          "p95": 317190144,
+          "max": 317190144,
+          "confidence95": [
+            317190144,
+            317190144
+          ]
+        },
+        "memory.heap_used_bytes": {
+          "unit": "bytes",
+          "count": 1,
+          "median": 95977664,
+          "p95": 95977664,
+          "max": 95977664,
+          "confidence95": [
+            95977664,
+            95977664
+          ]
+        },
+        "memory.heap_total_bytes": {
+          "unit": "bytes",
+          "count": 1,
+          "median": 120205312,
+          "p95": 120205312,
+          "max": 120205312,
+          "confidence95": [
+            120205312,
+            120205312
+          ]
+        },
+        "memory.heap_limit_bytes": {
+          "unit": "bytes",
+          "count": 1,
+          "median": 3271557120,
+          "p95": 3271557120,
+          "max": 3271557120,
+          "confidence95": [
+            3271557120,
+            3271557120
+          ]
+        },
+        "memory.external_bytes": {
+          "unit": "bytes",
+          "count": 1,
+          "median": 6350950,
+          "p95": 6350950,
+          "max": 6350950,
+          "confidence95": [
+            6350950,
+            6350950
+          ]
+        },
+        "memory.array_buffers_bytes": {
+          "unit": "bytes",
+          "count": 1,
+          "median": 740806,
+          "p95": 740806,
+          "max": 740806,
+          "confidence95": [
+            740806,
+            740806
+          ]
+        },
+        "memory.native_bytes": {
+          "unit": "bytes",
+          "count": 1,
+          "median": 225819608,
+          "p95": 225819608,
+          "max": 225819608,
+          "confidence95": [
+            225819608,
+            225819608
+          ]
+        },
+        "memory.worker_rss_total_bytes": {
+          "unit": "bytes",
+          "count": 1,
+          "median": 0,
+          "p95": 0,
+          "max": 0,
+          "confidence95": [
+            0,
+            0
+          ]
+        },
+        "memory.total_host_rss_bytes": {
+          "unit": "bytes",
+          "count": 1,
+          "median": 317190144,
+          "p95": 317190144,
+          "max": 317190144,
+          "confidence95": [
+            317190144,
+            317190144
+          ]
+        },
+        "memory.worker_rss_per_room_bytes": {
+          "unit": "bytes",
+          "count": 1,
+          "median": 0,
+          "p95": 0,
+          "max": 0,
+          "confidence95": [
+            0,
+            0
+          ]
+        },
+        "event_loop.utilization": {
+          "unit": "ratio",
+          "count": 1,
+          "median": 0.4955378097130682,
+          "p95": 0.4955378097130682,
+          "max": 0.4955378097130682,
+          "confidence95": [
+            0.4955378097130682,
+            0.4955378097130682
+          ]
+        },
+        "event_loop.delay_p95_ms": {
+          "unit": "ms",
+          "count": 1,
+          "median": 13.221887,
+          "p95": 13.221887,
+          "max": 13.221887,
+          "confidence95": [
+            13.221887,
+            13.221887
+          ]
+        },
+        "event_loop.delay_max_ms": {
+          "unit": "ms",
+          "count": 1,
+          "median": 26.198015,
+          "p95": 26.198015,
+          "max": 26.198015,
+          "confidence95": [
+            26.198015,
+            26.198015
+          ]
+        },
+        "scheduler.lateness_max_ms": {
+          "unit": "ms",
+          "count": 1,
+          "median": 21.807734,
+          "p95": 21.807734,
+          "max": 21.807734,
+          "confidence95": [
+            21.807734,
+            21.807734
+          ]
+        },
+        "gc.collections": {
+          "unit": "collections",
+          "count": 1,
+          "median": 0,
+          "p95": 0,
+          "max": 0,
+          "confidence95": [
+            0,
+            0
+          ]
+        },
+        "network.logical_bytes_per_second": {
+          "unit": "bytes/s",
+          "count": 1,
+          "median": 482123.8230147488,
+          "p95": 482123.8230147488,
+          "max": 482123.8230147488,
+          "confidence95": [
+            482123.8230147488,
+            482123.8230147488
+          ]
+        },
+        "network.wire_bytes_per_second": {
+          "unit": "bytes/s",
+          "count": 1,
+          "median": 485132.4889592534,
+          "p95": 485132.4889592534,
+          "max": 485132.4889592534,
+          "confidence95": [
+            485132.4889592534,
+            485132.4889592534
+          ]
+        },
+        "network.rtt_p95_ms": {
+          "unit": "ms",
+          "count": 1,
+          "median": 5,
+          "p95": 5,
+          "max": 5,
+          "confidence95": [
+            5,
+            5
+          ]
+        },
+        "network.loss_rate": {
+          "unit": "ratio",
+          "count": 1,
+          "median": 0,
+          "p95": 0,
+          "max": 0,
+          "confidence95": [
+            0,
+            0
+          ]
+        },
+        "network.disconnects": {
+          "unit": "events",
+          "count": 1,
+          "median": 0,
+          "p95": 0,
+          "max": 0,
+          "confidence95": [
+            0,
+            0
+          ]
+        },
+        "network.errors": {
+          "unit": "events",
+          "count": 1,
+          "median": 0,
+          "p95": 0,
+          "max": 0,
+          "confidence95": [
+            0,
+            0
+          ]
+        },
+        "workload.state_sync_messages": {
+          "unit": "messages",
+          "count": 1,
+          "median": 6490,
+          "p95": 6490,
+          "max": 6490,
+          "confidence95": [
+            6490,
+            6490
+          ]
+        },
+        "workload.reliable_messages": {
+          "unit": "messages",
+          "count": 1,
+          "median": 0,
+          "p95": 0,
+          "max": 0,
+          "confidence95": [
+            0,
+            0
+          ]
+        },
+        "workload.raw_bytes": {
+          "unit": "bytes",
+          "count": 1,
+          "median": 21468920,
+          "p95": 21468920,
+          "max": 21468920,
+          "confidence95": [
+            21468920,
+            21468920
+          ]
+        },
+        "workload.realized.rooms": {
+          "unit": "entities",
+          "count": 1,
+          "median": 3,
+          "p95": 3,
+          "max": 3,
+          "confidence95": [
+            3,
+            3
+          ]
+        },
+        "workload.active.rooms": {
+          "unit": "entities",
+          "count": 1,
+          "median": 3,
+          "p95": 3,
+          "max": 3,
+          "confidence95": [
+            3,
+            3
+          ]
+        },
+        "workload.realized.players": {
+          "unit": "entities",
+          "count": 1,
+          "median": 3,
+          "p95": 3,
+          "max": 3,
+          "confidence95": [
+            3,
+            3
+          ]
+        },
+        "workload.active.players": {
+          "unit": "entities",
+          "count": 1,
+          "median": 3,
+          "p95": 3,
+          "max": 3,
+          "confidence95": [
+            3,
+            3
+          ]
+        },
+        "workload.realized.bots": {
+          "unit": "entities",
+          "count": 1,
+          "median": 27,
+          "p95": 27,
+          "max": 27,
+          "confidence95": [
+            27,
+            27
+          ]
+        },
+        "workload.active.bots": {
+          "unit": "entities",
+          "count": 1,
+          "median": 27,
+          "p95": 27,
+          "max": 27,
+          "confidence95": [
+            27,
+            27
+          ]
+        },
+        "workload.realized.drones": {
+          "unit": "entities",
+          "count": 1,
+          "median": 60,
+          "p95": 60,
+          "max": 60,
+          "confidence95": [
+            60,
+            60
+          ]
+        },
+        "workload.active.drones": {
+          "unit": "entities",
+          "count": 1,
+          "median": 60,
+          "p95": 60,
+          "max": 60,
+          "confidence95": [
+            60,
+            60
+          ]
+        },
+        "workload.realized.projectiles": {
+          "unit": "entities",
+          "count": 1,
+          "median": 0,
+          "p95": 0,
+          "max": 0,
+          "confidence95": [
+            0,
+            0
+          ]
+        },
+        "workload.active.projectiles": {
+          "unit": "entities",
+          "count": 1,
+          "median": 0,
+          "p95": 0,
+          "max": 0,
+          "confidence95": [
+            0,
+            0
+          ]
+        },
+        "workload.rooms.created": {
+          "unit": "entities",
+          "count": 1,
+          "median": 3,
+          "p95": 3,
+          "max": 3,
+          "confidence95": [
+            3,
+            3
+          ]
+        },
+        "workload.players.registered": {
+          "unit": "entities",
+          "count": 1,
+          "median": 3,
+          "p95": 3,
+          "max": 3,
+          "confidence95": [
+            3,
+            3
+          ]
+        },
+        "workload.bots.spawned": {
+          "unit": "entities",
+          "count": 1,
+          "median": 27,
+          "p95": 27,
+          "max": 27,
+          "confidence95": [
+            27,
+            27
+          ]
+        },
+        "workload.drones.spawned": {
+          "unit": "entities",
+          "count": 1,
+          "median": 60,
+          "p95": 60,
+          "max": 60,
+          "confidence95": [
+            60,
+            60
+          ]
+        },
+        "workload.projectiles.spawned": {
+          "unit": "entities",
+          "count": 1,
+          "median": 0,
+          "p95": 0,
+          "max": 0,
+          "confidence95": [
+            0,
+            0
+          ]
+        }
+      },
+      "slo": {
+        "passed": true,
+        "failures": []
+      }
+    },
+    "outputDir": "/app/applet/.benchmark-artifacts/diagnostics-1788906571820"
+  },
+  "run3NoTelemetry": {
+    "summary": {
+      "schemaVersion": 1,
+      "profileId": "rule-compliant-3rooms",
+      "boundary": "server-process",
+      "transport": "socketio",
+      "trials": 1,
+      "validTrials": 1,
+      "metrics": {
+        "tick.p95_ms": {
+          "unit": "ms",
+          "count": 1,
+          "median": 12,
+          "p95": 12,
+          "max": 12,
+          "confidence95": [
+            12,
+            12
+          ]
+        },
+        "tick.rate_hz": {
+          "unit": "Hz",
+          "count": 1,
+          "median": 179.45690672963403,
+          "p95": 179.45690672963403,
+          "max": 179.45690672963403,
+          "confidence95": [
+            179.45690672963403,
+            179.45690672963403
+          ]
+        },
+        "tick.rate_per_room_hz": {
+          "unit": "Hz",
+          "count": 1,
+          "median": 59.81896890987801,
+          "p95": 59.81896890987801,
+          "max": 59.81896890987801,
+          "confidence95": [
+            59.81896890987801,
+            59.81896890987801
+          ]
+        },
+        "tick.dropped": {
+          "unit": "ticks",
+          "count": 1,
+          "median": 92,
+          "p95": 92,
+          "max": 92,
+          "confidence95": [
+            92,
+            92
+          ]
+        },
+        "tick.catch_up_steps": {
+          "unit": "steps",
+          "count": 1,
+          "median": 207,
+          "p95": 207,
+          "max": 207,
+          "confidence95": [
+            207,
+            207
+          ]
+        },
+        "tick.discarded_time_ms": {
+          "unit": "ms",
+          "count": 1,
+          "median": 1675.106923,
+          "p95": 1675.106923,
+          "max": 1675.106923,
+          "confidence95": [
+            1675.106923,
+            1675.106923
+          ]
+        },
+        "cpu.process_percent": {
+          "unit": "%",
+          "count": 1,
+          "median": 8.820286659316427,
+          "p95": 8.820286659316427,
+          "max": 8.820286659316427,
+          "confidence95": [
+            8.820286659316427,
+            8.820286659316427
+          ]
+        },
+        "memory.rss_bytes": {
+          "unit": "bytes",
+          "count": 1,
+          "median": 262856704,
+          "p95": 262856704,
+          "max": 262856704,
+          "confidence95": [
+            262856704,
+            262856704
+          ]
+        },
+        "memory.orchestrator_rss_bytes": {
+          "unit": "bytes",
+          "count": 1,
+          "median": 262856704,
+          "p95": 262856704,
+          "max": 262856704,
+          "confidence95": [
+            262856704,
+            262856704
+          ]
+        },
+        "memory.heap_used_bytes": {
+          "unit": "bytes",
+          "count": 1,
+          "median": 68810976,
+          "p95": 68810976,
+          "max": 68810976,
+          "confidence95": [
+            68810976,
+            68810976
+          ]
+        },
+        "memory.heap_total_bytes": {
+          "unit": "bytes",
+          "count": 1,
+          "median": 93540352,
+          "p95": 93540352,
+          "max": 93540352,
+          "confidence95": [
+            93540352,
+            93540352
+          ]
+        },
+        "memory.heap_limit_bytes": {
+          "unit": "bytes",
+          "count": 1,
+          "median": 3271557120,
+          "p95": 3271557120,
+          "max": 3271557120,
+          "confidence95": [
+            3271557120,
+            3271557120
+          ]
+        },
+        "memory.external_bytes": {
+          "unit": "bytes",
+          "count": 1,
+          "median": 7996740,
+          "p95": 7996740,
+          "max": 7996740,
+          "confidence95": [
+            7996740,
+            7996740
+          ]
+        },
+        "memory.array_buffers_bytes": {
+          "unit": "bytes",
+          "count": 1,
+          "median": 2909770,
+          "p95": 2909770,
+          "max": 2909770,
+          "confidence95": [
+            2909770,
+            2909770
+          ]
+        },
+        "memory.native_bytes": {
+          "unit": "bytes",
+          "count": 1,
+          "median": 199881529,
+          "p95": 199881529,
+          "max": 199881529,
+          "confidence95": [
+            199881529,
+            199881529
+          ]
+        },
+        "memory.worker.benchmark-rule-compliant-3rooms-1-0.rss_bytes": {
+          "unit": "bytes",
+          "count": 1,
+          "median": 288641024,
+          "p95": 288641024,
+          "max": 288641024,
+          "confidence95": [
+            288641024,
+            288641024
+          ]
+        },
+        "worker.benchmark-rule-compliant-3rooms-1-0.pid": {
+          "unit": "pid",
+          "count": 1,
+          "median": 1581,
+          "p95": 1581,
+          "max": 1581,
+          "confidence95": [
+            1581,
+            1581
+          ]
+        },
+        "memory.worker.benchmark-rule-compliant-3rooms-1-2.rss_bytes": {
+          "unit": "bytes",
+          "count": 1,
+          "median": 287830016,
+          "p95": 287830016,
+          "max": 287830016,
+          "confidence95": [
+            287830016,
+            287830016
+          ]
+        },
+        "worker.benchmark-rule-compliant-3rooms-1-2.pid": {
+          "unit": "pid",
+          "count": 1,
+          "median": 1593,
+          "p95": 1593,
+          "max": 1593,
+          "confidence95": [
+            1593,
+            1593
+          ]
+        },
+        "memory.worker.benchmark-rule-compliant-3rooms-1-1.rss_bytes": {
+          "unit": "bytes",
+          "count": 1,
+          "median": 291618816,
+          "p95": 291618816,
+          "max": 291618816,
+          "confidence95": [
+            291618816,
+            291618816
+          ]
+        },
+        "worker.benchmark-rule-compliant-3rooms-1-1.pid": {
+          "unit": "pid",
+          "count": 1,
+          "median": 1582,
+          "p95": 1582,
+          "max": 1582,
+          "confidence95": [
+            1582,
+            1582
+          ]
+        },
+        "memory.worker_rss_total_bytes": {
+          "unit": "bytes",
+          "count": 1,
+          "median": 868089856,
+          "p95": 868089856,
+          "max": 868089856,
+          "confidence95": [
+            868089856,
+            868089856
+          ]
+        },
+        "memory.total_host_rss_bytes": {
+          "unit": "bytes",
+          "count": 1,
+          "median": 1130946560,
+          "p95": 1130946560,
+          "max": 1130946560,
+          "confidence95": [
+            1130946560,
+            1130946560
+          ]
+        },
+        "memory.worker_rss_per_room_bytes": {
+          "unit": "bytes",
+          "count": 1,
+          "median": 289363285.3333333,
+          "p95": 289363285.3333333,
+          "max": 289363285.3333333,
+          "confidence95": [
+            289363285.3333333,
+            289363285.3333333
+          ]
+        },
+        "event_loop.utilization": {
+          "unit": "ratio",
+          "count": 1,
+          "median": 0.18441380142564973,
+          "p95": 0.18441380142564973,
+          "max": 0.18441380142564973,
+          "confidence95": [
+            0.18441380142564973,
+            0.18441380142564973
+          ]
+        },
+        "event_loop.delay_p95_ms": {
+          "unit": "ms",
+          "count": 1,
+          "median": 48.758783,
+          "p95": 48.758783,
+          "max": 48.758783,
+          "confidence95": [
+            48.758783,
+            48.758783
+          ]
+        },
+        "event_loop.delay_max_ms": {
+          "unit": "ms",
+          "count": 1,
+          "median": 57.180159,
+          "p95": 57.180159,
+          "max": 57.180159,
+          "confidence95": [
+            57.180159,
+            57.180159
+          ]
+        },
+        "scheduler.lateness_max_ms": {
+          "unit": "ms",
+          "count": 1,
+          "median": 392.617745,
+          "p95": 392.617745,
+          "max": 392.617745,
+          "confidence95": [
+            392.617745,
+            392.617745
+          ]
+        },
+        "gc.collections": {
+          "unit": "collections",
+          "count": 1,
+          "median": 0,
+          "p95": 0,
+          "max": 0,
+          "confidence95": [
+            0,
+            0
+          ]
+        },
+        "network.logical_bytes_per_second": {
+          "unit": "bytes/s",
+          "count": 1,
+          "median": 453276.2642672665,
+          "p95": 453276.2642672665,
+          "max": 453276.2642672665,
+          "confidence95": [
+            453276.2642672665,
+            453276.2642672665
+          ]
+        },
+        "network.wire_bytes_per_second": {
+          "unit": "bytes/s",
+          "count": 1,
+          "median": 456420.9780888111,
+          "p95": 456420.9780888111,
+          "max": 456420.9780888111,
+          "confidence95": [
+            456420.9780888111,
+            456420.9780888111
+          ]
+        },
+        "network.rtt_p95_ms": {
+          "unit": "ms",
+          "count": 1,
+          "median": 1.6666666666666667,
+          "p95": 1.6666666666666667,
+          "max": 1.6666666666666667,
+          "confidence95": [
+            1.6666666666666667,
+            1.6666666666666667
+          ]
+        },
+        "network.loss_rate": {
+          "unit": "ratio",
+          "count": 1,
+          "median": 0,
+          "p95": 0,
+          "max": 0,
+          "confidence95": [
+            0,
+            0
+          ]
+        },
+        "network.disconnects": {
+          "unit": "events",
+          "count": 1,
+          "median": 0,
+          "p95": 0,
+          "max": 0,
+          "confidence95": [
+            0,
+            0
+          ]
+        },
+        "network.errors": {
+          "unit": "events",
+          "count": 1,
+          "median": 0,
+          "p95": 0,
+          "max": 0,
+          "confidence95": [
+            0,
+            0
+          ]
+        },
+        "workload.state_sync_messages": {
+          "unit": "messages",
+          "count": 1,
+          "median": 5830,
+          "p95": 5830,
+          "max": 5830,
+          "confidence95": [
+            5830,
+            5830
+          ]
+        },
+        "workload.reliable_messages": {
+          "unit": "messages",
+          "count": 1,
+          "median": 1510,
+          "p95": 1510,
+          "max": 1510,
+          "confidence95": [
+            1510,
+            1510
+          ]
+        },
+        "workload.raw_bytes": {
+          "unit": "bytes",
+          "count": 1,
+          "median": 19285640,
+          "p95": 19285640,
+          "max": 19285640,
+          "confidence95": [
+            19285640,
+            19285640
+          ]
+        },
+        "workload.realized.rooms": {
+          "unit": "entities",
+          "count": 1,
+          "median": 3,
+          "p95": 3,
+          "max": 3,
+          "confidence95": [
+            3,
+            3
+          ]
+        },
+        "workload.active.rooms": {
+          "unit": "entities",
+          "count": 1,
+          "median": 3,
+          "p95": 3,
+          "max": 3,
+          "confidence95": [
+            3,
+            3
+          ]
+        },
+        "workload.realized.players": {
+          "unit": "entities",
+          "count": 1,
+          "median": 3,
+          "p95": 3,
+          "max": 3,
+          "confidence95": [
+            3,
+            3
+          ]
+        },
+        "workload.active.players": {
+          "unit": "entities",
+          "count": 1,
+          "median": 3,
+          "p95": 3,
+          "max": 3,
+          "confidence95": [
+            3,
+            3
+          ]
+        },
+        "workload.realized.bots": {
+          "unit": "entities",
+          "count": 1,
+          "median": 27,
+          "p95": 27,
+          "max": 27,
+          "confidence95": [
+            27,
+            27
+          ]
+        },
+        "workload.active.bots": {
+          "unit": "entities",
+          "count": 1,
+          "median": 27,
+          "p95": 27,
+          "max": 27,
+          "confidence95": [
+            27,
+            27
+          ]
+        },
+        "workload.realized.drones": {
+          "unit": "entities",
+          "count": 1,
+          "median": 120,
+          "p95": 120,
+          "max": 120,
+          "confidence95": [
+            120,
+            120
+          ]
+        },
+        "workload.active.drones": {
+          "unit": "entities",
+          "count": 1,
+          "median": 120,
+          "p95": 120,
+          "max": 120,
+          "confidence95": [
+            120,
+            120
+          ]
+        },
+        "workload.realized.projectiles": {
+          "unit": "entities",
+          "count": 1,
+          "median": 153,
+          "p95": 153,
+          "max": 153,
+          "confidence95": [
+            153,
+            153
+          ]
+        },
+        "workload.active.projectiles": {
+          "unit": "entities",
+          "count": 1,
+          "median": 1,
+          "p95": 1,
+          "max": 1,
+          "confidence95": [
+            1,
+            1
+          ]
+        },
+        "workload.rooms.created": {
+          "unit": "entities",
+          "count": 1,
+          "median": 3,
+          "p95": 3,
+          "max": 3,
+          "confidence95": [
+            3,
+            3
+          ]
+        },
+        "workload.players.registered": {
+          "unit": "entities",
+          "count": 1,
+          "median": 3,
+          "p95": 3,
+          "max": 3,
+          "confidence95": [
+            3,
+            3
+          ]
+        },
+        "workload.bots.spawned": {
+          "unit": "entities",
+          "count": 1,
+          "median": 27,
+          "p95": 27,
+          "max": 27,
+          "confidence95": [
+            27,
+            27
+          ]
+        },
+        "workload.drones.spawned": {
+          "unit": "entities",
+          "count": 1,
+          "median": 120,
+          "p95": 120,
+          "max": 120,
+          "confidence95": [
+            120,
+            120
+          ]
+        },
+        "workload.projectiles.spawned": {
+          "unit": "entities",
+          "count": 1,
+          "median": 153,
+          "p95": 153,
+          "max": 153,
+          "confidence95": [
+            153,
+            153
+          ]
+        }
+      },
+      "slo": {
+        "passed": true,
+        "failures": []
+      }
+    },
+    "outputDir": "/app/applet/.benchmark-artifacts/diagnostics-1788906590806"
+  }
+}

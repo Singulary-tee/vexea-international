@@ -1,0 +1,157 @@
+{
+  "tiny_control": {
+    "key": "tiny_control",
+    "name": "Tiny Control Message",
+    "messageCount": 5000,
+    "payloadSizeBytes": 50,
+    "totalBytesMB": "0.24",
+    "elapsedMs": "28.40",
+    "throughput": {
+      "msgsPerSec": 176072,
+      "bytesPerSecMB": "8.40 MB/s"
+    },
+    "parentCpu": {
+      "userMs": 0,
+      "sysMs": 10
+    },
+    "childCpu": {
+      "userMs": 20,
+      "sysMs": 10
+    },
+    "totalCpuMs": 40,
+    "cpuMsPer1kMsgs": "8.000",
+    "cpuMsPerMB": "167.772",
+    "serialization": {
+      "explicitSerMsPerMsg": "0.0007",
+      "explicitDeserMsPerMsg": "0.0006"
+    },
+    "contextSwitches": {
+      "voluntary": 0,
+      "nonvoluntary": 0
+    }
+  },
+  "player_input": {
+    "key": "player_input",
+    "name": "Player Input Message",
+    "messageCount": 5000,
+    "payloadSizeBytes": 183,
+    "totalBytesMB": "0.87",
+    "elapsedMs": "47.66",
+    "throughput": {
+      "msgsPerSec": 104918,
+      "bytesPerSecMB": "18.31 MB/s"
+    },
+    "parentCpu": {
+      "userMs": 0,
+      "sysMs": 0
+    },
+    "childCpu": {
+      "userMs": 10,
+      "sysMs": 20
+    },
+    "totalCpuMs": 30,
+    "cpuMsPer1kMsgs": "6.000",
+    "cpuMsPerMB": "34.380",
+    "serialization": {
+      "explicitSerMsPerMsg": "0.0015",
+      "explicitDeserMsPerMsg": "0.0013"
+    },
+    "contextSwitches": {
+      "voluntary": 0,
+      "nonvoluntary": 0
+    }
+  },
+  "reliable_event": {
+    "key": "reliable_event",
+    "name": "Reliable Gameplay Event",
+    "messageCount": 5000,
+    "payloadSizeBytes": 251,
+    "totalBytesMB": "1.20",
+    "elapsedMs": "53.77",
+    "throughput": {
+      "msgsPerSec": 92988,
+      "bytesPerSecMB": "22.26 MB/s"
+    },
+    "parentCpu": {
+      "userMs": 10,
+      "sysMs": 0
+    },
+    "childCpu": {
+      "userMs": 20,
+      "sysMs": 0
+    },
+    "totalCpuMs": 30,
+    "cpuMsPer1kMsgs": "6.000",
+    "cpuMsPerMB": "25.066",
+    "serialization": {
+      "explicitSerMsPerMsg": "0.0023",
+      "explicitDeserMsPerMsg": "0.0018"
+    },
+    "contextSwitches": {
+      "voluntary": 0,
+      "nonvoluntary": 0
+    }
+  },
+  "state_sync_json": {
+    "key": "state_sync_json",
+    "name": "State Synchronization JSON (30 entities)",
+    "messageCount": 2000,
+    "payloadSizeBytes": 4207,
+    "totalBytesMB": "8.02",
+    "elapsedMs": "188.46",
+    "throughput": {
+      "msgsPerSec": 10612,
+      "bytesPerSecMB": "42.58 MB/s"
+    },
+    "parentCpu": {
+      "userMs": 90,
+      "sysMs": 0
+    },
+    "childCpu": {
+      "userMs": 90,
+      "sysMs": 10
+    },
+    "totalCpuMs": 190,
+    "cpuMsPer1kMsgs": "95.000",
+    "cpuMsPerMB": "23.678",
+    "serialization": {
+      "explicitSerMsPerMsg": "0.0344",
+      "explicitDeserMsPerMsg": "0.0352"
+    },
+    "contextSwitches": {
+      "voluntary": 0,
+      "nonvoluntary": 0
+    }
+  },
+  "raw_binary_buffer_4kb": {
+    "key": "raw_binary_buffer_4kb",
+    "name": "Raw Binary Buffer (4 KB)",
+    "messageCount": 5000,
+    "payloadSizeBytes": 4096,
+    "totalBytesMB": "19.53",
+    "elapsedMs": "856.54",
+    "throughput": {
+      "msgsPerSec": 5837,
+      "bytesPerSecMB": "22.80 MB/s"
+    },
+    "parentCpu": {
+      "userMs": 420,
+      "sysMs": 20
+    },
+    "childCpu": {
+      "userMs": 380,
+      "sysMs": 20
+    },
+    "totalCpuMs": 840,
+    "cpuMsPer1kMsgs": "168.000",
+    "cpuMsPerMB": "43.008",
+    "serialization": {
+      "explicitSerMsPerMsg": "0.0000",
+      "explicitDeserMsPerMsg": "0.0000"
+    },
+    "contextSwitches": {
+      "voluntary": 0,
+      "nonvoluntary": 0
+    }
+  }
+}

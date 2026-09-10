@@ -7,7 +7,7 @@
 Never accept a resource restrictions without interrogating the requirement's derivation.
 
 ## 1. Core Stack & Infrastructure
-*   **Renderer (Client):** Three.js r184 with TSL (Three Shading Language). We strictly use the WebGPU renderer with `forcewebgl` if/when absolutely necessary for compatibility, and the outdated legacy WebGL renderer is never used. The use of THREE.WebGLRenderer is completely forbidden under any circumstances. No matter what's the issue or what's being fixed or added. This project is strictly designed, developed, and tested using the modern WebGPU pipeline. Under no circumstances should legacy WebGL-specific limitations, outdated APIs, or concepts like "WebGL buffer allocation" be assumed or referenced as primary.
+*   **Renderer (Client):** Three.js r186 with TSL (Three Shading Language). We strictly use the WebGPU renderer with `forcewebgl` if/when absolutely necessary for compatibility, and the outdated legacy WebGL renderer is never used. The use of THREE.WebGLRenderer is completely forbidden under any circumstances. No matter what's the issue or what's being fixed or added. This project is strictly designed, developed, and tested using the modern WebGPU pipeline. Under no circumstances should legacy WebGL-specific limitations, outdated APIs, or concepts like "WebGL buffer allocation" be assumed or referenced as primary.
 *   **Physics:** Rapier via WASM.
     *   **Server:** Authoritative state, static collisions, hitscan validation.
     *   **Client:** Used **ONLY** for player kinematic character controller and static map geometry. **Drones are NOT simulated in client-side Rapier.**
@@ -94,7 +94,7 @@ Never accept a resource restrictions without interrogating the requirement's der
 *   **The Zero-Allocation Client Pipeline:**
     *   `Geckos.io ArrayBuffer` -> `Dead Reckoning Interpolator` -> `Pre-allocated Vector3/Quaternion` -> `Pre-allocated Matrix4 Compose` -> `BatchedMesh Buffer Write`.
 *   **Batched Geometries & Draw Call Budget (Max 15 Draw Calls):**
-    *   Drones and projectiles use `THREE.BatchedMesh` (r184) for independent per-instance skeletal animations in a single draw call.
+    *   Drones and projectiles use `THREE.BatchedMesh` (r186) for independent per-instance skeletal animations in a single draw call.
     *   Static map geometry batched into a single merged geometry at load time (1 draw call).
 *   **Runtime Asset Loading & Shaders:**
     *   Pre-atlasing occurs at the build level via `gltf-transform`. Zero runtime atlasing.

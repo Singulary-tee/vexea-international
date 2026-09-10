@@ -1,0 +1,113 @@
+{
+  "r1": {
+    "roomCount": 1,
+    "durationMs": 18000,
+    "avgStartupMs": "2237.87",
+    "parent": {
+      "cpuUserMs": 20,
+      "cpuSystemMs": 10,
+      "rssMB": "146.4"
+    },
+    "children": [
+      {
+        "pid": 1022,
+        "cpuUserMs": 2470,
+        "cpuSysMs": 280,
+        "rssMB": "239.9",
+        "voluntary": 0,
+        "nonvoluntary": 0
+      }
+    ],
+    "totals": {
+      "totalUserMs": 2490,
+      "totalSysMs": 290,
+      "totalCpuMs": 2780,
+      "steadyStateCpuPercent": "15.44%",
+      "parentRssMB": "146.4",
+      "workerRssTotalMB": "239.9",
+      "totalRssMB": "386.3"
+    }
+  },
+  "r2": {
+    "roomCount": 2,
+    "durationMs": 18000,
+    "avgStartupMs": "2287.62",
+    "parent": {
+      "cpuUserMs": 10,
+      "cpuSystemMs": 0,
+      "rssMB": "146.6"
+    },
+    "children": [
+      {
+        "pid": 1037,
+        "cpuUserMs": 2530,
+        "cpuSysMs": 210,
+        "rssMB": "239.8",
+        "voluntary": 0,
+        "nonvoluntary": 0
+      },
+      {
+        "pid": 1050,
+        "cpuUserMs": 2580,
+        "cpuSysMs": 240,
+        "rssMB": "238.4",
+        "voluntary": 0,
+        "nonvoluntary": 0
+      }
+    ],
+    "totals": {
+      "totalUserMs": 5120,
+      "totalSysMs": 450,
+      "totalCpuMs": 5570,
+      "steadyStateCpuPercent": "30.94%",
+      "parentRssMB": "146.6",
+      "workerRssTotalMB": "478.2",
+      "totalRssMB": "624.8"
+    }
+  },
+  "r3": {
+    "roomCount": 3,
+    "durationMs": 18000,
+    "avgStartupMs": "2255.39",
+    "parent": {
+      "cpuUserMs": 0,
+      "cpuSystemMs": 0,
+      "rssMB": "146.8"
+    },
+    "children": [
+      {
+        "pid": 1099,
+        "cpuUserMs": 2440,
+        "cpuSysMs": 300,
+        "rssMB": "232.1",
+        "voluntary": 0,
+        "nonvoluntary": 0
+      },
+      {
+        "pid": 1116,
+        "cpuUserMs": 2520,
+        "cpuSysMs": 240,
+        "rssMB": "242.3",
+        "voluntary": 0,
+        "nonvoluntary": 0
+      },
+      {
+        "pid": 1133,
+        "cpuUserMs": 2440,
+        "cpuSysMs": 310,
+        "rssMB": "236.6",
+        "voluntary": 0,
+        "nonvoluntary": 0
+      }
+    ],
+    "totals": {
+      "totalUserMs": 7400,
+      "totalSysMs": 850,
+      "totalCpuMs": 8250,
+      "steadyStateCpuPercent": "45.83%",
+      "parentRssMB": "146.8",
+      "workerRssTotalMB": "711.0",
+      "totalRssMB": "857.8"
+    }
+  }
+}

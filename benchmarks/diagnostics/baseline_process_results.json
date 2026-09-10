@@ -1,0 +1,134 @@
+{
+  "r1": {
+    "childCount": 1,
+    "durationMs": 18000,
+    "avgStartupMs": "60.29",
+    "parent": {
+      "cpuUserMs": 970,
+      "cpuSystemMs": 60,
+      "rssMB": "126.3",
+      "eldMeanMs": "10.44",
+      "eldP95Ms": "10.60",
+      "eldMaxMs": "11.50"
+    },
+    "children": [
+      {
+        "pid": 203,
+        "cpuUserMs": 0,
+        "cpuSystemMs": 0,
+        "rssMB": "122.2",
+        "eldP95Ms": "10.63",
+        "voluntaryCtxt": 0,
+        "nonvoluntaryCtxt": 0
+      }
+    ],
+    "totals": {
+      "totalUserMs": 970,
+      "totalSysMs": 60,
+      "totalCpuMs": 1030,
+      "steadyStateCpuPercent": "5.72%",
+      "parentRssMB": "126.3",
+      "workerRssTotalMB": "122.2",
+      "totalRssMB": "248.4",
+      "totalVoluntaryCtxt": 0,
+      "totalNonVoluntaryCtxt": 0
+    }
+  },
+  "r2": {
+    "childCount": 2,
+    "durationMs": 18000,
+    "avgStartupMs": "56.68",
+    "parent": {
+      "cpuUserMs": 1730,
+      "cpuSystemMs": 40,
+      "rssMB": "127.5",
+      "eldMeanMs": "10.44",
+      "eldP95Ms": "10.69",
+      "eldMaxMs": "15.30"
+    },
+    "children": [
+      {
+        "pid": 210,
+        "cpuUserMs": 2590,
+        "cpuSystemMs": 90,
+        "rssMB": "119.6",
+        "eldP95Ms": "10.68",
+        "voluntaryCtxt": 0,
+        "nonvoluntaryCtxt": 0
+      },
+      {
+        "pid": 211,
+        "cpuUserMs": 100,
+        "cpuSystemMs": 0,
+        "rssMB": "126.2",
+        "eldP95Ms": "10.67",
+        "voluntaryCtxt": 0,
+        "nonvoluntaryCtxt": 0
+      }
+    ],
+    "totals": {
+      "totalUserMs": 4420,
+      "totalSysMs": 130,
+      "totalCpuMs": 4550,
+      "steadyStateCpuPercent": "25.28%",
+      "parentRssMB": "127.5",
+      "workerRssTotalMB": "245.8",
+      "totalRssMB": "373.3",
+      "totalVoluntaryCtxt": 0,
+      "totalNonVoluntaryCtxt": 0
+    }
+  },
+  "r3": {
+    "childCount": 3,
+    "durationMs": 18000,
+    "avgStartupMs": "60.84",
+    "parent": {
+      "cpuUserMs": 340,
+      "cpuSystemMs": 120,
+      "rssMB": "127.9",
+      "eldMeanMs": "10.46",
+      "eldP95Ms": "10.67",
+      "eldMaxMs": "19.04"
+    },
+    "children": [
+      {
+        "pid": 245,
+        "cpuUserMs": 370,
+        "cpuSystemMs": 70,
+        "rssMB": "120.9",
+        "eldP95Ms": "10.70",
+        "voluntaryCtxt": 0,
+        "nonvoluntaryCtxt": 0
+      },
+      {
+        "pid": 246,
+        "cpuUserMs": 200,
+        "cpuSystemMs": 30,
+        "rssMB": "126.7",
+        "eldP95Ms": "10.67",
+        "voluntaryCtxt": 0,
+        "nonvoluntaryCtxt": 0
+      },
+      {
+        "pid": 247,
+        "cpuUserMs": 2850,
+        "cpuSystemMs": 170,
+        "rssMB": "123.6",
+        "eldP95Ms": "10.69",
+        "voluntaryCtxt": 0,
+        "nonvoluntaryCtxt": 0
+      }
+    ],
+    "totals": {
+      "totalUserMs": 3760,
+      "totalSysMs": 390,
+      "totalCpuMs": 4150,
+      "steadyStateCpuPercent": "23.06%",
+      "parentRssMB": "127.9",
+      "workerRssTotalMB": "371.1",
+      "totalRssMB": "499.0",
+      "totalVoluntaryCtxt": 0,
+      "totalNonVoluntaryCtxt": 0
+    }
+  }
+}

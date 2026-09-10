@@ -880,3 +880,10 @@ Every file change in the VEXEA codebase must follow this strict two-step protoco
 * **R2 Replacements:** `Models/Entities/Player_one-optimized.glb` is verified at size `1,878,420`, content type `model/gltf-binary`, ETag `f362726569ede61b06b86a0e54320c39`; `Models/Entities/humanoid-optimized.glb` is verified at size `7,973,004`, content type `model/gltf-binary`, ETag `0c5c5318e31a93e0f8e9feab9816088e`. The player and humanoid manifest versions are `3.0.0` and `2.0.0`, respectively.
 * **Verification:** `npx vitest run tests/weapon-contracts.test.ts` passed 9/9; `npx tsc --noEmit` passed; full `npm test -- --run` passed 21/21 files and 110/110 tests; `git diff --check` passed; bounded guards found no forbidden renderer/React additions and no out-of-scope asset-domain file changes. The configured `npm run build` transformed 558 modules and reached Vite `rendering chunks...` before the sandbox terminated the process; it is recorded as incomplete/failed and not a passing build claim.
 * **Status:** Verified and finalized for the authorized player replacement and exact static humanoid/F90 pose route. No authored humanoid movement/shoot/reload clips are claimed.
+
+### Cycle 2026-09-10-01: Three.js r186 Upgrade
+* **Target Files:** `package.json`, `package-lock.json`, `ARCHITECTURE.md`, `client/screens/dev-entities.ts`, `CODEBASE_INDEX.md`.
+* **Scope:** Upgrade Three.js from `r184` (`0.184.0`) to `r186` (`0.186.0`), and `@types/three` to `0.185.4` (latest available). Update `ARCHITECTURE.md` architecture contract references to r186. Resolve breaking changes: add explicit `matrixWorldNeedsUpdate = true` following manual matrix writes with `matrixAutoUpdate = false` in `client/screens/dev-entities.ts`.
+* **Explicit Non-Scope:** No renderer replacement (`THREE.WebGLRenderer` remains forbidden, WebGPU remains strictly enforced), no React, no transport removal (Geckos/Socket.IO untouched), and no hot loop allocations.
+* **Status:** Verified and finalized.
+
