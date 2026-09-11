@@ -632,10 +632,12 @@ function findNamedBone(character: THREE.Object3D, names: string[]): THREE.Object
 
 function findBone(character: THREE.Object3D, side: "Left" | "Right", joint: "Shoulder" | "ForeArm" | "Hand"): THREE.Object3D | null {
   const jointName = joint === "ForeArm" ? "fore_arm" : joint.toLowerCase();
+  const armAlias = joint === "Shoulder" ? "top" : joint === "ForeArm" ? "bot" : "hand";
   return findNamedBone(character, [
     `mixamorig:${side}${joint}`,
     `${side}${joint}`,
     `arm_${side.toLowerCase()}_${jointName}`,
+    `arm_${side.toLowerCase()}_${armAlias}`,
   ]);
 }
 

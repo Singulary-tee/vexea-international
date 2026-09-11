@@ -36,6 +36,20 @@ function createCharacter(includeTorso = true): THREE.Group {
   return character;
 }
 
+function createArmAliasCharacter(): THREE.Group {
+  const character = new THREE.Group();
+  const leftShoulder = addBone(character, "arm_left_top", [0, 1.4, 0]);
+  const leftElbow = addBone(leftShoulder, "arm_left_bot", [0, -0.25, -0.15]);
+  addBone(leftElbow, "arm_left_hand", [0, -0.15, -0.25]);
+
+  const rightShoulder = addBone(character, "arm_right_top", [0, 1.4, 0]);
+  const rightElbow = addBone(rightShoulder, "arm_right_bot", [0, -0.25, -0.05]);
+  addBone(rightElbow, "arm_right_hand", [0, -0.15, 0.05]);
+  addTorsoBones(character);
+  character.updateMatrixWorld(true);
+  return character;
+}
+
 function addTorsoBones(character: THREE.Object3D): void {
   for (const [name, position] of [
     ["Hips", [0.5, 0.9, 0]],
@@ -468,6 +482,14 @@ describe("verified player weapon pose solver", () => {
     expect(result.clipping.checked).toBe(true);
     expect(result.verified).toBe(false);
     expect(result.reason).toContain("proxy");
+  });
+
+  it("resolves arm top/bot aliases for a complete third-person proxy", () => {
+    const result = solveVerifiedGripPose(createArmAliasCharacter(), createWeapon(), { weaponId: "rifle" });
+
+    expect(result.solved).toBe(true);
+    expect(result.clipping.proxyComplete).toBe(true);
+    expect(result.verified).toBe(true);
   });
 
   it("refreshes cached anchors after a socket transform changes", () => {
