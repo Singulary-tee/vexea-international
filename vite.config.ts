@@ -66,6 +66,12 @@ export default defineConfig(() => {
       emptyOutDir: true,
       assetsInlineLimit: 0,
       sourcemap: true,
+      rollupOptions: {
+        input: {
+          index: path.resolve(__dirname, 'client/index.html'),
+          poseEditor: path.resolve(__dirname, 'client/pose-editor.html'),
+        },
+      },
     },
     server: {
       // HMR is disabled in AI Studio via DISABLE_HMR env var, and also disabled
