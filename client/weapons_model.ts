@@ -499,17 +499,6 @@ export function getMuzzleWorldPosition(outVec: THREE.Vector3, camera: THREE.Came
     // Get the base animated world position from the model's muzzle or bone
     (activeMesh as any).muzzleNode.getWorldPosition(outVec);
     
-    // ONLY apply the camera-space offset if this is a procedurally created dynamic muzzle fallback.
-    // Authored gltf muzzle nodes are already placed perfectly at the tip.
-    if ((activeMesh as any).isProceduralMuzzle) {
-      const activeWeaponId = getMatch()?.getActiveWeaponId() || (weaponVisualState.activeSlot === 1 ? 'rifle' : 'pistol');
-      const activeStats = getWeaponPerformance(activeWeaponId) || getWeaponPerformance('rifle')!;
-      const muzzleOffset = activeStats.visualConfig.muzzleOffset;
-      
-      // Transform view-space offset to world space using pre-allocated vector
-      _muzzleWorldPos.set(muzzleOffset[0], muzzleOffset[1], muzzleOffset[2]).applyQuaternion(camera.quaternion);
-      outVec.add(_muzzleWorldPos);
-    }
   } else {
     outVec.copy(camera.position);
     _muzzleWorldPos.set(0, 0, -0.5).applyQuaternion(camera.quaternion);
