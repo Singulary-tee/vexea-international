@@ -8,6 +8,7 @@ import { initDroneModels } from "../../drone_models";
 import { initPlayerWeapons } from "../../weapons_model";
 import * as THREE from "three/webgpu";
 import { engineContext } from "../../context/ClientEngineContext";
+import { normalizeGameplayPlayerModel } from "../systems/player-visual-calibration";
 
 export async function orchestrateMatchLoad(
   mapEntry: MapRegistryEntry,
@@ -92,6 +93,7 @@ export async function orchestrateMatchLoad(
         getAssetUrl("Player_one-optimized.glb"),
         (gltf) => {
           const playerModel = gltf.scene;
+          normalizeGameplayPlayerModel(playerModel);
           (playerModel as any).animations = gltf.animations;
           engineContext.setPlayerModel(playerModel);
           (window as any).playerModel = playerModel;

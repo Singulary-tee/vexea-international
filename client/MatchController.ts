@@ -9,7 +9,7 @@ import { SimulationSystem } from "./src/systems/SimulationSystem";
 import { CombatSystem } from "./src/systems/CombatSystem";
 import { InputSystem } from "./src/systems/InputSystem";
 import { DroneSystem } from "./src/systems/DroneSystem";
-import { RemotePlayerSystem } from "./src/systems/RemotePlayerSystem";
+import { RemotePlayerSystem, disposeOwnedRemoteResources } from "./src/systems/RemotePlayerSystem";
 import { DiagnosisSystem } from "./src/systems/DiagnosisSystem";
 import { HUDSystem } from "./src/systems/HUDSystem";
 import { VisualsSystem } from "./src/systems/VisualsSystem";
@@ -21,6 +21,10 @@ import { ChatHUDSystem } from "./src/systems/ChatHUDSystem";
 import { DamageIndicators } from "./src/vfx/DamageIndicators";
 import { audioManager } from "./audio";
 import { ClientEngineContext, engineContext } from "./context/ClientEngineContext";
+
+function isSharedAssetResource(resource: any): boolean {
+  return resource?.userData?.vexeaSharedAsset === true;
+}
 
 
 export interface NetworkDroneState {
@@ -313,15 +317,22 @@ export class MatchController {
     }
 
     // 3. Deep disposal of Three.js Scene
+    this.remotePlayersMeshes.forEach((mesh, id) => {
+        console.log(`[MATCH] Disposing remote player mesh: ${id}`);
+        this.scene.remove(mesh);
+        disposeOwnedRemoteResources(mesh);
+    });
     console.log(`[MATCH] Disposing scene objects`);
     this.scene.traverse((object: any) => {
       if (object.isMesh || object.isLine || object.isSprite || object.isPoints) {
-        if (object.geometry) object.geometry.dispose();
+        if (object.geometry && !isSharedAssetResource(object.geometry)) object.geometry.dispose();
         if (object.material) {
           if (Array.isArray(object.material)) {
-            object.material.forEach((mat: any) => mat.dispose());
+            object.material.forEach((mat: any) => {
+              if (!isSharedAssetResource(mat)) mat.dispose();
+            });
           } else {
-            object.material.dispose();
+            if (!isSharedAssetResource(object.material)) object.material.dispose();
           }
         }
       }
@@ -342,17 +353,6 @@ export class MatchController {
     this.activeGroundDrones.clear();
     this.activeAirDrones.clear();
     
-    this.remotePlayersMeshes.forEach((mesh, id) => {
-        console.log(`[MATCH] Disposing remote player mesh: ${id}`);
-        this.scene.remove(mesh);
-        mesh.traverse((obj: any) => {
-            if (obj.geometry) obj.geometry.dispose();
-            if (obj.material) {
-                if (Array.isArray(obj.material)) obj.material.forEach((m: any) => m.dispose());
-                else obj.material.dispose();
-            }
-        });
-    });
     this.remotePlayersMeshes.clear();
     this.remotePlayersTargetData.clear();
     

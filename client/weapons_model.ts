@@ -24,6 +24,50 @@ let isFirstFrame = true;
 // Pre-cached cloned templates for 3rd-person remote player weapon rendering
 const cachedWeaponScenes = new Map<string, THREE.Group>();
 
+function disposeRemoteWeaponTemplate(template: THREE.Object3D): void {
+  const geometries = new Set<THREE.BufferGeometry>();
+  const materials = new Set<THREE.Material>();
+  template.traverse((child: any) => {
+    if (child.geometry) geometries.add(child.geometry);
+    if (child.material) {
+      for (const material of Array.isArray(child.material) ? child.material : [child.material]) {
+        materials.add(material);
+      }
+    }
+  });
+  geometries.forEach((geometry) => geometry.dispose());
+  materials.forEach((material) => material.dispose());
+}
+
+function cacheRemoteWeaponTemplate(weaponId: string, scene: THREE.Object3D): void {
+  const template = scene.clone(true) as THREE.Group;
+  template.traverse((child: any) => {
+    if (child.geometry) child.geometry = child.geometry.clone();
+    if (child.material) {
+      const materials = (Array.isArray(child.material) ? child.material : [child.material])
+        .map((material: THREE.Material) => material.clone());
+      child.material = Array.isArray(child.material) ? materials : materials[0];
+      for (const material of materials) {
+        material.userData.vexeaSharedAsset = true;
+      }
+      child.geometry?.userData && (child.geometry.userData.vexeaSharedAsset = true);
+    }
+  });
+  template.traverse((child: any) => {
+    if (child.geometry) child.geometry.userData.vexeaSharedAsset = true;
+  });
+  if (cachedWeaponScenes.has(weaponId)) {
+    disposeRemoteWeaponTemplate(template);
+    return;
+  }
+  cachedWeaponScenes.set(weaponId, template);
+}
+
+export function disposeRemoteWeaponTemplates(): void {
+  for (const template of cachedWeaponScenes.values()) disposeRemoteWeaponTemplate(template);
+  cachedWeaponScenes.clear();
+}
+
 /**
  * Standardized socket resolver using shared/asset-details.ts contracts (ARCH-16)
  */
@@ -32,7 +76,11 @@ export function resolveWeaponSocket(
   weaponId: WeaponId | string,
   socketType: "muzzle" | "adsReference" | "gripPrimary" | "gripSupport" | "magazine"
 ): { node: THREE.Object3D; isProcedural: boolean } {
-  const normalizedId = (weaponId as WeaponId) in WEAPON_ASSET_DETAILS ? (weaponId as WeaponId) : 'rifle';
+  const normalizedId = weaponId === 'secondary'
+    ? 'pistol'
+    : Object.prototype.hasOwnProperty.call(WEAPON_ASSET_DETAILS, weaponId)
+      ? weaponId as WeaponId
+      : 'rifle';
   const details = WEAPON_ASSET_DETAILS[normalizedId];
   const targetName = details?.animation?.nodes?.[socketType];
 
@@ -44,11 +92,14 @@ export function resolveWeaponSocket(
   }
 
   // Check standard direct names
-  const directNames = [
-    socketType === 'muzzle' ? 'Muzzle' : socketType === 'adsReference' ? 'ADSReference' : 'GripPrimary',
-    socketType.toLowerCase()
-  ];
-  for (const name of directNames) {
+  const directNames: Record<typeof socketType, string[]> = {
+    muzzle: ['Muzzle', 'muzzle'],
+    adsReference: ['ADSReference', 'adsReference'],
+    gripPrimary: ['GripPrimary', 'gripPrimary'],
+    gripSupport: ['GripSupport', 'gripSupport'],
+    magazine: ['Magazine', 'magazine'],
+  };
+  for (const name of directNames[socketType]) {
     const found = weaponScene.getObjectByName(name);
     if (found) {
       return { node: found, isProcedural: false };
@@ -77,9 +128,17 @@ export function resolveWeaponSocket(
   return { node: dynamicNode, isProcedural: true };
 }
 
+export function getRemoteWeaponTemplateKey(weaponId: WeaponId | string): string {
+  return weaponId === 'secondary' ? 'pistol' : weaponId;
+}
+
+export function hasRemoteWeaponTemplate(weaponId: WeaponId | string): boolean {
+  return cachedWeaponScenes.has(getRemoteWeaponTemplateKey(weaponId));
+}
+
 export function createRemotePlayerWeapon(weaponId: WeaponId | string): THREE.Group {
-  const normalizedKey = (weaponId === 'pistol' || weaponId === 'secondary') ? 'pistol' : 'rifle';
-  const template = cachedWeaponScenes.get(normalizedKey) || cachedWeaponScenes.get(weaponId);
+  const normalizedKey = getRemoteWeaponTemplateKey(weaponId);
+  const template = cachedWeaponScenes.get(normalizedKey);
   if (template) {
     const clone = template.clone(true);
     clone.name = `RemoteWeapon_${weaponId}`;
@@ -91,9 +150,28 @@ export function createRemotePlayerWeapon(weaponId: WeaponId | string): THREE.Gro
   fallback.name = `RemoteWeapon_Fallback_${weaponId}`;
   const mat = new THREE.MeshStandardMaterial({ color: 0x222222, roughness: 0.5, metalness: 0.8 });
   const barrel = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.08, 0.4), mat);
+  barrel.userData.remoteOwned = true;
   barrel.position.set(0, 0, -0.15);
   fallback.add(barrel);
   return fallback;
+}
+
+async function preloadRemoteWeaponCatalog(loader: ReturnType<typeof createConfiguredGLTFLoader>): Promise<void> {
+  await Promise.all(Object.entries(WEAPON_ASSET_DETAILS).map(async ([weaponId, details]) => {
+    if (cachedWeaponScenes.has(weaponId)) return;
+    try {
+      const url = await getCachedOrFetchUrl(details.modelKey, "Asset");
+      const gltf = await loader.loadAsync(url);
+      const stats = getWeaponPerformance(weaponId) || getWeaponPerformance('rifle')!;
+      applyViewModelCalibration(gltf.scene, {
+        viewModelQuaternion: details.viewModelQuaternion,
+        visualScale: stats.visualConfig.visualScale,
+      });
+      cacheRemoteWeaponTemplate(weaponId, gltf.scene);
+    } catch (error) {
+      console.warn(`[WEAPONS] Failed to preload remote ${weaponId}:`, error);
+    }
+  }));
 }
 
 // Weapon Container Group (attached directly to the camera)
@@ -213,8 +291,7 @@ export async function initPlayerWeapons(scene: THREE.Scene, camera: THREE.Camera
         visualScale: primaryStats.visualConfig.visualScale,
       });
       primaryGroup!.add(gltf.scene);
-      cachedWeaponScenes.set(primaryWeaponId, gltf.scene.clone(true));
-      cachedWeaponScenes.set('rifle', gltf.scene.clone(true));
+      cacheRemoteWeaponTemplate(primaryWeaponId, gltf.scene);
       primaryMixer = new THREE.AnimationMixer(gltf.scene);
       rifleMixer = primaryMixer;
       
@@ -272,8 +349,7 @@ export async function initPlayerWeapons(scene: THREE.Scene, camera: THREE.Camera
         visualScale: secondaryStats.visualConfig.visualScale,
       });
       secondaryGroup!.add(gltf.scene);
-      cachedWeaponScenes.set(secondaryWeaponId, gltf.scene.clone(true));
-      cachedWeaponScenes.set('pistol', gltf.scene.clone(true));
+      cacheRemoteWeaponTemplate(secondaryWeaponId, gltf.scene);
       secondaryMixer = new THREE.AnimationMixer(gltf.scene);
       pistolMixer = secondaryMixer;
 
@@ -317,6 +393,7 @@ export async function initPlayerWeapons(scene: THREE.Scene, camera: THREE.Camera
   })();
 
   await Promise.all([loadPrimaryPromise, loadSecondaryPromise]);
+  await preloadRemoteWeaponCatalog(loader);
 
   return weaponsContainer;
 }

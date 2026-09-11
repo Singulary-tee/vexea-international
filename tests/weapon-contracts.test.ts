@@ -9,6 +9,7 @@ import { AUDIO_MANIFEST } from '../client/audio-manifest';
 import { MODEL_MANIFEST } from '../client/model-manifest';
 import * as THREE from 'three';
 import { applyViewModelCalibration } from '../client/weapons/viewmodel-calibration';
+import { createRemotePlayerWeapon, getRemoteWeaponTemplateKey, resolveWeaponSocket } from '../client/weapons_model';
 
 describe('Mixamo player asset contract', () => {
   it('registers the canonical textured player replacement and all imported rifle/pistol actions', () => {
@@ -156,11 +157,36 @@ describe('named utility and asset connector contract', () => {
       root: 'WeaponRoot', gripPrimary: 'GripPrimary', gripSupport: 'GripSupport',
       muzzle: 'Muzzle', adsReference: 'ADSReference', magazine: 'Magazine',
     });
+    expect(WEAPON_ASSET_DETAILS.smg.animation?.muzzleAxis).toEqual([0, 1, 0]);
     expect(MODEL_MANIFEST).toContainEqual({
       key: 'ump-optimized.glb', path: 'Models/Weapons/ump-optimized.glb', category: 'weapons', version: '1.0.0',
     });
     expect(UTILITY_ASSET_DETAILS['Signal Jammer'].modelKey).toBe('prc152-optimized.glb');
     expect(UTILITY_ASSET_DETAILS['Signal Jammer'].animation?.clips.use).toBe('use');
+  });
+
+  it('keeps remote weapon template identity exact and uses a generic missing-asset fallback', () => {
+    for (const weaponId of Object.keys(WEAPON_ASSET_DETAILS)) {
+      expect(getRemoteWeaponTemplateKey(weaponId)).toBe(weaponId);
+    }
+    expect(getRemoteWeaponTemplateKey('secondary')).toBe('pistol');
+    expect(getRemoteWeaponTemplateKey('smg')).not.toBe('rifle');
+    expect(getRemoteWeaponTemplateKey('smg')).not.toBe('pistol');
+
+    const fallback = createRemotePlayerWeapon('smg');
+    expect(fallback.name).toBe('RemoteWeapon_Fallback_smg');
+  });
+
+  it('resolves non-contract socket aliases without collapsing support into primary', () => {
+    const weapon = new THREE.Group();
+    const support = new THREE.Object3D();
+    support.name = 'gripSupport';
+    const magazine = new THREE.Object3D();
+    magazine.name = 'magazine';
+    weapon.add(support, magazine);
+
+    expect(resolveWeaponSocket(weapon, 'rifle', 'gripSupport').node).toBe(support);
+    expect(resolveWeaponSocket(weapon, 'rifle', 'magazine').node).toBe(magazine);
   });
 
   it('applies viewmodel calibration once at the imported scene root', () => {
