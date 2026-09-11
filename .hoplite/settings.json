@@ -1,5 +1,12 @@
 {
 	"version": 1,
+	"inference": {
+		"run": {
+			"detectorVersion": 1,
+			"framework": "vite",
+			"workspacePath": null
+		}
+	},
 	"ports": {
 		"preview": 3000,
 		"additional": {}
@@ -11,7 +18,7 @@
 		},
 		"run": {
 			"enabled": true,
-			"command": null
+			"command": "PORT=3000 npm run dev"
 		},
 		"archive": {
 			"enabled": true,

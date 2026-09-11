@@ -12,6 +12,7 @@ import {
 import { getAssetUrl } from "../../asset-cache";
 import { setWeaponReloading, resetWeaponAnimations } from "../../weapons_model";
 import { audioManager } from "../../audio";
+import { disposeOwnedRemoteResources } from "./RemotePlayerSystem";
 
 // --- BEGIN ZERO-GC OPTIMIZATIONS ---
 const _droneMuzzlePos = new THREE.Vector3();
@@ -324,8 +325,11 @@ export class NetworkSyncSystem {
       if (match.remotePlayersMeshes.has(id)) {
         const mesh = match.remotePlayersMeshes.get(id)!;
         scene.remove(mesh);
+        disposeOwnedRemoteResources(mesh);
         match.remotePlayersMeshes.delete(id);
       }
+      const mixer = match.remotePlayerMixers.get(id);
+      mixer?.stopAllAction();
       match.remotePlayerMixers.delete(id);
       match.remotePlayersTargetData.delete(id);
     }

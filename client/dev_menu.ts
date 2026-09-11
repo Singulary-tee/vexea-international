@@ -17,6 +17,7 @@ import { FeatureFlagKey } from "../shared/feature-flags";
 import { llmTrackingVisualSystem } from "./src/vfx/LLMTrackingEffect";
 import { triggerExplosion } from "./src/vfx/large";
 import { triggerFlash as triggerVFXFlash } from "./src/vfx/VFXOrchestrator";
+import { disposePoseDiagnosisPanel, renderPoseDiagnosisPanel } from "./dev_pose_diagnosis";
 
 let isMenuOpen = false;
 let activePanel = "CONSOLE";
@@ -859,7 +860,7 @@ export function initDevMenu(channel: any, jitterMap: any) {
     overlay.style.cssText = `display:none;position:absolute;inset:0;background:rgba(10,10,12,0.95);backdrop-filter:blur(0.38rem);z-index:999998;pointer-events:auto;color:${DS.colors.success};font-family:${DS.typography.fontFamilyMono};padding:${DS.spacing.md};flex-direction:column;`;
     
     // PURELY FOR IN-MATCH DEVELOPMENT. NOT FOR ANYTHING PRE-MATCH.
-    const tabs = ["VIS DIAG", "EFFECTS", "GAME CONTROL", "PHYSICS", "CHEATS", "WEPS", "CAM_FX", "CONSOLE", "LLM FEED", "AI NAV", "PERF", "NETWORK", "ZONES", "ENTITIES", "COLLISIONS"];
+    const tabs = ["VIS DIAG", "POSE DIAG", "EFFECTS", "GAME CONTROL", "PHYSICS", "CHEATS", "WEPS", "CAM_FX", "CONSOLE", "LLM FEED", "AI NAV", "PERF", "NETWORK", "ZONES", "ENTITIES", "COLLISIONS"];
     const header = document.createElement("div");
     header.style.cssText = "display:flex;gap:0.63rem;margin-bottom:0.63rem;overflow-x:auto;";
     tabs.forEach(t => {
@@ -905,10 +906,12 @@ function toggleDevMenu() {
     const overlay = document.getElementById("dev-overlay");
     if (overlay) overlay.style.display = isMenuOpen ? "flex" : "none";
     if (isMenuOpen) renderPanel();
+    else disposePoseDiagnosisPanel();
 }
 (window as any).toggleDevMenu = toggleDevMenu;
 
 function renderPanel() {
+    if (activePanel !== "POSE DIAG") disposePoseDiagnosisPanel();
     if (activePanel !== "AI NAV" && navPanZoomInstance) {
         navPanZoomInstance.destroy();
         navPanZoomInstance = null;
@@ -2021,6 +2024,9 @@ function renderPanel() {
     else if (activePanel === "VIS DIAG") {
         c.innerHTML = (window as any).getVisualDiagnosisHTML ? (window as any).getVisualDiagnosisHTML() : "Loading...";
     }
+    else if (activePanel === "POSE DIAG") {
+        renderPoseDiagnosisPanel(c);
+    }
     else if (activePanel === "ZONES") {
         c.innerHTML = "<div id='dev-zones' style='white-space:pre-wrap;overflow-y:auto;height:100%; padding:${DS.spacing.md};'></div>";
     }
@@ -2076,6 +2082,8 @@ function renderPanel() {
             content = document.getElementById("dev-network")?.innerText || "";
         } else if (activePanel === "VIS DIAG") {
             content = "VIS DIAG TAB - CONTROLS & DIAGNOSTICS";
+        } else if (activePanel === "POSE DIAG") {
+            content = document.querySelector("[data-pose-results]")?.textContent || "";
         }
         else if (activePanel === "ZONES") {
             content = document.getElementById("dev-zones")?.innerText || "";
