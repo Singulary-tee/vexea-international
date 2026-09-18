@@ -15,6 +15,7 @@ export interface MapSpec {
   version: string;
   displayName: string;
   worldSize: { x: number; z: number };
+  sceneGlb?: string;
   zones: any[];
   buildings: any[];
   spawnPoints: any[];
@@ -33,6 +34,8 @@ export class MapLoader {
   private sceneAddCallCount: number = 0;
   private concreteWallMat: THREE.MeshStandardMaterial | null = null;
   private disposed = false;
+  private groundMap: THREE.CanvasTexture | null = null;
+  private groundRoughnessMap: THREE.CanvasTexture | null = null;
 
   constructor(scene: THREE.Scene) {
     this.scene = scene;
@@ -53,6 +56,9 @@ export class MapLoader {
     if (this.disposed || !this.spec || !isCurrent()) return;
 
     const uniqueMeshes = new Set<string>();
+    if (this.spec.sceneGlb) {
+      uniqueMeshes.add(this.spec.sceneGlb);
+    }
     this.spec.buildings.forEach(b => {
       if (b.meshFile && b.meshType !== 'TYPE_CENTERPIECE') uniqueMeshes.add(b.meshFile);
     });
@@ -159,8 +165,30 @@ export class MapLoader {
         });
     };
 
+    if (this.spec.sceneGlb && this.loadedAssets.has(this.spec.sceneGlb)) {
+      const sceneAsset = this.loadedAssets.get(this.spec.sceneGlb)!;
+      const clone = sceneAsset.clone();
+      const worldCenterX = this.spec.worldSize?.x ? this.spec.worldSize.x / 2 : 384;
+      const worldCenterZ = this.spec.worldSize?.z ? this.spec.worldSize.z / 2 : 384;
+      clone.position.set(worldCenterX, 0, worldCenterZ);
+      clone.updateMatrixWorld(true);
+      clone.traverse((child) => {
+        if (child instanceof THREE.Mesh) {
+          child.castShadow = false;
+          child.receiveShadow = false;
+        }
+      });
+      this.scene.add(clone);
+      this.mergedMeshes.push(clone as any);
+      this.sceneAddCallCount++;
+      console.log('[MAP DEBUG] Placed sceneGlb', this.spec.sceneGlb, 'at center:', worldCenterX, 0, worldCenterZ);
+    }
+
     for (const b of this.spec.buildings) {
       if (b.meshType === 'TYPE_CENTERPIECE') {
+        if (this.spec.sceneGlb) {
+          continue; // Facility GLB already contains the core structure
+        }
         const cp = this.buildCenterpiece();
         cp.position.set(b.position.x, b.position.y, b.position.z);
         // Note: Blueprint X=x, Y=z, Z=y typically, but map spec uses x/y/z directly as THREE coordinates.
@@ -260,52 +288,127 @@ export class MapLoader {
     console.log('[MAP DEBUG] Scene build complete. Zones merged:', this.mergedMeshes.length, 'Total draw calls added:', this.sceneAddCallCount);
   }
 
+  private createNoiseTexture(mean: number, amp: number, seed: number): THREE.CanvasTexture {
+    const S = 256;
+    const G = 16;
+    const c = document.createElement('canvas');
+    c.width = c.height = S;
+    const ctx = c.getContext('2d');
+    if (!ctx) return new THREE.CanvasTexture(c);
+
+    const img = ctx.createImageData(S, S);
+    let s = seed >>> 0;
+    const rnd = () => (s = (s * 1664525 + 1013904223) >>> 0) / 4294967296;
+    const lat = new Float32Array(G * G);
+    for (let i = 0; i < lat.length; i++) lat[i] = rnd();
+    const sm = (t: number) => t * t * (3 - 2 * t);
+    const oct = (u: number, v: number, g: number) => {
+      const x = u * g;
+      const y = v * g;
+      const xi = Math.floor(x);
+      const yi = Math.floor(y);
+      const fx = sm(x - xi);
+      const fy = sm(y - yi);
+      const x0 = xi % G;
+      const y0 = yi % G;
+      const x1 = (x0 + 1) % G;
+      const y1 = (y0 + 1) % G;
+      const a = lat[y0 * G + x0];
+      const b = lat[y0 * G + x1];
+      const d = lat[y1 * G + x0];
+      const e = lat[y1 * G + x1];
+      return (a + (b - a) * fx) * (1 - fy) + (d + (e - d) * fx) * fy;
+    };
+    for (let y = 0; y < S; y++) {
+      for (let x = 0; x < S; x++) {
+        const u = x / S;
+        const v = y / S;
+        const n = oct(u, v, 4) * 0.35 + oct(u, v, 8) * 0.3 + oct(u, v, 16) * 0.2 + oct(u, v, 32) * 0.15;
+        const m = mean + (n - 0.5) * 2 * amp;
+        const i = (y * S + x) * 4;
+        const g = Math.max(0, Math.min(255, Math.round(m * 255)));
+        img.data[i] = g;
+        img.data[i + 1] = g;
+        img.data[i + 2] = g;
+        img.data[i + 3] = 255;
+      }
+    }
+    ctx.putImageData(img, 0, 0);
+    const t = new THREE.CanvasTexture(c);
+    t.wrapS = THREE.RepeatWrapping;
+    t.wrapT = THREE.RepeatWrapping;
+    t.repeat.set(60, 49);
+    t.anisotropy = 4;
+    return t;
+  }
+
   async setupEnvironment(): Promise<void> {
     if (!this.spec) return;
 
-    // Ground plane: a single large flat plane covering the full 768x768 world size.
-    // We use the asphalt_02 PBR texture set to fit the facility vibe.
     this.concreteWallMat = new THREE.MeshStandardMaterial({
       color: 0x5a6372,
       roughness: 0.8,
       metalness: 0.1
     });
 
+    // Ground micro-variation pass matching authoring benchmarks
+    this.groundMap = this.createNoiseTexture(0.75, 0.05, 0x9e3779b9);
+    this.groundRoughnessMap = this.createNoiseTexture(0.9, 0.04, 0x85ebca6b);
+
     const groundMat = new THREE.MeshStandardMaterial({
-      color: 0x1f232a,
-      roughness: 0.85,
-      metalness: 0.15
+      color: 0x7b7567,
+      roughness: 1.0,
+      metalness: 0.0,
+      map: this.groundMap,
+      roughnessMap: this.groundRoughnessMap
     });
 
     const { x: wX, z: wZ } = this.spec.worldSize;
-    const groundGeom = new THREE.PlaneGeometry(wX, wZ);
+    const groundW = Math.max(wX, 2200);
+    const groundZ = Math.max(wZ, 1800);
+    const groundGeom = new THREE.PlaneGeometry(groundW, groundZ);
     groundGeom.rotateX(-Math.PI / 2);
     const groundMesh = new THREE.Mesh(groundGeom, groundMat);
-    // Center at world center (wX/2, wZ/2) instead of origin
-    groundMesh.position.set(wX / 2, 0, wZ / 2);
+    // Center at world center, slightly below Y=0 to avoid z-fighting with facility ground elements
+    groundMesh.position.set(wX / 2, -0.05, wZ / 2);
     groundMesh.castShadow = false;
     groundMesh.receiveShadow = false;
     this.scene.add(groundMesh);
     this.mergedMeshes.push(groundMesh);
 
     // Background and Fog setup
-    this.scene.background = new THREE.Color(0x181c24);
-    const fogNear = 80;
-    const fogFar = 400;
-    this.scene.fog = new THREE.Fog(0x181c24, fogNear, fogFar);
+    const SKY = new THREE.Color(0xa8bdd2);
+    this.scene.background = SKY;
+    this.scene.fog = new THREE.FogExp2(SKY.getHex(), 0.0007);
 
     if ((this.scene as any).fogNode) {
       (this.scene as any).fogNode = null;
     }
 
-    // Ambient + directional light simulating dusk HDR
-    const ambient = new THREE.AmbientLight(0xE8E8E8, 0.4);
-    this.scene.add(ambient);
-    this.mergedMeshes.push(ambient as any);
-    const dirLight = new THREE.DirectionalLight(0xffddbb, 0.6);
-    dirLight.position.set(100, 200, 50); 
+    // HDR skybox enhancement if available
+    try {
+      const skyboxUrl = await getCachedOrFetchUrl('qwantani_dusk_2_puresky_4k.hdr', 'Asset');
+      if (skyboxUrl) {
+        const rgbeLoader = new HDRLoader();
+        rgbeLoader.load(skyboxUrl, (texture) => {
+          texture.mapping = THREE.EquirectangularReflectionMapping;
+          this.scene.background = texture;
+          this.scene.environment = texture;
+          console.log('[ENV DEBUG] Skybox loaded successfully.');
+        }, undefined, () => {});
+      }
+    } catch (e) {}
+
+    // Key directional light: raking sunlight across the facility
+    const dirLight = new THREE.DirectionalLight(0xfff2dd, 1.8);
+    dirLight.position.set(-450 + (wX / 2), 380, 320 + (wZ / 2));
     this.scene.add(dirLight);
     this.mergedMeshes.push(dirLight as any);
+
+    // Atmosphere ambient fill
+    const hemiLight = new THREE.HemisphereLight(SKY, 0x4a4842, 0.35);
+    this.scene.add(hemiLight);
+    this.mergedMeshes.push(hemiLight as any);
   }
 
   private buildCenterpiece(): THREE.Group {
@@ -435,6 +538,14 @@ export class MapLoader {
     this.spec = null;
     this.concreteWallMat?.dispose();
     this.concreteWallMat = null;
+    if (this.groundMap) {
+      this.groundMap.dispose();
+      this.groundMap = null;
+    }
+    if (this.groundRoughnessMap) {
+      this.groundRoughnessMap.dispose();
+      this.groundRoughnessMap = null;
+    }
     if (this.centerpieceDisc) {
         this.centerpieceDisc = null;
     }
