@@ -39,8 +39,28 @@ function disposeRemoteWeaponTemplate(template: THREE.Object3D): void {
   materials.forEach((material) => material.dispose());
 }
 
-function cacheRemoteWeaponTemplate(weaponId: string, scene: THREE.Object3D): void {
+function disposeWeaponScene(scene: THREE.Object3D): void {
+  const geometries = new Set<THREE.BufferGeometry>();
+  const materials = new Set<THREE.Material>();
+  scene.traverse((child: any) => {
+    if (child.geometry) geometries.add(child.geometry);
+    if (child.material) {
+      for (const material of Array.isArray(child.material) ? child.material : [child.material]) {
+        materials.add(material);
+      }
+    }
+  });
+  geometries.forEach((geometry) => geometry.dispose());
+  materials.forEach((material) => material.dispose());
+}
+
+function cacheRemoteWeaponTemplate(
+  weaponId: string,
+  scene: THREE.Object3D,
+  animations: readonly THREE.AnimationClip[] = [],
+): void {
   const template = scene.clone(true) as THREE.Group;
+  (template as any).animations = animations;
   template.traverse((child: any) => {
     if (child.geometry) child.geometry = child.geometry.clone();
     if (child.material) {
@@ -142,6 +162,7 @@ export function createRemotePlayerWeapon(weaponId: WeaponId | string): THREE.Gro
   if (template) {
     const clone = template.clone(true);
     clone.name = `RemoteWeapon_${weaponId}`;
+    (clone as any).animations = (template as any).animations || [];
     return clone;
   }
   
@@ -156,18 +177,25 @@ export function createRemotePlayerWeapon(weaponId: WeaponId | string): THREE.Gro
   return fallback;
 }
 
-async function preloadRemoteWeaponCatalog(loader: ReturnType<typeof createConfiguredGLTFLoader>): Promise<void> {
+async function preloadRemoteWeaponCatalog(
+  loader: ReturnType<typeof createConfiguredGLTFLoader>,
+  isCurrent: () => boolean = () => true,
+): Promise<void> {
   await Promise.all(Object.entries(WEAPON_ASSET_DETAILS).map(async ([weaponId, details]) => {
     if (cachedWeaponScenes.has(weaponId)) return;
     try {
       const url = await getCachedOrFetchUrl(details.modelKey, "Asset");
       const gltf = await loader.loadAsync(url);
+      if (!isCurrent()) {
+        disposeWeaponScene(gltf.scene);
+        return;
+      }
       const stats = getWeaponPerformance(weaponId) || getWeaponPerformance('rifle')!;
       applyViewModelCalibration(gltf.scene, {
         viewModelQuaternion: details.viewModelQuaternion,
         visualScale: stats.visualConfig.visualScale,
       });
-      cacheRemoteWeaponTemplate(weaponId, gltf.scene);
+      cacheRemoteWeaponTemplate(weaponId, gltf.scene, gltf.animations);
     } catch (error) {
       console.warn(`[WEAPONS] Failed to preload remote ${weaponId}:`, error);
     }
@@ -252,8 +280,93 @@ export const weaponVisualState: WeaponVisualState = {
 // Internal tracking for transition logic
 let lastBaseState: WeaponAnimState = WeaponAnimState.IDLE;
 let isWeaponReloading = false;
+let playerWeaponGeneration = 0;
+let primaryScene: THREE.Object3D | null = null;
+let secondaryScene: THREE.Object3D | null = null;
+let activeWeaponInitialization: {
+  scene: THREE.Scene;
+  camera: THREE.Camera;
+  promise: Promise<THREE.Group>;
+} | null = null;
 
-export async function initPlayerWeapons(scene: THREE.Scene, camera: THREE.Camera): Promise<THREE.Group> {
+function disposeWeaponMixer(mixer: THREE.AnimationMixer | null, root: THREE.Object3D | null): void {
+  if (!mixer) return;
+  mixer.stopAllAction();
+  if (root && typeof (mixer as any).uncacheRoot === "function") {
+    (mixer as any).uncacheRoot(root);
+  }
+}
+
+function clearWeaponActions(actions: Record<string, THREE.AnimationAction>): void {
+  for (const key of Object.keys(actions)) delete actions[key];
+}
+
+export function disposePlayerWeapons(): void {
+  playerWeaponGeneration++;
+  activeWeaponInitialization = null;
+
+  disposeWeaponMixer(primaryMixer, primaryScene);
+  disposeWeaponMixer(secondaryMixer, secondaryScene);
+
+  const scenes = new Set<THREE.Object3D>();
+  if (primaryScene) scenes.add(primaryScene);
+  if (secondaryScene) scenes.add(secondaryScene);
+  for (const scene of scenes) disposeWeaponScene(scene);
+
+  weaponsContainer?.parent?.remove(weaponsContainer);
+  weaponsContainer = null;
+  primaryGroup = null;
+  secondaryGroup = null;
+  rifleGroup = null;
+  pistolGroup = null;
+  primaryMixer = null;
+  secondaryMixer = null;
+  rifleMixer = null;
+  pistolMixer = null;
+  primaryScene = null;
+  secondaryScene = null;
+  clearWeaponActions(primaryActions);
+  clearWeaponActions(secondaryActions);
+  currentActiveClipKeys[1] = null;
+  currentActiveClipKeys[2] = null;
+  weaponVisualState.activeSlot = 1;
+  weaponVisualState.switchTimer = 0;
+  weaponVisualState.pendingSlot = 0;
+  weaponVisualState.recoilZ = 0;
+  weaponVisualState.recoilPitch = 0;
+  weaponVisualState.recoilYaw = 0;
+  weaponVisualState.swayCycle = 0;
+  weaponVisualState.currentState = WeaponAnimState.IDLE;
+  lastBaseState = WeaponAnimState.IDLE;
+  isWeaponReloading = false;
+  isFirstFrame = true;
+}
+
+export function initPlayerWeapons(scene: THREE.Scene, camera: THREE.Camera): Promise<THREE.Group> {
+  if (
+    activeWeaponInitialization
+    && activeWeaponInitialization.scene === scene
+    && activeWeaponInitialization.camera === camera
+  ) {
+    return activeWeaponInitialization.promise;
+  }
+
+  disposePlayerWeapons();
+  const promise = initializePlayerWeapons(scene, camera);
+  activeWeaponInitialization = { scene, camera, promise };
+  void promise.then(
+    () => {
+      if (activeWeaponInitialization?.promise === promise) activeWeaponInitialization = null;
+    },
+    () => {
+      if (activeWeaponInitialization?.promise === promise) activeWeaponInitialization = null;
+    },
+  );
+  return promise;
+}
+
+async function initializePlayerWeapons(scene: THREE.Scene, camera: THREE.Camera): Promise<THREE.Group> {
+  const generation = playerWeaponGeneration;
   isFirstFrame = true;
   weaponsContainer = new THREE.Group();
   weaponsContainer.name = "WeaponsContainer";
@@ -279,19 +392,26 @@ export async function initPlayerWeapons(scene: THREE.Scene, camera: THREE.Camera
   const secondaryWeaponId: WeaponId = match?.secondaryWeaponId || 'pistol';
   const primaryAsset = WEAPON_ASSET_DETAILS[primaryWeaponId];
   const secondaryAsset = WEAPON_ASSET_DETAILS[secondaryWeaponId];
+  let primaryAnimations: readonly THREE.AnimationClip[] = [];
+  let secondaryAnimations: readonly THREE.AnimationClip[] = [];
 
   // Load primary weapon slot
   const loadPrimaryPromise = (async () => {
     try {
       const url = await getCachedOrFetchUrl(primaryAsset.modelKey, "Asset");
       const gltf = await loader.loadAsync(url);
+      if (generation !== playerWeaponGeneration) {
+        disposeWeaponScene(gltf.scene);
+        return;
+      }
+      primaryScene = gltf.scene;
+      primaryAnimations = gltf.animations;
       const primaryStats = getWeaponPerformance(primaryWeaponId) || getWeaponPerformance('rifle')!;
       applyViewModelCalibration(gltf.scene, {
         viewModelQuaternion: primaryAsset.viewModelQuaternion,
         visualScale: primaryStats.visualConfig.visualScale,
       });
       primaryGroup!.add(gltf.scene);
-      cacheRemoteWeaponTemplate(primaryWeaponId, gltf.scene);
       primaryMixer = new THREE.AnimationMixer(gltf.scene);
       rifleMixer = primaryMixer;
       
@@ -335,6 +455,7 @@ export async function initPlayerWeapons(scene: THREE.Scene, camera: THREE.Camera
       console.log(`[WEAPONS] Primary ${primaryWeaponId} loaded, animations:`, Object.keys(primaryActions));
     } catch (e) {
       console.error(`[WEAPONS] Failed to load primary ${primaryWeaponId}:`, e);
+      throw e;
     }
   })();
 
@@ -343,13 +464,18 @@ export async function initPlayerWeapons(scene: THREE.Scene, camera: THREE.Camera
     try {
       const url = await getCachedOrFetchUrl(secondaryAsset.modelKey, "Asset");
       const gltf = await loader.loadAsync(url);
+      if (generation !== playerWeaponGeneration) {
+        disposeWeaponScene(gltf.scene);
+        return;
+      }
+      secondaryScene = gltf.scene;
+      secondaryAnimations = gltf.animations;
       const secondaryStats = getWeaponPerformance(secondaryWeaponId) || getWeaponPerformance('pistol')!;
       applyViewModelCalibration(gltf.scene, {
         viewModelQuaternion: secondaryAsset.viewModelQuaternion,
         visualScale: secondaryStats.visualConfig.visualScale,
       });
       secondaryGroup!.add(gltf.scene);
-      cacheRemoteWeaponTemplate(secondaryWeaponId, gltf.scene);
       secondaryMixer = new THREE.AnimationMixer(gltf.scene);
       pistolMixer = secondaryMixer;
 
@@ -389,11 +515,26 @@ export async function initPlayerWeapons(scene: THREE.Scene, camera: THREE.Camera
       console.log(`[WEAPONS] Secondary ${secondaryWeaponId} loaded, animations:`, Object.keys(secondaryActions));
     } catch (e) {
       console.error(`[WEAPONS] Failed to load secondary ${secondaryWeaponId}:`, e);
+      throw e;
     }
   })();
 
-  await Promise.all([loadPrimaryPromise, loadSecondaryPromise]);
-  await preloadRemoteWeaponCatalog(loader);
+  const slotResults = await Promise.allSettled([loadPrimaryPromise, loadSecondaryPromise]);
+  if (generation !== playerWeaponGeneration) {
+    throw new Error("Player weapon initialization was superseded");
+  }
+  const failedSlot = slotResults.find((result): result is PromiseRejectedResult => result.status === "rejected");
+  if (failedSlot) {
+    disposePlayerWeapons();
+    throw failedSlot.reason;
+  }
+
+  if (primaryScene) cacheRemoteWeaponTemplate(primaryWeaponId, primaryScene, primaryAnimations);
+  if (secondaryScene) cacheRemoteWeaponTemplate(secondaryWeaponId, secondaryScene, secondaryAnimations);
+  await preloadRemoteWeaponCatalog(loader, () => generation === playerWeaponGeneration);
+  if (generation !== playerWeaponGeneration || !weaponsContainer) {
+    throw new Error("Player weapon initialization was superseded");
+  }
 
   return weaponsContainer;
 }
@@ -488,7 +629,12 @@ export function isSwitchingWeapon(): boolean {
   return weaponVisualState.switchTimer > 0;
 }
 
-export function getMuzzleWorldPosition(outVec: THREE.Vector3, camera: THREE.Camera): void {
+export function getMuzzleWorldPosition(outVec: THREE.Vector3, camera: THREE.Camera): boolean {
+  const localPlayerVisual = getMatch()?.localPlayerVisual;
+  if (localPlayerVisual?.ownsWeapon) {
+    return localPlayerVisual.getMuzzleWorldPosition(outVec);
+  }
+
   if (weaponsContainer) {
     weaponsContainer.updateMatrixWorld(true);
   }
@@ -504,6 +650,7 @@ export function getMuzzleWorldPosition(outVec: THREE.Vector3, camera: THREE.Came
     _muzzleWorldPos.set(0, 0, -0.5).applyQuaternion(camera.quaternion);
     outVec.add(_muzzleWorldPos);
   }
+  return true;
 }
 
 export function setWeaponReloading(val: boolean) {

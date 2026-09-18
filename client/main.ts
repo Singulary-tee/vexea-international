@@ -98,7 +98,6 @@ import {
   smoothstep,
   mix,
 } from "three/tsl";
-import { initDroneModels } from "./drone_models";
 import * as BufferGeometryUtils from "three/addons/utils/BufferGeometryUtils.js";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import * as SkeletonUtils from "three/addons/utils/SkeletonUtils.js";
@@ -146,6 +145,7 @@ import {
   WAYPOINTS,
   ZONES_ARRAY,
   getWeaponPerformance,
+  PLAYER_EYE_LEVEL,
 } from "../shared/constants";
 
 // State Tracker
@@ -443,21 +443,26 @@ const initClient = async () => {
           });
       }
 
-      if (requestedMap !== "map_0_dev") {
-        const mapDef = getMapById(requestedMap);
-        if (mapDef && channel) {
-          import("./src/map/LoadingOrchestrator").then((m) => {
-            m.orchestrateMatchLoad(mapDef, channel!, match.scene);
+      const mapDef = getMapById(requestedMap);
+      if (mapDef && channel) {
+        import("./src/map/LoadingOrchestrator").then((m) => {
+          m.orchestrateMatchLoad(mapDef, channel!, match.scene, camera, match).then((loaded) => {
+            if (!m.shouldSignalMatchLoadComplete(loaded, match, getMatch())) return;
           });
-        }
+        });
       } else {
         const mLoader = new MapLoader(match.scene);
-        const mapDef = getMapById(requestedMap);
         if (mapDef) {
-          mLoader.load(mapDef).then(() => {
-            mLoader.buildScene();
-            mLoader.placeProps();
-            (window as any).__vexMapLoader = mLoader;
+          const isCurrentMatch = () => match.active && getMatch() === match;
+          mLoader.load(mapDef, isCurrentMatch).then(async () => {
+            await mLoader.buildScene(isCurrentMatch);
+            mLoader.placeProps(isCurrentMatch);
+            if (isCurrentMatch()) {
+              (window as any).__vexMapLoader = mLoader;
+              match.visuals?.init();
+            } else {
+              mLoader.dispose();
+            }
           });
         }
       }
@@ -573,6 +578,7 @@ const initClient = async () => {
 
 function initializeLocalMatchScene(requestedMap: string, requestedClass: string = 'ASSAULT') {
   const match = createNewMatch();
+  (window as any).__vexMapLoader = undefined;
   const classId = requestedClass.toUpperCase() as import('../shared/classes').ClassId;
   const selectedWeapons = ClassLoadoutPersistence.getClassWeaponIds(classId);
   match.configureLoadout(classId, selectedWeapons.primaryWeaponId, selectedWeapons.secondaryWeaponId);
@@ -670,7 +676,8 @@ function startMatchFromMatchFound(msg: any) {
   const mapDef = getMapById(mapId);
   if (mapDef && channel) {
     import("./src/map/LoadingOrchestrator").then((m) => {
-      m.orchestrateMatchLoad(mapDef, channel!, match.scene, camera).then(() => {
+      m.orchestrateMatchLoad(mapDef, channel!, match.scene, camera, match).then((loaded) => {
+        if (!m.shouldSignalMatchLoadComplete(loaded, match, getMatch())) return;
         console.log("[MATCHMAKING] Loading complete. Signaling server loading_complete for matchId:", matchId);
         channel?.emit("loading_complete", { matchId });
       });
@@ -679,14 +686,21 @@ function startMatchFromMatchFound(msg: any) {
     const mLoader = new MapLoader(match.scene);
     const mDef = getMapById(mapId);
     if (mDef) {
-      mLoader.load(mDef).then(() => {
-        mLoader.buildScene();
-        mLoader.placeProps();
+      const isCurrentMatch = () => match.active && getMatch() === match;
+      mLoader.load(mDef, isCurrentMatch).then(async () => {
+        await mLoader.buildScene(isCurrentMatch);
+        mLoader.placeProps(isCurrentMatch);
+        if (!isCurrentMatch()) {
+          mLoader.dispose();
+          return;
+        }
         (window as any).__vexMapLoader = mLoader;
+        match.visuals?.init();
         console.log("[MATCHMAKING] Loading complete. Signaling server loading_complete for matchId:", matchId);
         channel?.emit("loading_complete", { matchId });
       });
-    } else {
+    } else if (match.active && getMatch() === match) {
+      match.visuals?.init();
       console.log("[MATCHMAKING] Loading complete. Signaling server loading_complete for matchId:", matchId);
       channel?.emit("loading_complete", { matchId });
     }
@@ -1186,6 +1200,27 @@ const animateFrame = async () => {
        (window as any).devSubsystems.physics = performance.now() - _p0;
      }
 
+     if (match.localPlayerVisual) {
+       match.localPlayerVisual.update(
+         dt,
+         match.playerPos,
+         match.playerYaw,
+         camera,
+         match.localCrouchY,
+         {
+           isAlive: !match.isLocalPlayerDead,
+           isFiring: inputManager.isFiring || match.pendingFire,
+           isReloading: match.isReloading,
+           speed: Math.hypot(match.playerVel.x, match.playerVel.z),
+           isGrounded: match.localGrounded,
+           isCrouching: inputManager.isCrouching || match.localCrouchY < PLAYER_EYE_LEVEL - 0.1,
+           isSprinting: inputManager.isSprinting,
+           isAiming: match.isADS,
+           weapon: match.getActiveWeaponId(),
+         },
+       );
+     }
+
      // Apply Camera & Viewmodel Effects (Point 9: head bobbing, tilting, landing jolts, FOV stretch)
      if (match.cameraEffects) {
        const isMoving = inputManager.moveX !== 0 || inputManager.moveZ !== 0;
@@ -1202,11 +1237,19 @@ const animateFrame = async () => {
        );
      }
 
+     if (match.localPlayerVisual) {
+       match.localPlayerVisual.updateWeaponPose(camera);
+     }
+
     // 4. Weapon Position Sync (Smooth spring-recoil, breathing sway, and draw-holster animations)
     if (weaponsContainer) {
-      const _w0 = performance.now();
-      updateWeaponsContainer(dt, camera, match.isADS, match.currentAdsLerp, inputManager.moveX !== 0 || inputManager.moveZ !== 0);
-      (window as any).devSubsystems.weapons = performance.now() - _w0;
+      const localWeaponOwnsPresentation = !!match.localPlayerVisual?.ownsWeapon;
+      weaponsContainer.visible = !localWeaponOwnsPresentation;
+      if (!localWeaponOwnsPresentation) {
+        const _w0 = performance.now();
+        updateWeaponsContainer(dt, camera, match.isADS, match.currentAdsLerp, inputManager.moveX !== 0 || inputManager.moveZ !== 0);
+        (window as any).devSubsystems.weapons = performance.now() - _w0;
+      }
 
       // Hide Center Crosshair dynamically when aiming down sights (ADS)
       const crosshair = document.getElementById("center-crosshair");

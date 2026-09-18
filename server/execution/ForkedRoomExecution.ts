@@ -5,6 +5,7 @@ import { fileURLToPath } from "url";
 import { RoomExecution, RoomExecutionStatus, RoomInboundEvent, RoomOutboundEvent } from "./RoomExecution";
 import { ParentToChildMessage, ChildToParentMessage } from "./protocol";
 import { connectionRegistry } from "../connection-registry";
+import type { ChannelAdapter } from "../transport/adapter";
 import { recordRemoteTelemetry, removeWorkerTelemetry, writeBenchmarkEventRecord } from "../benchmark/telemetry";
 
 export interface ForkedRoomExecutionOptions {
@@ -27,8 +28,11 @@ export function resolveWorkerPath(): { scriptPath: string; execArgv: string[] } 
     baseDir = path.resolve(process.cwd(), "server/execution");
   }
 
+  const sourceWorker = path.resolve(baseDir, "room-worker.ts");
+  const isSourceCheckout = path.basename(baseDir) === "execution"
+    && path.basename(path.dirname(baseDir)) === "server";
   const cjsCandidate = path.resolve(baseDir, "room-worker.cjs");
-  if (!fs.existsSync(cjsCandidate)) {
+  if (!isSourceCheckout && !fs.existsSync(cjsCandidate)) {
     const tsSource = path.resolve(process.cwd(), "server/execution/room-worker.ts");
     if (fs.existsSync(tsSource)) {
       try {
@@ -51,9 +55,9 @@ export function resolveWorkerPath(): { scriptPath: string; execArgv: string[] } 
   }
 
   const candidates = [
-    cjsCandidate,
+    ...(isSourceCheckout ? [sourceWorker] : [cjsCandidate]),
     path.resolve(baseDir, "room-worker.js"),
-    path.resolve(baseDir, "room-worker.ts"),
+    sourceWorker,
     path.resolve(process.cwd(), "server/execution/room-worker.ts"),
     path.resolve(baseDir, "../../server/execution/room-worker.ts"),
   ];
@@ -87,10 +91,91 @@ export class ForkedRoomExecution implements RoomExecution {
   private readyPromise: Promise<void>;
   private readyResolve!: () => void;
   private readyReject!: (err: Error) => void;
+  private readySettled = false;
   private options: ForkedRoomExecutionOptions;
   private childPid: number | null = null;
   private isExplicitTermination = false;
+  private terminalNotification: "crash" | "shutdown" | null = null;
+  private crashDisconnectSent = false;
+  private crashLifecycleSent = false;
+  private registeredPlayerIds = new Set<string>();
   private pendingMessages: ParentToChildMessage[] = [];
+  private reconnectRequestSequence = 0;
+  private invalidatedReconnects = new Set<string>();
+  private pendingReconnects = new Map<string, {
+    resolve: (accepted: boolean) => void;
+    timer: NodeJS.Timeout;
+    playerId: string;
+    channel: ChannelAdapter;
+    generation: number;
+  }>();
+
+  private settlePendingReconnects(accepted = false): void {
+    for (const [requestId, pending] of this.pendingReconnects) {
+      clearTimeout(pending.timer);
+      this.pendingReconnects.delete(requestId);
+      pending.resolve(accepted);
+    }
+    this.invalidatedReconnects.clear();
+  }
+
+  private resolveReady(): void {
+    if (this.readySettled) return;
+    this.readySettled = true;
+    this.readyResolve();
+  }
+
+  private rejectReady(error: Error): void {
+    if (this.readySettled) return;
+    this.readySettled = true;
+    this.readyReject(error);
+  }
+
+  private notifyCrash(error?: string): void {
+    if (this.terminalNotification) return;
+    this.terminalNotification = "crash";
+    this.options.onCrash?.(this.roomId, error);
+  }
+
+  private notifyShutdown(): void {
+    if (this.terminalNotification) return;
+    this.terminalNotification = "shutdown";
+    this.options.onShutdown?.(this.roomId);
+  }
+
+  private emitCrashLifecycle(error?: string): void {
+    if (this.crashLifecycleSent) return;
+    this.crashLifecycleSent = true;
+    this.emitCrashDisconnect();
+    this.emitOutbound("broadcast", {
+      type: "DISCONNECT",
+      reason: "ROOM_CRASHED",
+    });
+    this.outboundListeners = [];
+    this.notifyCrash(error);
+  }
+
+  private emitCrashDisconnect(): void {
+    if (this.crashDisconnectSent) return;
+    this.crashDisconnectSent = true;
+    const playerIds = new Set([
+      ...this.registeredPlayerIds,
+      ...Array.from(this.pendingReconnects.values(), (pending) => pending.playerId),
+    ]);
+    for (const playerId of playerIds) {
+      const pendingReconnect = Array.from(this.pendingReconnects.values()).find(
+        (pending) => pending.playerId === playerId,
+      );
+      const channel = pendingReconnect?.channel || connectionRegistry.get(playerId);
+      if (!channel || channel.connected === false) continue;
+      try {
+        channel.emit("reliable_event", {
+          type: "DISCONNECT",
+          reason: "ROOM_CRASHED",
+        });
+      } catch (e) {}
+    }
+  }
 
   constructor(roomId: string, options: ForkedRoomExecutionOptions = {}) {
     this.roomId = roomId;
@@ -135,11 +220,10 @@ export class ForkedRoomExecution implements RoomExecution {
         if (this.status === "starting") {
           console.error(`[ForkedRoomExecution] Room ${this.roomId} timed out waiting for ready state (${timeoutMs}ms)`);
           this.status = "crashed";
-          this.readyReject(new Error(`Room process ${this.roomId} timed out waiting for ready state`));
+          this.pendingMessages = [];
+          this.rejectReady(new Error(`Room process ${this.roomId} timed out waiting for ready state`));
           this.killChild();
-          if (this.options.onCrash) {
-            this.options.onCrash(this.roomId, "READY_TIMEOUT");
-          }
+          this.notifyCrash("READY_TIMEOUT");
         }
       }, timeoutMs);
 
@@ -149,16 +233,19 @@ export class ForkedRoomExecution implements RoomExecution {
 
       this.child.on("error", (err) => {
         console.error(`[ForkedRoomExecution] Child process error for room ${this.roomId}:`, err);
+        const wasEnding = this.status === "ending" || this.isExplicitTermination;
         if (this.status === "starting") {
           clearTimeout(timer);
           this.status = "crashed";
-          this.readyReject(err);
-        } else if (this.status !== "ending") {
+          this.rejectReady(err);
+        } else if (!wasEnding) {
           this.status = "crashed";
         }
-        if (this.options.onCrash) {
-          this.options.onCrash(this.roomId, err.message);
+        this.pendingMessages = [];
+        if (!wasEnding) {
+          this.emitCrashLifecycle(err.message);
         }
+        this.settlePendingReconnects();
       });
 
       this.child.on("exit", (code, signal) => {
@@ -167,20 +254,20 @@ export class ForkedRoomExecution implements RoomExecution {
         const wasEnding = this.status === "ending" || this.isExplicitTermination;
         if (!wasEnding) {
           console.warn(`[ForkedRoomExecution] Room process for ${this.roomId} exited unexpectedly (code: ${code}, signal: ${signal})`);
+          const wasStarting = this.status === "starting";
+          const exitError = new Error(`Room process ${this.roomId} exited before becoming ready`);
           this.status = "crashed";
-          this.emitOutbound("broadcast", {
-            type: "DISCONNECT",
-            reason: "ROOM_CRASHED",
-          });
-          if (this.options.onCrash) {
-            this.options.onCrash(this.roomId, `EXIT_${code || signal}`);
+          if (wasStarting) {
+            this.rejectReady(exitError);
           }
+          this.emitCrashLifecycle(`EXIT_${code || signal}`);
         } else {
           this.status = "ending";
-          if (this.options.onShutdown) {
-            this.options.onShutdown(this.roomId);
-          }
+          this.notifyShutdown();
+          this.outboundListeners = [];
         }
+        this.settlePendingReconnects();
+        this.pendingMessages = [];
         this.child = null;
       });
 
@@ -194,10 +281,8 @@ export class ForkedRoomExecution implements RoomExecution {
       this.child.send(initMsg);
     } catch (err: any) {
       this.status = "crashed";
-      this.readyReject(err);
-      if (this.options.onCrash) {
-        this.options.onCrash(this.roomId, err.message);
-      }
+      this.rejectReady(err);
+      this.notifyCrash(err.message);
     }
   }
 
@@ -208,8 +293,12 @@ export class ForkedRoomExecution implements RoomExecution {
       case "ready": {
         clearTimeout(timer);
         this.childPid = msg.pid || this.child?.pid || null;
+        if (this.status !== "starting") {
+          this.pendingMessages = [];
+          break;
+        }
         this.status = "active";
-        this.readyResolve();
+        this.resolveReady();
         if (this.child && this.child.connected) {
           for (const queuedMsg of this.pendingMessages) {
             this.child.send(queuedMsg);
@@ -226,8 +315,23 @@ export class ForkedRoomExecution implements RoomExecution {
         this.emitOutbound(msg.targetPlayerId, msg.event);
         break;
       }
+      case "reconnect_result": {
+        if (this.invalidatedReconnects.delete(msg.requestId)) {
+          break;
+        }
+        const pending = this.pendingReconnects.get(msg.requestId);
+        if (pending && (msg.generation === undefined || msg.generation === pending.generation)) {
+          clearTimeout(pending.timer);
+          this.pendingReconnects.delete(msg.requestId);
+          pending.resolve(msg.accepted);
+        }
+        break;
+      }
       case "emit_channel": {
-        const channel = connectionRegistry.get(msg.playerId);
+        const pendingReconnect = Array.from(this.pendingReconnects.values()).find(
+          (pending) => pending.playerId === msg.playerId,
+        );
+        const channel = pendingReconnect?.channel || connectionRegistry.get(msg.playerId);
         if (channel) {
           try {
             channel.emit(msg.eventName, msg.data, msg.options);
@@ -236,7 +340,10 @@ export class ForkedRoomExecution implements RoomExecution {
         break;
       }
       case "raw_emit_channel": {
-        const channel = connectionRegistry.get(msg.playerId);
+        const pendingReconnect = Array.from(this.pendingReconnects.values()).find(
+          (pending) => pending.playerId === msg.playerId,
+        );
+        const channel = pendingReconnect?.channel || connectionRegistry.get(msg.playerId);
         if (channel) {
           try {
             const buf = Buffer.isBuffer(msg.buffer)
@@ -257,10 +364,15 @@ export class ForkedRoomExecution implements RoomExecution {
         break;
       }
       case "shutdown": {
-        this.status = "ending";
-        if (this.options.onShutdown) {
-          this.options.onShutdown(this.roomId);
+        clearTimeout(timer);
+        if (this.status === "starting") {
+          this.rejectReady(new Error(`Room process ${this.roomId} shut down before becoming ready`));
         }
+        this.status = "ending";
+        this.pendingMessages = [];
+        this.settlePendingReconnects();
+        this.notifyShutdown();
+        this.outboundListeners = [];
         break;
       }
       case "telemetry": {
@@ -273,11 +385,19 @@ export class ForkedRoomExecution implements RoomExecution {
       }
       case "error": {
         console.error(`[ForkedRoomExecution] Worker reported error for room ${this.roomId}:`, msg.error);
-        if (this.status === "starting") {
-          clearTimeout(timer);
+        const wasEnding = this.status === "ending" || this.isExplicitTermination;
+        if (!wasEnding) {
+          if (this.status === "starting") {
+            clearTimeout(timer);
+            this.rejectReady(new Error(msg.error));
+          }
           this.status = "crashed";
-          this.readyReject(new Error(msg.error));
+          this.pendingMessages = [];
         }
+        if (!wasEnding) {
+          this.emitCrashLifecycle(msg.error);
+        }
+        this.settlePendingReconnects();
         break;
       }
     }
@@ -292,7 +412,7 @@ export class ForkedRoomExecution implements RoomExecution {
   }
 
   private emitOutbound(playerId: string | "broadcast", event: RoomOutboundEvent): void {
-    for (const listener of this.outboundListeners) {
+    for (const listener of [...this.outboundListeners]) {
       try {
         listener(playerId, event);
       } catch (err) {
@@ -302,6 +422,14 @@ export class ForkedRoomExecution implements RoomExecution {
   }
 
   public async send(playerId: string | "broadcast", event: RoomInboundEvent): Promise<void> {
+    if (
+      playerId !== "broadcast" &&
+      event.type === "PLAYER_QUIT" &&
+      (!event.channelId || connectionRegistry.get(playerId)?.id === event.channelId)
+    ) {
+      this.registeredPlayerIds.delete(playerId);
+      this.clearReconnectStateForPlayer(playerId);
+    }
     const msg: ParentToChildMessage = {
       type: "inbound",
       playerId,
@@ -352,27 +480,99 @@ export class ForkedRoomExecution implements RoomExecution {
     displayName?: string,
     reqUid?: string,
     primaryWeaponId?: string,
-    secondaryWeaponId?: string
+    secondaryWeaponId?: string,
+    channelId?: string,
+    channel?: ChannelAdapter,
   ): Promise<void> {
+    const wasRegistered = this.registeredPlayerIds.has(playerId);
+    const previousChannel = connectionRegistry.get(playerId);
+    this.registeredPlayerIds.add(playerId);
+    if (channel) {
+      connectionRegistry.register(playerId, channel);
+    }
     const msg: ParentToChildMessage = {
       type: "register_player",
       playerId,
+      channelId,
       classId,
       displayName,
       reqUid,
       primaryWeaponId,
       secondaryWeaponId,
     };
-    if (this.status === "starting") {
-      this.pendingMessages.push(msg);
-      return;
-    }
-    if (this.child && this.child.connected) {
-      this.child.send(msg);
+    try {
+      if (this.status === "starting") {
+        this.pendingMessages.push(msg);
+        return;
+      }
+      if (this.child && this.child.connected) {
+        this.child.send(msg);
+      }
+    } catch (error) {
+      if (!wasRegistered) this.registeredPlayerIds.delete(playerId);
+      if (channel) connectionRegistry.unregister(playerId, channel);
+      if (previousChannel) connectionRegistry.register(playerId, previousChannel);
+      throw error;
     }
   }
 
+  public reconnectPlayer(
+    playerId: string,
+    reqUid: string,
+    channel: ChannelAdapter,
+  ): Promise<boolean> {
+    if (this.status !== "starting" && this.status !== "active") {
+      return Promise.resolve(false);
+    }
+
+    const generation = ++this.reconnectRequestSequence;
+    const requestId = `${this.roomId}:reconnect:${generation}`;
+    const msg: ParentToChildMessage = {
+      type: "reconnect_player",
+      requestId,
+      generation,
+      playerId,
+      reqUid,
+      channelId: channel.id,
+    };
+
+    return new Promise<boolean>((resolve) => {
+      const timer = setTimeout(() => {
+        this.pendingReconnects.delete(requestId);
+        this.pendingMessages = this.pendingMessages.filter(
+          (queuedMsg) => queuedMsg.type !== "reconnect_player" || queuedMsg.requestId !== requestId,
+        );
+        this.invalidatedReconnects.add(requestId);
+        const cancelMessage: ParentToChildMessage = {
+          type: "cancel_reconnect",
+          requestId,
+          generation,
+          playerId,
+        };
+        if (this.status === "starting" && this.child?.connected) {
+          this.pendingMessages.push(cancelMessage);
+        } else if (this.child && this.child.connected) {
+          this.child.send(cancelMessage);
+        }
+        resolve(false);
+      }, 5000);
+      this.pendingReconnects.set(requestId, { resolve, timer, playerId, channel, generation });
+
+      if (this.status === "starting") {
+        this.pendingMessages.push(msg);
+      } else if (this.child && this.child.connected) {
+        this.child.send(msg);
+      } else {
+        clearTimeout(timer);
+        this.pendingReconnects.delete(requestId);
+        resolve(false);
+      }
+    });
+  }
+
   public async removePlayer(playerId: string): Promise<void> {
+    this.registeredPlayerIds.delete(playerId);
+    this.clearReconnectStateForPlayer(playerId);
     const msg: ParentToChildMessage = {
       type: "remove_player",
       playerId,
@@ -395,7 +595,13 @@ export class ForkedRoomExecution implements RoomExecution {
   }
 
   public async terminate(reason: string = "TERMINATED"): Promise<void> {
+    const wasStarting = this.status === "starting";
     this.isExplicitTermination = true;
+    this.pendingMessages = [];
+    this.settlePendingReconnects();
+    if (wasStarting) {
+      this.rejectReady(new Error(`Room process ${this.roomId} terminated before becoming ready`));
+    }
     if (this.status !== "crashed") {
       this.status = "ending";
     }
@@ -413,7 +619,18 @@ export class ForkedRoomExecution implements RoomExecution {
     }
   }
 
+  private clearReconnectStateForPlayer(playerId: string): void {
+    for (const [requestId, pending] of this.pendingReconnects) {
+      if (pending.playerId !== playerId) continue;
+      clearTimeout(pending.timer);
+      this.pendingReconnects.delete(requestId);
+      pending.resolve(false);
+    }
+    this.invalidatedReconnects.clear();
+  }
+
   private killChild(): void {
+    this.settlePendingReconnects();
     if (this.child) {
       try {
         this.child.kill("SIGTERM");

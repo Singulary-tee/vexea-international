@@ -73,6 +73,17 @@ describe("Stage D: Execution Host and Room Placement", () => {
     expect(host.hasRoom("room-alpha-1")).toBe(false);
   });
 
+  it("preserves a same-ID replacement when the old release callback completes", async () => {
+    const first = await allocator.allocate("reused-room");
+    allocator.release("reused-room");
+
+    const replacement = await allocator.allocate("reused-room");
+    (allocator as any).handleHostRoomReleased("default-local-host", "reused-room", first);
+
+    expect(allocator.getExecution("reused-room")).toBe(replacement);
+    expect(allocator.getExecution("reused-room")).not.toBe(first);
+  });
+
   it("2. RoomAllocator places rooms across multiple hosts using least-loaded strategy", async () => {
     // Clear default host and register two explicit hosts
     const hosts = allocator.getHosts();
@@ -178,5 +189,18 @@ describe("Stage D: Execution Host and Room Placement", () => {
     await host.shutdown();
     expect(host.getActiveRoomCount()).toBe(0);
     expect(host.getRemainingCapacity()).toBe(5);
+  });
+
+  it("does not let a released room's shutdown callback delete its replacement", async () => {
+    const host = new LocalExecutionHost({ id: "reuse-host", backendType: "in-process" });
+    const original = await host.allocateRoom("reused-room");
+    const originalRoom = (original as InProcessRoomExecution).getRoom();
+
+    await host.releaseRoom("reused-room");
+    const replacement = await host.allocateRoom("reused-room");
+
+    originalRoom.shutdown();
+
+    expect(host.getRoomExecution("reused-room")).toBe(replacement);
   });
 });

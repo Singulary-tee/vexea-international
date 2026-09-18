@@ -16,7 +16,9 @@ class MatchManager {
       // Phase 4: Signal Manager when teardown is complete
       room.onShutdown = (id) => {
         console.log(`[MATCH MANAGER] Room ${id} signaled shutdown. Removing from activeRooms.`);
-        this.activeRooms.delete(id);
+        if (this.activeRooms.get(id) === room) {
+          this.activeRooms.delete(id);
+        }
       };
 
       this.activeRooms.set(roomId, room);

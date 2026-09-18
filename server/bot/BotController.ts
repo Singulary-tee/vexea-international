@@ -92,6 +92,7 @@ export function processBotTick(player: PlayerState, room: MatchRoom, dt: number)
       if (wState.currentMag > 0 && !wState.isReloading) {
         wState.currentMag--;
         player.firedThisTick = true;
+        player.firedSinceBroadcast = true;
 
         // Build normalized direction from yaw/pitch
         const cosP = Math.cos(player.pitch);

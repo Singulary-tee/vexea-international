@@ -62,6 +62,7 @@ class EngineContextManager implements ClientEngineContext {
 
   public setPlayerModel(model: THREE.Group | null): void {
     this.playerModel = model;
+    this.activeMatch?.localPlayerVisual?.setCanonicalModel(model);
   }
 
   public setPhysicsWorker(worker: Worker | null): void {
@@ -70,6 +71,9 @@ class EngineContextManager implements ClientEngineContext {
 
   public setActiveMatch(match: MatchController | null): void {
     this.activeMatch = match;
+    if (match && this.playerModel) {
+      match.localPlayerVisual?.setCanonicalModel(this.playerModel);
+    }
   }
 }
 

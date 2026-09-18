@@ -1,6 +1,8 @@
 import * as THREE from "three/webgpu";
 import { WEAPON_ASSET_DETAILS } from "../../shared/asset-details";
 import type { WeaponId } from "../../shared/weapons";
+import { PLAYER_BODY_FORWARD } from "../src/systems/player-visual-calibration";
+import { applyPlayerHoldFrame, type PlayerHoldFrame } from "./player-hold-ik";
 
 export type GripSocketName = "primary" | "support" | "muzzle" | "ads";
 export type GripSocketSource = "authored" | "candidate" | "procedural";
@@ -23,6 +25,7 @@ export interface GripAnchors {
 export interface PoseSolveOptions {
   weaponId?: WeaponId | string;
   poseContext?: string;
+  holdFrame?: PlayerHoldFrame;
   forwardPitch?: number;
   scale?: number;
   diagnostics?: boolean;
@@ -70,6 +73,10 @@ export const VERIFIED_POSE_CANDIDATES: readonly PoseCandidate[] = [
   { id: "rifle-neutral", forwardPitch: 0 },
   { id: "rifle-low-ready", forwardPitch: -0.12 },
   { id: "rifle-high-ready", forwardPitch: 0.12 },
+];
+
+const SNIPER_POSE_CANDIDATES: readonly PoseCandidate[] = [
+  { id: "sniper-low-ready", forwardPitch: -0.3 },
 ];
 
 export const VERIFIED_POSE_THRESHOLDS = {
@@ -175,6 +182,25 @@ interface PoseCache {
   distanceDelta: THREE.Vector3;
   distancePoint: THREE.Vector3;
   distanceSegmentT: number;
+  triangleA: THREE.Vector3;
+  triangleB: THREE.Vector3;
+  triangleC: THREE.Vector3;
+  triangleNormal: THREE.Vector3;
+  trianglePlaneVector: THREE.Vector3;
+  triangleClosestPoint: THREE.Vector3;
+  bestTriangleA: THREE.Vector3;
+  bestTriangleB: THREE.Vector3;
+  bestTriangleC: THREE.Vector3;
+  segmentDirectionA: THREE.Vector3;
+  segmentDirectionB: THREE.Vector3;
+  segmentOffset: THREE.Vector3;
+  segmentClosestA: THREE.Vector3;
+  segmentClosestB: THREE.Vector3;
+  triangle: THREE.Triangle;
+  insideRay: THREE.Ray;
+  insideRayHit: THREE.Vector3;
+  triangleSegmentT: number;
+  segmentParameter: number;
   scale: number;
   hasPreviousPose: boolean;
   initialized: boolean;
@@ -234,6 +260,28 @@ function createPoseCache(): PoseCache {
     distanceDelta: new THREE.Vector3(),
     distancePoint: new THREE.Vector3(),
     distanceSegmentT: 0,
+    triangleA: new THREE.Vector3(),
+    triangleB: new THREE.Vector3(),
+    triangleC: new THREE.Vector3(),
+    triangleNormal: new THREE.Vector3(),
+    trianglePlaneVector: new THREE.Vector3(),
+    triangleClosestPoint: new THREE.Vector3(),
+    bestTriangleA: new THREE.Vector3(),
+    bestTriangleB: new THREE.Vector3(),
+    bestTriangleC: new THREE.Vector3(),
+    segmentDirectionA: new THREE.Vector3(),
+    segmentDirectionB: new THREE.Vector3(),
+    segmentOffset: new THREE.Vector3(),
+    segmentClosestA: new THREE.Vector3(),
+    segmentClosestB: new THREE.Vector3(),
+    triangle: new THREE.Triangle(),
+    insideRay: new THREE.Ray(
+      new THREE.Vector3(),
+      new THREE.Vector3(1, 0.371, 0.217).normalize(),
+    ),
+    insideRayHit: new THREE.Vector3(),
+    triangleSegmentT: 0,
+    segmentParameter: 0,
     scale: 0,
     hasPreviousPose: false,
     initialized: false,
@@ -619,26 +667,41 @@ function findNamedBone(character: THREE.Object3D, names: string[]): THREE.Object
   for (const name of names) {
     const exact = character.getObjectByName(name);
     if (exact) return exact;
+    const wanted = normalizedName(name);
+    let found: THREE.Object3D | null = null;
+    character.traverse((child) => {
+      if (!found) {
+        const childName = normalizedName(child.name);
+        if (childName === wanted || childName.endsWith(wanted)) found = child;
+      }
+    });
+    if (found) return found;
   }
-  const wanted = names.map(normalizedName);
-  let found: THREE.Object3D | null = null;
-  character.traverse((child) => {
-    if (found) return;
-    const childName = normalizedName(child.name);
-    if (wanted.some((name) => childName === name || childName.endsWith(name))) found = child;
-  });
-  return found;
+  return null;
 }
 
 function findBone(character: THREE.Object3D, side: "Left" | "Right", joint: "Shoulder" | "ForeArm" | "Hand"): THREE.Object3D | null {
   const jointName = joint === "ForeArm" ? "fore_arm" : joint.toLowerCase();
   const armAlias = joint === "Shoulder" ? "top" : joint === "ForeArm" ? "bot" : "hand";
-  return findNamedBone(character, [
-    `mixamorig:${side}${joint}`,
-    `${side}${joint}`,
-    `arm_${side.toLowerCase()}_${jointName}`,
-    `arm_${side.toLowerCase()}_${armAlias}`,
-  ]);
+  const names = joint === "Shoulder"
+    ? [
+      `mixamorig:${side}Arm`,
+      `mixamorig${side}Arm`,
+      `${side}Arm`,
+      `arm_${side.toLowerCase()}_arm`,
+      `arm_${side.toLowerCase()}_${armAlias}`,
+      `mixamorig:${side}${joint}`,
+      `mixamorig${side}${joint}`,
+      `${side}${joint}`,
+    ]
+    : [
+      `mixamorig:${side}${joint}`,
+      `mixamorig${side}${joint}`,
+      `${side}${joint}`,
+      `arm_${side.toLowerCase()}_${jointName}`,
+      `arm_${side.toLowerCase()}_${armAlias}`,
+    ];
+  return findNamedBone(character, names);
 }
 
 function findBodyBone(character: THREE.Object3D, joint: string): THREE.Object3D | null {
@@ -691,7 +754,11 @@ function buildTargetBasis(character: THREE.Object3D, cache: PoseCache, forwardPi
   if (!Number.isFinite(handSpan) || handSpan < VERIFIED_POSE_THRESHOLDS.handSpan) return false;
   cache.targetAxis.multiplyScalar(1 / handSpan);
 
-  cache.bodyForward.set(0, 0, 1).transformDirection(character.matrixWorld);
+  cache.bodyForward.set(
+    PLAYER_BODY_FORWARD.x,
+    PLAYER_BODY_FORWARD.y,
+    PLAYER_BODY_FORWARD.z,
+  ).transformDirection(character.matrixWorld);
   cache.worldUp.set(0, 1, 0).transformDirection(character.matrixWorld);
   if (!finiteVector(cache.bodyForward) || !finiteVector(cache.worldUp)) return false;
   const pitch = Number.isFinite(forwardPitch) ? Math.max(-0.5, Math.min(0.5, forwardPitch)) : 0;
@@ -854,6 +921,9 @@ const characterProxyCaches = new WeakMap<THREE.Object3D, CharacterProxyCache>();
 
 interface WeaponBox {
   node: THREE.Object3D;
+  position: THREE.BufferAttribute | THREE.InterleavedBufferAttribute | null;
+  triangleIndices: number[];
+  closed: boolean;
   bounds: THREE.Box3;
   inverse: THREE.Matrix4;
   worldScale: number;
@@ -1025,6 +1095,107 @@ function isMagazinePart(
   return false;
 }
 
+interface GeometryComponent {
+  bounds: THREE.Box3;
+  triangleIndices: number[];
+  closed: boolean;
+}
+
+function collectGeometryComponentBounds(geometry: THREE.BufferGeometry): GeometryComponent[] {
+  const position = geometry.getAttribute("position");
+  const index = geometry.getIndex();
+  const triangleIndexCount = index?.count ?? position?.count ?? 0;
+  if (!position || triangleIndexCount < 3) {
+    return geometry.boundingBox
+      ? [{ bounds: geometry.boundingBox.clone(), triangleIndices: [], closed: false }]
+      : [];
+  }
+
+  const parent = Array.from({ length: position.count }, (_, vertex) => vertex);
+  const find = (vertex: number): number => {
+    let root = vertex;
+    while (parent[root] !== root) root = parent[root];
+    while (parent[vertex] !== vertex) {
+      const next = parent[vertex];
+      parent[vertex] = root;
+      vertex = next;
+    }
+    return root;
+  };
+  const union = (first: number, second: number): void => {
+    const firstRoot = find(first);
+    const secondRoot = find(second);
+    if (firstRoot !== secondRoot) parent[secondRoot] = firstRoot;
+  };
+
+  const vertexKeys = new Array<string>(position.count);
+  const weldedVertices = new Map<string, number>();
+  const weldPoint = new THREE.Vector3();
+  for (let vertexIndex = 0; vertexIndex < position.count; vertexIndex += 1) {
+    weldPoint.fromBufferAttribute(position, vertexIndex);
+    const key = `${Math.round(weldPoint.x * 1e6)}:${Math.round(weldPoint.y * 1e6)}:${Math.round(weldPoint.z * 1e6)}`;
+    vertexKeys[vertexIndex] = key;
+    const existing = weldedVertices.get(key);
+    if (existing === undefined) weldedVertices.set(key, vertexIndex);
+    else union(vertexIndex, existing);
+  }
+
+  const getVertexIndex = (offset: number): number => index?.getX(offset) ?? offset;
+  for (let offset = 0; offset + 2 < triangleIndexCount; offset += 3) {
+    const first = getVertexIndex(offset);
+    const second = getVertexIndex(offset + 1);
+    const third = getVertexIndex(offset + 2);
+    if (first < position.count && second < position.count && third < position.count) {
+      union(first, second);
+      union(second, third);
+    }
+  }
+
+  const componentBounds = new Map<number, {
+    bounds: THREE.Box3;
+    triangleIndices: number[];
+    edgeCounts: Map<string, number>;
+  }>();
+  const vertex = new THREE.Vector3();
+  for (let offset = 0; offset + 2 < triangleIndexCount; offset += 3) {
+    const first = getVertexIndex(offset);
+    const second = getVertexIndex(offset + 1);
+    const third = getVertexIndex(offset + 2);
+    if (first < 0 || second < 0 || third < 0
+      || first >= position.count || second >= position.count || third >= position.count) continue;
+    const root = find(first);
+    let component = componentBounds.get(root);
+    if (!component) {
+      component = {
+        bounds: new THREE.Box3().makeEmpty(),
+        triangleIndices: [],
+        edgeCounts: new Map(),
+      };
+      componentBounds.set(root, component);
+    }
+    for (const vertexIndex of [first, second, third]) {
+      component.bounds.expandByPoint(vertex.fromBufferAttribute(position, vertexIndex));
+    }
+    component.triangleIndices.push(first, second, third);
+    for (const [start, end] of [[first, second], [second, third], [third, first]]) {
+      const startKey = vertexKeys[start];
+      const endKey = vertexKeys[end];
+      const edge = startKey < endKey ? `${startKey}:${endKey}` : `${endKey}:${startKey}`;
+      component.edgeCounts.set(edge, (component.edgeCounts.get(edge) ?? 0) + 1);
+    }
+  }
+
+  return componentBounds.size > 0
+    ? [...componentBounds.values()].map(({ bounds, triangleIndices, edgeCounts }) => ({
+      bounds,
+      triangleIndices,
+      closed: edgeCounts.size > 0 && [...edgeCounts.values()].every((count) => count === 2),
+    }))
+    : geometry.boundingBox
+      ? [{ bounds: geometry.boundingBox.clone(), triangleIndices: [], closed: false }]
+      : [];
+}
+
 function collectWeaponBoxes(weapon: THREE.Object3D, weaponId?: WeaponId | string): WeaponBox[] {
   const boxes: WeaponBox[] = [];
   weapon.traverse((child: any) => {
@@ -1037,13 +1208,19 @@ function collectWeaponBoxes(weapon: THREE.Object3D, weaponId?: WeaponId | string
     const basisZ = new THREE.Vector3().setFromMatrixColumn(child.matrixWorld, 2).length();
     const worldScale = Math.min(basisX, basisY, basisZ);
     if (!Number.isFinite(worldScale) || worldScale <= 1e-8) return;
-    boxes.push({
-      node: child,
-      bounds: child.geometry.boundingBox.clone(),
-      inverse,
-      worldScale,
-      allowsTorsoContact: isMagazinePart(child, weapon, weaponId),
-    });
+    const position = child.geometry.getAttribute("position") as THREE.BufferAttribute | THREE.InterleavedBufferAttribute | null;
+    for (const component of collectGeometryComponentBounds(child.geometry)) {
+      boxes.push({
+        node: child,
+        position,
+        triangleIndices: component.triangleIndices,
+        closed: component.closed,
+        bounds: component.bounds,
+        inverse: inverse.clone(),
+        worldScale,
+        allowsTorsoContact: isMagazinePart(child, weapon, weaponId),
+      });
+    }
   });
   return boxes;
 }
@@ -1071,7 +1248,134 @@ function distanceAtSegmentT(
   return bounds.distanceToPoint(point.copy(start).addScaledVector(delta, segmentT));
 }
 
-function distanceSegmentToWeaponBox(
+function clampUnit(value: number): number {
+  return Math.max(0, Math.min(1, value));
+}
+
+function distanceSegmentToSegmentSquared(
+  firstStart: THREE.Vector3,
+  firstEnd: THREE.Vector3,
+  secondStart: THREE.Vector3,
+  secondEnd: THREE.Vector3,
+  cache: PoseCache,
+): number {
+  const firstDirection = cache.segmentDirectionA.subVectors(firstEnd, firstStart);
+  const secondDirection = cache.segmentDirectionB.subVectors(secondEnd, secondStart);
+  const offset = cache.segmentOffset.subVectors(firstStart, secondStart);
+  const a = firstDirection.dot(firstDirection);
+  const e = secondDirection.dot(secondDirection);
+  const f = secondDirection.dot(offset);
+  let firstT = 0;
+  let secondT = 0;
+
+  if (a <= 1e-12 && e <= 1e-12) {
+    cache.segmentClosestA.copy(firstStart);
+    cache.segmentClosestB.copy(secondStart);
+    cache.segmentParameter = 0;
+    return cache.segmentClosestA.distanceToSquared(cache.segmentClosestB);
+  }
+  if (a <= 1e-12) {
+    secondT = clampUnit(f / e);
+  } else {
+    const c = firstDirection.dot(offset);
+    if (e <= 1e-12) {
+      firstT = clampUnit(-c / a);
+    } else {
+      const b = firstDirection.dot(secondDirection);
+      const denominator = a * e - b * b;
+      firstT = denominator !== 0 ? clampUnit((b * f - c * e) / denominator) : 0;
+      secondT = (b * firstT + f) / e;
+      if (secondT < 0) {
+        secondT = 0;
+        firstT = clampUnit(-c / a);
+      } else if (secondT > 1) {
+        secondT = 1;
+        firstT = clampUnit((b - c) / a);
+      }
+    }
+  }
+
+  cache.segmentClosestA.copy(firstStart).addScaledVector(firstDirection, firstT);
+  cache.segmentClosestB.copy(secondStart).addScaledVector(secondDirection, secondT);
+  cache.segmentParameter = firstT;
+  return cache.segmentClosestA.distanceToSquared(cache.segmentClosestB);
+}
+
+function distanceSegmentToTriangle(
+  start: THREE.Vector3,
+  end: THREE.Vector3,
+  first: THREE.Vector3,
+  second: THREE.Vector3,
+  third: THREE.Vector3,
+  cache: PoseCache,
+): number {
+  cache.triangle.set(first, second, third);
+  let bestDistanceSq = Infinity;
+  let bestT = 0;
+  const consider = (distanceSq: number, segmentT: number): void => {
+    if (distanceSq >= bestDistanceSq) return;
+    bestDistanceSq = distanceSq;
+    bestT = segmentT;
+  };
+
+  cache.triangle.closestPointToPoint(start, cache.triangleClosestPoint);
+  consider(cache.triangleClosestPoint.distanceToSquared(start), 0);
+  cache.triangle.closestPointToPoint(end, cache.triangleClosestPoint);
+  consider(cache.triangleClosestPoint.distanceToSquared(end), 1);
+
+  const segmentDirection = cache.distanceDelta.subVectors(end, start);
+  const planeVector = cache.trianglePlaneVector.subVectors(third, first);
+  const normal = cache.triangleNormal.subVectors(second, first).cross(planeVector);
+  if (normal.lengthSq() > 1e-12) {
+    const denominator = normal.dot(segmentDirection);
+    if (Math.abs(denominator) > 1e-12) {
+      const planeOffset = cache.trianglePlaneVector.subVectors(first, start);
+      const segmentT = normal.dot(planeOffset) / denominator;
+      if (segmentT >= 0 && segmentT <= 1) {
+        const planePoint = cache.distancePoint.copy(start).addScaledVector(segmentDirection, segmentT);
+        if (THREE.Triangle.containsPoint(planePoint, first, second, third)) {
+          cache.triangleSegmentT = segmentT;
+          return 0;
+        }
+      }
+    }
+  }
+
+  consider(distanceSegmentToSegmentSquared(start, end, first, second, cache), cache.segmentParameter);
+  consider(distanceSegmentToSegmentSquared(start, end, second, third, cache), cache.segmentParameter);
+  consider(distanceSegmentToSegmentSquared(start, end, third, first, cache), cache.segmentParameter);
+  cache.triangleSegmentT = bestT;
+  return Math.sqrt(bestDistanceSq);
+}
+
+function pointInsideClosedWeaponComponent(
+  point: THREE.Vector3,
+  weaponBox: WeaponBox,
+  cache: PoseCache,
+): boolean {
+  if (!weaponBox.closed || !weaponBox.position || weaponBox.triangleIndices.length < 3) return false;
+  cache.insideRay.origin.copy(point);
+  let intersectionCount = 0;
+  for (let offset = 0; offset + 2 < weaponBox.triangleIndices.length; offset += 3) {
+    const firstIndex = weaponBox.triangleIndices[offset];
+    const secondIndex = weaponBox.triangleIndices[offset + 1];
+    const thirdIndex = weaponBox.triangleIndices[offset + 2];
+    cache.triangleA.fromBufferAttribute(weaponBox.position, firstIndex);
+    cache.triangleB.fromBufferAttribute(weaponBox.position, secondIndex);
+    cache.triangleC.fromBufferAttribute(weaponBox.position, thirdIndex);
+    if (!cache.insideRay.intersectTriangle(
+      cache.triangleA,
+      cache.triangleB,
+      cache.triangleC,
+      false,
+      cache.insideRayHit,
+    )) continue;
+    if (cache.insideRayHit.sub(point).dot(cache.insideRay.direction) > 1e-8) intersectionCount += 1;
+  }
+  return intersectionCount % 2 === 1;
+}
+
+function distanceSegmentToWeaponBounds(
   segment: ProxySegment,
   weaponBox: WeaponBox,
   cache: PoseCache,
@@ -1107,6 +1411,66 @@ function distanceSegmentToWeaponBox(
   return bestDistance * weaponBox.worldScale;
 }
 
+function distanceSegmentToWeaponGeometry(
+  segment: ProxySegment,
+  weaponBox: WeaponBox,
+  cache: PoseCache,
+): number {
+  const boundsDistance = distanceSegmentToWeaponBounds(segment, weaponBox, cache);
+  if (!weaponBox.position || weaponBox.triangleIndices.length < 3 || boundsDistance > segment.radius) {
+    return boundsDistance;
+  }
+
+  const start = cache.distanceStart;
+  const end = cache.distanceEnd;
+  let bestDistance = Infinity;
+  let bestT = 0;
+  cache.bestTriangleA.set(0, 0, 0);
+  cache.bestTriangleB.set(0, 0, 0);
+  cache.bestTriangleC.set(0, 0, 0);
+  for (let offset = 0; offset + 2 < weaponBox.triangleIndices.length; offset += 3) {
+    const firstIndex = weaponBox.triangleIndices[offset];
+    const secondIndex = weaponBox.triangleIndices[offset + 1];
+    const thirdIndex = weaponBox.triangleIndices[offset + 2];
+    cache.triangleA.fromBufferAttribute(weaponBox.position, firstIndex);
+    cache.triangleB.fromBufferAttribute(weaponBox.position, secondIndex);
+    cache.triangleC.fromBufferAttribute(weaponBox.position, thirdIndex);
+    const distance = distanceSegmentToTriangle(
+      start,
+      end,
+      cache.triangleA,
+      cache.triangleB,
+      cache.triangleC,
+      cache,
+    );
+    if (distance < bestDistance) {
+      bestDistance = distance;
+      bestT = cache.triangleSegmentT;
+      cache.bestTriangleA.copy(cache.triangleA);
+      cache.bestTriangleB.copy(cache.triangleB);
+      cache.bestTriangleC.copy(cache.triangleC);
+      if (bestDistance <= 1e-8) break;
+    }
+  }
+
+  if (bestDistance > segment.radius && weaponBox.closed) {
+    const midpoint = cache.distancePoint.copy(start).add(end).multiplyScalar(0.5);
+    if (pointInsideClosedWeaponComponent(start, weaponBox, cache)) {
+      bestDistance = 0;
+      bestT = 0;
+    } else if (pointInsideClosedWeaponComponent(end, weaponBox, cache)) {
+      bestDistance = 0;
+      bestT = 1;
+    } else if (pointInsideClosedWeaponComponent(midpoint, weaponBox, cache)) {
+      bestDistance = 0;
+      bestT = 0.5;
+    }
+  }
+
+  cache.distanceSegmentT = bestT;
+  return Number.isFinite(bestDistance) ? bestDistance * weaponBox.worldScale : boundsDistance;
+}
+
 function calculateClipping(
   character: THREE.Object3D,
   cache: PoseCache,
@@ -1128,7 +1492,7 @@ function calculateClipping(
   for (const weaponBox of weaponBoxes) {
     if (!weaponBox.node.visible) continue;
     for (const segment of segments) {
-      const distance = distanceSegmentToWeaponBox(segment, weaponBox, cache);
+      const distance = distanceSegmentToWeaponGeometry(segment, weaponBox, cache);
       const penetration = segment.radius - distance;
       if (penetration <= 0 || (segment.kind === "forearm" && cache.distanceSegmentT > 0.75)) continue;
       if (segment.kind === "body") {
@@ -1290,6 +1654,7 @@ export function solveVerifiedGripPose(
     cache.poseContext = options.poseContext;
     cache.hasPreviousPose = false;
   }
+  if (!applyPlayerHoldFrame(character, options.holdFrame)) return makeFailedDiagnostics("missing hold-frame IK bones");
   if (!copyCharacterHands(character, cache)) return makeFailedDiagnostics("missing hand bones");
   if (cache.leftHand.distanceTo(cache.rightHand) < VERIFIED_POSE_THRESHOLDS.handSpan) {
     return makeFailedDiagnostics("degenerate hand span");
@@ -1359,10 +1724,13 @@ function restoreTransform(weapon: THREE.Object3D, snapshot: TransformSnapshot): 
 export function chooseVerifiedGripPose(
   character: THREE.Object3D,
   weapon: THREE.Object3D,
-  candidates: readonly PoseCandidate[] = VERIFIED_POSE_CANDIDATES,
+  candidates: readonly PoseCandidate[] | undefined = undefined,
   options: Omit<PoseSolveOptions, "forwardPitch"> = {},
 ): PoseCandidateResult {
-  const selectedFallback = candidates[0] || VERIFIED_POSE_CANDIDATES[0];
+  const resolvedCandidates = candidates || (getWeaponKey(options.weaponId) === "sniper"
+    ? SNIPER_POSE_CANDIDATES
+    : VERIFIED_POSE_CANDIDATES);
+  const selectedFallback = resolvedCandidates[0] || VERIFIED_POSE_CANDIDATES[0];
   if (!selectedFallback) return { selected: { id: "none", forwardPitch: 0 }, diagnostics: makeFailedDiagnostics("no pose candidates"), candidates: [] };
 
   const cache = getPoseCache(weapon);
@@ -1374,7 +1742,7 @@ export function chooseVerifiedGripPose(
   let selectedDiagnostics = makeFailedDiagnostics("no pose candidates");
   const results: Array<{ candidate: PoseCandidate; diagnostics: PoseDiagnostics }> = [];
 
-  for (const candidate of candidates) {
+  for (const candidate of resolvedCandidates) {
     restoreTransform(weapon, baseline);
     cache.previousPosition.copy(previousPosition);
     cache.previousQuaternion.copy(previousQuaternion);

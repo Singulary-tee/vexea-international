@@ -5,9 +5,15 @@ import {
   resolveGripAnchors,
   solveVerifiedGripPose,
 } from "../client/weapons/pose-solver";
+import { applyPlayerHoldFrame } from "../client/weapons/player-hold-ik";
 import { normalizeGameplayPlayerModel } from "../client/src/systems/player-visual-calibration";
+import { PLAYER_EYE_FORWARD_OFFSET } from "../client/src/systems/player-visual-calibration";
 import {
   disposeOwnedRemoteResources,
+  getRemoteBaseForwardPitch,
+  getRemoteWeaponForwardPitch,
+  getRemotePlayerModelY,
+  RemotePlayerSystem,
   shouldReplaceRemotePlayerWeapon,
   shouldShowRemotePlayerWeapon,
 } from "../client/src/systems/RemotePlayerSystem";
@@ -36,6 +42,18 @@ function createCharacter(includeTorso = true): THREE.Group {
   return character;
 }
 
+function createWideHandHoldCharacter(): THREE.Group {
+  const character = new THREE.Group();
+  for (const [side, sign, handDepth] of [["Left", -1, -0.25], ["Right", 1, 0.05]] as const) {
+    const shoulder = addBone(character, `mixamorig:${side}Shoulder`, [sign * 0.01, 1.4, 0]);
+    const elbow = addBone(shoulder, `mixamorig:${side}ForeArm`, [0, -0.25, side === "Left" ? -0.15 : -0.05]);
+    addBone(elbow, `mixamorig:${side}Hand`, [0, -0.15, handDepth]);
+  }
+  addBone(character, "Head", [0, 1.65, 0]);
+  character.updateMatrixWorld(true);
+  return character;
+}
+
 function createArmAliasCharacter(): THREE.Group {
   const character = new THREE.Group();
   const leftShoulder = addBone(character, "arm_left_top", [0, 1.4, 0]);
@@ -45,6 +63,19 @@ function createArmAliasCharacter(): THREE.Group {
   const rightShoulder = addBone(character, "arm_right_top", [0, 1.4, 0]);
   const rightElbow = addBone(rightShoulder, "arm_right_bot", [0, -0.25, -0.05]);
   addBone(rightElbow, "arm_right_hand", [0, -0.15, 0.05]);
+  addTorsoBones(character);
+  character.updateMatrixWorld(true);
+  return character;
+}
+
+function createAuthoredArmCharacter(): THREE.Group {
+  const character = new THREE.Group();
+  for (const [side, sign] of [["Left", -1], ["Right", 1]] as const) {
+    const shoulder = addBone(character, `mixamorig${side}Shoulder`, [sign * 0.2, 1.4, 0]);
+    const upperArm = addBone(shoulder, `mixamorig${side}Arm`, [sign * 0.15, -0.05, 0.02]);
+    const foreArm = addBone(upperArm, `mixamorig${side}ForeArm`, [sign * 0.2, -0.25, -0.15]);
+    addBone(foreArm, `mixamorig${side}Hand`, [sign * 0.05, -0.15, -0.25]);
+  }
   addTorsoBones(character);
   character.updateMatrixWorld(true);
   return character;
@@ -62,7 +93,7 @@ function addTorsoBones(character: THREE.Object3D): void {
   character.updateMatrixWorld(true);
 }
 
-function createWeapon(includeBody = true): THREE.Group {
+function createWeapon(includeBody = true, muzzleRotationZ = 0): THREE.Group {
   const weapon = new THREE.Group();
   const support = new THREE.Object3D();
   support.name = "GripSupport";
@@ -72,6 +103,7 @@ function createWeapon(includeBody = true): THREE.Group {
   const muzzle = new THREE.Object3D();
   muzzle.name = "Muzzle";
   muzzle.position.y = -1;
+  muzzle.rotation.z = muzzleRotationZ;
   const ads = new THREE.Object3D();
   ads.name = "ADSReference";
   ads.position.z = 1;
@@ -99,6 +131,30 @@ function createProceduralWeapon(): THREE.Group {
   ));
   weapon.updateMatrixWorld(true);
   return weapon;
+}
+
+function createDisconnectedBoxGeometry(centers: readonly number[], halfExtent = 0.025): THREE.BufferGeometry {
+  const positions: number[] = [];
+  const indices: number[] = [];
+  const faces = [
+    [0, 1, 3, 2], [4, 6, 7, 5], [0, 4, 5, 1],
+    [2, 3, 7, 6], [0, 2, 6, 4], [1, 5, 7, 3],
+  ] as const;
+  for (const center of centers) {
+    const base = positions.length / 3;
+    for (const [x, y, z] of [
+      [-halfExtent, center - 0.05, -halfExtent], [halfExtent, center - 0.05, -halfExtent],
+      [-halfExtent, center + 0.05, -halfExtent], [halfExtent, center + 0.05, -halfExtent],
+      [-halfExtent, center - 0.05, halfExtent], [halfExtent, center - 0.05, halfExtent],
+      [-halfExtent, center + 0.05, halfExtent], [halfExtent, center + 0.05, halfExtent],
+    ] as const) positions.push(x, y, z);
+    for (const [a, b, c, d] of faces) indices.push(base + a, base + b, base + d, base + a, base + d, base + c);
+  }
+  const geometry = new THREE.BufferGeometry();
+  geometry.setAttribute("position", new THREE.Float32BufferAttribute(positions, 3));
+  geometry.setIndex(indices);
+  geometry.computeBoundingBox();
+  return geometry;
 }
 
 function createMetadataAxisWeapon(reversed: boolean): THREE.Group {
@@ -326,6 +382,136 @@ describe("verified player weapon pose solver", () => {
     expect(result.shoulderAlignmentError).toBeGreaterThan(0.35);
   });
 
+  it("applies the shared rifle hold frame before solving the weapon", () => {
+    const character = createCharacter();
+    character.getObjectByName("mixamorig:LeftHand")!.position.x = -0.4;
+    character.getObjectByName("mixamorig:RightHand")!.position.x = 0.4;
+    character.updateMatrixWorld(true);
+
+    const result = solveVerifiedGripPose(character, createWeapon(false), {
+      weaponId: "rifle",
+      holdFrame: "rifle-body-forward",
+    });
+    const leftHand = character.getObjectByName("mixamorig:LeftHand")!;
+    const rightHand = character.getObjectByName("mixamorig:RightHand")!;
+    const leftPosition = new THREE.Vector3();
+    const rightPosition = new THREE.Vector3();
+    leftHand.getWorldPosition(leftPosition);
+    rightHand.getWorldPosition(rightPosition);
+    const handAxis = rightPosition.sub(leftPosition).normalize();
+
+    expect(result.solved).toBe(true);
+    expect(handAxis.x).toBeGreaterThan(0.005);
+    expect(handAxis.dot(new THREE.Vector3(0, 0, 1))).toBeLessThan(-0.9998);
+    expect(result.primaryGripError).toBeLessThan(0.0001);
+    expect(result.supportGripError).toBeLessThan(0.0001);
+  });
+
+  it("preserves an authored raised hold instead of lowering it to the shoulder plane", () => {
+    const character = createCharacter();
+    const leftHand = character.getObjectByName("mixamorig:LeftHand")!;
+    const rightHand = character.getObjectByName("mixamorig:RightHand")!;
+    leftHand.position.y = 0.35;
+    rightHand.position.y = 0.35;
+    character.updateMatrixWorld(true);
+
+    const shoulderY = character.getObjectByName("mixamorig:LeftShoulder")!
+      .getWorldPosition(new THREE.Vector3()).y;
+    const startingHoldY = leftHand.getWorldPosition(new THREE.Vector3())
+      .add(rightHand.getWorldPosition(new THREE.Vector3()))
+      .multiplyScalar(0.5).y;
+
+    expect(startingHoldY).toBeGreaterThan(shoulderY);
+    expect(applyPlayerHoldFrame(character, "rifle-body-forward")).toBe(true);
+
+    const solvedHoldY = leftHand.getWorldPosition(new THREE.Vector3())
+      .add(rightHand.getWorldPosition(new THREE.Vector3()))
+      .multiplyScalar(0.5).y;
+    expect(solvedHoldY).toBeGreaterThanOrEqual(shoulderY + 0.05);
+  });
+
+  it("prefers authored upper-arm nodes when shoulder and arm names share a hierarchy", () => {
+    const character = createAuthoredArmCharacter();
+
+    expect(applyPlayerHoldFrame(character, "rifle-body-forward")).toBe(true);
+    const head = character.getObjectByName("Head")!;
+    const headPosition = head.getWorldPosition(new THREE.Vector3());
+    const minimumForward = headPosition.z + PLAYER_EYE_FORWARD_OFFSET * 2;
+    for (const side of ["Left", "Right"] as const) {
+      const handPosition = character
+        .getObjectByName(`mixamorig${side}Hand`)!
+        .getWorldPosition(new THREE.Vector3());
+      expect(handPosition.z).toBeGreaterThanOrEqual(minimumForward - 1e-6);
+    }
+
+    const result = solveVerifiedGripPose(character, createWeapon(false), {
+      weaponId: "rifle",
+      holdFrame: "rifle-body-forward",
+    });
+    expect(result.verified).toBe(true);
+    expect(result.elbowBendError).toBe(0);
+  });
+
+  it("caps nested upper-arm holds to the authored shoulder anchors", () => {
+    const character = createAuthoredArmCharacter();
+    const leftHand = character.getObjectByName("mixamorigLeftHand")!;
+    const rightHand = character.getObjectByName("mixamorigRightHand")!;
+    leftHand.position.x = 1;
+    rightHand.position.x = -1;
+    character.updateMatrixWorld(true);
+
+    const shoulderSpan = character.getObjectByName("mixamorigLeftShoulder")!
+      .getWorldPosition(new THREE.Vector3())
+      .distanceTo(character.getObjectByName("mixamorigRightShoulder")!
+        .getWorldPosition(new THREE.Vector3()));
+    expect(applyPlayerHoldFrame(character, "rifle-body-forward")).toBe(true);
+
+    const solvedHandSpan = character.getObjectByName("mixamorigLeftHand")!
+      .getWorldPosition(new THREE.Vector3())
+      .distanceTo(character.getObjectByName("mixamorigRightHand")!
+        .getWorldPosition(new THREE.Vector3()));
+    expect(solvedHandSpan).toBeLessThanOrEqual(shoulderSpan + 1e-6);
+  });
+
+  it("keeps a centered rifle hold on the player's right half", () => {
+    const character = createAuthoredArmCharacter();
+    const leftHand = character.getObjectByName("mixamorigLeftHand")!;
+    const rightHand = character.getObjectByName("mixamorigRightHand")!;
+    leftHand.position.x += 0.3;
+    rightHand.position.x += 0.3;
+    character.updateMatrixWorld(true);
+
+    expect(applyPlayerHoldFrame(character, "rifle-body-forward")).toBe(true);
+    const leftShoulder = character.getObjectByName("mixamorigLeftShoulder")!
+      .getWorldPosition(new THREE.Vector3());
+    const rightShoulder = character.getObjectByName("mixamorigRightShoulder")!
+      .getWorldPosition(new THREE.Vector3());
+    const holdCenter = leftHand.getWorldPosition(new THREE.Vector3())
+      .add(rightHand.getWorldPosition(new THREE.Vector3()))
+      .multiplyScalar(0.5);
+    const shoulderMidpoint = leftShoulder.add(rightShoulder).multiplyScalar(0.5);
+    expect(holdCenter.x).toBeLessThanOrEqual(shoulderMidpoint.x - 0.19);
+  });
+
+  it("does not let a broad clip hand span exceed the animated shoulder span", () => {
+    const character = createWideHandHoldCharacter();
+    const leftShoulder = character.getObjectByName("mixamorig:LeftShoulder")!;
+    const rightShoulder = character.getObjectByName("mixamorig:RightShoulder")!;
+    const leftHand = character.getObjectByName("mixamorig:LeftHand")!;
+    const rightHand = character.getObjectByName("mixamorig:RightHand")!;
+    const shoulderSpan = leftShoulder.getWorldPosition(new THREE.Vector3())
+      .distanceTo(rightShoulder.getWorldPosition(new THREE.Vector3()));
+    const startingHandSpan = leftHand.getWorldPosition(new THREE.Vector3())
+      .distanceTo(rightHand.getWorldPosition(new THREE.Vector3()));
+
+    expect(startingHandSpan).toBeGreaterThan(shoulderSpan);
+    expect(applyPlayerHoldFrame(character, "rifle-body-forward")).toBe(true);
+
+    const solvedHandSpan = leftHand.getWorldPosition(new THREE.Vector3())
+      .distanceTo(rightHand.getWorldPosition(new THREE.Vector3()));
+    expect(solvedHandSpan).toBeLessThanOrEqual(shoulderSpan + 1e-6);
+  });
+
   it("fails closed when a procedural muzzle has no independent direction metadata", () => {
     const character = createCharacter();
     const weapon = createProceduralWeapon();
@@ -447,6 +633,49 @@ describe("verified player weapon pose solver", () => {
     expect(result.clipping.checked).toBe(true);
     expect(result.clipping.weaponBody || result.clipping.weaponArm).toBe(true);
     expect(result.verified).toBe(false);
+  });
+
+  it("does not reject disconnected weapon geometry because one mesh box spans its empty gap", () => {
+    const character = createCharacter();
+    const weapon = createWeapon(false);
+    weapon.add(new THREE.Mesh(
+      createDisconnectedBoxGeometry([-2, 3], 0.4),
+      new THREE.MeshBasicMaterial(),
+    ));
+
+    const result = solveVerifiedGripPose(character, weapon, { weaponId: "rifle" });
+
+    expect(result.solved).toBe(true);
+    expect(result.clipping.proxyComplete).toBe(true);
+    expect(result.clipping.weaponBody || result.clipping.weaponArm || result.clipping.handForearm).toBe(false);
+    expect(result.verified).toBe(true);
+  });
+
+  it("does not reject a triangle whose AABB crosses an arm without the surface touching it", () => {
+    const character = createCharacter();
+    const weapon = createWeapon(false);
+    solveVerifiedGripPose(character, weapon, { weaponId: "rifle" });
+
+    const worldToLocal = weapon.matrixWorld.clone().invert();
+    const trianglePoints = [
+      [-0.3, 1.5, 0.3],
+      [0.3, 1.5, -0.3],
+      [0.3, 0.9, 0.3],
+    ].map(([x, y, z]) => new THREE.Vector3(x, y, z).applyMatrix4(worldToLocal));
+    const geometry = new THREE.BufferGeometry();
+    geometry.setAttribute("position", new THREE.Float32BufferAttribute(
+      trianglePoints.flatMap((point) => point.toArray()),
+      3,
+    ));
+    geometry.setIndex([0, 1, 2]);
+    geometry.computeBoundingBox();
+    weapon.add(new THREE.Mesh(geometry, new THREE.MeshBasicMaterial()));
+
+    const result = solveVerifiedGripPose(character, weapon, { weaponId: "rifle" });
+
+    expect(result.clipping.proxyComplete).toBe(true);
+    expect(result.clipping.weaponBody || result.clipping.weaponArm || result.clipping.handForearm).toBe(false);
+    expect(result.verified).toBe(true);
   });
 
   it("allows a named magazine to contact the torso without allowing oversized weapon geometry", () => {
@@ -574,6 +803,27 @@ describe("verified player weapon pose solver", () => {
     expect(result.verified).toBe(false);
   });
 
+  it("invalidates cached clipping geometry when an existing mesh becomes oversized", () => {
+    const character = createCharacter();
+    const weapon = createWeapon();
+    const first = solveVerifiedGripPose(character, weapon, { weaponId: "rifle" });
+    expect(first.clipping.weaponBody || first.clipping.weaponArm).toBe(false);
+
+    const body = weapon.children.find((child) => (child as THREE.Mesh).isMesh) as THREE.Mesh;
+    const position = body.geometry.getAttribute("position") as THREE.BufferAttribute;
+    for (let vertex = 0; vertex < position.count; vertex += 1) {
+      position.setXYZ(vertex, position.getX(vertex) * 50, position.getY(vertex) * 50, position.getZ(vertex) * 50);
+    }
+    position.needsUpdate = true;
+    body.geometry.computeBoundingBox();
+    weapon.updateMatrixWorld(true);
+
+    const result = solveVerifiedGripPose(character, weapon, { weaponId: "rifle" });
+
+    expect(result.clipping.weaponBody || result.clipping.weaponArm).toBe(true);
+    expect(result.verified).toBe(false);
+  });
+
   it("refreshes cached anchors when an authored socket is renamed", () => {
     const character = createCharacter();
     const weapon = createWeapon();
@@ -615,6 +865,24 @@ describe("verified player weapon pose solver", () => {
     expect(shouldShowRemotePlayerWeapon(false, false)).toBe(true);
     expect(shouldShowRemotePlayerWeapon(true, false)).toBe(false);
     expect(shouldShowRemotePlayerWeapon(true, true)).toBe(true);
+  });
+
+  it("anchors remote authored feet at the network player's ground position", () => {
+    expect(getRemotePlayerModelY(0.9)).toBeCloseTo(0);
+    expect(getRemotePlayerModelY(4.5)).toBeCloseTo(3.6);
+  });
+
+  it("preserves the weapon contract's base pose when applying remote pitch", () => {
+    expect(getRemoteWeaponForwardPitch(-0.3, 0.2)).toBeCloseTo(-0.5);
+    expect(getRemoteWeaponForwardPitch(-0.3, -0.4)).toBeCloseTo(0.1);
+  });
+
+  it("fails closed instead of retaining an unverified weapon-specific base pose", () => {
+    const sniperCandidate = { id: "sniper-low-ready", forwardPitch: -0.3 };
+
+    expect(getRemoteBaseForwardPitch(sniperCandidate, true)).toBeCloseTo(-0.3);
+    expect(getRemoteBaseForwardPitch(sniperCandidate, false)).toBe(0);
+    expect(getRemoteWeaponForwardPitch(getRemoteBaseForwardPitch(sniperCandidate, false), 0.2)).toBeCloseTo(-0.2);
   });
 
   it("replaces a late fallback weapon only when its exact catalog template is ready", () => {
@@ -675,6 +943,7 @@ describe("verified player weapon pose solver", () => {
       remotePlayerMixers: new Map([["player-1", mixer]]),
       remotePlayersTargetData: new Map([["player-1", { pos: new THREE.Vector3() }]]),
     };
+    (match as any).remotePlayers = new RemotePlayerSystem(match as any);
     const networkSync = Object.create(NetworkSyncSystem.prototype) as NetworkSyncSystem;
     (networkSync as any).match = match;
 
@@ -730,5 +999,12 @@ describe("verified player weapon pose solver", () => {
     const reverseScores = new Map(reverse.candidates.map(({ candidate, diagnostics }) => [candidate.id, diagnostics.score]));
     expect(reverse.selected.id).toBe(forward.selected.id);
     for (const [id, score] of forwardScores) expect(reverseScores.get(id)).toBeCloseTo(score, 8);
+  });
+
+  it("uses the sniper low-ready candidate when the weapon contract requests it", () => {
+    const result = chooseVerifiedGripPose(createCharacter(), createWeapon(true, Math.PI / 2), undefined, { weaponId: "sniper" });
+
+    expect(result.selected.id).toBe("sniper-low-ready");
+    expect(result.selected.forwardPitch).toBe(-0.3);
   });
 });

@@ -73,7 +73,7 @@ describe('Shared Entity Animation Contract System', () => {
       });
       expect(reloadOutput.kind).toBe('clip');
       if (reloadOutput.kind === 'clip') {
-        expect(reloadOutput.clipName).toBe('rifle_aim_idle');
+        expect(reloadOutput.clipName).toBe('rifle_idle');
       }
 
       // Firing rifle

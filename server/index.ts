@@ -332,6 +332,7 @@ async function shutdownServer(): Promise<void> {
   clearInterval(matchProgressGcInterval);
   matchmaker.shutdown();
   matchManager.shutdownAll();
+  await roomAllocator.shutdownAll();
   io.close();
   await new Promise<void>((resolve) => server.close(() => resolve()));
   await closeBenchmarkTelemetry();
@@ -422,13 +423,17 @@ io.onConnection((channel: ChannelAdapter) => {
 
   channel.onDisconnect(() => {
     matchmaker.removePlayerFromPool(playerId);
-    connectionRegistry.unregister(playerId);
+    connectionRegistry.unregister(playerId, channel);
+    const registryPlayerId = (channel as any).connectionRegistryPlayerId;
+    if (registryPlayerId) {
+      connectionRegistry.unregister(registryPlayerId, channel);
+    }
     const roomExec = getRoomExecution();
     const p = getPlayer();
     if (p && roomExec) {
       const pid = p.id;
       console.log(`Disconnection registered: ${pid}. Starting 75s grace period via room.`);
-      roomExec.send(pid, { type: "PLAYER_DISCONNECT" });
+      roomExec.send(pid, { type: "PLAYER_DISCONNECT", channelId: channel.id });
     } else {
       const room = getRoom();
       if (p && room) {

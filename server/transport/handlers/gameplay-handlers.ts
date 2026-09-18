@@ -20,6 +20,8 @@ export function registerGameplayHandlers(
       const pitch = dataView.getFloat32(5, true);
       const yaw = dataView.getFloat32(9, true);
 
+      if (!Number.isFinite(pitch) || !Number.isFinite(yaw)) return;
+
       if (seq > p.lastSequence) {
         p.lastSequence = seq;
         const roomExec = typeof getRoomExecution === "function" ? getRoomExecution() : getRoomExecution;
@@ -68,9 +70,22 @@ export function registerGameplayHandlers(
       return;
     }
 
+    if (type === "SELECT_WEAPON") {
+      const slot = (args.weaponSlot ?? args.slot) as "primary" | "secondary";
+      if (slot === "primary" || slot === "secondary") {
+        roomExec.send(p.id, { type: "SELECT_WEAPON", slot });
+      }
+      return;
+    }
+
+    if (type === "SET_AIM") {
+      roomExec.send(p.id, { type: "SET_AIM", aiming: !!args.aiming });
+      return;
+    }
+
     if (type === "RELOAD") {
       const slot = args.weaponSlot as "primary" | "secondary";
-      if (slot) {
+      if (slot === "primary" || slot === "secondary") {
         roomExec.send(p.id, { type: "RELOAD", weaponSlot: slot });
       }
       return;
@@ -78,7 +93,7 @@ export function registerGameplayHandlers(
 
     if (type === "CANCEL_RELOAD") {
       const slot = args.weaponSlot as "primary" | "secondary";
-      if (slot) {
+      if (slot === "primary" || slot === "secondary") {
         roomExec.send(p.id, { type: "CANCEL_RELOAD", weaponSlot: slot });
       }
       return;

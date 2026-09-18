@@ -1,5 +1,6 @@
 import { RoomExecution, RoomExecutionStatus, RoomInboundEvent, RoomOutboundEvent } from "./RoomExecution";
 import { MatchRoom, PlayerState, getWeaponReloadTicks } from "../MatchRoom";
+import type { ChannelAdapter } from "../transport/adapter";
 import { processHitscan } from "../combat/hitscan";
 import { getWeaponPerformance } from "../../shared/constants";
 import { recordHitscanRejected } from "../sentry";
@@ -26,12 +27,16 @@ export class InProcessRoomExecution implements RoomExecution {
     return this.room;
   }
 
-  public onOutbound(callback: (playerId: string | "broadcast", event: RoomOutboundEvent) => void): void {
+  public onOutbound(callback: (playerId: string | "broadcast", event: RoomOutboundEvent) => void): () => void {
     this.outboundListeners.push(callback);
+    return () => {
+      const index = this.outboundListeners.indexOf(callback);
+      if (index !== -1) this.outboundListeners.splice(index, 1);
+    };
   }
 
   public emitOutbound(playerId: string | "broadcast", event: RoomOutboundEvent): void {
-    for (const listener of this.outboundListeners) {
+    for (const listener of [...this.outboundListeners]) {
       try {
         listener(playerId, event);
       } catch (err) {
@@ -108,7 +113,26 @@ export class InProcessRoomExecution implements RoomExecution {
 
     switch (event.type) {
       case "INPUT": {
+        if (
+          !Number.isSafeInteger(event.seq) ||
+          event.seq < 0 ||
+          !Number.isInteger(event.inputMask) ||
+          event.inputMask < 0 ||
+          event.inputMask > 0xff ||
+          !Number.isFinite(event.pitch) ||
+          !Number.isFinite(event.yaw)
+        ) {
+          break;
+        }
         this.room.updatePlayerInput(p, event.inputMask, event.pitch, event.yaw);
+        break;
+      }
+      case "SET_AIM": {
+        this.room.updatePlayerAiming(p, !!event.aiming);
+        break;
+      }
+      case "SELECT_WEAPON": {
+        this.room.selectPlayerWeapon(p, event.slot);
         break;
       }
       case "USE_UTILITY": {
@@ -128,10 +152,12 @@ export class InProcessRoomExecution implements RoomExecution {
         break;
       }
       case "PLAYER_QUIT": {
-        await this.room.handlePlayerAbandonment(p.id);
+        if (event.channelId && p.channel.id !== event.channelId) break;
+        await this.room.handlePlayerAbandonment(p.id, p.channel);
         break;
       }
       case "PLAYER_DISCONNECT": {
+        if (event.channelId && p.channel.id !== event.channelId) break;
         this.room.handlePlayerDisconnect(p.id);
         break;
       }
@@ -157,8 +183,8 @@ export class InProcessRoomExecution implements RoomExecution {
       }
       case "RELOAD": {
         if (!p.isAlive) break;
-        const slot = event.weaponSlot as "primary" | "secondary";
-        if (!slot) break;
+        const slot = event.weaponSlot;
+        if (slot !== "primary" && slot !== "secondary") break;
         const wState = p.weaponState[slot];
         const wDef = getWeaponPerformance(wState.weaponId);
         if (!wDef) break;
@@ -179,8 +205,8 @@ export class InProcessRoomExecution implements RoomExecution {
       }
       case "CANCEL_RELOAD": {
         if (!p.isAlive) break;
-        const slot = event.weaponSlot as "primary" | "secondary";
-        if (!slot) break;
+        const slot = event.weaponSlot;
+        if (slot !== "primary" && slot !== "secondary") break;
         const wState = p.weaponState[slot];
         if (wState.isReloading) {
           wState.isReloading = false;
@@ -233,6 +259,7 @@ export class InProcessRoomExecution implements RoomExecution {
           wState.leakyBucket = leakyUpdate + 1;
           wState.lastConfirmedShotT = now;
           p.firedThisTick = true;
+          p.firedSinceBroadcast = true;
 
           if (p.infiniteAmmo) {
             wState.currentMag = weaponStats.capacity;
@@ -262,6 +289,20 @@ export class InProcessRoomExecution implements RoomExecution {
     }
   }
 
+  public async reconnectPlayer(
+    playerId: string,
+    reqUid: string,
+    channel: ChannelAdapter,
+  ): Promise<boolean> {
+    const player = this.room.players.get(playerId);
+    if (!player || player.reqUid !== reqUid) return false;
+    if (!channel.connected) return false;
+    if (player.channel !== channel && player.channel.connected) return false;
+
+    this.room.registerPlayer(playerId, channel, undefined, undefined, undefined, reqUid);
+    return true;
+  }
+
   public async spawnBots(count: number): Promise<void> {
     this.room.spawnTestBots(count);
   }
@@ -277,6 +318,10 @@ export class InProcessRoomExecution implements RoomExecution {
   }
 
   public async getStatus(): Promise<RoomExecutionStatus> {
+    return this.status;
+  }
+
+  public get currentStatus(): RoomExecutionStatus {
     return this.status;
   }
 

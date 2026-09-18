@@ -112,6 +112,116 @@ describe('RoomExecution and RoomAllocator Tests', () => {
     expect(allocator.getActiveRoomCount()).toBe(0);
   });
 
+  it('rejects malformed weapon-slot events without throwing', async () => {
+    const execution = await allocator.allocate('room-invalid-weapon-slot');
+    const room = (execution as InProcessRoomExecution).getRoom();
+    const mockPlayer = {
+      id: 'p1',
+      channel: { emit: vi.fn() },
+      isAlive: true,
+      weaponState: {
+        primary: { weaponId: 'rifle', currentMag: 30, reserve: 90, isReloading: false, reloadTimer: 0, leakyBucket: 0, lastConfirmedShotT: 0 },
+        secondary: { weaponId: 'pistol', currentMag: 15, reserve: 45, isReloading: false, reloadTimer: 0, leakyBucket: 0, lastConfirmedShotT: 0 },
+      },
+    };
+    room.players.set('p1', mockPlayer);
+
+    await expect(execution.send('p1', { type: 'RELOAD', weaponSlot: 'tertiary' } as any)).resolves.toBeUndefined();
+    await expect(execution.send('p1', { type: 'CANCEL_RELOAD', weaponSlot: 'tertiary' } as any)).resolves.toBeUndefined();
+    expect(mockPlayer.weaponState.primary.isReloading).toBe(false);
+
+    await execution.terminate('test cleanup');
+  });
+
+  it('ignores a disconnect event from a superseded channel', async () => {
+    const execution = await allocator.allocate('room-stale-disconnect');
+    const room = (execution as InProcessRoomExecution).getRoom();
+    const mockPlayer = {
+      id: 'p1',
+      channel: { id: 'new-channel', connected: false, emit: vi.fn() },
+      isAlive: true,
+      weaponState: {
+        primary: { weaponId: 'rifle', currentMag: 30, reserve: 90, isReloading: false, reloadTimer: 0, leakyBucket: 0, lastConfirmedShotT: 0 },
+        secondary: { weaponId: 'pistol', currentMag: 15, reserve: 45, isReloading: false, reloadTimer: 0, leakyBucket: 0, lastConfirmedShotT: 0 },
+      },
+    };
+    room.players.set('p1', mockPlayer);
+
+    await execution.send('p1', {
+      type: 'PLAYER_DISCONNECT',
+      channelId: 'old-channel',
+    } as any);
+
+    expect(room.handlePlayerDisconnect).not.toHaveBeenCalled();
+    await execution.terminate('test cleanup');
+  });
+
+  it('ignores a quit event from a superseded channel', async () => {
+    const execution = await allocator.allocate('room-stale-quit');
+    const room = (execution as InProcessRoomExecution).getRoom();
+    const mockPlayer = {
+      id: 'p1',
+      channel: { id: 'new-channel', connected: true, emit: vi.fn() },
+      isAlive: true,
+      weaponState: {
+        primary: { weaponId: 'rifle', currentMag: 30, reserve: 90, isReloading: false, reloadTimer: 0 },
+        secondary: { weaponId: 'pistol', currentMag: 15, reserve: 45, isReloading: false, reloadTimer: 0 },
+      },
+    };
+    room.players.set('p1', mockPlayer);
+
+    await execution.send('p1', {
+      type: 'PLAYER_QUIT',
+      channelId: 'old-channel',
+    } as any);
+
+    expect(room.handlePlayerAbandonment).not.toHaveBeenCalled();
+    await execution.terminate('test cleanup');
+  });
+
+  it('rebinds a reconnecting transport to the existing player identity', async () => {
+    const execution = await allocator.allocate('room-reconnect-identity');
+    const room = (execution as InProcessRoomExecution).getRoom();
+    const oldChannel = { id: 'old-channel', connected: false, emit: vi.fn() };
+    const newChannel = { id: 'new-channel', connected: true, emit: vi.fn() };
+    const player = {
+      id: 'stable-player',
+      reqUid: 'stable-uid',
+      channel: oldChannel,
+    };
+    room.players.set(player.id, player);
+    (room as any).registerPlayer = vi.fn((id: string, channel: any) => {
+      player.channel = channel;
+      return player;
+    });
+
+    await expect(
+      execution.reconnectPlayer(player.id, player.reqUid, newChannel as any),
+    ).resolves.toBe(true);
+    expect(player.channel).toBe(newChannel);
+    expect((room as any).registerPlayer).toHaveBeenCalledWith(
+      player.id,
+      newChannel,
+      undefined,
+      undefined,
+      undefined,
+      player.reqUid,
+    );
+
+    const duplicateChannel = { id: 'duplicate-channel', connected: true, emit: vi.fn() };
+    await expect(
+      execution.reconnectPlayer(player.id, player.reqUid, duplicateChannel as any),
+    ).resolves.toBe(false);
+    expect(player.channel).toBe(newChannel);
+
+    await expect(
+      execution.reconnectPlayer(player.id, 'wrong-uid', oldChannel as any),
+    ).resolves.toBe(false);
+    expect(player.channel).toBe(newChannel);
+
+    await execution.terminate('test cleanup');
+  });
+
   it('should release execution and clean up from allocator', async () => {
     const execution = await allocator.allocate('room-release');
     expect(allocator.getActiveRoomCount()).toBe(1);

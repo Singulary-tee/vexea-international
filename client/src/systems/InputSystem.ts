@@ -77,6 +77,7 @@ export class InputSystem {
       if (e.button === 2) {
         e.preventDefault();
         this.match.isADS = true;
+        if (this.match.transport) this.match.transport.emit("reliable_event", { type: "SET_AIM", aiming: true });
       }
     }, { signal });
 
@@ -86,6 +87,7 @@ export class InputSystem {
       if (e.button === 2) {
         e.preventDefault();
         this.match.isADS = false;
+        if (this.match.transport) this.match.transport.emit("reliable_event", { type: "SET_AIM", aiming: false });
       }
     }, { signal });
 
@@ -143,8 +145,12 @@ export class InputSystem {
     if (isSwitchingWeapon()) return;
 
     if (this.match.activeWeapon !== slot) {
+      const wasAiming = this.match.isADS;
       this.match.isADS = false;
       this.match.targetAdsLerp = 0.0;
+      if (wasAiming && this.match.transport) {
+        this.match.transport.emit("reliable_event", { type: "SET_AIM", aiming: false });
+      }
 
       if (this.match.isReloading) {
         this.match.isReloading = false;
@@ -156,6 +162,12 @@ export class InputSystem {
 
       switchActiveWeaponModel(slot);
       this.match.activeWeapon = slot;
+      if (this.match.transport) {
+        this.match.transport.emit("reliable_event", {
+          type: "SELECT_WEAPON",
+          slot: slot === 1 ? "primary" : "secondary",
+        });
+      }
       this.match.updateWeaponUI();
     } else if (slot === 1) {
       if (this.match.transport) this.match.transport.emit("reliable_event", { type: "TOGGLE_FIRE_MODE" });
@@ -331,6 +343,7 @@ export class InputSystem {
         if (isSwitchingWeapon()) return;
         if (!this.match) return;
         this.match.isADS = !this.match.isADS;
+        if (this.match.transport) this.match.transport.emit("reliable_event", { type: "SET_AIM", aiming: this.match.isADS });
         if (this.match.isADS) adsBtn.classList.add("bg-white", "opacity-80");
         else adsBtn.classList.remove("bg-white", "opacity-80");
       });

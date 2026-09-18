@@ -1,7 +1,11 @@
+import type { ChannelAdapter } from "../transport/adapter";
+
 export type RoomExecutionStatus = "starting" | "active" | "ending" | "crashed";
 
 export type RoomInboundEvent =
   | { type: "INPUT"; seq: number; inputMask: number; pitch: number; yaw: number }
+  | { type: "SET_AIM"; aiming: boolean }
+  | { type: "SELECT_WEAPON"; slot: "primary" | "secondary" }
   | { type: "USE_UTILITY"; slot: "utility1" | "utility2" }
   | { type: "OBJECTIVE_HOLD"; holding: boolean }
   | { type: "TOGGLE_FIRE_MODE" }
@@ -11,8 +15,8 @@ export type RoomInboundEvent =
   | { type: "CHAT_MESSAGE"; message: string; sender?: string }
   | { type: "QUICK_COMM"; optionId: string; sender?: string }
   | { type: "PLAYER_READY" }
-  | { type: "PLAYER_QUIT" }
-  | { type: "PLAYER_DISCONNECT" }
+  | { type: "PLAYER_QUIT"; channelId?: string }
+  | { type: "PLAYER_DISCONNECT"; channelId?: string }
   | { type: "SELECT_CLASS"; classId: any }
   | { type: "REGISTER_PLAYER"; [key: string]: any }
   | { type: "REMOVE_PLAYER" }
@@ -36,10 +40,11 @@ export interface RoomExecution {
   // This is what allows a future out-of-process backend to implement the same interface
   // without a second migration.
   send(playerId: string | "broadcast", event: RoomInboundEvent): Promise<void>;
+  reconnectPlayer(playerId: string, reqUid: string, channel: ChannelAdapter): Promise<boolean>;
   spawnBots(count: number): Promise<void>;
   spawnDrones(count: number, type?: number): Promise<void>;
   spawnProjectiles(count: number): Promise<void>;
-  onOutbound(callback: (playerId: string | "broadcast", event: RoomOutboundEvent) => void): void;
+  onOutbound(callback: (playerId: string | "broadcast", event: RoomOutboundEvent) => void): () => void;
   getStatus(): Promise<RoomExecutionStatus>;
   terminate(reason: string): Promise<void>;
 }

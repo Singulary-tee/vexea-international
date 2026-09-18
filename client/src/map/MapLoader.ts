@@ -32,12 +32,14 @@ export class MapLoader {
   private centerpieceDisc: THREE.Mesh | null = null;
   private sceneAddCallCount: number = 0;
   private concreteWallMat: THREE.MeshStandardMaterial | null = null;
+  private disposed = false;
 
   constructor(scene: THREE.Scene) {
     this.scene = scene;
   }
 
-  async load(mapEntry: MapRegistryEntry): Promise<void> {
+  async load(mapEntry: MapRegistryEntry, isCurrent: () => boolean = () => true): Promise<void> {
+    if (this.disposed || !isCurrent()) return;
     if (!mapEntry.specFile) return;
 
     try {
@@ -45,10 +47,10 @@ export class MapLoader {
       this.spec = await resp.json() as MapSpec;
     } catch (e) {
       console.error('Failed to load map spec:', e);
-      return;
+      throw e;
     }
 
-    if (!this.spec) return;
+    if (this.disposed || !this.spec || !isCurrent()) return;
 
     const uniqueMeshes = new Set<string>();
     this.spec.buildings.forEach(b => {
@@ -84,15 +86,21 @@ export class MapLoader {
       const fullUrl = browserDir + meshFile;
       let cachedUrl = fullUrl;
       try {
-        cachedUrl = await getCachedOrFetchUrl(fullUrl, 'Asset');
-      } catch (e) {
-        console.warn(`[MapLoader] Cache routing failed, falling back:`, e);
-      }
+          cachedUrl = await getCachedOrFetchUrl(fullUrl, 'Asset');
+        } catch (e) {
+          console.warn(`[MapLoader] Cache routing failed, falling back:`, e);
+        }
+
+        if (this.disposed || !isCurrent()) return;
 
       return new Promise<void>((resolve, reject) => {
         loader.load(
           cachedUrl,
           (gltf) => {
+            if (this.disposed || !isCurrent()) {
+              resolve();
+              return;
+            }
             this.loadedAssets.set(meshFile, gltf.scene);
             loaded++;
             window.dispatchEvent(new CustomEvent('map_load_progress', { detail: { loaded, total } }));
@@ -101,7 +109,7 @@ export class MapLoader {
           undefined,
           (err) => {
             console.error('Failed to load ' + meshFile, err);
-            resolve(); // Resolve anyway to avoid breaking Promise.all
+            reject(err);
           }
         );
       });
@@ -110,12 +118,13 @@ export class MapLoader {
     await Promise.all(loadPromises);
   }
 
-  async buildScene(): Promise<void> {
+  async buildScene(isCurrent: () => boolean = () => true): Promise<void> {
     this.sceneAddCallCount = 0;
-    if (!this.spec) return;
+    if (this.disposed || !this.spec || !isCurrent()) return;
     console.log('[MAP DEBUG] buildScene called with spec:', JSON.stringify(this.spec).slice(0, 200));
 
     await this.setupEnvironment();
+    if (this.disposed || !isCurrent()) return;
 
     const zoneGeometries: Map<string, { geom: THREE.BufferGeometry, mat: THREE.Material }[]> = new Map();
 
@@ -349,10 +358,11 @@ export class MapLoader {
     return group;
   }
 
-  placeProps(): void {
-    if (!this.spec?.props?.cameras) return;
+  placeProps(isCurrent: () => boolean = () => true): void {
+    if (this.disposed || !this.spec?.props?.cameras || !isCurrent()) return;
 
     for (const prop of this.spec.props.cameras) {
+      if (this.disposed || !isCurrent()) return;
       if (prop.meshFile && this.loadedAssets.has(prop.meshFile)) {
         const asset = this.loadedAssets.get(prop.meshFile)!;
         const clone = asset.clone();
@@ -394,29 +404,38 @@ export class MapLoader {
   }
 
   dispose(): void {
-    for (const mesh of this.mergedMeshes) {
-      this.scene.remove(mesh);
-      mesh.traverse((child: any) => {
-        if (child.isMesh) {
-          if (child.geometry) child.geometry.dispose();
-          if (Array.isArray(child.material)) {
-            child.material.forEach((m: any) => m.dispose());
-          } else if (child.material) {
-            child.material.dispose();
+    if (this.disposed) return;
+    this.disposed = true;
+
+    const geometries = new Set<THREE.BufferGeometry>();
+    const materials = new Set<THREE.Material>();
+    const collectResources = (root: THREE.Object3D) => {
+      root.traverse((child: any) => {
+        if (child.geometry) geometries.add(child.geometry);
+        if (child.material) {
+          for (const material of Array.isArray(child.material) ? child.material : [child.material]) {
+            materials.add(material);
           }
         }
       });
-      if (mesh.geometry) mesh.geometry.dispose();
-      if (Array.isArray(mesh.material)) {
-        mesh.material.forEach(m => m.dispose());
-      } else if (mesh.material) {
-        mesh.material.dispose();
-      }
+    };
+
+    for (const mesh of this.mergedMeshes) {
+      this.scene.remove(mesh);
+      collectResources(mesh);
     }
+    for (const asset of this.loadedAssets.values()) {
+      collectResources(asset);
+    }
+
+    geometries.forEach((geometry) => geometry.dispose());
+    materials.forEach((material) => material.dispose());
     this.mergedMeshes = [];
+    this.loadedAssets.clear();
+    this.spec = null;
+    this.concreteWallMat?.dispose();
+    this.concreteWallMat = null;
     if (this.centerpieceDisc) {
-        this.centerpieceDisc.geometry.dispose();
-        (this.centerpieceDisc.material as THREE.Material).dispose();
         this.centerpieceDisc = null;
     }
   }

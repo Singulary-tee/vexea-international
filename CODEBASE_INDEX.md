@@ -887,3 +887,9 @@ Every file change in the VEXEA codebase must follow this strict two-step protoco
 * **Explicit Non-Scope:** No renderer replacement (`THREE.WebGLRenderer` remains forbidden, WebGPU remains strictly enforced), no React, no transport removal (Geckos/Socket.IO untouched), and no hot loop allocations.
 * **Status:** Verified and finalized.
 
+### Cycle 2026-09-16-01: Match Loading Failure Closure
+* **Target Files:** `client/src/map/LoadingOrchestrator.ts`, `client/src/map/MapLoader.ts`, `tests/loading-orchestrator.test.ts`, `CODEBASE_INDEX.md`.
+* **Scope:** Preserve the existing stale-operation cleanup while making map and required combat-asset load failures abort the match load before `loading_complete` can be emitted.
+* **Explicit Non-Scope:** No changes to gameplay, networking, combat, physics, camera interpolation, or asset contents.
+* **Status:** In progress.
+

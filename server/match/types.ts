@@ -121,6 +121,9 @@ export interface PlayerState {
     };
   };
   utilityState?: PlayerUtilityState;
+  sessionGeneration?: number;
+  weaponEquipSequence?: number;
+  weaponEquipTimestamp?: number;
   ping: number;
   lastSequence: number;
   leakyRateLimit: number;
@@ -132,7 +135,9 @@ export interface PlayerState {
   velEmaY: number;
   velEmaZ: number;
   adMultiplier?: number;
+  isAiming?: boolean;
   firedThisTick?: boolean;
+  firedSinceBroadcast?: boolean;
   godMode?: boolean;
   infiniteAmmo?: boolean;
   isHoldingObjective?: boolean;

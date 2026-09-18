@@ -9,29 +9,63 @@ import { initPlayerWeapons } from "../../weapons_model";
 import * as THREE from "three/webgpu";
 import { engineContext } from "../../context/ClientEngineContext";
 import { normalizeGameplayPlayerModel } from "../systems/player-visual-calibration";
+import type { MatchController } from "../../MatchController";
+
+let latestLoadOperation = 0;
+
+export function shouldSignalMatchLoadComplete(
+  loadSucceeded: boolean,
+  match: Pick<MatchController, "active"> | null | undefined,
+  activeMatch: MatchController | null,
+): boolean {
+  return loadSucceeded && !!match && match.active && activeMatch === match;
+}
 
 export async function orchestrateMatchLoad(
   mapEntry: MapRegistryEntry,
   channel: any,
   targetScene: THREE.Scene,
-  camera?: THREE.Camera
-): Promise<void> {
+  camera?: THREE.Camera,
+  match?: MatchController,
+): Promise<boolean> {
+  const operation = ++latestLoadOperation;
+  const belongsToActiveMatch = () =>
+    operation === latestLoadOperation && (!match || (match.active && engineContext.activeMatch === match));
+  if (!belongsToActiveMatch()) return false;
+
   (window as any)._serverMatchReady = false; // Reset the server ready flag for the new match load!
   const loadingScreen = new LoadingScreen();
   const mapLoader = new MapLoader(targetScene);
+  const discardStaleLoad = (): boolean => {
+    loadingScreen.destroy();
+    mapLoader.dispose();
+    return false;
+  };
 
   loadingScreen.show();
 
   // Phase 1 — Check Cache and Download Required Assets
   loadingScreen.setPhase('CHECKING CACHE');
-  const missing = await getMissingFilesForMap(mapEntry.id);
+  try {
+    const missing = await getMissingFilesForMap(mapEntry.id);
+    if (!belongsToActiveMatch()) {
+      return discardStaleLoad();
+    }
 
-  if (missing.length > 0) {
-    loadingScreen.setPhase('DOWNLOADING ASSETS');
-    await downloadMapAssets(mapEntry.id, (progress) => {
-      loadingScreen.setPhase(`DOWNLOADING ${progress.currentFile.toUpperCase()}`);
-      loadingScreen.setProgress(progress.loaded, progress.total);
-    });
+    if (missing.length > 0) {
+      loadingScreen.setPhase('DOWNLOADING ASSETS');
+      await downloadMapAssets(mapEntry.id, (progress) => {
+        if (!belongsToActiveMatch()) return;
+        loadingScreen.setPhase(`DOWNLOADING ${progress.currentFile.toUpperCase()}`);
+        loadingScreen.setProgress(progress.loaded, progress.total);
+      });
+      if (!belongsToActiveMatch()) {
+        return discardStaleLoad();
+      }
+    }
+  } catch (e) {
+    console.error('[LoadingOrchestrator] Failed to prepare map assets:', e);
+    return discardStaleLoad();
   }
 
   // Preload and prewarm gameplay audio buffers into Howler
@@ -40,6 +74,9 @@ export async function orchestrateMatchLoad(
     await audioManager.loadGameplayAudio();
   } catch (e) {
     console.warn('[LoadingOrchestrator] Failed to preload gameplay audio:', e);
+  }
+  if (!belongsToActiveMatch()) {
+    return discardStaleLoad();
   }
 
   // Preload VFX textures
@@ -60,25 +97,32 @@ export async function orchestrateMatchLoad(
           console.warn(`[LoadingOrchestrator] Failed to preload VFX texture ${item.key}:`, err);
         }
         loadedVfx++;
-        loadingScreen.setProgress(loadedVfx, totalVfx);
+        if (belongsToActiveMatch()) loadingScreen.setProgress(loadedVfx, totalVfx);
       }
     };
     await Promise.all(Array(workerCount).fill(0).map(() => processQueue()));
   } catch (e) {
     console.warn('[LoadingOrchestrator] Failed to preload VFX textures:', e);
   }
+  if (!belongsToActiveMatch()) {
+    return discardStaleLoad();
+  }
 
   // Phase 2 — Build Scene & Map Props
   loadingScreen.setPhase('BUILDING MAP');
   loadingScreen.setProgress(0, 1);
   try {
-    await mapLoader.load(mapEntry);
-    await mapLoader.buildScene();
-    mapLoader.placeProps();
-    (window as any).__vexMapLoader = mapLoader;
+    await mapLoader.load(mapEntry, belongsToActiveMatch);
+    await mapLoader.buildScene(belongsToActiveMatch);
+    mapLoader.placeProps(belongsToActiveMatch);
   } catch (e) {
     console.error("Error building map scene:", e);
+    return discardStaleLoad();
   }
+  if (!belongsToActiveMatch()) {
+    return discardStaleLoad();
+  }
+  (window as any).__vexMapLoader = mapLoader;
 
   // Phase 3 — Load Character, Drone, and Weapon Models
   loadingScreen.setPhase('LOADING COMBAT ASSETS');
@@ -88,13 +132,17 @@ export async function orchestrateMatchLoad(
     const gltfLoader = createConfiguredGLTFLoader(undefined, renderer);
 
     // 1. Character model
-    await new Promise<void>((resolve) => {
+    await new Promise<void>((resolve, reject) => {
       gltfLoader.load(
         getAssetUrl("Player_one-optimized.glb"),
         (gltf) => {
           const playerModel = gltf.scene;
           normalizeGameplayPlayerModel(playerModel);
           (playerModel as any).animations = gltf.animations;
+          if (!belongsToActiveMatch()) {
+            resolve();
+            return;
+          }
           engineContext.setPlayerModel(playerModel);
           (window as any).playerModel = playerModel;
           playerModel.traverse((child) => {
@@ -108,7 +156,7 @@ export async function orchestrateMatchLoad(
         undefined,
         (err) => {
           console.warn("[LoadingOrchestrator] Failed to load Player_one-optimized.glb:", err);
-          resolve();
+          reject(err);
         }
       );
     });
@@ -126,6 +174,10 @@ export async function orchestrateMatchLoad(
     loadingScreen.setProgress(3, 3);
   } catch (e) {
     console.warn("[LoadingOrchestrator] Error loading combat assets:", e);
+    return discardStaleLoad();
+  }
+  if (!belongsToActiveMatch()) {
+    return discardStaleLoad();
   }
 
   // Phase 4 — Prewarm shaders and materials with a multi-directional panoramic view from the spawn point
@@ -168,6 +220,10 @@ export async function orchestrateMatchLoad(
     }
   }
 
+  if (!belongsToActiveMatch()) {
+    return discardStaleLoad();
+  }
+
   loadingScreen.setProgress(1, 1);
 
   // Send player_ready signal to the server
@@ -177,39 +233,55 @@ export async function orchestrateMatchLoad(
 
   // Phase 5 — Wait for server ready confirmation
   loadingScreen.setPhase('WAITING FOR SERVER');
-  await waitForServerReady(channel);
+  const serverReady = await waitForServerReady(channel, belongsToActiveMatch);
 
+  if (!serverReady || !belongsToActiveMatch()) {
+    return discardStaleLoad();
+  }
+
+  match?.visuals?.init();
   loadingScreen.destroy();
+  return true;
 }
 
-async function waitForServerReady(channel: any): Promise<void> {
-  if ((window as any)._serverMatchReady) return Promise.resolve();
+export async function waitForServerReady(
+  channel: any,
+  isCurrent: () => boolean = () => true,
+  timeoutMs = 15000,
+): Promise<boolean> {
+  if (!isCurrent()) return false;
+  if ((window as any)._serverMatchReady) return true;
   if (!channel || typeof channel.on !== 'function') {
-    console.warn('[LOADING] No valid channel provided — proceeding without confirmation');
-    return Promise.resolve();
+    console.warn('[LOADING] No valid channel provided — aborting load');
+    return false;
   }
   return new Promise((resolve) => {
     let resolved = false;
-    const handleMatchReady = () => {
-      if (!resolved) {
-        resolved = true;
-        if (typeof channel.off === 'function') {
-          channel.off('match_ready', handleMatchReady);
-        }
-        resolve();
+    let staleCheck: ReturnType<typeof setInterval> | undefined;
+    let timeout: ReturnType<typeof setTimeout> | undefined;
+    const finish = (ready: boolean) => {
+      if (resolved) return;
+      resolved = true;
+      if (staleCheck) clearInterval(staleCheck);
+      if (timeout) clearTimeout(timeout);
+      if (typeof channel.off === 'function') {
+        channel.off('match_ready', handleMatchReady);
       }
+      resolve(ready);
+    };
+    const handleMatchReady = () => {
+      finish(true);
     };
     channel.on('match_ready', handleMatchReady);
-    
-    setTimeout(() => {
+
+    staleCheck = setInterval(() => {
+      if (!isCurrent()) finish(false);
+    }, 250);
+    timeout = setTimeout(() => {
       if (!resolved) {
-        resolved = true;
-        if (typeof channel.off === 'function') {
-          channel.off('match_ready', handleMatchReady);
-        }
-        console.warn('[LOADING] Server ready timeout — proceeding without confirmation');
-        resolve();
+        console.warn('[LOADING] Server ready timeout — aborting load');
+        finish(false);
       }
-    }, 15000);
+    }, timeoutMs);
   });
 }

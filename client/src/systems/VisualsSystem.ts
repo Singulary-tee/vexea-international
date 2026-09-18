@@ -38,13 +38,14 @@ import {
   dustPerHitCount,
   barrelSmokeCount
 } from "../vfx/VFXOrchestrator";
-import { initDroneModels } from "../../drone_models";
-import { initPlayerWeapons, rifleGroup, pistolGroup } from "../../weapons_model";
+import { rifleGroup, pistolGroup } from "../../weapons_model";
 import { getSettings, applySettings } from "../../settings";
 
 export class VisualsSystem {
   private match: MatchController;
   private decorativeProps: THREE.Mesh[] = [];
+  private initialized = false;
+  private disposed = false;
 
   constructor(match: MatchController) {
     this.match = match;
@@ -58,7 +59,10 @@ export class VisualsSystem {
     });
   };
 
-  public async init() {
+  public init() {
+    if (this.initialized || this.disposed || !this.match.active) return;
+    this.initialized = true;
+
     const scene = this.match.scene;
     const renderer = (window as any).renderer; // Use global renderer for now, but scene is match-specific
     
@@ -94,12 +98,10 @@ export class VisualsSystem {
     // Initialize VFX
     initMatchVisuals(scene);
 
-    // Initialize Drone Models
-    await initDroneModels(scene);
-
-    // Initialize Player Weapons
     const camera = this.match.scene.userData.camera as THREE.PerspectiveCamera;
-    await initPlayerWeapons(scene, camera);
+    if (this.match.context.playerModel) {
+      this.match.localPlayerVisual?.setCanonicalModel(this.match.context.playerModel);
+    }
 
     this.setupDevMapDecorations(scene);
     this.setupLaserSegments(scene);
@@ -228,6 +230,7 @@ export class VisualsSystem {
   }
 
   public dispose() {
+    this.disposed = true;
     clearAllVisuals();
     window.removeEventListener("VEXEA_GRAPHICS_CHANGED", this.onGraphicsChanged as any);
   }

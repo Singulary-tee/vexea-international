@@ -16,7 +16,9 @@ export class ConnectionRegistry {
     this.connections.set(playerId, { channel, connectedAt: Date.now() });
   }
 
-  unregister(playerId: string): void {
+  unregister(playerId: string, expectedChannel?: ChannelAdapter): void {
+    const entry = this.connections.get(playerId);
+    if (expectedChannel && entry?.channel !== expectedChannel) return;
     this.connections.delete(playerId);
   }
 

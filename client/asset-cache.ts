@@ -803,6 +803,29 @@ export function initKTX2Support(rendererInstance: any): void {
   }
 }
 
+/** Initialize Basis transcoding to uncompressed RGBA when no GPU is available. */
+export function initKTX2SoftwareSupport(): void {
+  if (!sharedKtx2Loader) {
+    sharedKtx2Loader = new KTX2Loader();
+    sharedKtx2Loader.setTranscoderPath('/basis/');
+  }
+  if (!(sharedKtx2Loader as any)._supportDetected) {
+    sharedKtx2Loader.detectSupport({
+      extensions: {
+        has: () => false,
+        get: () => undefined,
+      },
+    } as any);
+    (sharedKtx2Loader as any)._supportDetected = true;
+  }
+  if (!(sharedKtx2Loader as any)._initStarted) {
+    (sharedKtx2Loader as any)._initStarted = true;
+    sharedKtx2Loader.init().catch((err: any) => {
+      console.error('[AssetCache] KTX2Loader basis transcoder init failed:', err);
+    });
+  }
+}
+
 function getSharedKtx2Loader(rendererInstance?: any): KTX2Loader {
   if (!sharedKtx2Loader) {
     sharedKtx2Loader = new KTX2Loader();
