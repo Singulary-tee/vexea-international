@@ -3,11 +3,11 @@ import * as SkeletonUtils from "three/addons/utils/SkeletonUtils.js";
 import { WEAPON_ASSET_DETAILS } from "../shared/asset-details";
 import type { WeaponId } from "../shared/weapons";
 import { IS_DEV } from "../shared/gates/production.gate";
-import { createConfiguredGLTFLoader, getCachedOrFetchUrl, populateBlobUrlMap } from "./asset-cache";
-import { engineContext } from "./context/ClientEngineContext";
-import { normalizeGameplayPlayerModel } from "./src/systems/player-visual-calibration";
-import { chooseVerifiedGripPose, resolveGripAnchors, type PoseDiagnostics } from "./weapons/pose-solver";
-import { getPlayerHoldFrame } from "./weapons/player-hold-ik";
+import { createConfiguredGLTFLoader, getCachedOrFetchUrl, populateBlobUrlMap } from "../client/asset-cache";
+import { engineContext } from "../client/context/ClientEngineContext";
+import { normalizeGameplayPlayerModel } from "../client/src/systems/player-visual-calibration";
+import { chooseVerifiedGripPose, resolveGripAnchors, type PoseDiagnostics } from "../client/weapons/pose-solver";
+import { getPlayerHoldFrame } from "../client/weapons/player-hold-ik";
 
 interface PoseDiagnosisState {
   renderer: THREE.WebGPURenderer | null;

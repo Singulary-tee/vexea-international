@@ -1,5 +1,5 @@
 import * as THREE from "three/webgpu";
-import { resolveGripAnchors } from "./weapons/pose-solver";
+import { resolveGripAnchors } from "../client/weapons/pose-solver";
 import type { WeaponId } from "../shared/weapons";
 import {
   chooseBarrelDirection,

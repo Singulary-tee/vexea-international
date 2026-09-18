@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import * as THREE from "three/webgpu";
-import { POSE_EDITOR_ITEMS, getPoseEditorItem } from "../client/pose-editor-config";
-import { WEAPON_ASSET_DETAILS } from "../shared/asset-details";
+import { POSE_EDITOR_ITEMS, getPoseEditorItem } from "../pose-editor-config";
+import { WEAPON_ASSET_DETAILS } from "../../shared/asset-details";
 import {
   aimDirectionFromBodyForward,
   chooseBarrelDirection,
@@ -15,7 +15,7 @@ import {
   planFirstPersonContentScale,
   planFirstPersonDepth,
   planFirstPersonFit,
-} from "../client/pose-editor-composition";
+} from "../pose-editor-composition";
 import {
   alignPoseFrame,
   alignPoseDirection,
@@ -27,11 +27,11 @@ import {
   projectedBounds,
   visibleWorldBounds,
   worldSpan,
-} from "../client/pose-editor-geometry";
+} from "../pose-editor-geometry";
 import {
   PLAYER_BODY_FORWARD,
   PLAYER_EYE_FORWARD_OFFSET,
-} from "../client/src/systems/player-visual-calibration";
+} from "../../client/src/systems/player-visual-calibration";
 
 const weaponIds = ["rifle", "pistol", "smg", "shotgun", "lmg", "sniper"] as const;
 const utilityIds = ["Grenade", "Flashbang", "Med Kit", "Revive Tool", "Radio", "Signal Jammer", "Proximity Mine", "C4"] as const;

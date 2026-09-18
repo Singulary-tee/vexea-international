@@ -69,7 +69,6 @@ export default defineConfig(() => {
       rollupOptions: {
         input: {
           index: path.resolve(__dirname, 'client/index.html'),
-          poseEditor: path.resolve(__dirname, 'client/pose-editor.html'),
         },
       },
     },

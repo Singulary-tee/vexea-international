@@ -1,12 +1,12 @@
 import * as THREE from "three/webgpu";
 import * as SkeletonUtils from "three/addons/utils/SkeletonUtils.js";
 import { PLAYER_CENTER_OFFSET, PLAYER_EYE_LEVEL } from "../../../shared/constants";
-import { PLAYER_EYE_FORWARD_OFFSET } from "./player-visual-calibration";
 import {
+  PLAYER_EYE_FORWARD_OFFSET,
   disposeGeneratedPoseResources,
   hideFirstPersonHead,
   type FirstPersonHeadFilterStats,
-} from "../../pose-editor-geometry";
+} from "./player-visual-calibration";
 import {
   resolvePlayerAnimationState,
   type AnimationOutput,

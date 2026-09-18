@@ -51,11 +51,11 @@ The current branch is `hoplite/pellene-61cfde19`. Use `git log -1` for the exact
 The current implementation work includes:
 
 - `client/weapons/pose-solver.ts`: authored/candidate/procedural grip-anchor resolution and pose diagnostics.
-- `client/src/systems/player-visual-calibration.ts`: player visual normalization/calibration.
-- `client/dev_pose_diagnosis.ts`: development-only pose diagnostic panel and catalog checks.
+- `client/src/systems/player-visual-calibration.ts`: player visual normalization, head filtering, and calibration.
+- `PoseEditor/`: standalone pose editor workspace (extracted from `client/dev_pose_diagnosis.ts`, `client/pose-editor*`, `tasks/*`, `docs/*`).
 - `client/weapons_model.ts`, `shared/asset-details.ts`: weapon template/socket/asset-contract changes.
 - `client/src/systems/RemotePlayerSystem.ts`, `client/MatchController.ts`: remote player/weapon ownership and disposal changes.
-- `client/dev_menu.ts`: exposes the `POSE DIAG` panel.
+- `client/dev_menu.ts`: in-match development menu.
 - `client/src/map/LoadingOrchestrator.ts`, `client/src/systems/NetworkSyncSystem.ts`: additional current edits; review these carefully for scope creep before treating them as required for pose alignment.
 - `tests/pose-solver.test.ts`, `tests/weapon-contracts.test.ts`: focused contract and solver coverage.
 - `.hoplite/settings.json`: Preview inference metadata and an explicit `PORT=3000 npm run dev` run command. This was added while diagnosing Preview lifecycle behavior and is not proof that it is the correct long-term project configuration.

@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>VEXEA Pose Editor</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        font-family: "Barlow Condensed", "Arial Narrow", sans-serif;
+        background: #080b10;
+        color: #e5edf5;
+      }
+      * { box-sizing: border-box; }
+      html, body, #pose-editor { width: 100%; height: 100%; margin: 0; }
+      body { overflow: hidden; background: #080b10; }
+      #pose-editor { display: grid; grid-template-rows: auto 1fr; }
+      header {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        min-height: 4.25rem;
+        padding: 0.75rem 1rem;
+        border-bottom: 1px solid #263241;
+        background: #0d131c;
+      }
+      h1 { margin: 0; color: #67e8f9; font-size: 1.05rem; letter-spacing: 0.12em; white-space: nowrap; }
+      label { display: grid; gap: 0.25rem; color: #93a4b8; font-size: 0.72rem; letter-spacing: 0.08em; }
+      select, button {
+        min-height: 2rem;
+        border: 1px solid #344457;
+        border-radius: 0.25rem;
+        background: #111b27;
+        color: #e5edf5;
+        font: inherit;
+        padding: 0.35rem 0.55rem;
+      }
+      button { cursor: pointer; color: #a7f3d0; }
+      button:hover, button:focus-visible, select:focus-visible { border-color: #67e8f9; outline: 2px solid #164e63; outline-offset: 1px; }
+      #pose-status { margin-left: auto; color: #a7f3d0; font-size: 0.78rem; letter-spacing: 0.04em; }
+      #pose-editor-stage { position: relative; min-height: 0; overflow: hidden; }
+      #pose-canvas { display: block; width: 100%; height: 100%; }
+      #pose-loading {
+        position: absolute;
+        inset: 0;
+        display: grid;
+        place-items: center;
+        background: #080b10;
+        color: #67e8f9;
+        letter-spacing: 0.12em;
+      }
+      #pose-loading[hidden] { display: none; }
+      #pose-readout {
+        position: absolute;
+        left: 1rem;
+        top: 1rem;
+        width: min(38rem, calc(100% - 2rem));
+        max-height: min(20rem, calc(100% - 2rem));
+        margin: 0;
+        padding: 0.7rem;
+        overflow: auto;
+        border: 1px solid #263241;
+        background: rgb(4 9 15 / 86%);
+        color: #c7f9e5;
+        font: 0.75rem/1.35 ui-monospace, SFMono-Regular, Menlo, monospace;
+        white-space: pre-wrap;
+      }
+      @media (max-width: 700px) {
+        header { flex-wrap: wrap; gap: 0.5rem; }
+        #pose-status { width: 100%; margin-left: 0; }
+      }
+    </style>
+  </head>
+  <body>
+    <main id="pose-editor">
+      <header>
+        <h1>POSE LAB / REAL ASSETS</h1>
+        <label>ITEM<select id="pose-item" aria-label="Pose editor item"></select></label>
+        <label>VIEW<select id="pose-view" aria-label="Pose editor view">
+          <option value="third">THIRD PERSON</option>
+          <option value="first">FIRST PERSON</option>
+        </select></label>
+        <button id="pose-reload" type="button">RELOAD POSE</button>
+        <span id="pose-status" role="status" aria-live="polite">Preparing renderer…</span>
+      </header>
+      <section id="pose-editor-stage" aria-label="Rendered pose stage">
+        <canvas id="pose-canvas" aria-label="Rendered player and held item pose"></canvas>
+        <div id="pose-loading">LOADING REAL PLAYER ASSET…</div>
+        <pre id="pose-readout">No pose loaded.</pre>
+      </section>
+    </main>
+    <script type="module" src="./pose-editor.ts"></script>
+  </body>
+</html>

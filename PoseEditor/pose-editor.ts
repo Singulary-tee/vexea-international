@@ -8,17 +8,17 @@ import {
   initKTX2Support,
   initKTX2SoftwareSupport,
   populateBlobUrlMap,
-} from "./asset-cache";
+} from "../client/asset-cache";
 import {
   normalizeGameplayPlayerModel,
   PLAYER_EYE_FORWARD_OFFSET,
-} from "./src/systems/player-visual-calibration";
+} from "../client/src/systems/player-visual-calibration";
 import {
   chooseVerifiedGripPose,
   resolveGripAnchors,
   type PoseDiagnostics,
-} from "./weapons/pose-solver";
-import { getPlayerHoldFrame } from "./weapons/player-hold-ik";
+} from "../client/weapons/pose-solver";
+import { getPlayerHoldFrame } from "../client/weapons/player-hold-ik";
 import { UTILITY_ASSET_DETAILS } from "../shared/asset-details";
 import type { UtilityId } from "../shared/utilities";
 import type { WeaponId } from "../shared/weapons";

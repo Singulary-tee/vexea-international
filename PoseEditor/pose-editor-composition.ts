@@ -1,5 +1,5 @@
 import type { PoseEditorItemCategory } from "./pose-editor-config";
-import { PLAYER_BODY_FORWARD } from "./src/systems/player-visual-calibration";
+import { PLAYER_BODY_FORWARD } from "../client/src/systems/player-visual-calibration";
 
 export const FIRST_PERSON_BODY_FORWARD = PLAYER_BODY_FORWARD;
 
