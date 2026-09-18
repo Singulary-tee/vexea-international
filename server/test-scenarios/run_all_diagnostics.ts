@@ -277,6 +277,7 @@ export async function runAllTests() {
 
     // Simulate firing a gun
     player.firedThisTick = true;
+    player.firedSinceBroadcast = true;
 
     // Update match entities (which processes sound reaction)
     room.serverTick++;

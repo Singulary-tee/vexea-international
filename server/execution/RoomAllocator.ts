@@ -26,7 +26,7 @@ export class RoomAllocator {
       id: "default-local-host",
       backendType: this.backendType,
       capacity: 64,
-      onRoomReleased: (hostId, roomId) => this.handleHostRoomReleased(hostId, roomId),
+      onRoomReleased: (hostId, roomId, execution) => this.handleHostRoomReleased(hostId, roomId, execution),
     });
     this.registerHost(this.defaultHost);
   }
@@ -68,7 +68,7 @@ export class RoomAllocator {
         id: "default-local-host",
         backendType: backend,
         capacity: 64,
-        onRoomReleased: (hostId, roomId) => this.handleHostRoomReleased(hostId, roomId),
+        onRoomReleased: (hostId, roomId, execution) => this.handleHostRoomReleased(hostId, roomId, execution),
       });
       this.registerHost(this.defaultHost);
     }
@@ -192,10 +192,11 @@ export class RoomAllocator {
     }
   }
 
-  private handleHostRoomReleased(hostId: string, roomId: string): void {
-    if (this.roomHostMap.get(roomId) === hostId) {
-      this.roomHostMap.delete(roomId);
-    }
+  private handleHostRoomReleased(hostId: string, roomId: string, releasedExecution?: RoomExecution): void {
+    if (this.roomHostMap.get(roomId) !== hostId) return;
+    const currentExecution = this.hosts.get(hostId)?.getRoomExecution(roomId);
+    if (releasedExecution && currentExecution && currentExecution !== releasedExecution) return;
+    this.roomHostMap.delete(roomId);
   }
 
   public async shutdownAll(): Promise<void> {

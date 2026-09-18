@@ -129,7 +129,7 @@ export const PLAYER_ANIMATION_CONTRACT: EntityAnimationContract<PlayerAnimationS
       mutuallyExclusiveWith: ['FIRING', 'DEAD'],
       output: {
         kind: 'clip',
-        clipName: 'rifle_aim_idle',
+        clipName: 'rifle_idle',
         loop: true,
         crossFadeDuration: 0.15,
       },
@@ -277,7 +277,7 @@ export function resolvePlayerAnimationState(ctx: PlayerAnimationContext): Animat
   if (ctx.isReloading) {
     return {
       kind: 'clip',
-      clipName: isPistol ? 'pistol_idle' : 'rifle_aim_idle',
+      clipName: isPistol ? 'pistol_idle' : 'rifle_idle',
       loop: true,
       crossFadeDuration: 0.15,
     };

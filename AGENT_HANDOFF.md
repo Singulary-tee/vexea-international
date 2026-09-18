@@ -2,6 +2,19 @@
 
 Read this file first. This branch is a checkpoint for the weapon/utility pose-alignment task. It is not a claim that the final gameplay view is working.
 
+## Latest handoff state — 2026-09-18
+
+The current snapshot is prepared for follow-up GLB/pose work. The latest bounded rifle proposal, P-002, was applied, tested, captured, visually rejected, and reverted. `tasks/scene-investigation-log.md` is the append-only record, with Entry 006 containing the post-revert audit.
+
+- Target: `rifle/hold-idle/local+remote` remains `ISSUE_REQUIRES_ACTION`.
+- Acceptance: `EDITOR_PASS_ACCEPTED` is absent; accepted weapon and utility counts remain `0`.
+- P-002 result: numerical solver checks passed, but raw first-person pixels showed a buried/end-on weapon and raw third-person pixels did not separate the rifle from the chest/arm cluster.
+- Source state: no P-002 solver branch, temporary assertion, or debug marker remains. No camera, asset, metadata, scale, depth, offset, or follow-up pose mutation was retained.
+- Verification: the reverted focused suite passed `6` files and `135` tests; the production build passed; `git diff --check` passed. Heap-expanded typecheck still reports the existing `benchmarks/diagnostics/measure_benchmark_ipc.ts:27` `RunnerOptions.profile` error.
+- Runtime/gameplay/network/server usability remains unperformed and unproven.
+
+This handoff intentionally excludes private user attachments and ignored generated capture artifacts. The attached reference images remain visual source material, not acceptance evidence.
+
 ## Active requirement
 
 Align every relevant weapon and utility item so the presentation is believable from both first-person and third-person views.

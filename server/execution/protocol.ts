@@ -20,11 +20,26 @@ export type ParentToChildMessage =
   | {
       type: "register_player";
       playerId: string;
+      channelId?: string;
       classId?: string;
       displayName?: string;
       reqUid?: string;
       primaryWeaponId?: string;
       secondaryWeaponId?: string;
+    }
+  | {
+      type: "reconnect_player";
+      requestId: string;
+      generation: number;
+      playerId: string;
+      reqUid: string;
+      channelId: string;
+    }
+  | {
+      type: "cancel_reconnect";
+      requestId: string;
+      generation: number;
+      playerId: string;
     }
   | {
       type: "remove_player";
@@ -64,6 +79,12 @@ export type ChildToParentMessage =
       type: "outbound";
       targetPlayerId: string | "broadcast";
       event: RoomOutboundEvent;
+    }
+  | {
+      type: "reconnect_result";
+      requestId: string;
+      generation: number;
+      accepted: boolean;
     }
   | {
       type: "emit_channel";

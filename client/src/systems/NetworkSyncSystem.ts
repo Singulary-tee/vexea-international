@@ -7,12 +7,87 @@ import {
   DRONE_CONFIGS,
   HEADER_SIZE, 
   DRONE_STRUCT_SIZE,
-  getWeaponPerformance
+  getWeaponPerformance,
+  isRuntimeWeaponId,
 } from "../../../shared/constants";
 import { getAssetUrl } from "../../asset-cache";
 import { setWeaponReloading, resetWeaponAnimations } from "../../weapons_model";
 import { audioManager } from "../../audio";
-import { disposeOwnedRemoteResources } from "./RemotePlayerSystem";
+import { UTILITIES, type PlayerUtilityState, type UtilityId } from "../../../shared/utilities";
+
+function getRemoteWeaponId(value: unknown): string | undefined {
+  return typeof value === "string" && isRuntimeWeaponId(value) ? value : undefined;
+}
+
+function getRemoteWeaponEquipSequence(value: unknown): number | undefined {
+  return typeof value === "number" && Number.isSafeInteger(value) && value >= 0 ? value : undefined;
+}
+
+function getRemoteWeaponEquipTimestamp(value: unknown): number | undefined {
+  return typeof value === "number" && Number.isFinite(value) && value >= 0 ? value : undefined;
+}
+
+function getRemotePlayerGeneration(value: unknown): number | undefined {
+  return typeof value === "number" && Number.isSafeInteger(value) && value >= 0 ? value : undefined;
+}
+
+function getRemoteUtilityState(value: unknown): PlayerUtilityState | undefined {
+  if (!value || typeof value !== "object") return undefined;
+  const source = value as Record<string, unknown>;
+  const state = {} as PlayerUtilityState;
+
+  for (const slotKey of ["utility1", "utility2"] as const) {
+    const slot = source[slotKey];
+    if (!slot || typeof slot !== "object") return undefined;
+    const candidate = slot as Record<string, unknown>;
+    if (
+      typeof candidate.id !== "string"
+      || !Object.prototype.hasOwnProperty.call(UTILITIES, candidate.id)
+    ) return undefined;
+    if (
+      typeof candidate.charges !== "number"
+      || !Number.isSafeInteger(candidate.charges)
+      || candidate.charges < 0
+      || typeof candidate.maxCharges !== "number"
+      || !Number.isSafeInteger(candidate.maxCharges)
+      || candidate.maxCharges < 0
+      || candidate.charges > candidate.maxCharges
+      || typeof candidate.cooldownRemaining !== "number"
+      || !Number.isFinite(candidate.cooldownRemaining)
+      || candidate.cooldownRemaining < 0
+      || typeof candidate.baseCooldown !== "number"
+      || !Number.isFinite(candidate.baseCooldown)
+      || candidate.baseCooldown < 0
+    ) {
+      return undefined;
+    }
+
+    state[slotKey] = {
+      id: candidate.id as UtilityId,
+      charges: candidate.charges,
+      maxCharges: candidate.maxCharges,
+      cooldownRemaining: candidate.cooldownRemaining,
+      baseCooldown: candidate.baseCooldown,
+    };
+  }
+
+  return state;
+}
+
+export function shouldApplyRemoteWeaponSnapshot(
+  currentSequence: number,
+  incomingSequence: number | undefined,
+  currentWeapon: string,
+  incomingWeapon: string | undefined,
+  currentTimestamp = 0,
+  incomingTimestamp = 0,
+): boolean {
+  if (incomingWeapon === undefined) return false;
+  if (incomingSequence === undefined) return currentSequence === 0;
+  if (incomingSequence > currentSequence) return true;
+  if (incomingSequence < currentSequence) return false;
+  return incomingWeapon === currentWeapon && incomingTimestamp >= currentTimestamp;
+}
 
 // --- BEGIN ZERO-GC OPTIMIZATIONS ---
 const _droneMuzzlePos = new THREE.Vector3();
@@ -111,6 +186,9 @@ export class NetworkSyncSystem {
 
   private pingInterval: any = null;
   private listenersSetup = false;
+  private disposed = false;
+  private removedRemotePlayerGenerations = new Map<string, number>();
+  private lastStateSyncTick: number | undefined;
 
   constructor(match: MatchController) {
     this.match = match;
@@ -125,7 +203,7 @@ export class NetworkSyncSystem {
   }
 
   public setupListeners() {
-    if (this.listenersSetup) return;
+    if (this.disposed || this.listenersSetup) return;
     const channel = this.match.transport;
     if (!channel) return;
 
@@ -139,7 +217,38 @@ export class NetworkSyncSystem {
     this.listenersSetup = true;
   }
 
+  private removeRemotePlayer(id: string, generation?: number): boolean {
+    this.removedRemotePlayerGenerations ??= new Map();
+    const currentGeneration = getRemotePlayerGeneration(
+      this.match.remotePlayersTargetData.get(id)?.playerGeneration,
+    );
+    const tombstoneGeneration = this.removedRemotePlayerGenerations.get(id);
+
+    if (generation !== undefined) {
+      if (currentGeneration !== undefined && generation < currentGeneration) return false;
+      if (tombstoneGeneration !== undefined && generation < tombstoneGeneration) return false;
+    } else if (
+      currentGeneration !== undefined
+      && tombstoneGeneration !== undefined
+      && currentGeneration > tombstoneGeneration
+    ) {
+      return false;
+    }
+
+    const removalGeneration = generation ?? currentGeneration ?? tombstoneGeneration ?? 0;
+    if (tombstoneGeneration !== undefined && removalGeneration < tombstoneGeneration) return false;
+    this.removedRemotePlayerGenerations.set(
+      id,
+      Math.max(tombstoneGeneration ?? 0, removalGeneration),
+    );
+
+    this.match.remotePlayers?.removePlayer(id);
+    this.match.remotePlayersTargetData.delete(id);
+    return true;
+  }
+
   private handleRaw(data: ArrayBuffer) {
+    if (this.disposed) return;
     if (typeof (window as any).trackNetwork === "function")
       (window as any).trackNetwork("IN", data);
     
@@ -249,6 +358,7 @@ export class NetworkSyncSystem {
   }
 
   private handleHandshake(json: any) {
+    if (this.disposed) return;
     this.match.localPlayerId = json.id;
     (window as any).lastLocalPlayerId = json.id; // Persist for reconnection survival
     if (json.position) {
@@ -272,6 +382,7 @@ export class NetworkSyncSystem {
   }
 
   private handleEnvironmentalEvent(msg: any) {
+    if (this.disposed) return;
     if (msg.color) {
       if (this.match.scene.background instanceof THREE.Color)
         this.match.scene.background.set(msg.color);
@@ -281,6 +392,7 @@ export class NetworkSyncSystem {
   }
 
   private handleReliableEvent(msg: any) {
+    if (this.disposed) return;
     const match = this.match;
     const scene = match.scene;
 
@@ -322,16 +434,8 @@ export class NetworkSyncSystem {
 
     if (msg.type === "PLAYER_LEFT") {
       const id = msg.playerId;
-      if (match.remotePlayersMeshes.has(id)) {
-        const mesh = match.remotePlayersMeshes.get(id)!;
-        scene.remove(mesh);
-        disposeOwnedRemoteResources(mesh);
-        match.remotePlayersMeshes.delete(id);
-      }
-      const mixer = match.remotePlayerMixers.get(id);
-      mixer?.stopAllAction();
-      match.remotePlayerMixers.delete(id);
-      match.remotePlayersTargetData.delete(id);
+      this.removedRemotePlayerGenerations ??= new Map();
+      this.removeRemotePlayer(id, getRemotePlayerGeneration(msg.playerGeneration));
     }
 
     if (msg.type === "HIT_CONFIRMED" || msg.type === "HIT_ENVIRONMENT") {
@@ -645,37 +749,112 @@ export class NetworkSyncSystem {
   }
 
   private handleStateSync(json: any) {
+    if (this.disposed) return;
     const match = this.match;
     if (!json) return;
+
+    if (json.tick !== undefined) {
+      if (!Number.isSafeInteger(json.tick) || json.tick < 0) return;
+      if (this.lastStateSyncTick !== undefined && json.tick < this.lastStateSyncTick) return;
+      this.lastStateSyncTick = json.tick;
+    }
     
     // Sync other players
     if (Array.isArray(json.players)) {
+      const snapshotPlayerIds = new Set<string>();
       for (const p of json.players) {
         if (!p || !p.id) continue;
+        const incomingGeneration = getRemotePlayerGeneration(p.playerGeneration);
+        const removedGeneration = this.removedRemotePlayerGenerations.get(p.id);
+        if (removedGeneration !== undefined) {
+          if (incomingGeneration === undefined || incomingGeneration <= removedGeneration) {
+            continue;
+          }
+          this.removedRemotePlayerGenerations.delete(p.id);
+        }
+        snapshotPlayerIds.add(p.id);
         if (p.id !== match.localPlayerId) {
+          const existingData = match.remotePlayersTargetData.get(p.id);
+          const currentGeneration = getRemotePlayerGeneration(existingData?.playerGeneration) ?? 0;
+          if (
+            existingData
+            && incomingGeneration !== undefined
+            && incomingGeneration < currentGeneration
+          ) {
+            continue;
+          }
+          if (
+            existingData
+            && incomingGeneration !== undefined
+            && incomingGeneration > currentGeneration
+          ) {
+            this.removeRemotePlayer(p.id, currentGeneration);
+            this.removedRemotePlayerGenerations.delete(p.id);
+          }
+
           if (!match.remotePlayersTargetData.has(p.id)) {
+            const weapon = getRemoteWeaponId(p.currentWeapon);
+            const weaponEquipSequence = weapon ? getRemoteWeaponEquipSequence(p.weaponEquipSequence) ?? 0 : 0;
+            const weaponEquipTimestamp = weapon ? getRemoteWeaponEquipTimestamp(p.weaponEquipTimestamp) ?? 0 : 0;
+            const utilityState = getRemoteUtilityState(p.utilityState);
             match.remotePlayersTargetData.set(p.id, {
               pos: new THREE.Vector3(p.posX || 0, p.posY || 0, p.posZ || 0),
               yaw: p.yaw || 0,
-              pitch: 0,
+              pitch: p.pitch || 0,
               hp: p.hp ?? 100,
               isAlive: p.isAlive ?? true,
               isFiring: !!p.isFiring,
               isReloading: !!p.isReloading,
-              weapon: p.currentWeapon || 'rifle'
+              isAiming: !!p.isAiming,
+              isGrounded: p.isGrounded ?? true,
+              isCrouching: !!p.isCrouching,
+              isSprinting: !!p.isSprinting,
+              weapon: weapon ?? 'rifle',
+              utilityState,
+              playerGeneration: incomingGeneration ?? 0,
+              weaponEquipSequence,
+              weaponEquipTimestamp,
             });
           } else {
             const data = match.remotePlayersTargetData.get(p.id);
             if (data) {
               data.pos.set(p.posX || 0, p.posY || 0, p.posZ || 0);
               data.yaw = p.yaw || 0;
+              data.pitch = p.pitch || 0;
               data.hp = p.hp ?? 100;
               data.isAlive = p.isAlive ?? true;
               data.isFiring = !!p.isFiring;
               data.isReloading = !!p.isReloading;
-              data.weapon = p.currentWeapon || 'rifle';
+              data.isAiming = !!p.isAiming;
+              data.isGrounded = p.isGrounded ?? true;
+              data.isCrouching = !!p.isCrouching;
+              data.isSprinting = !!p.isSprinting;
+              const utilityState = getRemoteUtilityState(p.utilityState);
+              if (utilityState) data.utilityState = utilityState;
+              if (incomingGeneration !== undefined) data.playerGeneration = incomingGeneration;
+              const incomingWeapon = getRemoteWeaponId(p.currentWeapon);
+              const incomingEquipSequence = getRemoteWeaponEquipSequence(p.weaponEquipSequence);
+              const incomingEquipTimestamp = getRemoteWeaponEquipTimestamp(p.weaponEquipTimestamp);
+              if (shouldApplyRemoteWeaponSnapshot(
+                data.weaponEquipSequence,
+                incomingEquipSequence,
+                data.weapon,
+                incomingWeapon,
+                data.weaponEquipTimestamp,
+                incomingEquipTimestamp,
+              )) {
+                data.weapon = incomingWeapon ?? data.weapon;
+                data.weaponEquipSequence = incomingEquipSequence ?? data.weaponEquipSequence;
+                data.weaponEquipTimestamp = incomingEquipTimestamp ?? data.weaponEquipTimestamp;
+              }
             }
           }
+        }
+      }
+
+      for (const id of match.remotePlayersTargetData.keys()) {
+        if (!snapshotPlayerIds.has(id)) {
+          this.removeRemotePlayer(id);
         }
       }
 
@@ -728,6 +907,7 @@ export class NetworkSyncSystem {
   }
 
   private handlePong() {
+    if (this.disposed) return;
     const match = this.match;
     match.latency = Math.round(performance.now() - match.lastPingTime);
     (window as any).latency = match.latency;
@@ -747,6 +927,9 @@ export class NetworkSyncSystem {
   }
 
   public dispose() {
+    this.disposed = true;
+    this.lastStateSyncTick = undefined;
+    this.removedRemotePlayerGenerations.clear();
     if (this.pingInterval) {
         clearInterval(this.pingInterval);
         this.pingInterval = null;

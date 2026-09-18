@@ -139,13 +139,26 @@ export class NetworkBroadcaster {
       posY: p.posY,
       posZ: p.posZ,
       yaw: p.yaw,
+      pitch: p.pitch,
+      playerGeneration: p.sessionGeneration || 0,
       currentWeapon: p.weapon || "rifle",
-      isFiring: p.firedThisTick || false,
+      weaponEquipSequence: p.weaponEquipSequence || 0,
+      weaponEquipTimestamp: p.weaponEquipTimestamp || 0,
+      utilityState: p.utilityState,
+      isFiring: !!(p.firedThisTick || p.firedSinceBroadcast),
       isReloading:
         p.weaponState.primary.isReloading || p.weaponState.secondary.isReloading,
+      isAiming: p.isAiming || false,
+      isCrouching: (p.inputMask & 0x40) !== 0,
+      isSprinting: (p.inputMask & 0x20) !== 0,
+      isGrounded: p.kcc ? p.kcc.computedGrounded() : Math.abs(p.velY) < 0.001,
       isAlive: p.isAlive,
       activeCollisions: (p as any).activeCollisions || [],
     }));
+
+    for (const p of players.values()) {
+      p.firedSinceBroadcast = false;
+    }
 
     if (benchmarkInstrumentationEnabled()) {
       const stateBytes = Buffer.byteLength(JSON.stringify({

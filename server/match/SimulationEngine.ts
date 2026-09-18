@@ -359,6 +359,7 @@ export class SimulationEngine {
           player.hp = 0;
           player.inputMask = 0;
           player.fire = 0;
+          player.isAiming = false;
           player.velX = 0;
           player.velY = 0;
           player.velZ = 0;

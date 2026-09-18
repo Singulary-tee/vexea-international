@@ -114,14 +114,26 @@ function createCompatibilityAnimationAliases(animation: WeaponAnimationContract)
 }
 
 const RIFLE_ANIMATION = createWeaponAnimationContract([78.764503, 7.600975, 25.293276], true);
-const PISTOL_ANIMATION = createWeaponAnimationContract([0.03113, 0.293643, 0.158911], true);
+const PISTOL_ANIMATION = {
+  ...createWeaponAnimationContract([0.03113, 0.293643, 0.158911], true),
+  muzzleAxis: [0, 0, -1] as const,
+};
 const SMG_ANIMATION = {
   ...createWeaponAnimationContract([7.899324, 0.660313, 3.354116], true),
   muzzleAxis: [0, 1, 0] as const,
 };
-const LMG_ANIMATION = createWeaponAnimationContract([2.140608, 19.06014, 5.112448], true);
-const SHOTGUN_ANIMATION = createWeaponAnimationContract([1.18001, 4.159216, 0.845963], false);
-const SNIPER_ANIMATION = createWeaponAnimationContract([4.98094, 0.80619, 1.400133], true);
+const LMG_ANIMATION = {
+  ...createWeaponAnimationContract([2.140608, 19.06014, 5.112448], true),
+  muzzleAxis: [0, 0, -1] as const,
+};
+const SHOTGUN_ANIMATION = {
+  ...createWeaponAnimationContract([1.18001, 4.159216, 0.845963], false),
+  muzzleAxis: [0, 0, -1] as const,
+};
+const SNIPER_ANIMATION = {
+  ...createWeaponAnimationContract([4.98094, 0.80619, 1.400133], true),
+  muzzleAxis: [-1, 0, 0] as const,
+};
 
 /**
  * Runtime asset contract for weapon identity. Model, audio, SVG, and authored

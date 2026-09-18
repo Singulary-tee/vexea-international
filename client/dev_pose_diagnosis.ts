@@ -7,6 +7,7 @@ import { createConfiguredGLTFLoader, getCachedOrFetchUrl, populateBlobUrlMap } f
 import { engineContext } from "./context/ClientEngineContext";
 import { normalizeGameplayPlayerModel } from "./src/systems/player-visual-calibration";
 import { chooseVerifiedGripPose, resolveGripAnchors, type PoseDiagnostics } from "./weapons/pose-solver";
+import { getPlayerHoldFrame } from "./weapons/player-hold-ik";
 
 interface PoseDiagnosisState {
   renderer: THREE.WebGPURenderer | null;
@@ -222,6 +223,7 @@ function createPoseCheck(
   const pose = chooseVerifiedGripPose(character, weapon, undefined, {
     weaponId,
     poseContext: `${weaponId}:${clip.name}:${sample}`,
+    holdFrame: getPlayerHoldFrame(weaponId, clip.name),
     diagnostics: true,
   });
   const result = {
@@ -252,6 +254,7 @@ function createRenderedPoseCheck(
   const pose = chooseVerifiedGripPose(character, weapon, undefined, {
     weaponId,
     poseContext: `${weaponId}:${clip.name}:${sample}`,
+    holdFrame: getPlayerHoldFrame(weaponId, clip.name),
     diagnostics: true,
   });
   return {

@@ -110,9 +110,11 @@ export class CombatSystem {
     audioManager.playWeaponFire(activeWeaponId);
 
     this.weaponMuzzlePos.set(0, 0, 0);
-    getMuzzleWorldPosition(this.weaponMuzzlePos, camera);
-    spawnTracer(this.weaponMuzzlePos, this.weaponFireDir);
-    triggerFlash(this.weaponMuzzlePos, 1.0, true, null, this.match);
+    const hasVerifiedMuzzle = getMuzzleWorldPosition(this.weaponMuzzlePos, camera);
+    if (hasVerifiedMuzzle) {
+      spawnTracer(this.weaponMuzzlePos, this.weaponFireDir);
+      triggerFlash(this.weaponMuzzlePos, 1.0, true, null, this.match);
+    }
 
     console.time('[PERF] raycast');
     const hit = hitscanSystem.performClientHitscan(camera, this.match.scene, this.weaponFireDir, currentWeaponStats.falloff.minDamageRange);

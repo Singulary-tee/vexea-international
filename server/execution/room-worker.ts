@@ -10,9 +10,12 @@ import "../benchmark/telemetry";
 
 let currentRoom: MatchRoom | null = null;
 const channels = new Map<string, ChildChannelAdapter>();
+const cancelledReconnectRequests = new Set<string>();
+const latestReconnectGenerationByPlayer = new Map<string, number>();
 
 class ChildChannelAdapter implements ChannelAdapter {
   public id: string;
+  public connectionId?: string;
   public connected: boolean = true;
   private disconnectListeners: (() => void)[] = [];
   private eventListeners: Map<string, ((data: any) => void)[]> = new Map();
@@ -64,22 +67,27 @@ class ChildChannelAdapter implements ChannelAdapter {
     this.rawListeners = [];
   }
 
-  triggerDisconnect(): void {
+  triggerDisconnect(expectedConnectionId?: string): boolean {
+    if (expectedConnectionId !== undefined && expectedConnectionId !== this.connectionId) {
+      return false;
+    }
     this.connected = false;
     for (const cb of this.disconnectListeners) {
       try {
         cb();
       } catch (e) {}
     }
+    return true;
   }
 }
 
-function getOrCreateChannel(playerId: string): ChildChannelAdapter {
+function getOrCreateChannel(playerId: string, connectionId?: string): ChildChannelAdapter {
   let ch = channels.get(playerId);
   if (!ch) {
     ch = new ChildChannelAdapter(playerId);
     channels.set(playerId, ch);
   }
+  if (connectionId !== undefined) ch.connectionId = connectionId;
   return ch;
 }
 
@@ -125,7 +133,7 @@ async function handleInit(msg: Extract<ParentToChildMessage, { type: "init" }>) 
 
 async function handleRegisterPlayer(msg: Extract<ParentToChildMessage, { type: "register_player" }>) {
   if (!currentRoom) return;
-  const ch = getOrCreateChannel(msg.playerId);
+  const ch = getOrCreateChannel(msg.playerId, msg.channelId);
   currentRoom.registerPlayer(
     msg.playerId,
     ch,
@@ -136,6 +144,68 @@ async function handleRegisterPlayer(msg: Extract<ParentToChildMessage, { type: "
     msg.primaryWeaponId,
     msg.secondaryWeaponId
   );
+}
+
+async function handleReconnectPlayer(msg: Extract<ParentToChildMessage, { type: "reconnect_player" }>) {
+  let accepted = false;
+  const latestGeneration = latestReconnectGenerationByPlayer.get(msg.playerId);
+  if (
+    cancelledReconnectRequests.has(msg.requestId) ||
+    (latestGeneration !== undefined && msg.generation < latestGeneration)
+  ) {
+    if (process.send) {
+      process.send({
+        type: "reconnect_result",
+        requestId: msg.requestId,
+        generation: msg.generation,
+        accepted: false,
+      } as ChildToParentMessage);
+    }
+    return;
+  }
+
+  latestReconnectGenerationByPlayer.set(msg.playerId, msg.generation);
+  const existing = currentRoom?.players.get(msg.playerId);
+  const existingChannel = channels.get(msg.playerId);
+  const channelAvailable = existingChannel
+    ? !existingChannel.connected || existingChannel.connectionId === msg.channelId
+    : false;
+  if (
+    !cancelledReconnectRequests.has(msg.requestId) &&
+    latestReconnectGenerationByPlayer.get(msg.playerId) === msg.generation &&
+    existing &&
+    existing.reqUid === msg.reqUid &&
+    channelAvailable
+  ) {
+    const channel = getOrCreateChannel(msg.playerId, msg.channelId);
+    channel.connected = true;
+    currentRoom!.registerPlayer(
+      msg.playerId,
+      channel,
+      undefined,
+      undefined,
+      undefined,
+      msg.reqUid,
+    );
+    accepted = true;
+  }
+
+  if (process.send) {
+    process.send({
+      type: "reconnect_result",
+      requestId: msg.requestId,
+      generation: msg.generation,
+      accepted,
+    } as ChildToParentMessage);
+  }
+}
+
+function handleCancelReconnect(msg: Extract<ParentToChildMessage, { type: "cancel_reconnect" }>): void {
+  cancelledReconnectRequests.add(msg.requestId);
+  const latestGeneration = latestReconnectGenerationByPlayer.get(msg.playerId);
+  if (latestGeneration === undefined || msg.generation >= latestGeneration) {
+    latestReconnectGenerationByPlayer.set(msg.playerId, msg.generation);
+  }
 }
 
 async function handleRemovePlayer(msg: Extract<ParentToChildMessage, { type: "remove_player" }>) {
@@ -153,6 +223,17 @@ async function handleInbound(msg: Extract<ParentToChildMessage, { type: "inbound
   const room = currentRoom;
   const playerId = msg.playerId;
   const event = msg.event;
+
+  if (playerId === "broadcast") {
+    if (event.type === "PRE_MATCH_COUNTDOWN" || event.type === "PRE_MATCH_COUNTDOWN_TICK") {
+      room.broadcastReliableEvent(event);
+      return;
+    }
+    if (event.type === "START_MATCH") {
+      await room.triggerStartMatch();
+      return;
+    }
+  }
 
   if (playerId === "broadcast" || event.type === "CHAT_MESSAGE" || event.type === "QUICK_COMM" || event.type.startsWith("DEV_")) {
     if (event.type === "CHAT_MESSAGE") {
@@ -243,10 +324,13 @@ async function handleInbound(msg: Extract<ParentToChildMessage, { type: "inbound
       await room.handlePlayerAbandonment(playerId);
       return;
     } else if (event.type === "PLAYER_DISCONNECT") {
-      room.handlePlayerDisconnect(playerId);
+      const channel = channels.get(playerId);
+      if (!channel || channel.triggerDisconnect(event.channelId)) {
+        room.handlePlayerDisconnect(playerId);
+      }
       return;
     } else if (event.type === "REGISTER_PLAYER") {
-      const ch = getOrCreateChannel(playerId);
+      const ch = getOrCreateChannel(playerId, event.channelId);
       p = room.registerPlayer(
         playerId,
         ch,
@@ -258,9 +342,7 @@ async function handleInbound(msg: Extract<ParentToChildMessage, { type: "inbound
         event.secondaryWeaponId
       );
     } else {
-      // Auto-provision channel if incoming gameplay action
-      const ch = getOrCreateChannel(playerId);
-      p = room.registerPlayer(playerId, ch);
+      return;
     }
   }
 
@@ -269,7 +351,26 @@ async function handleInbound(msg: Extract<ParentToChildMessage, { type: "inbound
 
   switch (event.type) {
     case "INPUT": {
+      if (
+        !Number.isSafeInteger(event.seq) ||
+        event.seq < 0 ||
+        !Number.isInteger(event.inputMask) ||
+        event.inputMask < 0 ||
+        event.inputMask > 0xff ||
+        !Number.isFinite(event.pitch) ||
+        !Number.isFinite(event.yaw)
+      ) {
+        break;
+      }
       room.updatePlayerInput(p, event.inputMask, event.pitch, event.yaw);
+      break;
+    }
+    case "SET_AIM": {
+      room.updatePlayerAiming(p, !!event.aiming);
+      break;
+    }
+    case "SELECT_WEAPON": {
+      room.selectPlayerWeapon(p, event.slot);
       break;
     }
     case "USE_UTILITY": {
@@ -289,11 +390,15 @@ async function handleInbound(msg: Extract<ParentToChildMessage, { type: "inbound
       break;
     }
     case "PLAYER_QUIT": {
-      await room.handlePlayerAbandonment(p.id);
+      if (event.channelId && p.channel.id !== event.channelId) break;
+      await room.handlePlayerAbandonment(p.id, p.channel);
       break;
     }
     case "PLAYER_DISCONNECT": {
-      room.handlePlayerDisconnect(p.id);
+      const channel = channels.get(playerId);
+      if (!channel || channel.triggerDisconnect(event.channelId)) {
+        room.handlePlayerDisconnect(p.id);
+      }
       break;
     }
     case "SELECT_CLASS": {
@@ -324,8 +429,8 @@ async function handleInbound(msg: Extract<ParentToChildMessage, { type: "inbound
     }
     case "RELOAD": {
       if (!p.isAlive) break;
-      const slot = event.weaponSlot as "primary" | "secondary";
-      if (!slot) break;
+      const slot = event.weaponSlot;
+      if (slot !== "primary" && slot !== "secondary") break;
       const wState = p.weaponState[slot];
       const wDef = getWeaponPerformance(wState.weaponId);
       if (!wDef) break;
@@ -352,8 +457,8 @@ async function handleInbound(msg: Extract<ParentToChildMessage, { type: "inbound
     }
     case "CANCEL_RELOAD": {
       if (!p.isAlive) break;
-      const slot = event.weaponSlot as "primary" | "secondary";
-      if (!slot) break;
+      const slot = event.weaponSlot;
+      if (slot !== "primary" && slot !== "secondary") break;
       const wState = p.weaponState[slot];
       if (wState.isReloading) {
         wState.isReloading = false;
@@ -418,6 +523,7 @@ async function handleInbound(msg: Extract<ParentToChildMessage, { type: "inbound
         wState.leakyBucket = leakyUpdate + 1;
         wState.lastConfirmedShotT = now;
         p.firedThisTick = true;
+        p.firedSinceBroadcast = true;
 
         if (p.infiniteAmmo) {
           wState.currentMag = weaponStats.capacity;
@@ -494,6 +600,12 @@ process.on("message", async (msg: ParentToChildMessage) => {
       break;
     case "register_player":
       await handleRegisterPlayer(msg);
+      break;
+    case "reconnect_player":
+      await handleReconnectPlayer(msg);
+      break;
+    case "cancel_reconnect":
+      handleCancelReconnect(msg);
       break;
     case "remove_player":
       await handleRemovePlayer(msg);

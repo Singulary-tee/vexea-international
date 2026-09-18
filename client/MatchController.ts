@@ -9,7 +9,7 @@ import { SimulationSystem } from "./src/systems/SimulationSystem";
 import { CombatSystem } from "./src/systems/CombatSystem";
 import { InputSystem } from "./src/systems/InputSystem";
 import { DroneSystem } from "./src/systems/DroneSystem";
-import { RemotePlayerSystem, disposeOwnedRemoteResources } from "./src/systems/RemotePlayerSystem";
+import { RemotePlayerSystem } from "./src/systems/RemotePlayerSystem";
 import { DiagnosisSystem } from "./src/systems/DiagnosisSystem";
 import { HUDSystem } from "./src/systems/HUDSystem";
 import { VisualsSystem } from "./src/systems/VisualsSystem";
@@ -21,6 +21,9 @@ import { ChatHUDSystem } from "./src/systems/ChatHUDSystem";
 import { DamageIndicators } from "./src/vfx/DamageIndicators";
 import { audioManager } from "./audio";
 import { ClientEngineContext, engineContext } from "./context/ClientEngineContext";
+import { LocalPlayerVisualSystem } from "./src/systems/LocalPlayerVisualSystem";
+import { disposePlayerWeapons } from "./weapons_model";
+import type { PlayerUtilityState } from "../shared/utilities";
 
 function isSharedAssetResource(resource: any): boolean {
   return resource?.userData?.vexeaSharedAsset === true;
@@ -100,7 +103,15 @@ export interface RemotePlayerData {
   isAlive: boolean;
   isFiring: boolean;
   isReloading: boolean;
+  isAiming: boolean;
+  isGrounded: boolean;
+  isCrouching: boolean;
+  isSprinting: boolean;
   weapon: string;
+  utilityState?: PlayerUtilityState;
+  playerGeneration?: number;
+  weaponEquipSequence: number;
+  weaponEquipTimestamp: number;
 }
 
 /**
@@ -136,6 +147,7 @@ export class MatchController {
   public input: InputSystem | null = null;
   public drones: DroneSystem | null = null;
   public remotePlayers: RemotePlayerSystem | null = null;
+  public localPlayerVisual: LocalPlayerVisualSystem | null = null;
   public diagnosis: DiagnosisSystem | null = null;
   public hud: HUDSystem | null = null;
   public chatHUD: ChatHUDSystem | null = null;
@@ -249,9 +261,10 @@ export class MatchController {
   constructor(context: ClientEngineContext = engineContext) {
     this.context = context;
     this.scene = new THREE.Scene();
+    this.localPlayerVisual = new LocalPlayerVisualSystem(this.scene);
   }
 
-  public async start(mapId: string) {
+  public start(mapId: string) {
     if (this.active) return;
     this.active = true;
     this.mapId = mapId;
@@ -278,7 +291,6 @@ export class MatchController {
     this.compass = new CompassSystem(this);
     this.compass.init();
     this.visuals = new VisualsSystem(this);
-    this.visuals.init();
     this.cameraEffects = new CameraEffectsSystem(this);
     this.reconnection = new ReconnectionSystem(this);
     this.llmObjective = new LLMObjectiveSystem(this);
@@ -316,12 +328,32 @@ export class MatchController {
       this.transport = null;
     }
 
+    if (this.networkSync) {
+      this.networkSync.dispose();
+      this.networkSync = null;
+    }
+
+    disposePlayerWeapons();
+
+    if (this.localPlayerVisual) {
+      this.localPlayerVisual.dispose();
+      this.localPlayerVisual = null;
+    }
+
+    if (this.remotePlayers) {
+      this.remotePlayers.destroy();
+      this.remotePlayers = null;
+    }
+
+    const mapLoader = typeof window !== "undefined" ? (window as any).__vexMapLoader : null;
+    if (mapLoader && typeof mapLoader.dispose === "function") {
+      mapLoader.dispose();
+      if ((window as any).__vexMapLoader === mapLoader) {
+        (window as any).__vexMapLoader = undefined;
+      }
+    }
+
     // 3. Deep disposal of Three.js Scene
-    this.remotePlayersMeshes.forEach((mesh, id) => {
-        console.log(`[MATCH] Disposing remote player mesh: ${id}`);
-        this.scene.remove(mesh);
-        disposeOwnedRemoteResources(mesh);
-    });
     console.log(`[MATCH] Disposing scene objects`);
     this.scene.traverse((object: any) => {
       if (object.isMesh || object.isLine || object.isSprite || object.isPoints) {
@@ -353,12 +385,6 @@ export class MatchController {
     this.activeGroundDrones.clear();
     this.activeAirDrones.clear();
     
-    this.remotePlayersMeshes.clear();
-    this.remotePlayersTargetData.clear();
-    
-    this.remotePlayerMixers.forEach(mixer => mixer.stopAllAction());
-    this.remotePlayerMixers.clear();
-
     if (this.minimap) {
         this.minimap.dispose();
         this.minimap = null;
@@ -369,11 +395,6 @@ export class MatchController {
         this.llmObjective = null;
     }
     
-    if (this.networkSync) {
-        this.networkSync.dispose();
-        this.networkSync = null;
-    }
-
     if (this.input) {
         this.input.dispose();
         this.input = null;
@@ -399,11 +420,6 @@ export class MatchController {
 
     if (this.drones) {
         this.drones = null;
-    }
-
-    if (this.remotePlayers) {
-        this.remotePlayers.destroy();
-        this.remotePlayers = null;
     }
 
     if (this.combat) {

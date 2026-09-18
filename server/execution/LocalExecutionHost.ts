@@ -13,7 +13,7 @@ export interface LocalExecutionHostConfig {
   id?: string;
   capacity?: number;
   backendType?: RoomExecutionBackendType;
-  onRoomReleased?: (hostId: string, roomId: string) => void;
+  onRoomReleased?: (hostId: string, roomId: string, execution: RoomExecution) => void;
 }
 
 /**
@@ -26,7 +26,7 @@ export class LocalExecutionHost implements ExecutionHost {
   public readonly backendType: RoomExecutionBackendType;
 
   private executions: Map<string, RoomExecution> = new Map();
-  private onRoomReleasedCallback?: (hostId: string, roomId: string) => void;
+  private onRoomReleasedCallback?: (hostId: string, roomId: string, execution: RoomExecution) => void;
 
   constructor(config: LocalExecutionHostConfig = {}) {
     this.id = config.id || `local-host-${Math.random().toString(36).substring(2, 8)}`;
@@ -89,11 +89,12 @@ export class LocalExecutionHost implements ExecutionHost {
     }
 
     if (this.backendType === "isolated" || this.backendType === "forked") {
-      const forkedExec = new ForkedRoomExecution(roomId, {
+      let forkedExec: ForkedRoomExecution | null = null;
+      forkedExec = new ForkedRoomExecution(roomId, {
         geminiKey: options.geminiKey,
         mapId: options.mapId,
-        onCrash: (id) => this.handleRoomTermination(id),
-        onShutdown: (id) => this.handleRoomTermination(id),
+        onCrash: (id) => this.handleRoomTermination(id, forkedExec),
+        onShutdown: (id) => this.handleRoomTermination(id, forkedExec),
       });
       this.executions.set(roomId, forkedExec);
 
@@ -109,7 +110,7 @@ export class LocalExecutionHost implements ExecutionHost {
     const execution = new InProcessRoomExecution(room);
     const prevShutdown = room.onShutdown;
     room.onShutdown = (id: string) => {
-      this.handleRoomTermination(id);
+      this.handleRoomTermination(id, execution);
       if (prevShutdown) prevShutdown(id);
     };
 
@@ -132,15 +133,16 @@ export class LocalExecutionHost implements ExecutionHost {
     }
 
     if (this.onRoomReleasedCallback) {
-      this.onRoomReleasedCallback(this.id, roomId);
+      this.onRoomReleasedCallback(this.id, roomId, execution);
     }
   }
 
-  private handleRoomTermination(roomId: string): void {
-    if (this.executions.has(roomId)) {
+  private handleRoomTermination(roomId: string, expectedExecution?: RoomExecution | null): void {
+    const execution = this.executions.get(roomId);
+    if (execution && (!expectedExecution || execution === expectedExecution)) {
       this.executions.delete(roomId);
       if (this.onRoomReleasedCallback) {
-        this.onRoomReleasedCallback(this.id, roomId);
+        this.onRoomReleasedCallback(this.id, roomId, expectedExecution || execution);
       }
     }
   }

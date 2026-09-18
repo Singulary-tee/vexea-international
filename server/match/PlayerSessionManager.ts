@@ -43,8 +43,15 @@ export interface PlayerSessionManagerContext {
 export class PlayerSessionManager {
   public players = new Map<string, PlayerState>();
   public abandonedPlayerIds = new Set<string>();
+  private playerGenerations = new Map<string, number>();
 
   constructor(private context: PlayerSessionManagerContext) {}
+
+  private nextPlayerGeneration(playerId: string): number {
+    const generation = (this.playerGenerations.get(playerId) ?? 0) + 1;
+    this.playerGenerations.set(playerId, generation);
+    return generation;
+  }
 
   public applyPlayerClassLoadout(
     pStateOrId: PlayerState | string,
@@ -71,10 +78,19 @@ export class PlayerSessionManager {
         ? requestedSecondaryWeaponId
         : classDef.secondaryWeapon;
 
+    const loadoutChanged =
+      pState.weapon !== primaryWeaponId ||
+      pState.weaponState.primary.weaponId !== primaryWeaponId ||
+      pState.weaponState.secondary.weaponId !== secondaryWeaponId;
+
     pState.classId = classDef.id;
     pState.weapon = primaryWeaponId;
     resetWeaponSlotState(pState.weaponState.primary, primaryWeaponId);
     resetWeaponSlotState(pState.weaponState.secondary, secondaryWeaponId);
+    if (loadoutChanged) {
+      pState.weaponEquipSequence = (pState.weaponEquipSequence ?? 0) + 1;
+      pState.weaponEquipTimestamp = Date.now();
+    }
     pState.hp = 100;
     pState.maxHp = PLAYER_MAX_HP;
     pState.utilityState = createInitialUtilityState(
@@ -231,7 +247,11 @@ export class PlayerSessionManager {
       velEmaY: 0,
       velEmaZ: 0,
       adMultiplier: 1,
+      isAiming: false,
       firedThisTick: false,
+      firedSinceBroadcast: false,
+      weaponEquipSequence: 0,
+      weaponEquipTimestamp: 0,
       maxHp: PLAYER_MAX_HP,
       isAlive: true,
       isDead: false,
@@ -255,6 +275,7 @@ export class PlayerSessionManager {
         chosenClassId,
         ACTIVE_GAMEMODE.utilityCooldownMultiplier
       ),
+      sessionGeneration: this.nextPlayerGeneration(playerId),
     };
 
     if (stats) {
@@ -341,6 +362,7 @@ export class PlayerSessionManager {
   public handlePlayerDisconnect(playerId: string): void {
     const p = this.players.get(playerId);
     if (!p) return;
+    if (p.channel.connected) return;
 
     if (p.disconnectTimer) {
       clearTimeout(p.disconnectTimer);
@@ -349,13 +371,20 @@ export class PlayerSessionManager {
     console.log(
       `[MATCH] Starting 75-second grace period for player ${playerId}`
     );
+    const disconnectedChannel = p.channel;
+    const disconnectedGeneration = p.sessionGeneration;
     p.disconnectTimer = setTimeout(async () => {
       const pCheck = this.players.get(playerId);
-      if (pCheck && (!pCheck.channel || !pCheck.channel.connected)) {
+      if (
+        pCheck &&
+        pCheck.channel === disconnectedChannel &&
+        pCheck.sessionGeneration === disconnectedGeneration &&
+        !pCheck.channel.connected
+      ) {
         console.log(
           `[MATCH] Disconnect grace period (75s) expired for ${playerId}. Triggering match abandonment.`
         );
-        await this.handlePlayerAbandonment(playerId);
+        await this.handlePlayerAbandonment(playerId, disconnectedChannel);
       }
     }, 75000);
   }
@@ -374,25 +403,29 @@ export class PlayerSessionManager {
         );
       }
       p.channel = newChannel;
+      p.abandonedMatch = undefined;
+      this.abandonedPlayerIds.delete(playerId);
       p.lastInputChangeTime = Date.now();
       p.afkWarningIssued = false;
     }
   }
 
-  public async handlePlayerAbandonment(playerId: string): Promise<void> {
+  public async handlePlayerAbandonment(
+    playerId: string,
+    expectedChannel?: ChannelAdapter,
+  ): Promise<void> {
     const p = this.players.get(playerId);
-    if (!p) {
-      this.abandonedPlayerIds.add(playerId);
-      return;
-    }
+    if (!p) return;
+    if (expectedChannel && p.channel !== expectedChannel) return;
+
+    const expectedGeneration = p.sessionGeneration;
+    const abandonmentChannel = expectedChannel || p.channel;
 
     if (p.disconnectTimer) {
       clearTimeout(p.disconnectTimer);
       p.disconnectTimer = undefined;
     }
 
-    p.abandonedMatch = true;
-    this.abandonedPlayerIds.add(playerId);
     const uid = p.reqUid || p.id;
 
     if (!p.isBot) {
@@ -402,6 +435,19 @@ export class PlayerSessionManager {
       await MatchAbuseStore.recordOffense(uid);
     }
 
+    const current = this.players.get(playerId);
+    if (
+      !current ||
+      current !== p ||
+      current.sessionGeneration !== expectedGeneration ||
+      current.channel !== abandonmentChannel ||
+      (expectedChannel && current.channel.connected)
+    ) {
+      return;
+    }
+
+    p.abandonedMatch = true;
+    this.abandonedPlayerIds.add(playerId);
     this.removePlayer(playerId);
   }
 
@@ -424,7 +470,11 @@ export class PlayerSessionManager {
         rapierWorld.removeRigidBody(p.body);
       }
       this.players.delete(playerId);
-      this.context.broadcastReliableEvent({ type: "PLAYER_LEFT", playerId });
+      this.context.broadcastReliableEvent({
+        type: "PLAYER_LEFT",
+        playerId,
+        playerGeneration: p.sessionGeneration ?? 0,
+      });
 
       let hasRealPlayers = false;
       for (const player of this.players.values()) {
@@ -446,6 +496,15 @@ export class PlayerSessionManager {
     pitch: number,
     yaw: number
   ): void {
+    if (
+      !Number.isInteger(inputMask) ||
+      inputMask < 0 ||
+      inputMask > 0xff ||
+      !Number.isFinite(pitch) ||
+      !Number.isFinite(yaw)
+    ) {
+      return;
+    }
     const inputChanged =
       p.inputMask !== inputMask ||
       Math.abs(p.pitch - pitch) > 0.0001 ||
@@ -464,6 +523,27 @@ export class PlayerSessionManager {
       }
       p.lastInputChangeTime = Date.now();
     }
+  }
+
+  public updatePlayerAiming(p: PlayerState, isAiming: boolean): void {
+    if (p.isAiming === isAiming) return;
+    p.isAiming = isAiming;
+    this.recordPlayerActivity(p);
+  }
+
+  public selectPlayerWeapon(
+    pStateOrId: PlayerState | string,
+    slot: "primary" | "secondary",
+  ): boolean {
+    if (slot !== "primary" && slot !== "secondary") return false;
+    const pState = typeof pStateOrId === "string" ? this.players.get(pStateOrId) : pStateOrId;
+    if (!pState || !pState.isAlive) return false;
+
+    pState.weapon = pState.weaponState[slot].weaponId;
+    pState.isAiming = false;
+    pState.weaponEquipSequence = (pState.weaponEquipSequence ?? 0) + 1;
+    pState.weaponEquipTimestamp = Date.now();
+    return true;
   }
 
   public recordPlayerActivity(p: PlayerState): void {

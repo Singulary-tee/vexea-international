@@ -547,8 +547,11 @@ export class MatchRoom {
     this.sessionManager.handlePlayerReconnect(playerId, newChannel);
   }
 
-  public async handlePlayerAbandonment(playerId: string): Promise<void> {
-    await this.sessionManager.handlePlayerAbandonment(playerId);
+  public async handlePlayerAbandonment(
+    playerId: string,
+    expectedChannel?: ChannelAdapter,
+  ): Promise<void> {
+    await this.sessionManager.handlePlayerAbandonment(playerId, expectedChannel);
   }
 
   public removePlayer(playerId: string): void {
@@ -562,6 +565,17 @@ export class MatchRoom {
     yaw: number
   ): void {
     this.sessionManager.updatePlayerInput(p, inputMask, pitch, yaw);
+  }
+
+  public updatePlayerAiming(p: PlayerState, isAiming: boolean): void {
+    this.sessionManager.updatePlayerAiming(p, isAiming);
+  }
+
+  public selectPlayerWeapon(
+    pStateOrId: PlayerState | string,
+    slot: "primary" | "secondary",
+  ): boolean {
+    return this.sessionManager.selectPlayerWeapon(pStateOrId, slot);
   }
 
   public recordPlayerActivity(p: PlayerState): void {

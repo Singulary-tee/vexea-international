@@ -117,6 +117,7 @@ export class CombatResolver {
       const p = this.context.getPlayers().get(sourceId);
       if (p) {
         p.firedThisTick = true;
+        p.firedSinceBroadcast = true;
       }
     }
   }
@@ -367,6 +368,7 @@ export class CombatResolver {
       p.hp = 0;
       p.isAlive = false;
       p.isDead = true;
+      p.isAiming = false;
       p.respawnTimer = PLAYER_RESPAWN_DELAY_DEFAULT;
       p.deathPosition = { x: p.posX, y: p.posY, z: p.posZ };
       p.stats.deaths++;
@@ -816,6 +818,7 @@ export class CombatResolver {
         if (p.hp <= 0) {
           p.isAlive = false;
           p.isDead = true;
+          p.isAiming = false;
           p.respawnTimer = 5;
           p.stats.deaths += 1;
           p.channel.emit("reliable_event", {
