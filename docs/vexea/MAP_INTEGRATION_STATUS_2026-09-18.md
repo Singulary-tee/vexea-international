@@ -52,6 +52,16 @@ previously rendered only a flat dark plane plus a procedural centerpiece — eve
   found and fixed a build-breaking `error TS2339` at `MapLoader.ts:366` (`.getHex()` called on a
   number literal instead of the `SKY` colour) which the interrupted session had reported as passing.
   See the Cycle entry in `CODEBASE_INDEX.md`.
+- **Post-rebase verdict (2026-09-18, later run — supersedes the wording above for the rebased tree):**
+  after rebasing onto `main` @`dc8057a`, root `tsc --noEmit` on this branch reports exactly **one**
+  error — `benchmarks/diagnostics/measure_benchmark_ipc.ts(27,5) TS2353` (dead `profile` key in
+  `RunnerOptions`). A baseline worktree of `origin/main` @`dc8057a` reproduces the identical error,
+  proving it pre-exists on main (it arrived with the upstream benchmark tooling in the 38 rebased
+  commits; the earlier "exits 0" claim was true only for the pre-rebase base). No file this branch
+  touches has any error. Both defects (the tsc error and the broken `npm ci` / lock r186 mismatch)
+  are fixed on separate branch `agent/fix-main-bench-tsc-r186-lock`, whose full gate is green:
+  `npm ci` exit 0 + `tsc --noEmit` exit 0 at `697469f`. See Cycle 2026-09-18-02 in
+  `CODEBASE_INDEX.md`.
 - **Not** verified: the integration has never been rendered in a browser. No build, test-suite, or
   render-gate result is claimed for it.
 
