@@ -1,6 +1,6 @@
 # Map Integration — Status & What's Left (2026-09-18)
 
-Branch: `agent/facility-glb-map-integration` (base `33e430b` on `main`).
+Branch: `agent/facility-glb-map-integration` (rebased onto `main` @`dc8057a`).
 
 ## Why this branch exists
 
@@ -47,7 +47,13 @@ previously rendered only a flat dark plane plus a procedural centerpiece — eve
 - The GLB is fetched through `getCachedOrFetchUrl('/assets/maps/map_1/facility-v3.glb', 'Asset')`
   under a `try/catch` that falls back to the direct public URL, so no
   `MODEL_MANIFEST` / `ASSET_STRUCTURE` entry is strictly required for it to load.
-- TypeScript typecheck: see the Cycle entry in `CODEBASE_INDEX.md`.
+- TypeScript typecheck: `npx tsc --noEmit` exits **0** on the codespace
+  (`supreme-space-train-7vr496j4wwxxfx5p7`) — run it there, this VM exhausts its heap. That gate
+  found and fixed a build-breaking `error TS2339` at `MapLoader.ts:366` (`.getHex()` called on a
+  number literal instead of the `SKY` colour) which the interrupted session had reported as passing.
+  See the Cycle entry in `CODEBASE_INDEX.md`.
+- **Not** verified: the integration has never been rendered in a browser. No build, test-suite, or
+  render-gate result is claimed for it.
 
 ## What's left
 
