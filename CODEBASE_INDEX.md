@@ -413,8 +413,11 @@ This file is the authoritative index of all directories and source files within 
 ### 1.8 Map Authoring Space (`/map-authoring`)
 
 *   **`map-authoring/`**
-    *   *Purpose:* Level authoring and density validation data for map design.
+    *   *Purpose:* Standalone level authoring workbench, dense blockout editors, and validation tooling for map design. Fully isolated outside the client game runtime.
     *   *Key Files/Subdirectories:*
+        *   `index.html`: Standalone map authoring workbench HTML entrypoint.
+        *   `vite.config.ts`: Standalone Vite configuration for running the map authoring workbench on dedicated port 3200.
+        *   `src/`: Standalone map authoring TypeScript modules (`main.ts`, `blockout-data.ts`, `dense-approved-blockout.ts`, `pressure-plant-*`).
         *   `approved-dense-v24/`: Approved dense blockout specification, editor binaries, evidence captures, and validation scripts (`validate-approved-dense-blockout-v1.mjs`, etc.).
 
 ### 1.9 Documentation Space (`/docs/vexea`)
@@ -907,3 +910,10 @@ Every file change in the VEXEA codebase must follow this strict two-step protoco
 * **Scope:** (1) `measure_benchmark_ipc.ts` passed a dead `profile` key inside its `RunnerOptions` argument; the interface is local to `benchmarks/src/runner.ts` (only `outputDir` / `cwd` / `skipBuild` / `repetitions`) and `runProfile` never reads a profile option, so `tsc --noEmit` failed at repo root with `TS2353: Object literal may only specify known properties, and 'profile' does not exist in type 'RunnerOptions'`. The excess property was removed; `benchmarks/src/cli.ts` never passed it. (2) `96a94a8` ("build: upgrade Three.js to r186") bumped `package.json` (`three` `0.186.0`, `@types/three` `^0.185.4`) without regenerating `package-lock.json` (still pinned `three` `0.184.0` / `@types/three` `0.184.1`), so `npm ci` failed on any fresh clone with an `EUSAGE` spec mismatch. The lock was regenerated with `npm install --package-lock-only --ignore-scripts` (node v24.20.0, npm 11.19.0); the diff is version bumps plus dependency-graph bookkeeping only.
 * **Verification:** Full gate on codespace `supreme-space-train-7vr496j4wwxxfx5p7` in an isolated worktree at `697469f`: `npm ci` exited **0** (lock sync proven; 583 packages) and `tsc --noEmit` exited **0** with zero diagnostics — the whole repo is type-clean for the first time since `96a94a8`. The pre-existing nature of the tsc error was proven against a baseline worktree of `origin/main` @`dc8057a` (`npm install` — `npm ci` is impossible there — then `tsc --noEmit`): same single error, `TSC_EXIT=2`, nothing else. Method note: the branch worktree must use `npm install` (or the fixed lock) before invoking `./node_modules/.bin/tsc` directly — a bare `npx tsc` with no local `typescript` silently installs the unrelated `tsc@2.0.4` stub package, which is not the compiler.
 * **Status:** Hygiene branch pushed; user merges it independently of (or ahead of) the map branch. It does not alter the map integration's scope or its open items.
+
+### Cycle 2026-09-18-03: Standalone Map Authoring Extraction from Game Client
+* **Target Files:** `client/src/map-authoring/` (deleted), `client/map-authoring.html` (deleted), `map-authoring/index.html`, `map-authoring/vite.config.ts`, `map-authoring/src/`, `CODEBASE_INDEX.md`.
+* **Scope:** Fully extract the map authoring bench and blockout tooling out of the `client/` game runtime directory into the standalone `/map-authoring` space at repository root (matching the isolated `/PoseEditor` pattern). Created `map-authoring/index.html`, standalone `map-authoring/vite.config.ts`, and synced all map authoring source modules under `map-authoring/src/`. Deleted all entwined map authoring source files and HTML entrypoints from `client/src/map-authoring` and `client/map-authoring.html`.
+* **Explicit Non-Scope:** Zero modifications to core gameplay systems, server simulation, physics loop, or networking transport.
+* **Status:** Verified and finalized.
+

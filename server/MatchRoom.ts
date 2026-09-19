@@ -994,13 +994,9 @@ export class MatchRoom {
       d.state = DroneState.DEAD;
     }
 
-    if (this.rapierWorld) {
-      try {
-        this.rapierWorld.free();
-        (this as any).rapierWorld = null;
-      } catch (e) {
-        console.error("[VEXEA SERVER] Error freeing rapierWorld:", e);
-      }
+    if (this.physicsManager) {
+      this.physicsManager.destroy();
+      (this as any).rapierWorld = null;
     }
 
     if (this.onShutdown) {

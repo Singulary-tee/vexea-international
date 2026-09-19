@@ -885,18 +885,18 @@ const setup3DStage = async () => {
     }
   }
 
-  let initWidth = window.innerWidth;
-  let initHeight = window.innerHeight;
+  let initWidth = Math.max(window.innerWidth || 1, 1);
+  let initHeight = Math.max(window.innerHeight || 1, 1);
   if (IS_MOBILE) {
     const maxDimension = 1000;
     if (initWidth > maxDimension || initHeight > maxDimension) {
       const aspectRatio = initWidth / initHeight;
       if (initWidth > initHeight) {
         initWidth = maxDimension;
-        initHeight = Math.round(maxDimension / aspectRatio);
+        initHeight = Math.max(1, Math.round(maxDimension / aspectRatio));
       } else {
         initHeight = maxDimension;
-        initWidth = Math.round(maxDimension * aspectRatio);
+        initWidth = Math.max(1, Math.round(maxDimension * aspectRatio));
       }
     }
   }
@@ -951,8 +951,8 @@ const setup3DStage = async () => {
 
 // 4. Input & Controls binds (Zero allocations in trigger keys)
 const handleWindowResize = () => {
-  let width = window.innerWidth;
-  let height = window.innerHeight;
+  let width = Math.max(window.innerWidth || 1, 1);
+  let height = Math.max(window.innerHeight || 1, 1);
   
   if (IS_MOBILE) {
     const maxDimension = 1000;
@@ -960,15 +960,15 @@ const handleWindowResize = () => {
       const aspectRatio = width / height;
       if (width > height) {
         width = maxDimension;
-        height = Math.round(maxDimension / aspectRatio);
+        height = Math.max(1, Math.round(maxDimension / aspectRatio));
       } else {
         height = maxDimension;
-        width = Math.round(maxDimension * aspectRatio);
+        width = Math.max(1, Math.round(maxDimension * aspectRatio));
       }
     }
   }
 
-  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.aspect = width / height;
   camera.updateProjectionMatrix();
   renderer.setSize(width, height, false);
   renderer.domElement.style.width = "100%";

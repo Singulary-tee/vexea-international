@@ -1258,7 +1258,7 @@ async function setup3D() {
     }
 
     localRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    localRenderer.setSize(window.innerWidth, window.innerHeight);
+    localRenderer.setSize(Math.max(window.innerWidth || 1, 1), Math.max(window.innerHeight || 1, 1));
     
     const canvasEl = localRenderer.domElement;
     canvasEl.id = "de-main-canvas";
@@ -1417,9 +1417,11 @@ function resetCamera() {
 function onWindowResize() {
     const canvasCont = document.getElementById("de-canvas-container");
     if (!canvasCont || !camera || !localRenderer) return;
-    camera.aspect = canvasCont.clientWidth / canvasCont.clientHeight;
+    const w = Math.max(canvasCont.clientWidth || window.innerWidth || 1, 1);
+    const h = Math.max(canvasCont.clientHeight || window.innerHeight || 1, 1);
+    camera.aspect = w / h;
     camera.updateProjectionMatrix();
-    localRenderer.setSize(canvasCont.clientWidth, canvasCont.clientHeight);
+    localRenderer.setSize(w, h);
 }
 
 function switchTab(tabId: string) {

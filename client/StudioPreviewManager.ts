@@ -351,7 +351,9 @@ class StudioPreviewManagerImpl {
       });
       const renderer = (window as any).renderer;
       if (renderer && typeof renderer.setSize === 'function') {
-        renderer.setSize(window.innerWidth, window.innerHeight, false);
+        const w = Math.max(window.innerWidth || 1, 1);
+        const h = Math.max(window.innerHeight || 1, 1);
+        renderer.setSize(w, h, false);
       }
     }
   }
@@ -1005,8 +1007,8 @@ class StudioPreviewManagerImpl {
 
   public resizeToContainer(): void {
     if (!this.containerEl) return;
-    const width = this.containerEl.clientWidth || window.innerWidth;
-    const height = this.containerEl.clientHeight || window.innerHeight;
+    const width = Math.max(this.containerEl.clientWidth || window.innerWidth || 1, 1);
+    const height = Math.max(this.containerEl.clientHeight || window.innerHeight || 1, 1);
 
     const aspect = width / height;
 

@@ -115,7 +115,9 @@ async function executeTransition(target: ScreenId, durationMs: number, immediate
         renderer.domElement.style.width = "100%";
         renderer.domElement.style.height = "100%";
         if (typeof renderer.setSize === 'function') {
-          renderer.setSize(window.innerWidth, window.innerHeight, false);
+          const w = Math.max(window.innerWidth || 1, 1);
+          const h = Math.max(window.innerHeight || 1, 1);
+          renderer.setSize(w, h, false);
         }
       }
     }

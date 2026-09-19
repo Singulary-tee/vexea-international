@@ -171,6 +171,8 @@ export class MapLoader {
       const worldCenterX = this.spec.worldSize?.x ? this.spec.worldSize.x / 2 : 384;
       const worldCenterZ = this.spec.worldSize?.z ? this.spec.worldSize.z / 2 : 384;
       clone.position.set(worldCenterX, 0, worldCenterZ);
+      const scaleFactor = 700 / 920;
+      clone.scale.set(scaleFactor, scaleFactor, scaleFactor);
       clone.updateMatrixWorld(true);
       clone.traverse((child) => {
         if (child instanceof THREE.Mesh) {
@@ -181,7 +183,7 @@ export class MapLoader {
       this.scene.add(clone);
       this.mergedMeshes.push(clone as any);
       this.sceneAddCallCount++;
-      console.log('[MAP DEBUG] Placed sceneGlb', this.spec.sceneGlb, 'at center:', worldCenterX, 0, worldCenterZ);
+      console.log('[MAP DEBUG] Placed sceneGlb', this.spec.sceneGlb, 'at center:', worldCenterX, 0, worldCenterZ, 'scale:', scaleFactor);
     }
 
     for (const b of this.spec.buildings) {

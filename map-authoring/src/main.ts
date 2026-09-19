@@ -13831,12 +13831,12 @@ function onPointerDown(event: PointerEvent) {
 }
 
 function resize() {
-  const width = canvasWrap.clientWidth;
-  const height = canvasWrap.clientHeight;
+  const width = Math.max(canvasWrap.clientWidth || 1, 1);
+  const height = Math.max(canvasWrap.clientHeight || 1, 1);
   if (orthographicBlockoutMode) {
     updateOrthographicFrustum();
   } else {
-    camera.aspect = width / Math.max(1, height);
+    camera.aspect = width / height;
     camera.updateProjectionMatrix();
   }
   renderer.setSize(width, height, false);
