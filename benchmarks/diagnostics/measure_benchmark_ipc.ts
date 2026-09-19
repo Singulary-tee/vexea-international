@@ -24,7 +24,6 @@ async function runTest(profilePath: string, envOverrides: Record<string, string>
   const outputDir = path.resolve(`.benchmark-artifacts/diagnostics-${Date.now()}`);
   const { summary } = await runProfile(profile, {
     outputDir,
-    profile: profile.id,
     skipBuild: true,
   });
 
