@@ -6,6 +6,7 @@
     "x": 768,
     "z": 768
   },
+  "sceneGlb": "facility-v3.glb",
   "coordinateSystem": {
     "note": "Blueprint X maps to Three.js X. Blueprint Y maps to Three.js Z. Elevation maps to Three.js Y. Z=0 is ground level. Tunnels at Y=-20. Rooftops at Y=+25 to +35."
   },
