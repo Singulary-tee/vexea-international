@@ -12,18 +12,6 @@ import {
   type AnimationOutput,
   type PlayerAnimationContext,
 } from "../../../shared/state-animation-contract";
-import {
-  createRemotePlayerWeapon,
-  hasRemoteWeaponTemplate,
-} from "../../weapons_model";
-import {
-  chooseVerifiedGripPose,
-  resolveGripAnchors,
-  solveVerifiedGripPose,
-  type PoseCandidate,
-  type PoseDiagnostics,
-} from "../../weapons/pose-solver";
-import { getPlayerHoldFrame } from "../../weapons/player-hold-ik";
 
 const HEAD_BONE_NAMES = ["mixamorig:Head", "mixamorigHead", "Head"];
 const _headWorldPosition = new THREE.Vector3();
@@ -118,22 +106,6 @@ function applyAnimationOutput(
   representation.currentClipName = clip.name;
 }
 
-function disposeOwnedWeaponResources(root: THREE.Object3D): void {
-  const geometries = new Set<THREE.BufferGeometry>();
-  const materials = new Set<THREE.Material>();
-  root.traverse((child: any) => {
-    if (!child.userData?.remoteOwned) return;
-    if (child.geometry) geometries.add(child.geometry);
-    if (child.material) {
-      for (const material of Array.isArray(child.material) ? child.material : [child.material]) {
-        materials.add(material);
-      }
-    }
-  });
-  geometries.forEach((geometry) => geometry.dispose());
-  materials.forEach((material) => material.dispose());
-}
-
 export function createLocalPlayerRepresentation(canonicalModel: THREE.Group): LocalPlayerRepresentation {
   const root = new THREE.Group();
   root.name = "LocalPlayerRepresentation";
@@ -202,12 +174,6 @@ export function disposeLocalPlayerRepresentation(
 
 export class LocalPlayerVisualSystem {
   public representation: LocalPlayerRepresentation | null = null;
-  public weaponDiagnostics: PoseDiagnostics | null = null;
-  private weapon: THREE.Object3D | null = null;
-  private weaponId: string | null = null;
-  private weaponTemplateAvailable = false;
-  private poseContext: string | null = null;
-  private poseCandidate: PoseCandidate | null = null;
 
   constructor(private readonly scene: THREE.Scene) {}
 
@@ -225,80 +191,12 @@ export class LocalPlayerVisualSystem {
   }
 
   public get ownsWeapon(): boolean {
-    return this.weapon !== null;
+    return false;
   }
 
-  private disposeWeapon(): void {
-    if (!this.weapon) return;
-    this.weapon.removeFromParent();
-    disposeOwnedWeaponResources(this.weapon);
-    this.weapon = null;
-    this.weaponId = null;
-    this.weaponTemplateAvailable = false;
-    this.poseContext = null;
-    this.poseCandidate = null;
-    this.weaponDiagnostics = null;
-  }
+  public updateWeaponPose(_camera: THREE.Camera): void {}
 
-  private ensureWeapon(weaponId: string): void {
-    if (!this.representation) return;
-    const templateAvailable = hasRemoteWeaponTemplate(weaponId);
-    const needsReplacement = this.weaponId !== weaponId
-      || (!this.weaponTemplateAvailable && templateAvailable);
-    if (!needsReplacement && this.weapon) return;
-
-    this.disposeWeapon();
-    this.weapon = createRemotePlayerWeapon(weaponId);
-    this.weapon.name = `LocalPlayerWeapon_${weaponId}`;
-    this.weapon.userData.localPlayerWeapon = true;
-    this.weapon.visible = false;
-    this.weaponId = weaponId;
-    this.weaponTemplateAvailable = templateAvailable;
-    this.representation.model.add(this.weapon);
-  }
-
-  public updateWeaponPose(camera: THREE.Camera): void {
-    if (!this.representation || !this.weapon || !this.weaponId) return;
-    const poseContext = `${this.weaponId}:${this.representation.currentClipName || "unanimated"}`;
-    const holdFrame = getPlayerHoldFrame(this.weaponId, this.representation.currentClipName);
-    const forwardPitch = (this.poseCandidate?.forwardPitch ?? 0) - camera.rotation.x;
-    let diagnostics: PoseDiagnostics;
-    if (this.poseContext === poseContext) {
-      diagnostics = solveVerifiedGripPose(this.representation.model, this.weapon, {
-        weaponId: this.weaponId,
-        poseContext,
-        holdFrame,
-        forwardPitch,
-        diagnostics: true,
-      });
-    } else {
-      const pose = chooseVerifiedGripPose(this.representation.model, this.weapon, undefined, {
-        weaponId: this.weaponId,
-        poseContext,
-        holdFrame,
-        diagnostics: true,
-      });
-      this.poseContext = poseContext;
-      this.poseCandidate = pose.diagnostics.verified ? pose.selected : null;
-      diagnostics = solveVerifiedGripPose(this.representation.model, this.weapon, {
-        weaponId: this.weaponId,
-        poseContext,
-        holdFrame,
-        forwardPitch: (this.poseCandidate?.forwardPitch ?? 0) - camera.rotation.x,
-        diagnostics: true,
-      });
-    }
-    this.weaponDiagnostics = diagnostics;
-    this.weapon.visible = diagnostics.verified;
-  }
-
-  public getMuzzleWorldPosition(target: THREE.Vector3): boolean {
-    if (!this.weapon || !this.weaponId || !this.weapon.visible || !this.weaponDiagnostics?.verified) return false;
-    this.weapon.updateMatrixWorld(true);
-    const muzzle = resolveGripAnchors(this.weapon, this.weaponId).muzzle.point;
-    target.copy(muzzle).applyMatrix4(this.weapon.matrixWorld);
-    return target.x === target.x && target.y === target.y && target.z === target.z;
-  }
+  public getMuzzleWorldPosition(_target: THREE.Vector3): boolean { return false; }
 
   public update(
     dt: number,
@@ -309,7 +207,6 @@ export class LocalPlayerVisualSystem {
     animationContext: PlayerAnimationContext = { isAlive: true },
   ): void {
     if (!this.representation) return;
-    this.ensureWeapon(animationContext.weapon ?? "rifle");
     applyAnimationOutput(
       this.representation,
       resolvePlayerAnimationState(animationContext),
@@ -320,7 +217,6 @@ export class LocalPlayerVisualSystem {
   }
 
   public dispose(): void {
-    this.disposeWeapon();
     if (!this.representation) return;
     disposeLocalPlayerRepresentation(this.representation);
     this.representation = null;

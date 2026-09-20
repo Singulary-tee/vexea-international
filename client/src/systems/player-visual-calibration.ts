@@ -43,10 +43,36 @@ export function normalizedName(name: string): string {
   return name.toLowerCase().replace(/[^a-z0-9]/g, "");
 }
 
+function isHeadObjectName(name: string): boolean {
+  const value = normalizedName(name);
+  return value === "head"
+    || value.endsWith("head")
+    || value.includes("headmesh")
+    || value.includes("helmet")
+    || value.includes("hair")
+    || value.includes("face");
+}
+
 export function hideFirstPersonHead(root: THREE.Object3D): FirstPersonHeadFilterStats {
   const stats: FirstPersonHeadFilterStats = { meshes: 0, sourceTriangles: 0, hiddenTriangles: 0 };
   root.updateMatrixWorld(true);
+  const headObjects = new Set<THREE.Object3D>();
   root.traverse((child: any) => {
+    if (child.isBone && isHeadObjectName(child.name)) headObjects.add(child);
+  });
+
+  const isHeadMesh = (mesh: THREE.Object3D): boolean => {
+    if (isHeadObjectName(mesh.name)) return true;
+    let parent = mesh.parent;
+    while (parent && parent !== root) {
+      if (headObjects.has(parent)) return true;
+      parent = parent.parent;
+    }
+    return false;
+  };
+
+  root.traverse((child: any) => {
+    if (child.isMesh && isHeadMesh(child)) child.visible = false;
     if (!child.isSkinnedMesh || !child.geometry || !child.skeleton) return;
     const headBones = new Set<number>();
     child.skeleton.bones.forEach((bone: THREE.Bone, index: number) => {
