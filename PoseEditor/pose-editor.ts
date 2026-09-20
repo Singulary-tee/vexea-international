@@ -50,6 +50,7 @@ import {
   findNamed,
   findPlacementAnchor,
   hideFirstPersonHead,
+  hideFirstPersonBodyExceptArms,
   measureProbedBarrelAxis,
   placementAnchorPoint,
   prepareBarrelMeasurement,
@@ -64,9 +65,18 @@ import {
 import {
   getPoseEditorItem,
   POSE_EDITOR_ITEMS,
+  resolvePoseEditorAnimationMode,
+  type PoseEditorAnimationMode,
   type PoseEditorItem,
   type PoseEditorItemId,
 } from "./pose-editor-config";
+import {
+  applyRifleWeaponPresentation,
+  measureLiveRifleFrame,
+  prepareRifleHold,
+  restoreRiflePoseTransaction,
+  snapshotRiflePoseTransaction,
+} from "./rifle-presentation";
 
 type ViewMode = "first" | "third";
 type PoseRenderer = THREE.WebGPURenderer | SVGRenderer;
@@ -101,6 +111,7 @@ interface EditorState {
   view: ViewMode;
   itemId: PoseEditorItemId;
   backend: RendererBackend;
+  animationMode: PoseEditorAnimationMode;
   result: PoseDiagnostics | UtilityPoseResult | null;
   firstPersonFit: FirstPersonFitDiagnostics | null;
   firstPersonComposition: FirstPersonCompositionResult | null;
@@ -201,6 +212,59 @@ function disposeAssetTree(root: THREE.Object3D): void {
   });
 }
 
+function failedRiflePoseDiagnostics(weapon: THREE.Object3D, reason: string): PoseDiagnostics {
+  const anchors = resolveGripAnchors(weapon, "rifle");
+  return {
+    solved: false,
+    verified: false,
+    reason,
+    weaponScale: 0,
+    primaryGripError: Infinity,
+    supportGripError: Infinity,
+    gripSpanError: Infinity,
+    gripOrientationError: Infinity,
+    muzzleDirectionError: Infinity,
+    muzzleDirectionTrusted: false,
+    shoulderAlignmentError: Infinity,
+    elbowBendError: Infinity,
+    clipping: {
+      checked: false,
+      proxyComplete: false,
+      weaponBody: false,
+      weaponArm: false,
+      handForearm: false,
+      maxPenetration: 0,
+    },
+    stable: false,
+    score: Infinity,
+    socketSources: {
+      primary: anchors.primary.source,
+      support: anchors.support.source,
+      muzzle: anchors.muzzle.source,
+      ads: anchors.ads.source,
+    },
+    socketNodes: {
+      primary: anchors.primary.nodeName,
+      support: anchors.support.nodeName,
+      muzzle: anchors.muzzle.nodeName,
+      ads: anchors.ads.nodeName,
+    },
+  };
+}
+
+function asBarrelDirectionMeasurement(
+  barrel: NonNullable<ReturnType<typeof measureLiveRifleFrame>>["barrel"],
+): BarrelDirectionMeasurement {
+  return {
+    direction: barrel.direction,
+    start: barrel.start,
+    end: barrel.end,
+    source: "mesh-principal-axis",
+    probeStart: barrel.probeStart,
+    probes: barrel.probes,
+  };
+}
+
 function worldPoint(root: THREE.Object3D, names: readonly string[]): THREE.Vector3 | null {
   const node = findNamed(root, names);
   return node ? node.getWorldPosition(new THREE.Vector3()) : null;
@@ -286,8 +350,8 @@ function isReadableProjectedPoint(point: THREE.Vector3 | null, camera: THREE.Per
 
 function addBarrelVisualDiagnostics(): void {
   if (!state || !state.item || !state.barrelMeasurement) return;
-  const measurement = state.barrelMeasurement.actual
-    || state.barrelMeasurement.measurement;
+  const measurement = state.barrelMeasurement.actual;
+  if (!measurement) return;
   const authoredEnd = state.view === "first"
     ? currentMuzzlePoint(state.item, state.itemId as WeaponId)
     : state.barrelMeasurement.authored.end;
@@ -313,7 +377,7 @@ function updateBarrelDiagnostics(): void {
     return;
   }
   const basis = cameraBasis(state.camera);
-  const actual = state.view === "first" ? state.barrelMeasurement.actual : null;
+  const actual = state.barrelMeasurement.actual;
   state.barrelDiagnostics = {
     cameraAlignment: actual
       ? directionAlignmentAngle(asDirection3(actual.direction), asDirection3(basis.forward))
@@ -462,6 +526,14 @@ function clearDebugRoot(): void {
     state.debugRoot.remove(child);
     disposeAssetTree(child);
   }
+}
+
+function hideFirstPersonBodyExceptItem(character: THREE.Object3D, item: THREE.Object3D): void {
+  const itemNodes = new Set<THREE.Object3D>();
+  item.traverse((child) => itemNodes.add(child));
+  character.traverse((child: any) => {
+    if (!itemNodes.has(child) && child.isMesh) child.visible = false;
+  });
 }
 
 function addWeaponDiagnostics(character: THREE.Group, item: THREE.Group, itemId: WeaponId): void {
@@ -821,12 +893,6 @@ function composeFirstPersonPose(): void {
       muzzleCameraAlignment = directionAlignmentAngle(asDirection3(socketDirection), asDirection3(basis.forward));
     }
   }
-  if (selectedItem?.category === "weapon" && state.barrelMeasurement) {
-    state.barrelMeasurement.actual = measureProbedBarrelAxis(
-      state.barrelMeasurement.measurement,
-      currentMuzzlePoint(item, selectedItem.id as WeaponId),
-    );
-  }
   const contentProjection = projectedBounds(fitObject, state.camera, Boolean(state.firstPersonContent)) || projected;
   const contentFractions = projectedFractions(contentProjection);
   const bodyFractions = projectedFractions(
@@ -910,8 +976,9 @@ function buildPose(item: PoseEditorItem): void {
   state.barrelMeasurement = null;
   state.barrelDiagnostics = null;
 
-  const clip = choosePlayerClip(item);
-  state.clipName = clip?.name || "bind-pose";
+  state.animationMode = resolvePoseEditorAnimationMode(item.id, params.get("animation"));
+  const clip = state.animationMode === "animated" ? choosePlayerClip(item) : undefined;
+  state.clipName = clip?.name || (state.animationMode === "static" ? "t-pose" : "bind-pose");
   if (clip) {
     const mixer = new THREE.AnimationMixer(character);
     const action = mixer.clipAction(clip);
@@ -923,15 +990,93 @@ function buildPose(item: PoseEditorItem): void {
   }
 
   if (item.category === "weapon") {
-    const poseContext = `${item.id}:${state.clipName}`;
-    const pose = chooseVerifiedGripPose(character, heldItem, undefined, {
-      weaponId: item.id as WeaponId,
-      poseContext,
-      holdFrame: getPlayerHoldFrame(item.id, state.clipName),
-      diagnostics: true,
-    });
-    state.result = pose.diagnostics;
-    state.barrelMeasurement = prepareBarrelMeasurement(heldItem, item.id as WeaponId);
+    const poseContext = `${item.id}:${state.animationMode}:${state.clipName}`;
+    const riflePresentation = item.id === "rifle"
+      && state.animationMode === "animated"
+      && state.clipName === "rifle_idle";
+    const rifleStaticHold = item.id === "rifle" && state.animationMode === "static";
+    const rifleHold = riflePresentation || rifleStaticHold;
+    if (rifleHold) character.add(heldItem);
+    const rifleHoldTransaction = rifleHold
+      ? snapshotRiflePoseTransaction(character, heldItem)
+      : null;
+    let holdFrameApplied = true;
+    if (rifleHold) {
+      holdFrameApplied = prepareRifleHold(character, {
+        weaponId: item.id,
+        clipName: "rifle_idle",
+        view: state.view,
+      }).applied;
+    }
+    if (!holdFrameApplied) {
+      if (rifleHoldTransaction) restoreRiflePoseTransaction(rifleHoldTransaction, character, heldItem);
+      state.result = failedRiflePoseDiagnostics(heldItem, "rifle hold-frame IK failed; transaction rolled back");
+      character.userData.poseEditorRiflePresentation = null;
+    } else {
+      const pose = chooseVerifiedGripPose(character, heldItem, undefined, {
+        weaponId: item.id as WeaponId,
+        poseContext,
+        holdFrame: rifleHold ? undefined : getPlayerHoldFrame(item.id, state.clipName),
+        diagnostics: true,
+      });
+      state.result = pose.diagnostics;
+      if (item.id === "rifle" && state.animationMode === "static" && pose.diagnostics.verified) {
+        character.updateMatrixWorld(true);
+        heldItem.updateMatrixWorld(true);
+        const staticFrame = measureLiveRifleFrame(heldItem, state.view, "pre-presentation");
+        if (staticFrame) {
+          state.barrelMeasurement = staticFrame.barrelMeasurement;
+          state.barrelMeasurement.actual = asBarrelDirectionMeasurement(staticFrame.barrel);
+        }
+      }
+      if (riflePresentation) {
+        const riflePoseTransaction = snapshotRiflePoseTransaction(character, heldItem);
+        let presentation: ReturnType<typeof applyRifleWeaponPresentation> | null = null;
+        if (pose.diagnostics.verified) {
+          character.updateMatrixWorld(true);
+          heldItem.updateMatrixWorld(true);
+          const preFrame = measureLiveRifleFrame(heldItem, state.view, "pre-presentation");
+          if (preFrame) {
+            state.barrelMeasurement = preFrame.barrelMeasurement;
+            presentation = applyRifleWeaponPresentation(character, heldItem, {
+              view: state.view,
+              weaponId: item.id,
+              clipName: state.clipName,
+              frame: preFrame,
+            });
+            if (presentation.applied) {
+              const postFrame = measureLiveRifleFrame(heldItem, state.view, "post-presentation");
+              if (!postFrame) {
+                presentation = {
+                  ...presentation,
+                  applied: false,
+                  reason: "rifle post-presentation live probe refresh failed",
+                };
+              } else {
+                state.barrelMeasurement.actual = asBarrelDirectionMeasurement(postFrame.barrel);
+              }
+            }
+          }
+        }
+        character.userData.poseEditorRiflePresentation = presentation;
+        if (!pose.diagnostics.verified) {
+          restoreRiflePoseTransaction(riflePoseTransaction, character, heldItem);
+          state.barrelMeasurement = null;
+        } else if (!presentation || !presentation.applied) {
+          restoreRiflePoseTransaction(riflePoseTransaction, character, heldItem);
+          state.barrelMeasurement = null;
+          state.result = {
+            ...pose.diagnostics,
+            verified: false,
+            stable: false,
+            reason: `rifle presentation rejected: ${presentation?.reason || "live frame measurement unavailable"}`,
+          };
+        }
+      }
+    }
+    if (!riflePresentation && !state.barrelMeasurement) {
+      state.barrelMeasurement = prepareBarrelMeasurement(heldItem, item.id as WeaponId);
+    }
     addWeaponDiagnostics(character, heldItem, item.id as WeaponId);
   } else {
     character.add(heldItem);
@@ -942,7 +1087,9 @@ function buildPose(item: PoseEditorItem): void {
     content.name = "FirstPersonContent";
     poseRoot.add(content);
     character.userData.poseEditorHeadFilter = hideFirstPersonHead(character);
+    character.userData.poseEditorArmFilter = hideFirstPersonBodyExceptArms(character, heldItem);
     content.attach(character);
+    if (params.get("weaponOnly") === "1") hideFirstPersonBodyExceptItem(character, heldItem);
     state.firstPersonContent = content;
     setFirstPersonEnvironment(true);
     state.debugRoot.visible = false;
@@ -953,9 +1100,55 @@ function buildPose(item: PoseEditorItem): void {
   character.updateMatrixWorld(true);
   if (state.backend === "svg") bakeSkinnedMeshesForSoftware(character);
   heldItem.updateMatrixWorld(true);
-  if (state.view === "first" && item.category === "weapon" && state.barrelMeasurement) {
+  if (item.id === "rifle" && state.animationMode === "animated" && state.clipName === "rifle_idle" && state.barrelMeasurement) {
+    const postBakeFrame = measureLiveRifleFrame(heldItem, state.view, "post-bake");
+    const presentation = character.userData.poseEditorRiflePresentation as ReturnType<
+      typeof applyRifleWeaponPresentation
+    > | null;
+    const expectedBarrel = presentation?.postBarrelDirection
+      ? new THREE.Vector3(...presentation.postBarrelDirection)
+      : null;
+    const expectedAdsY = presentation?.postAdsY
+      ? new THREE.Vector3(...presentation.postAdsY)
+      : null;
+    const postBakeCoherent = Boolean(
+      postBakeFrame
+      && postBakeFrame.weapon === heldItem
+      && postBakeFrame.phase === "post-bake"
+      && presentation?.applied
+      && expectedBarrel
+      && expectedAdsY
+      && postBakeFrame.barrel.direction.angleTo(expectedBarrel) <= 1e-3
+      && postBakeFrame.adsY.direction.angleTo(expectedAdsY) <= 1e-3,
+    );
+    if (postBakeCoherent) {
+      state.barrelMeasurement.actual = asBarrelDirectionMeasurement(postBakeFrame!.barrel);
+    } else {
+      const reason = postBakeFrame
+        ? "post-bake live probe no longer matches the applied rifle frame"
+        : "post-bake live probe refresh failed";
+      state.barrelMeasurement.actual = null;
+      if (presentation?.applied) {
+        const rejectionReason = `rifle post-bake validation rejected: ${reason}`;
+        character.userData.poseEditorRiflePresentation = {
+          ...presentation,
+          applied: false,
+          reason: rejectionReason,
+        };
+        if (state.result && "verified" in state.result) {
+          state.result = {
+            ...state.result,
+            verified: false,
+            stable: false,
+            reason: rejectionReason,
+          };
+        }
+      }
+    }
+  }
+  if (item.category === "weapon" && state.barrelMeasurement?.actual) {
     state.barrelMeasurement.actual = measureProbedBarrelAxis(
-      state.barrelMeasurement.measurement,
+      state.barrelMeasurement.actual,
       currentMuzzlePoint(heldItem, item.id as WeaponId),
     );
   }
@@ -1143,6 +1336,12 @@ function updateReadout(item: PoseEditorItem): void {
     && hasFirstPersonArmChain(state.character, "Right");
   const fit = state.firstPersonFit;
   const selectedItem = getPoseEditorItem(state.itemId);
+  const riflePresentation = selectedItem?.id === "rifle"
+    && state.animationMode === "animated"
+    && state.clipName === "rifle_idle";
+  const riflePresentationResult = riflePresentation
+    ? state.character.userData.poseEditorRiflePresentation
+    : null;
   state.firstPersonComposition = state.view !== "first"
     ? null
     : fit
@@ -1172,7 +1371,8 @@ function updateReadout(item: PoseEditorItem): void {
       : { accepted: false, reason: "first-person fit unavailable" };
   const compositionAccepted = state.view !== "first" || Boolean(state.firstPersonComposition?.accepted);
   const solverVerified = result
-    ? "verified" in result ? result.verified : result.solved
+    ? ("verified" in result ? result.verified : result.solved)
+      && (!riflePresentation || Boolean(riflePresentationResult?.applied))
     : false;
   state.firstPersonReadiness = evaluatePoseEditorReadiness({
     solverVerified,
@@ -1185,16 +1385,24 @@ function updateReadout(item: PoseEditorItem): void {
   const lines = [
     `asset=${item.modelKey}`,
     `view=${state.view} backend=${state.backend}`,
-    `player=Player_one-optimized.glb clip=${state.clipName}`,
+    `player=Player_one-optimized.glb animation=${state.animationMode} clip=${state.clipName}`,
     `bounds=${size.x.toFixed(3)} x ${size.y.toFixed(3)} x ${size.z.toFixed(3)}m`,
   ];
+  if (state.view === "first" && params.get("weaponOnly") === "1") {
+    lines.push("presentationControl=weapon-only character-render-hidden");
+  }
   if (item.category === "weapon" && result && "weaponScale" in result) {
+    const displayPrimaryGripError = riflePresentationResult?.primaryGripError ?? result.primaryGripError;
+    const displaySupportGripError = riflePresentationResult?.supportGripError ?? result.supportGripError;
     lines.push(
-      `pose=${poseVerified ? "VERIFIED" : "REJECTED"} solver=${result.verified ? "VERIFIED" : "REJECTED"} candidate=${result.reason || "none"}`,
-      `scale=${result.weaponScale.toFixed(5)} grip=${result.primaryGripError.toFixed(4)}/${result.supportGripError.toFixed(4)}m`,
+      `pose=${poseVerified ? "VERIFIED" : "REJECTED"} solver=${result.verified && solverVerified ? "VERIFIED" : "REJECTED"} candidate=${result.reason || "none"}`,
+      `scale=${result.weaponScale.toFixed(5)} grip=${displayPrimaryGripError.toFixed(4)}/${displaySupportGripError.toFixed(4)}m${riflePresentation ? ` solverGrip=${result.primaryGripError.toFixed(4)}/${result.supportGripError.toFixed(4)}m` : ""}`,
       `muzzle=${result.muzzleDirectionError.toFixed(4)}rad sockets=${Object.values(result.socketSources).join(",")}`,
       `clipping=${result.clipping.weaponBody || result.clipping.weaponArm || result.clipping.handForearm ? "detected" : "clear"}`,
     );
+    if (riflePresentation) {
+      lines.push(`riflePresentation=${riflePresentationResult?.applied ? "APPLIED" : "REJECTED"}`);
+    }
   } else if (result && "anchorError" in result) {
     lines.push(
       `pose=${poseVerified ? "ALIGNED" : "REJECTED"} solver=${result.solved ? "ALIGNED" : "REJECTED"} anchor=${result.anchorName || "none"} mode=${result.anchorMode}`,
@@ -1227,6 +1435,7 @@ function updateReadout(item: PoseEditorItem): void {
     view: state.view,
     backend: state.backend,
     modelKey: item.modelKey,
+    animationMode: state.animationMode,
     clip: state.clipName,
     result: state.result,
     bounds: { x: size.x, y: size.y, z: size.z },
@@ -1240,6 +1449,8 @@ function updateReadout(item: PoseEditorItem): void {
     },
     headFilter,
     barrelDiagnostics: state.barrelDiagnostics,
+    riflePresentation: riflePresentationResult,
+    weaponOnly: state.view === "first" && params.get("weaponOnly") === "1",
   };
 }
 
@@ -1356,6 +1567,7 @@ async function init(): Promise<void> {
     view: initialView,
     itemId: initialItem,
     backend: created.backend,
+    animationMode: resolvePoseEditorAnimationMode(initialItem, params.get("animation")),
     result: null,
     firstPersonFit: null,
     firstPersonComposition: null,
@@ -1410,6 +1622,12 @@ reloadButton.addEventListener("click", () => void renderSelection());
         position: state.camera.position.toArray(),
         forward: cameraBasis(state.camera).forward.toArray(),
       },
+      bodyFrame: state.character ? {
+        forward: new THREE.Vector3(0, 0, 1)
+          .applyQuaternion(state.character.getWorldQuaternion(new THREE.Quaternion())).toArray(),
+        up: new THREE.Vector3(0, 1, 0)
+          .applyQuaternion(state.character.getWorldQuaternion(new THREE.Quaternion())).toArray(),
+      } : null,
       character: {
         name: state.character?.name || null,
         bounds: state.character ? visibleWorldBounds(state.character) : null,
@@ -1436,7 +1654,122 @@ reloadButton.addEventListener("click", () => void renderSelection());
         end: inspectPoint(measurement.actual.end),
         direction: measurement.actual.direction.toArray(),
       } : null,
+      riflePresentation: state.character?.userData.poseEditorRiflePresentation || null,
     };
+  },
+  getWeaponMetrics: () => {
+    if (!state?.item || getPoseEditorItem(state.itemId)?.category !== "weapon") return null;
+    const item = state.item;
+    item.updateMatrixWorld(true);
+    const axesFor = (quaternion: THREE.Quaternion): Record<string, number[]> => ({
+      x: new THREE.Vector3(1, 0, 0).applyQuaternion(quaternion).toArray(),
+      y: new THREE.Vector3(0, 1, 0).applyQuaternion(quaternion).toArray(),
+      z: new THREE.Vector3(0, 0, 1).applyQuaternion(quaternion).toArray(),
+    });
+    const nodes: Array<Record<string, unknown>> = [];
+    item.traverse((child: any) => {
+      const worldQuaternion = child.getWorldQuaternion(new THREE.Quaternion());
+      const localQuaternion = child.quaternion.clone().normalize();
+      const bounds = child.geometry?.boundingBox || null;
+      nodes.push({
+        name: child.name,
+        type: child.type,
+        parent: child.parent?.name || null,
+        localPosition: child.position.toArray(),
+        localQuaternion: localQuaternion.toArray(),
+        localScale: child.scale.toArray(),
+        localMatrix: child.matrix.toArray(),
+        worldPosition: child.getWorldPosition(new THREE.Vector3()).toArray(),
+        worldQuaternion: worldQuaternion.toArray(),
+        worldMatrix: child.matrixWorld.toArray(),
+        worldAxes: axesFor(worldQuaternion),
+        geometry: child.geometry
+          ? {
+            vertices: child.geometry.getAttribute?.("position")?.count || 0,
+            bounds: bounds
+              ? { min: bounds.min.toArray(), max: bounds.max.toArray() }
+              : null,
+            materialType: Array.isArray(child.material)
+              ? child.material.map((material: THREE.Material) => material.type)
+              : child.material?.type || null,
+          }
+          : null,
+      });
+    });
+    const anchors = resolveGripAnchors(item, state.itemId as WeaponId);
+    const anchorMetric = (anchor: typeof anchors.primary): Record<string, unknown> => {
+      const node = anchor.nodeName ? item.getObjectByName(anchor.nodeName) : null;
+      const worldDirection = anchor.direction
+        ? anchor.direction.clone().transformDirection(item.matrixWorld).toArray()
+        : null;
+      return {
+        source: anchor.source,
+        nodeName: anchor.nodeName || null,
+        pointLocal: anchor.point.toArray(),
+        pointWorld: anchor.point.clone().applyMatrix4(item.matrixWorld).toArray(),
+        directionLocal: anchor.direction?.toArray() || null,
+        directionWorld: worldDirection,
+        nodeWorldPosition: node?.getWorldPosition(new THREE.Vector3()).toArray() || null,
+        nodeWorldQuaternion: node?.getWorldQuaternion(new THREE.Quaternion()).toArray() || null,
+        nodeWorldAxes: node
+          ? axesFor(node.getWorldQuaternion(new THREE.Quaternion()))
+          : null,
+      };
+    };
+    const parentChain: string[] = [];
+    let parent: THREE.Object3D | null = item;
+    while (parent) {
+      parentChain.push(parent.name || parent.type);
+      parent = parent.parent;
+    }
+    return {
+      parentChain,
+      root: {
+        name: item.name,
+        position: item.position.toArray(),
+        quaternion: item.quaternion.toArray(),
+        scale: item.scale.toArray(),
+        matrix: item.matrix.toArray(),
+        worldPosition: item.getWorldPosition(new THREE.Vector3()).toArray(),
+        worldQuaternion: item.getWorldQuaternion(new THREE.Quaternion()).toArray(),
+        worldScale: item.getWorldScale(new THREE.Vector3()).toArray(),
+        worldMatrix: item.matrixWorld.toArray(),
+        worldAxes: axesFor(item.getWorldQuaternion(new THREE.Quaternion())),
+        bounds: visibleWorldBounds(item),
+      },
+      anchors: {
+        primary: anchorMetric(anchors.primary),
+        support: anchorMetric(anchors.support),
+        muzzle: anchorMetric(anchors.muzzle),
+        ads: anchorMetric(anchors.ads),
+      },
+      nodes,
+    };
+  },
+  getSkeletonMetrics: () => {
+    if (!state?.character) return null;
+    state.character.updateMatrixWorld(true);
+    return state.character.children.length === 0 ? [] : (() => {
+      const entries: Array<Record<string, unknown>> = [];
+      state.character!.traverse((child) => {
+        if (!/arm|forearm|hand|finger|thumb|index|middle|ring|pinky/i.test(child.name)) return;
+        const quaternion = child.getWorldQuaternion(new THREE.Quaternion());
+        entries.push({
+          name: child.name,
+          parent: child.parent?.name || null,
+          localPosition: child.position.toArray(),
+          localQuaternion: child.quaternion.toArray(),
+          position: child.getWorldPosition(new THREE.Vector3()).toArray(),
+          quaternion: quaternion.toArray(),
+          axes: {
+            x: new THREE.Vector3(1, 0, 0).applyQuaternion(quaternion).toArray(),
+            y: new THREE.Vector3(0, 1, 0).applyQuaternion(quaternion).toArray(),
+            z: new THREE.Vector3(0, 0, 1).applyQuaternion(quaternion).toArray(),
+          },
+        });
+      });
+      return entries;
+    })();
   },
   getBodyMetrics: () => {
     if (!state?.firstPersonContent || !state.character) return null;
@@ -1454,7 +1787,10 @@ reloadButton.addEventListener("click", () => void renderSelection());
       const max = new THREE.Vector3(-Infinity, -Infinity, -Infinity);
       const screenMin = new THREE.Vector2(Infinity, Infinity);
       const screenMax = new THREE.Vector2(-Infinity, -Infinity);
-      for (let index = 0; index < position.count; index += 1) {
+      const visibleIndices = child.userData.poseEditorVisibleIndices as number[] | undefined;
+      const indexCount = visibleIndices ? visibleIndices.length : position.count;
+      for (let offset = 0; offset < indexCount; offset += 1) {
+        const index = visibleIndices ? visibleIndices[offset] : offset;
         child.getVertexPosition(index, vertex);
         child.localToWorld(vertex);
         min.min(vertex);
@@ -1479,9 +1815,26 @@ reloadButton.addEventListener("click", () => void renderSelection());
       screen: meshes,
       bones: ["Left", "Right"].flatMap((side) => ({
         side,
-        shoulder: playerJoint(bodyRoot, side as "Left" | "Right", "Shoulder")?.project(state!.camera).toArray() || null,
-        elbow: playerJoint(bodyRoot, side as "Left" | "Right", "ForeArm")?.project(state!.camera).toArray() || null,
-        hand: playerHand(bodyRoot, side as "Left" | "Right")?.project(state!.camera).toArray() || null,
+        upperArm: (() => {
+          const point = findNamed(bodyRoot, [
+            `mixamorig:${side}Arm`,
+            `mixamorig${side}Arm`,
+            `${side}Arm`,
+          ])?.getWorldPosition(new THREE.Vector3());
+          return point ? { world: point.toArray(), screen: point.project(state!.camera).toArray() } : null;
+        })(),
+        shoulder: (() => {
+          const point = playerJoint(bodyRoot, side as "Left" | "Right", "Shoulder");
+          return point ? { world: point.toArray(), screen: point.project(state!.camera).toArray() } : null;
+        })(),
+        elbow: (() => {
+          const point = playerJoint(bodyRoot, side as "Left" | "Right", "ForeArm");
+          return point ? { world: point.toArray(), screen: point.project(state!.camera).toArray() } : null;
+        })(),
+        hand: (() => {
+          const point = playerHand(bodyRoot, side as "Left" | "Right");
+          return point ? { world: point.toArray(), screen: point.project(state!.camera).toArray() } : null;
+        })(),
       })),
       headFilter: bodyRoot.userData.poseEditorHeadFilter || null,
     };

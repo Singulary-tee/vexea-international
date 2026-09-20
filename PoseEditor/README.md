@@ -57,6 +57,7 @@ Query parameters supported:
 - `view`: `first` (first person) or `third` (third person)
 - `backend`: `webgpu`, `webgl`, or `svg`
 - `clip`: animation clip name (e.g., `rifle_idle`, `rifle_run`, `rifle_aim_idle`)
+- `animation`: `on` enables the selected clip path; `off` forces the authored bind/T-pose. The rifle target is static by default so its hold can be solved before animation is compared.
 
 ### 2. Standalone Build
 Build the static bundle without affecting the main game's `dist/client`:
