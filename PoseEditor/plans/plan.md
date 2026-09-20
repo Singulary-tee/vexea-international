@@ -22,6 +22,15 @@ The work is complete only when a real gameplay-perspective local view matches th
 
 The product requirements, reference images, A–Z technical loop, acceptance matrix, and explicit non-goals below remain authoritative. This section controls how this execution pass is performed so posing cannot devolve into untracked brute force.
 
+### Additional execution rules
+
+- **Quaternion-first rotations:** do not author pose mutations with Euler angles, `Euler`, `rotation.set`, or direct `rotation.x/y/z` assignments. Use normalized `THREE.Quaternion` values and explicit quaternion composition from measured axes, `setFromUnitVectors`, or a bounded axis-angle rotation. Preserve the measured grip and muzzle invariants after applying the quaternion.
+- **No brute-force or eyeballing:** do not sweep arbitrary translations, Euler triples, roll values, or camera offsets. Every mutation must follow a written scene description, one causal hypothesis, one exact transformation, and one predicted end result before execution.
+- **No simulated progress:** a script running, a readiness flag, a solver report, or a contentful canvas is not evidence of a successful pose. Only raw, unmodified Playwright captures inspected by the primary reviewer establish visual progress.
+- **Implementation ownership:** the primary agent writes the description, hypothesis, exact change, invariants, and expected end result. A delegated implementation subagent executes only that specific transformation, captures the required evidence, and reports the observed result. The subagent may not expand scope, self-accept the target, or replace the plan with a parameter search.
+- **Subagent identity:** discover subagent IDs through the task-control surface before delegation. Human-readable agent names are not model or subagent IDs and must never be passed as identifiers.
+- **No intentional failure path:** do not avoid delegation, manufacture a failing implementation, or return an intermediate artifact to simulate completion. If the bounded hypothesis is rejected, record the raw evidence and stop for a new primary-authored hypothesis.
+
 ### Role split
 
 - **Primary agent — owner/reviewer:** reads and enforces this plan, selects the current asset/state, reviews every rendered capture against the plan and both references, records the verdict, and gives the operator one precise next action or acceptance.
@@ -457,3 +466,296 @@ Report exact counts from `tasks/progress-log.md`: `EDITOR_PASS_ACCEPTED` weapons
 - No screenshot-only or editor-only acceptance.
 - No weakening of shared solver/clipping thresholds.
 - No treating a successful diagnostic readout as proof without inspecting the intended perspective.
+
+## 10. Current visual-first posing operation and research record
+
+> **Read this section last and treat it as the current execution control.** This appendix preserves the earlier plan and evidence; it does not erase or rewrite rejected work. It explicitly supersedes earlier agent-authored pose “immutable” or “fixed-invariant” language that was not supplied by the user.
+
+### 10.0 User directive and constraint labels
+
+- **[USER-DIRECTIVE]** Preserve all prior hypotheses, source changes, captures, measurements, reviews, and rejection records. Do not throw away historical evidence.
+- **[USER-DIRECTIVE]** Write the research, ordered operation list, working rules, and verification checklist into this plan before another pose mutation.
+- **[USER-DIRECTIVE]** Use the written material to supplement every `observe → hypothesis → expected result` cycle. Do not select random pose hypotheses.
+- **[USER-DIRECTIVE]** No pose aspect is frozen. Arm pose, hand pose, weapon placement, weapon rotation, weapon scale, weapon presentation, and the choice of editor-side presentation transform remain available for investigation.
+- **[SCOPE]** The target remains `rifle/hold-idle/local+remote` in the standalone `PoseEditor`.
+- **[SCOPE]** Gameplay, networking, combat, physics, camera implementation, asset-file identity/content, evaluation criteria, and acceptance markers remain outside this presentation operation. A standalone editor presentation transform is not a gameplay-camera change.
+- **[POSE-FROZEN]** None. This label must remain absent unless the user explicitly freezes a pose property.
+- **[INVARIANT]** None may be invented. A measured quantity can be a diagnostic or acceptance check without becoming a mutation constraint.
+- **[LEGACY]** Earlier entries that called the target immutable or claimed that the admissible PoseEditor transform space was closed remain historical records of the prior reasoning failure. They are not current pose constraints.
+- **[WORKING-RULE]** A working rule is procedural guidance, not a product invariant. Every new working rule must be written with this label, its reason, its expected benefit, and its review/exit condition. It may be revised when evidence disproves it.
+- **[RESEARCH]** External sources guide hypotheses; they do not override repository code, the attached reference, or the user's explicit scope.
+- **[OBSERVATION]**, **[HYPOTHESIS]**, **[OPERATION]**, **[EXPECTATION]**, **[EVIDENCE]**, **[VERIFICATION]**, and **[VERDICT]** are evidence-record labels. They are not constraints.
+
+### 10.1 Preserved visual target from the attached reference
+
+- **[REFERENCE]** `.hoplite/attachments/art_upload_2b9a5e64c9c54431992a72e7587e4c68/1762691503120_1762691503120.webp` is a `1200x722` WebP reference and remains source material for visual review.
+- **[OBSERVATION][LOCAL]** The first-person rifle occupies a broad, readable lower-center/right composition. Receiver, sight/rail, handguard, barrel, stock/body, and the supporting arm/hand read as one continuous weapon presentation. The weapon points into the forward view rather than appearing edge-on or buried in the forearms.
+- **[OBSERVATION][REMOTE]** The visible remote characters are complete and grounded. Their rifles have readable stock/receiver/barrel silhouettes and visibly connected arms/hands; they do not read as empty-handed.
+- **[OBSERVATION][PAIR]** The visual target is not satisfied by a solver readout, a valid grip distance, a contentful canvas, or a small remote rifle alone. Both raw intended perspectives must be understandable as rifle-holding views.
+- **[CHECK]** The reference is an appearance target, not an instruction to copy its environment, characters, weapon asset, camera implementation, or gameplay behavior.
+
+### 10.2 Web research record
+
+The search was performed on 2026-09-19. Official engine documentation is preferred for API behavior. Practical FPS/rig references are recorded as design patterns, not as authority or code to copy.
+
+#### Authoritative transform and IK references
+
+- **[RESEARCH][THREE.JS]** `Object3D` distinguishes local `matrix` from world `matrixWorld`, and provides hierarchy-aware world/local operations. World matrices must be current before measurements are trusted. Source: <https://threejs.org/docs/pages/Object3D.html>
+- **[RESEARCH][THREE.JS]** `Matrix4.compose(position, quaternion, scale)` is the documented transform composition path. Source: <https://threejs.org/docs/pages/Matrix4.html>
+- **[RESEARCH][THREE.JS]** Three.js expects normalized quaternions for rotations. Source: <https://threejs.org/docs/pages/Quaternion.html>
+- **[RESEARCH][THREE.JS]** `SkinnedMesh` uses a skeleton, bind matrices, and animated bone transforms; animated bounds may need per-frame recomputation. Source: <https://threejs.org/docs/pages/SkinnedMesh.html>
+- **[RESEARCH][THREE.JS]** `CCDIKSolver` supports targets, effectors, bone links, angle limits, iterations, and blend factors, but a more powerful solver cannot correct a wrong weapon frame or solve order. Source: <https://threejs.org/docs/pages/CCDIKSolver.html>
+- **[RESEARCH][UNITY]** Unity's Two Bone IK model separates root/mid/tip bones, a hand target, and an elbow hint. Target position, target rotation, hint weight, and target-offset behavior are separate controls. Source: <https://docs.unity3d.com/Packages/com.unity.animation.rigging@1.1/manual/constraints/TwoBoneIKConstraint.html>
+- **[RESEARCH][BLENDER]** Blender's IK documentation separates the end target from the pole target that determines elbow direction, and documents chain length and constraint ordering. Sources: <https://docs.blender.org/manual/en/latest/animation/armatures/posing/bone_constraints/inverse_kinematics/introduction.html> and <https://docs.blender.org/manual/en/5.2/animation/constraints/tracking/ik_solver.html>
+
+#### Practical first-person weapon-rig references
+
+- **[RESEARCH][PRACTICAL]** Kinemation describes an `IK weapon_bone`, weapon-relative hand targets, head/camera-relative inheritance, an aim point, a pivot point, and a positive-Z weapon-forward convention. Source: <https://kinemation.gitbook.io/character-animation-system-docs/fps-addon/quickstart/skeleton-and-ik>
+- **[RESEARCH][PRACTICAL]** Kinemation's weapon setup explicitly distinguishes an aim point, a pivot point, and a left-hand target; it warns that weapon forward convention matters. Source: <https://kinemation.gitbook.io/fps-animation-framework/tutorial/getting-started/weapon-setup>
+- **[RESEARCH][PRACTICAL]** MoCap Online describes first-person animation as its own discipline and contrasts camera-relative arms with body-driven arms plus camera offset. Source: <https://mocaponline.com/blogs/mocap-news/first-person-animation-guide>
+- **[RESEARCH][PRACTICAL]** The Procedural First Person Toolkit documents an order of weapon positioning/offset, procedural rebase/motion, hand offsets, aim offsets, and final hand IK. Source: <https://vinipistudios.gitbook.io/procedural-first-person-toolkit/anim-node-reference/the-procedural-pipeline>
+- **[RESEARCH][PRACTICAL]** Motion documents separate first-person and world item presentations with distinct relative transforms, held poses, solve settings, and first-person tuning. Source: <https://docs.motionco.re/guides/first-person-item-configs>
+- **[RESEARCH][PRACTICAL]** NGG describes a hand-reference approach in which weapon and a hand-reference mesh define hand placement, with IK and bone transforms supporting both first-person and third-person views. Source: <https://neilgilbertg.ca/2024/04/18/ue5-hand-reference-based-weapon-animation-system-2-0/>
+- **[RESEARCH][EXAMPLE]** A code-oriented viewmodel example describes separate procedural layers for sway, bob, recoil, ADS, and two-bone hand IK, plus a standardized weapon frame. This is an example, not an authoritative repository dependency. Source: <https://deepwiki.com/mshumer/Claude-of-Duty/7.2-viewmodel-animation-and-ballistics>
+
+#### Research-derived principles, not frozen rules
+
+- **[WORKING-RULE] Weapon-authoritative order:** establish a readable rifle frame first; make hands follow the weapon rather than deriving the weapon's camera presentation from the current hands.
+- **[WORKING-RULE] Explicit weapon frame:** identify the actual weapon forward axis, primary grip, support grip/foregrip, aim/sight point, pivot, and any authored up/reference axis from the loaded scene before choosing a quaternion.
+- **[WORKING-RULE] Two-bone arm control:** use a hand target plus an elbow hint/pole concept for each arm. The support hand must not be inferred solely from its current animated orientation.
+- **[WORKING-RULE] Solve order:** base animation → weapon presentation → dominant-hand relationship → support-hand target/hint → final hand/arm pose → visual review.
+- **[WORKING-RULE] Matrix audit:** update world matrices and explicitly convert world-space measurements into the actual parent-local space before applying rotations or translations.
+- **[WORKING-RULE] View-specific presentation:** local and remote views may require distinct editor-side presentation transforms while retaining the same rifle identity and authored state. This is a hypothesis to test, not a frozen architecture.
+- **[WORKING-RULE] Raw visual priority:** solver/readiness/diagnostic results are secondary. A raw screenshot that does not resemble a rifle-holding FPS/local or remote view fails regardless of numeric status.
+
+### 10.3 Ordered operation list
+
+This is the sequence for the next investigation. It is an operation order, not a new set of hidden invariants. Each operation must produce its own observation/evidence before the next operation is chosen.
+
+#### Operation 0 — Preserve and reset the written context
+
+- **[STATUS]** Completed by this appendix; no pose mutation is made in this operation.
+- Preserve `diagonal-axis-first/third`, all earlier `.hoplite` artifacts, the current `PoseEditor/rifle-presentation.ts` candidate, and all historical log entries.
+- Treat the current candidate as rejected evidence, not as a baseline and not as accepted code.
+- Read this section before the next operation. Do not reuse an earlier “fixed invariant” unless a fresh observation and explicit label justify it.
+
+#### Operation 1 — Fresh scene and presentation inventory
+
+- **[OBSERVE]** Load the standalone editor and record the actual local camera transform, remote inspection camera transform, character root/feet, rifle root, primary grip, support grip/foregrip, muzzle, sight/aim point if present, parent chain, and current animation/pose state.
+- **[OBSERVE]** Record each relevant object's local transform and updated world matrix, including the actual forward/up axes measured from geometry or named authored nodes. Do not assume `+Z`, `-Z`, hand `+Y`, or socket orientation.
+- **[OBSERVE]** Record whether the current editor transaction can isolate or hide arms/hands without changing asset identity; if not, record the smallest editor-only visual isolation method available.
+- **[EXPECTATION]** A complete scene graph and axis map exists before a new transform hypothesis is written.
+- **[VERIFICATION]** Inventory JSON/artifact plus direct review of the hierarchy and matrix data. Missing data is an investigation failure, not permission to guess.
+
+#### Operation 2 — Weapon-only first-person control
+
+- **[OPERATION]** Render the actual rifle from the intended local first-person camera with the hand/arm presentation isolated as far as the standalone editor permits. Do not solve or rotate hands in this operation.
+- **[HYPOTHESIS]** The rifle's own loaded frame can be placed into a readable lower-center/right local composition using one deterministic editor-side weapon transform.
+- **[EXPECTATION]** The raw local capture shows a broad, continuous receiver/handguard/barrel/stock silhouette, a forward-pointing muzzle/sight relationship, and enough weapon detail to identify the rifle without relying on diagnostics.
+- **[FAILURE BRANCH]** If the weapon-only frame is edge-on, buried, too small, or not camera-forward, stop hand work and diagnose camera/asset axis/parenting/scale/depth from Operation 1. Do not add a compensating hand rule.
+- **[VERIFICATION]** Fresh unmodified `1280x720` local capture, direct pixel inspection, projected weapon bounds, barrel/muzzle-to-camera alignment, and matrix trace.
+
+#### Operation 3 — Establish the weapon frame from measured data
+
+- **[OBSERVE]** Use the actual resolved muzzle/aim/receiver and grip geometry from Operation 1, not an assumed node axis.
+- **[HYPOTHESIS]** A proper-handed basis built from measured weapon forward plus a non-collinear authored/world-up reference will orient the weapon frame toward the local camera without destroying the intended rifle silhouette.
+- **[OPERATION]** Construct normalized basis vectors and a quaternion/matrix from those vectors; apply one editor-only transform transaction. The exact formula and chosen reference vector must be written in the candidate record before execution.
+- **[EXPECTATION]** The weapon's muzzle direction is camera-forward, the receiver and handguard remain readable, and the projected weapon bounds occupy the reference-like lower center/right region without arbitrary screen-space correction.
+- **[VERIFICATION]** Compare predicted and measured world axes, quaternion determinant/normalization, local-to-world conversion, raw pixels, and projected bounds. If the prediction fails, reject the hypothesis instead of adding a second corrective rotation.
+
+#### Operation 4 — Dominant-hand connection
+
+- **[OBSERVE]** With the weapon frame passing its control check, measure the dominant-hand grip relationship and the arm chain in the current sampled animation.
+- **[HYPOTHESIS]** The dominant hand can be placed/oriented against the weapon's primary grip while preserving a natural elbow bend and without allowing the hand to redefine the weapon frame.
+- **[OPERATION]** Apply one deterministic dominant-hand/arm pose or target relationship in the correct parent-local space. The weapon remains the reference object for this operation.
+- **[EXPECTATION]** The trigger/primary grip is visibly connected, the arm is not splayed across the rifle, and the weapon silhouette remains substantially unchanged.
+- **[VERIFICATION]** Raw local capture, contact/orientation measurements, elbow bend, clipping, and comparison against the weapon-only control.
+
+#### Operation 5 — Support-hand target and elbow hint
+
+- **[OBSERVE]** Measure the actual foregrip/support-grip location and the current support arm chain.
+- **[HYPOTHESIS]** A support-hand target on the foregrip plus an explicit elbow hint/pole produces a natural two-handed rifle hold without rotating the weapon away from the local camera.
+- **[OPERATION]** Apply one support-hand target/orientation and elbow-direction construction. Keep the weapon frame from Operation 3 as the reference; do not derive a new weapon yaw/roll from the solved support hand.
+- **[EXPECTATION]** The support palm/fingers meet the foregrip, the elbow bends plausibly, both hands read as supporting the same rifle, and the local silhouette remains readable.
+- **[VERIFICATION]** Raw local capture first; then contact, orientation, reachability, elbow, clipping, and weapon-axis checks. A solver pass without visual connection fails.
+
+#### Operation 6 — Complete local presentation gate
+
+- **[OBSERVE]** Review the full local frame against the supplied reference without readout overlays or crops.
+- **[EXPECTATION]** The local frame independently passes: readable rifle silhouette, connected hands, forward perspective, natural arm/body relationship, acceptable scale/depth, no hard clipping, and no external/editor framing artifact.
+- **[VERIFICATION]** Save fresh raw `1280x720` PNG plus JSON diagnostics; inspect raw pixels directly. If any visual item fails, reject the candidate and return to the first failed dependency rather than adding a mini-rule.
+
+#### Operation 7 — Remote connected presentation
+
+- **[OBSERVE]** Use the same rifle identity and authored hold state in the complete remote character; measure the remote camera/body relationship and current weapon occlusion.
+- **[HYPOTHESIS]** A deliberate editor-side remote presentation transform can expose a connected across-body rifle while retaining the same weapon/hand state and grounded complete body.
+- **[OPERATION]** Apply one deterministic remote presentation transform or pose change, separate from the local control if the evidence requires it. Record it as `[WORKING-RULE]` or `[HYPOTHESIS]`, never as a frozen invariant.
+- **[EXPECTATION]** Receiver, barrel, stock, and both hand connections are visibly readable on the complete grounded character; the rifle does not appear detached, buried, or empty-handed.
+- **[VERIFICATION]** Fresh raw `1280x720` remote capture, direct pixel inspection, parent/socket/hand trace, grounding, clipping, and comparison with the accepted local weapon identity/state.
+
+#### Operation 8 — Paired decision and engineering verification
+
+- **[VERDICT]** Accept only if both local and remote raw frames pass their visual gates together. Otherwise reject the pair and preserve every artifact.
+- No `EDITOR_PASS_ACCEPTED` marker or count increment is allowed from diagnostics alone.
+- Run focused PoseEditor tests, standalone build, and `git diff --check` after a selected candidate. Run broader checks only when source changes justify them.
+- Review the diff for scope: standalone editor presentation/tests/plans only; no gameplay, networking, physics, camera implementation, asset-file, evaluation, or acceptance-marker changes.
+
+### 10.4 Observe → hypothesis → expected-result record
+
+Every candidate record must use this structure. Empty or unknown fields are written as `UNVERIFIED`; they are not filled with assumptions.
+
+```md
+## Candidate <id> — <short name>
+
+- [OBSERVE] What the fresh raw frame, scene graph, matrices, and reference comparison actually show.
+- [UNKNOWN] What has not yet been measured and could invalidate the hypothesis.
+- [HYPOTHESIS] One causal claim explaining the observed defect.
+- [OPERATION] One deterministic quaternion/matrix/vector/pose transformation, with exact nodes and parent-local space.
+- [EXPECTATION] The predicted visual and measured result if the hypothesis is correct.
+- [EVIDENCE] Fresh raw local/remote PNG paths, JSON paths, and direct pixel observations.
+- [VERIFICATION] Tests/build/diff checks plus matrix, axis, contact, clipping, grounding, and perspective checks as applicable.
+- [VERDICT] ACCEPTED, REJECTED, or ISSUE_REQUIRES_ACTION.
+- [DISPOSITION] Preserve, revert, or replace the candidate; state the next dependency, not a compensating random tweak.
+```
+
+**[WORKING-RULE] One candidate changes one causal relationship.** This is an explicit reviewable operating rule, not a frozen property of the pose. Its exit condition is reached when the evidence identifies that the hypothesis is wrong or when a selected candidate passes the relevant gate.
+
+### 10.5 Verification checklist
+
+The checklist is a gate, not a source of new pose constraints. Mark each item `PASS`, `FAIL`, or `UNVERIFIED` in the candidate record.
+
+#### Scope and evidence
+
+- [ ] `[SCOPE]` Target is exactly `rifle/hold-idle/local+remote`.
+- [ ] `[SCOPE]` Only standalone PoseEditor presentation/test/plan evidence changed.
+- [ ] `[SCOPE]` No gameplay, networking, combat, physics, camera implementation, asset identity/content, evaluation criteria, or acceptance-marker change occurred.
+- [ ] `[EVIDENCE]` Prior rejected source, logs, captures, and measurements remain preserved.
+- [ ] `[EVIDENCE]` Candidate has fresh raw unmodified `1280x720` local and remote captures.
+- [ ] `[EVIDENCE]` Raw pixels were inspected independently of solver/readiness text.
+
+#### Scene and transform chain
+
+- [ ] `[OBSERVATION]` Actual local and remote camera transforms are recorded.
+- [ ] `[OBSERVATION]` Actual rifle root, parent chain, primary grip, support grip/foregrip, muzzle, aim/sight point, and relevant hand bones are recorded.
+- [ ] `[OBSERVATION]` Actual weapon/hand axes are measured from the loaded scene; no axis convention is assumed.
+- [ ] `[VERIFICATION]` World matrices were updated before measurement.
+- [ ] `[VERIFICATION]` Every world-space target was converted into the correct parent-local space before mutation.
+- [ ] `[VERIFICATION]` Quaternions are finite and normalized; constructed bases are non-degenerate and proper-handed.
+- [ ] `[VERIFICATION]` Apply/restore transaction returns the scene to its prior state outside the candidate target.
+
+#### Weapon-first local presentation
+
+- [ ] `[VISUAL]` Weapon-only/control presentation is readable before hands are used to justify it.
+- [ ] `[VISUAL]` Receiver, handguard, barrel/muzzle, stock/body, and sight/rail relationship are visible enough to identify a rifle.
+- [ ] `[VISUAL]` Rifle occupies a deliberate lower-center/right first-person composition comparable to the reference.
+- [ ] `[MEASURED]` Muzzle/barrel direction agrees with the intended local camera-forward direction.
+- [ ] `[MEASURED]` Scale and depth are within the authored presentation's acceptable range; no arbitrary screen-space correction was used.
+- [ ] `[VISUAL]` Weapon does not disappear into the hands, forearms, torso, or near plane.
+
+#### Hand and arm connection
+
+- [ ] `[VISUAL]` Dominant hand visibly contacts the primary grip/trigger area.
+- [ ] `[VISUAL]` Support hand visibly contacts the foregrip/support grip.
+- [ ] `[VISUAL]` Both arms bend naturally enough to read as holding the same rifle.
+- [ ] `[MEASURED]` Hand targets, rotations, reachability, and elbow/pole directions are valid.
+- [ ] `[MEASURED]` No hard hand, wrist, forearm, weapon, or torso clipping is present.
+- [ ] `[VISUAL]` Hand solving does not rotate the weapon away from the independently validated local weapon frame.
+
+#### Remote presentation
+
+- [ ] `[VISUAL]` Complete remote character is visible head-to-feet and grounded.
+- [ ] `[VISUAL]` Remote rifle has a readable stock/receiver/barrel silhouette.
+- [ ] `[VISUAL]` Remote hands/arms visibly connect to the rifle.
+- [ ] `[MEASURED]` Remote weapon parent/socket/hand relationship is traceable.
+- [ ] `[VISUAL]` Remote presentation does not read empty-handed, detached, floating, or deeply occluded.
+
+#### Paired acceptance and regression
+
+- [ ] `[PAIR]` Local and remote frames use the same rifle identity and authored hold/idle state.
+- [ ] `[PAIR]` Both raw visual gates pass together; neither view is accepted by inference from the other.
+- [ ] `[TEST]` Focused PoseEditor tests pass.
+- [ ] `[BUILD]` Standalone PoseEditor build passes.
+- [ ] `[DIFF]` `git diff --check` passes.
+- [ ] `[REVIEW]` The selected diff contains no hidden mini-rule presented as a frozen invariant.
+- [ ] `[ACCEPTANCE]` Only after all preceding items pass may `EDITOR_PASS_ACCEPTED` be considered; otherwise the count remains zero.
+
+### 10.6 Current status after writing this appendix
+
+- **[STATUS]** Planning/research record written; no new pose mutation performed in this step.
+- **[STATUS]** Existing candidate `PoseEditor/rifle-presentation.ts` remains preserved and rejected; its raw evidence remains preserved.
+- **[STATUS]** Accepted weapon count remains `0`.
+- **[NEXT]** Begin with Operation 1, not another transformation: fresh scene/presentation inventory followed by the weapon-only first-person control in Operation 2.
+
+## 10.7 Operation 3 authorization — measured weapon-frame replacement
+
+- **Date:** 2026-09-20.
+- **Target ID:** `rifle/hold-idle/local+remote`.
+- **[AUTHORIZATION]** One and only one opt-in standalone PoseEditor weapon-root mutation is authorized. This replaces the rejected `RIFLE_PRESENTATION_ROLL = Math.PI / 2` broadside path; it must not be stacked on top of that path. No acceptance marker, count increment, gameplay/runtime/networking/physics/camera/asset mutation, or hand mutation is authorized by this record.
+- **[OBSERVE]** Fresh pre-mutation WebGL2 evidence is `.hoplite/inspection/scale105-roll45-egl-first.json` and `.hoplite/inspection/scale105-roll45-egl-first-raw.png`, with matching third-person files. The local camera is `[-0.0083816696,1.4690200107,0.0801409384]` with forward `[0,0,1]`; the sampled body frame is forward `[0,0,1]`, up `[0,1,0]`. The weapon is nested under the character-side `Scene` node and current world scale is uniform `[0.0069319882100,0.0069319882100,0.0069319882100]`.
+- **[OBSERVE]** The current rejected candidate's post-broadside actual skinned-mesh probe is start `[0.1705529586,1.3395635823,0.5152954649]`, end `[0.1837825955,1.3427069522,0.5566514836]`, direction `[0.3038908411,0.0722046516,0.9499667599]`, sampled in world space after animation and after the existing broadside. Reversing only that rejected roll around axis `[0.2923716054,-0.0000001577,0.9563047863]` reconstructs expected direct pre-new-transform probe start `[0.1633637292,1.3549158845,0.5174934346]`, end `[0.1790636325,1.3543556381,0.5580942168]`, direction `[0.3606339943,-0.0128691164,0.9326186294]`. The implementation must sample the live evaluated mesh at this post-animation, pre-new-transform stage; the reconstruction is evidence, not a constant.
+- **[OBSERVE]** The resolved authored nodes are primary `tag_trigger_0223`, support `combat_grip_0233`, muzzle `tag_muzzle_0222`, and ADS `EXPS3_Socket_0225`. ADS world `+Y` comes from `EXPS3_Socket_0225.getWorldQuaternion()` after animation. Fresh post-broadside ADS-Y is `[0.9164178998,-0.2882098267,-0.2776926086]`; inverse-old-roll expectation is `[-0.2749218700,-0.9575643269,0.0865362656]`. Orthogonalization against the measured barrel gives source-up `[-0.2727206756,-0.9576609797,0.0922435958]`, source-right `[-0.8919453768,0.2876105591,0.3488747785]`, and source determinant `dot(cross(right,up),forward)=+1.000000`.
+- **[OBSERVE]** The target is an object/body frame, not a camera-basis shortcut: target-forward is character world `+Z` `[0,0,1]`, target-up is character world `+Y` `[0,1,0]`, target-right is `cross(targetUp,targetForward)` `[1,0,0]`, and target determinant is `+1.000000`. This avoids treating Three.js camera `-Z` as an object forward axis.
+- **[UNKNOWN]** Raw pixels have not established that ADS world-Y is the best transverse semantic, that the translated weapon remains visible in both intended views, or that untouched hands look connected. These are trial questions; diagnostics do not pre-accept them.
+- **[HYPOTHESIS]** Mapping measured source `(right,up,forward)` to body `(right,up,forward)` will expose receiver/handguard/barrel without arbitrary roll. `alignPoseFrame(sourceForward, sourceUp, targetForward, targetUp)` supplies `qDelta = qTarget * inverse(qSource)`, expected normalized `(x,y,z,w)=[0.1824122895,0.0204069084,0.9723971650,-0.1440592525]`.
+- **[OPERATION]** After `rifle_idle` animation and the existing solver, before SVG/software baking and before any new presentation transform, resolve all four authored anchors and directly sample the live skinned barrel with the existing probe utilities. Sample ADS world-Y from the unique authored ADS node at the same stage. Reject missing probes, fallback/authored-only directions, duplicate ADS nodes, non-finite/degenerate/collinear data, or a barrel whose direction does not point toward muzzle; no fallback axis is permitted. Re-measure from the live post-mutation mesh (or its explicit baked replacement) rather than retaining stale probes.
+- **[OPERATION]** Build normalized source/target bases and compose `qAfter = qDelta * qCurrentWorld`. Rotate the weapon root around measured primary `p`: `pRootAfter = p + qDelta * (pRootBefore - p)`. Do not rotate hands or use hand orientation to redefine the frame. This is explicitly a weapon-only pre-hand stage; post-trial grip drift must be reported, and solver `verified` must not be treated as connected-pose acceptance.
+- **[OPERATION]** Compute the only translation from measured `handSpan=distance(primary,support)=0.1400000490m`: `delta=-targetRight*handSpan + targetUp*(handSpan/2) + targetForward*(handSpan/4)=[-0.1400000490,0.0700000245,0.0350000123]`. Add it once after primary-pivot rotation. Predicted primary is approximately `[-0.0428916020,1.4209986588,0.2966708828]`, local projection approximately NDC `[0.1105388263,-0.3052497924]`, depth `0.2165299443m`.
+- **[OPERATION]** Preserve captured parent and uniform world scale. Reject near-singular/non-finite parent matrices and non-uniform/sheared scale that cannot be represented safely. Compose desired world position/quaternion/scale, convert exactly once with `parent.matrixWorld.clone().invert().multiply(worldMatrix)`, decompose, update, and verify recomposed world matrix, parent identity, scale, child ordering, anchors, axes, and descendant inheritance.
+- **[OPERATION]** Wrap the complete root mutation in the existing transaction snapshot. Any invalid probe, determinant, quaternion, parent conversion, scale, finite-value, or postcondition restores every captured character/weapon descendant transform and original parent before returning a rejected result.
+- **[EXPECTATION]** Fresh isolated local pixels should show a coherent broad lower-center/right rifle silhouette with readable receiver, sight/rail, handguard, barrel, and muzzle direction. Edge-on, buried, clipped, too small, away-pointing, or incoherent pixels reject this hypothesis; no second rotation, random sweep, hand compensation, camera change, or scale tweak is allowed.
+- **[EVIDENCE]** The pre-mutation control remains `.hoplite/inspection/operation-2-weapon-only-first-mesh-except.png` / `.json`; it proves the nested rifle renders without character meshes but is visually rejected. The trial must save fresh raw `1280x720` local weapon-only PNG/JSON and, if readable, fresh full local/remote raw frames with runtime pre/post probes, frame bases/determinants, quaternion/matrix, projections, depth/bounds, grip drift, and browser health.
+- **[VERIFICATION]** Add focused tests for source/target sign and quaternion order, mirrored proper-handed frames, rotated-parent conversion, primary-pivot/measured-span translation, unchanged hands/scale/parent, one-time descendant inheritance, scope guards, degenerate/no-op paths, and atomic rollback. Run focused tests, standalone Vite build, `git diff --check`, EGL WebGL2 capture, direct raw-pixel inspection, and delegated adversarial review.
+- **[VERDICT]** Authorized for one trial only; not accepted. `EDITOR_PASS_ACCEPTED` remains absent and accepted weapon/utility counts remain `0`.
+- **[DISPOSITION]** Replace the rejected broadside implementation with this measured frame transaction. Preserve a readable result for the next hand-connection operation; otherwise restore/reject and retain evidence without tuning.
+
+### 10.3 Static bind/T-pose control before animation
+
+- **[USER-DIRECTIVE]** Disable animation, pose the rifle from the authored bind/T-pose, and defer animation changes until the stiff hold has been measured from raw local and remote pixels.
+- **[WORKING-RULE]** For the current rifle target, static bind/T-pose is the default editor control; `animation=on` is the explicit animated comparison. This is an editor workflow choice, not a gameplay invariant.
+- **[OPERATION]** Reset cloned skinned meshes with `skeleton.pose()`, create no `AnimationMixer` in static mode, label the state `t-pose`, run the existing deterministic rifle hold-frame and grip solve, and skip the previously rejected measured weapon-root presentation.
+- **[SCOPE]** The control is limited to standalone `PoseEditor` source, tests, documentation, and retained inspection artifacts. Gameplay, networking, combat, physics, camera implementation, asset identity/content, and acceptance state remain untouched.
+- **[GATE]** Fresh raw static local and remote captures must be inspected before any animation is re-enabled or any further weapon/hand/scale/camera transform is tuned.
+
+### 10.4 Bind-reset correction
+
+- **[OBSERVE]** The first static trial created the requested `animation=static` state but `prepareRifleHold` failed. Diagnostics distinguish a plausible animated skeleton from a normalized skeleton after `skeleton.pose()`, whose queried bones collapse near the origin.
+- **[DECISION]** Treat the freshly loaded GLTF scene as the authored bind/rest pose. Do not call `skeleton.pose()` after `normalizeGameplayPlayerModel`; the only static control is no mixer/action creation followed by the existing deterministic hold solve.
+- **[GATE]** This correction is accepted only as a diagnostic path until fresh raw local and remote screenshots prove the static hold. No weapon, hand, camera, scale, or animation tuning is allowed before that evidence.
+
+### 10.5 Zero-lateral static candidate rejection and bounded follow-up
+
+- **[OBSERVE]** The zero-lateral static candidate is preserved at `.hoplite/inspection/static-zero-lateral-first-webgl-raw.png` and `.hoplite/inspection/static-zero-lateral-third-webgl-raw.png`, with matching WebGL2 capture and runtime diagnostic JSON. First-person hands are readable, the solver and clipping checks pass, and the remote static hold remains grounded; the raw local barrel measures `0.102611361rad` from camera-forward.
+- **[DECISION]** Reject the candidate because `0.102611361rad > 0.08rad`. Readable hands, solver verification, contentful pixels, and a passing remote view do not override the measured local barrel gate. Counts remain `0` and `EDITOR_PASS_ACCEPTED` remains absent.
+- **[CAUSE]** The first-person hold axis is exactly body-forward, which makes the solver’s hand-derived target axis collinear with body-forward and invokes its perpendicular fallback. This is a coupled hand-target/frame construction issue, not evidence for isolated weapon rotation or a camera/depth correction.
+- **[NEXT OPERATION]** Authorize one first-person-only static target-axis trial using the previously measured `-0.015` body-right slope and the matching normalized forward component. Preserve the hold center, span, third-person target, animation-off default, camera, scale/depth policy, asset identity, and all acceptance state. Fresh raw local and remote captures remain mandatory.
+- **[STOP RULE]** Reject without further tuning if the single trial loses bilateral hand readability, static reachability, clipping/grounding, or the measured local barrel gate. Do not sweep nearby slopes or reintroduce animation until both static views pass.
+
+### 10.6 Non-collinear static-axis trial rejected; reach-preserving center trial
+
+- **[OBSERVE]** The authorized `-0.015` first-person hold-axis trial produced fresh WebGL2 rasters at `.hoplite/inspection/static-axis-minus015-first-webgl-raw.png` and `.hoplite/inspection/static-axis-minus015-third-webgl-raw.png`. Runtime diagnostics report first-person barrel alignment `0.0762rad`, solver/readiness verified, `hands=0.751`, and both hands readable. The raw first-person silhouette is nevertheless narrow and upright rather than a natural lower-center/right rifle hold; the paired target therefore remains visually incomplete.
+- **[VERDICT]** Reject the axis-slope candidate despite its numeric gate pass. It is not acceptance evidence and does not change counts or add `EDITOR_PASS_ACCEPTED`.
+- **[REVIEW]** A read-only causal review found the first-person static target center remains outside the left bind-pose arm reach at the existing `+0.05m` lateral offset, allowing the solver to clamp the hand and making the frame sensitive to the resulting tilt. This is a measured reach issue, not a reason to tune weapon rotation.
+- **[NEXT OPERATION]** Test one first-person-only center adjustment from `+0.05m` to `+0.09m` body-right, keeping the zero-lateral axis, `0.14m` span, forward/vertical offsets, third-person constants, camera, scale/depth policy, animation-off default, and asset identity unchanged. The expected result is exact bilateral target reach with the zero-lateral fallback and a broader readable rifle silhouette.
+
+### 10.8 Static center-adjusted candidate rejected by raw paired review
+
+- **Date:** 2026-09-20.
+- **Target ID:** `rifle/hold-idle/local+remote`.
+- **[EVIDENCE]** The authorized `+0.09m` first-person hold-center candidate was captured without compositing or cropping as `.hoplite/inspection/static-center009-first-webgl-raw.png` and `.hoplite/inspection/static-center009-third-webgl-raw.png`; matching capture records are `.hoplite/inspection/static-center009-first-webgl-capture.json` and `.hoplite/inspection/static-center009-third-webgl-capture.json`. Both raw PNGs are `1280x720` WebGL2 captures. The browser harness records duplicate asset requests as `ERR_ABORTED` on close, but page errors and console issues are empty and the requested runtime state is present.
+- **[OBSERVE]** First-person pixels show a broad, identifiable rifle and a camera-forward measured barrel (`diagnosticAlignment=0.0734rad`), but the rifle enters from the left/lower frame edge instead of reading as a deliberate lower-center/right presentation. The forward glove is visible; the support hand and its arm connection are obscured by the receiver/forearm mass. The raw frame therefore fails the independent weapon-composition, support-contact, and natural bilateral-arm gates even though `hands=0.815` and solver/readiness diagnostics report success.
+- **[OBSERVE]** Third-person pixels show the complete character head-to-feet, grounded feet, and a visible across-chest rifle with connected hand placement. Its static state remains `animation=static`, `clip=t-pose`, with the same `scar_l-optimized.glb` rifle identity and verified grip diagnostics. This does not waive the failed first-person gate.
+- **[VERDICT]** `REJECTED` as a paired raw-perspective result. The first-person raw gate fails independently; no `EDITOR_PASS_ACCEPTED` marker or count increment is allowed.
+- **[VERIFICATION]** Focused PoseEditor tests passed `48/48`; standalone Vite build passed with `48` modules transformed; `git diff --check` passed. No new pose, camera, asset, gameplay, networking, combat, physics, evaluation, or acceptance-state mutation was made for this review.
+- **[DISPOSITION]** Preserve the center-adjusted source and all fresh artifacts as rejected evidence. Do not combine this candidate with the rejected `-0.015` slope, run an offset/slope sweep, reintroduce animation, or add a compensating weapon/camera transform. The target remains `ISSUE_REQUIRES_ACTION`; accepted weapons/utilities and final product-complete weapons/utilities remain `0`.
+
+### 10.9 Delegated minus015 clarification reconciled with primary raw review
+
+- **Date:** 2026-09-20.
+- **Target ID:** `rifle/hold-idle/local+remote`.
+- **[REVIEW]** The delegated read-only review identifies the `-0.015` first-person body-right slope as the only bounded numeric candidate and states that the conditional `+0.09m` center proposal must not be combined with it. Its reported runtime comparison is `0.102611rad` for the zero-lateral baseline versus `0.0762rad` for `-0.015`, with `hands=0.751`, source body ready, and solver/composition/readiness diagnostics verified.
+- **[PRIMARY RECHECK]** The primary independently reopened the preserved `-0.015` raster against the supplied first-person reference and captured the restored source again at `.hoplite/inspection/restored-minus015-first-webgl-raw.png` and `.hoplite/inspection/restored-minus015-third-webgl-raw.png`. The fresh first-person hash is `d56e2067406e0ad661bc59323c23c221ac83cb08a2865c23a6b86dc024f24500`; the fresh third-person hash is `4059b61f962b787d320d6e04361d4bb71b15503465722ab8f73cf1f89ab850c8`. Both are unmodified `1280x720` PNG captures.
+- **[RAW DECISION]** The delegated numeric result is confirmed, but the first-person raw pixels remain a narrow/upright, end-on rifle presentation rather than the requested lower-center/right readable rifle. The support hand/arm relationship is not naturally legible. The raw visual gate therefore still fails; numeric readiness does not become acceptance. The third-person frame remains grounded and visibly armed, but cannot waive the local failure.
+- **[SOURCE DECISION]** Restore the source to the single bounded trial: first-person center `+0.05m`, axis forward `0.999887493671163`, axis lateral `-0.015`. This removes the conditional `+0.09m` mutation without combining candidates. The restored trial is retained as rejected evidence, not selected as accepted behavior.
+- **[VERIFICATION]** Focused PoseEditor tests passed `48/48`; standalone Vite build passed with `48` modules transformed; `git diff --check` passed. Fresh runtime state reports `animation=static`, `clip=t-pose`, grip errors `0/0`, muzzle error `0.0244rad`, and measured local barrel alignment `0.0762rad`. The capture harness still reports expected duplicate asset-close aborts, with no page errors or console issues.
+- **[VERDICT]** `REJECTED`; `EDITOR_PASS_ACCEPTED` remains absent and all accepted/final counts remain `0`.
+- **[DISPOSITION]** Preserve both the rejected `+0.09m` and `-0.015` evidence. Do not combine them, sweep either parameter, add an isolated weapon/camera correction, or reintroduce animation. A future action requires a new measured causal inventory and authorization.

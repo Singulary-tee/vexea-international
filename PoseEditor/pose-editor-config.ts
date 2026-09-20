@@ -4,6 +4,15 @@ import type { WeaponId } from "../shared/weapons";
 
 export type PoseEditorItemId = WeaponId | UtilityId;
 export type PoseEditorItemCategory = "weapon" | "utility";
+export type PoseEditorAnimationMode = "static" | "animated";
+
+export function resolvePoseEditorAnimationMode(
+  itemId: string,
+  animationParam: string | null,
+): PoseEditorAnimationMode {
+  if (animationParam === "off" || (itemId === "rifle" && animationParam !== "on")) return "static";
+  return "animated";
+}
 
 export interface PoseEditorItem {
   id: PoseEditorItemId;

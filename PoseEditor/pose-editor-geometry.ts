@@ -59,75 +59,140 @@ export interface FirstPersonHeadFilterStats {
   hiddenTriangles: number;
 }
 
-export function hideFirstPersonHead(root: THREE.Object3D): FirstPersonHeadFilterStats {
-  const stats: FirstPersonHeadFilterStats = { meshes: 0, sourceTriangles: 0, hiddenTriangles: 0 };
+interface FirstPersonTriangleFilterStats {
+  meshes: number;
+  sourceTriangles: number;
+  hiddenTriangles: number;
+}
+
+function filterFirstPersonSkinnedMeshes(
+  root: THREE.Object3D,
+  matchesBone: (name: string) => boolean,
+  keepTriangle: (weights: number[]) => boolean,
+  skip: (object: THREE.Object3D) => boolean = () => false,
+): FirstPersonTriangleFilterStats {
+  const stats: FirstPersonTriangleFilterStats = { meshes: 0, sourceTriangles: 0, hiddenTriangles: 0 };
+  const updates: Array<{
+    child: any;
+    geometry: THREE.BufferGeometry;
+    visibleIndices: number[];
+  }> = [];
   root.updateMatrixWorld(true);
-  root.traverse((child: any) => {
-    if (!child.isSkinnedMesh || !child.geometry || !child.skeleton) return;
-    const headBones = new Set<number>();
-    child.skeleton.bones.forEach((bone: THREE.Bone, index: number) => {
-      if (/head/i.test(normalizedName(bone.name))) headBones.add(index);
-    });
-    const indexAttribute = child.geometry.getIndex();
-    const skinIndex = child.geometry.getAttribute("skinIndex");
-    const skinWeight = child.geometry.getAttribute("skinWeight");
-    if (!headBones.size || !indexAttribute || !skinIndex || !skinWeight) return;
+  try {
+    root.traverse((child: any) => {
+      if (skip(child) || !child.isSkinnedMesh || !child.geometry || !child.skeleton) return;
+      const matchingBones = new Set<number>();
+      child.skeleton.bones.forEach((bone: THREE.Bone, index: number) => {
+        if (matchesBone(bone.name)) matchingBones.add(index);
+      });
+      const indexAttribute = child.geometry.getIndex();
+      const skinIndex = child.geometry.getAttribute("skinIndex");
+      const skinWeight = child.geometry.getAttribute("skinWeight");
+      if (!matchingBones.size || !indexAttribute || !skinIndex || !skinWeight) return;
 
-    const readHeadWeight = (vertexIndex: number): number => {
-      let total = 0;
-      for (let influence = 0; influence < 4; influence += 1) {
-        if (headBones.has(skinIndex.getComponent(vertexIndex, influence))) {
-          total += skinWeight.getComponent(vertexIndex, influence);
+      const matchingWeight = (vertexIndex: number): number => {
+        let total = 0;
+        for (let influence = 0; influence < 4; influence += 1) {
+          if (matchingBones.has(skinIndex.getComponent(vertexIndex, influence))) {
+            total += skinWeight.getComponent(vertexIndex, influence);
+          }
         }
-      }
-      return total;
-    };
-    const groups = child.geometry.groups.length > 0
-      ? child.geometry.groups
-      : [{ start: 0, count: indexAttribute.count, materialIndex: 0 }];
-    const keptIndices: number[] = [];
-    const keptGroupCounts: number[] = [];
-    let hiddenTriangles = 0;
-    for (const group of groups) {
-      const groupEnd = Math.min(group.start + group.count, indexAttribute.count);
-      let keptCount = 0;
-      for (let offset = group.start; offset + 2 < groupEnd; offset += 3) {
-        const vertices = [
-          indexAttribute.getX(offset),
-          indexAttribute.getX(offset + 1),
-          indexAttribute.getX(offset + 2),
-        ];
-        const isHeadTriangle = vertices.every((vertexIndex) => readHeadWeight(vertexIndex) >= 0.5);
-        if (isHeadTriangle) {
-          hiddenTriangles += 1;
-          continue;
+        return total;
+      };
+      const groups = child.geometry.groups.length > 0
+        ? child.geometry.groups
+        : [{ start: 0, count: indexAttribute.count, materialIndex: 0 }];
+      const keptIndices: number[] = [];
+      const keptGroupCounts: number[] = [];
+      let hiddenTriangles = 0;
+      for (const group of groups) {
+        const groupEnd = Math.min(group.start + group.count, indexAttribute.count);
+        let keptCount = 0;
+        for (let offset = group.start; offset + 2 < groupEnd; offset += 3) {
+          const vertices = [
+            indexAttribute.getX(offset),
+            indexAttribute.getX(offset + 1),
+            indexAttribute.getX(offset + 2),
+          ];
+          const keep = keepTriangle(vertices.map(matchingWeight));
+          if (!keep) {
+            hiddenTriangles += 1;
+            continue;
+          }
+          keptIndices.push(...vertices);
+          keptCount += 3;
         }
-        keptIndices.push(...vertices);
-        keptCount += 3;
+        keptGroupCounts.push(keptCount);
       }
-      keptGroupCounts.push(keptCount);
-    }
-    const sourceTriangles = Math.floor(indexAttribute.count / 3);
-    stats.sourceTriangles += sourceTriangles;
-    stats.hiddenTriangles += hiddenTriangles;
-    if (hiddenTriangles === 0) return;
+      const sourceTriangles = Math.floor(indexAttribute.count / 3);
+      stats.sourceTriangles += sourceTriangles;
+      stats.hiddenTriangles += hiddenTriangles;
+      if (hiddenTriangles === 0) return;
 
-    const filteredGeometry = child.geometry.clone();
-    filteredGeometry.setIndex(keptIndices);
-    filteredGeometry.clearGroups();
-    let groupStart = 0;
-    groups.forEach((group, groupIndex) => {
-      const count = keptGroupCounts[groupIndex];
-      if (count > 0) filteredGeometry.addGroup(groupStart, count, group.materialIndex);
-      groupStart += count;
+      const filteredGeometry = child.geometry.clone();
+      filteredGeometry.setIndex(keptIndices);
+      filteredGeometry.clearGroups();
+      let groupStart = 0;
+      groups.forEach((group, groupIndex) => {
+        const count = keptGroupCounts[groupIndex];
+        if (count > 0) filteredGeometry.addGroup(groupStart, count, group.materialIndex);
+        groupStart += count;
+      });
+      filteredGeometry.computeBoundingBox();
+      filteredGeometry.computeBoundingSphere();
+      updates.push({
+        child,
+        geometry: filteredGeometry,
+        visibleIndices: [...new Set(keptIndices)],
+      });
+      stats.meshes += 1;
     });
-    filteredGeometry.computeBoundingBox();
-    filteredGeometry.computeBoundingSphere();
-    child.geometry = filteredGeometry;
+  } catch (error) {
+    updates.forEach(({ geometry }) => geometry.dispose());
+    throw error;
+  }
+  updates.forEach(({ child, geometry, visibleIndices }) => {
+    const previousGeometry = child.geometry as THREE.BufferGeometry;
+    const disposePrevious = Boolean(child.userData.poseEditorOwnedGeometry);
+    child.geometry = geometry;
     child.userData.poseEditorOwnedGeometry = true;
-    stats.meshes += 1;
+    child.userData.poseEditorVisibleIndices = visibleIndices;
+    if (disposePrevious) previousGeometry.dispose();
   });
   return stats;
+}
+
+export function hideFirstPersonHead(root: THREE.Object3D): FirstPersonHeadFilterStats {
+  return filterFirstPersonSkinnedMeshes(
+    root,
+    (name) => /head/i.test(normalizedName(name)),
+    (weights) => !weights.every((weight) => weight >= 0.5),
+  );
+}
+
+export interface FirstPersonBodyFilterStats extends FirstPersonTriangleFilterStats {
+  hiddenMeshes: number;
+}
+
+export function hideFirstPersonBodyExceptArms(
+  root: THREE.Object3D,
+  heldItem: THREE.Object3D,
+): FirstPersonBodyFilterStats {
+  const itemNodes = new Set<THREE.Object3D>();
+  heldItem.traverse((child) => itemNodes.add(child));
+  const armFilter = filterFirstPersonSkinnedMeshes(
+    root,
+    (name) => /forearm|lowerarm|wrist|hand|finger|thumb/i.test(normalizedName(name)),
+    (weights) => weights.every((weight) => weight >= 0.5),
+    (object) => itemNodes.has(object),
+  );
+  const meshesToHide: THREE.Object3D[] = [];
+  root.traverse((child: any) => {
+    if (itemNodes.has(child) || !child.isMesh || child.isSkinnedMesh || child.visible === false) return;
+    meshesToHide.push(child);
+  });
+  meshesToHide.forEach((child) => { child.visible = false; });
+  return { ...armFilter, hiddenMeshes: meshesToHide.length };
 }
 
 /** Bake mesh positions for renderers that do not evaluate skin or quantized attributes. */
@@ -342,7 +407,10 @@ export function projectedBounds(
     object.traverseVisible((child: any) => {
       const position = child.geometry?.getAttribute?.("position");
       if (!position) return;
-      for (let index = 0; index < position.count; index += 1) {
+      const visibleIndices = child.userData.poseEditorVisibleIndices as number[] | undefined;
+      const indexCount = visibleIndices ? visibleIndices.length : position.count;
+      for (let offset = 0; offset < indexCount; offset += 1) {
+        const index = visibleIndices ? visibleIndices[offset] : offset;
         if (typeof child.getVertexPosition === "function") child.getVertexPosition(index, vertex);
         else vertex.fromBufferAttribute(position, index);
         worldVertex.copy(vertex).applyMatrix4(child.matrixWorld);

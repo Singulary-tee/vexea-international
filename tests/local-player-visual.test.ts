@@ -124,6 +124,7 @@ describe("local player representation", () => {
     expect(headMesh.geometry).not.toBe(sourceGeometry);
     expect(headMesh.userData.poseEditorOwnedGeometry).toBe(true);
     expect(headMesh.geometry.getIndex()?.count).toBe(0);
+    expect(headMesh.visible).toBe(false);
   });
 
   it("starts and transitions authored animation clips", () => {
@@ -184,7 +185,7 @@ describe("local player representation", () => {
     expect(dispose).not.toHaveBeenCalled();
   });
 
-  it("owns the active weapon under the authored character instead of the camera", () => {
+  it("leaves first-person weapon presentation to the camera viewmodel", () => {
     const scene = new THREE.Scene();
     const system = new LocalPlayerVisualSystem(scene);
     const camera = new THREE.PerspectiveCamera();
@@ -195,13 +196,13 @@ describe("local player representation", () => {
       weapon: "rifle",
     });
 
-    expect(system.ownsWeapon).toBe(true);
-    expect(system.representation?.model.getObjectByName("LocalPlayerWeapon_rifle")).toBeDefined();
+    expect(system.ownsWeapon).toBe(false);
+    expect(system.representation?.model.getObjectByName("LocalPlayerWeapon_rifle")).toBeUndefined();
 
     system.dispose();
   });
 
-  it("does not expose a muzzle from an unverified authored pose", () => {
+  it("does not expose a local muzzle because the camera viewmodel owns presentation", () => {
     const system = new LocalPlayerVisualSystem(new THREE.Scene());
     const camera = new THREE.PerspectiveCamera();
 
@@ -212,8 +213,7 @@ describe("local player representation", () => {
     });
     system.updateWeaponPose(camera);
 
-    expect(system.weaponDiagnostics?.verified).toBe(false);
-    expect(system.representation?.model.getObjectByName("LocalPlayerWeapon_rifle")?.visible).toBe(false);
+    expect(system.representation?.model.getObjectByName("LocalPlayerWeapon_rifle")).toBeUndefined();
     expect(system.getMuzzleWorldPosition(new THREE.Vector3())).toBe(false);
 
     system.dispose();

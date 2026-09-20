@@ -103,7 +103,7 @@ export const DETAILED_WEAPONS: Record<string, WeaponPerformance> = {
     swayAmplitude: 0.003,
     swaySpeed: 2.5,
     visualConfig: {
-      hipPosition: [0.025, -0.49, 0.05],
+      hipPosition: [0.28, -0.49, -0.35],
       adsPosition: [-0.075, -0.42, 0.0],
       adsTilt: -0.05,
       muzzleOffset: [0.18, 0.15, -0.47],

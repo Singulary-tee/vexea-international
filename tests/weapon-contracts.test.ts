@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { CLASSES, getClassWeaponId, isClassWeaponAllowed } from '../shared/classes';
 import { ASSET_STRUCTURE } from '../shared/asset-structure';
 import { DRONE_CONFIGS, DroneType, isRuntimeWeaponId } from '../shared/constants';
-import { AUTHORING_REQUIRED_WEAPON_IDS } from '../shared/weapons';
+import { AUTHORING_REQUIRED_WEAPON_IDS, DETAILED_WEAPONS } from '../shared/weapons';
 import { UTILITY_MODEL_KEYS, UTILITIES, createInitialUtilityState } from '../shared/utilities';
 import { UTILITY_ASSET_DETAILS, WEAPON_ASSET_DETAILS } from '../shared/asset-details';
 import { AUDIO_MANIFEST } from '../client/audio-manifest';
@@ -55,6 +55,13 @@ describe('humanoid exact static F90 contract', () => {
 });
 
 describe('semantic weapon slot contract', () => {
+  it('keeps the rifle idle viewmodel in front of and to the right of the camera', () => {
+    const [x, , z] = DETAILED_WEAPONS.rifle.visualConfig.hipPosition;
+
+    expect(x).toBeGreaterThan(0.2);
+    expect(z).toBeLessThan(-0.2);
+  });
+
   it('keeps class primary pools and rifle defaults aligned', () => {
     expect(CLASSES.ASSAULT.primaryWeaponOptions).toEqual(['rifle', 'smg']);
     expect(CLASSES.MEDIC.primaryWeaponOptions).toEqual(['rifle', 'shotgun']);
