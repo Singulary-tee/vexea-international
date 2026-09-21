@@ -5,6 +5,7 @@ import {
   PLAYER_EYE_FORWARD_OFFSET,
   disposeGeneratedPoseResources,
   hideFirstPersonHead,
+  isHeadObjectName,
   type FirstPersonHeadFilterStats,
 } from "./player-visual-calibration";
 import {
@@ -115,6 +116,7 @@ export function createLocalPlayerRepresentation(canonicalModel: THREE.Group): Lo
   model.name = "LocalPlayerCharacter";
   model.userData.canonicalPlayerModelClone = true;
   (model as any).animations = (canonicalModel as any).animations;
+  model.rotation.set(0, Math.PI, 0);
   root.add(model);
 
   const eyeAnchor = new THREE.Object3D();
@@ -212,6 +214,11 @@ export class LocalPlayerVisualSystem {
       resolvePlayerAnimationState(animationContext),
     );
     this.representation.mixer.update(dt);
+    this.representation.model.traverse((child: any) => {
+      if (child.isBone && isHeadObjectName(child.name)) {
+        child.scale.set(0.00001, 0.00001, 0.00001);
+      }
+    });
     syncLocalPlayerRepresentation(this.representation, playerPosition, playerYaw, eyeHeight);
     getLocalPlayerEyeWorldPosition(this.representation, camera.position);
   }

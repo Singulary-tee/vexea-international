@@ -296,6 +296,7 @@ This file is the authoritative index of all directories and source files within 
         *   **`RadialCommSystem.ts`**: Controls the tactile radial quick-communication wheel and radio callout broadcasts during gameplay.
         *   **`ReconnectionSystem.ts`**: Manages reconnect routines.
         *   **`SimulationSystem.ts`**: Implements predictive movement loops.
+        *   **`TempDebugEnvironment.ts`**: Self-contained temporary debug skybox and illumination rig (`applyTempDebugEnvironment`, `removeTempDebugEnvironment`). Provides procedural daylight/overcast gradient equirectangular texture, sky dome mesh, multi-point directional sunlight and ambient fill across the facility (768x768), and temporarily lifts distance-based dark fog to enable map visibility for debugging. Fully reversible via handle or window global.
         *   **`VisualsSystem.ts`**: Handles camera field-of-view zooms, visual sway patterns, and active recoil transitions.
     *   **`ui/`**
         *   **`LoadingScreen.ts`**: Renders structural loading indicators.
@@ -916,4 +917,11 @@ Every file change in the VEXEA codebase must follow this strict two-step protoco
 * **Scope:** Fully extract the map authoring bench and blockout tooling out of the `client/` game runtime directory into the standalone `/map-authoring` space at repository root (matching the isolated `/PoseEditor` pattern). Created `map-authoring/index.html`, standalone `map-authoring/vite.config.ts`, and synced all map authoring source modules under `map-authoring/src/`. Deleted all entwined map authoring source files and HTML entrypoints from `client/src/map-authoring` and `client/map-authoring.html`.
 * **Explicit Non-Scope:** Zero modifications to core gameplay systems, server simulation, physics loop, or networking transport.
 * **Status:** Verified and finalized.
+
+### Cycle 2026-09-20-01: Self-Contained Temporary Debug Skybox and Lighting Rig
+* **Target Files:** `client/src/systems/TempDebugEnvironment.ts`, `client/src/systems/VisualsSystem.ts`, `CODEBASE_INDEX.md`.
+* **Scope:** Provide an immediately visible, self-contained, and easily removable temporary skybox and illumination rig for facility map debugging. Creates a procedural daylight gradient equirectangular texture, inward-facing sky dome mesh, directional sunlight and cooler fill light targeting map center (384, 0, 384), hemisphere light, and baseline ambient light. Temporarily bypasses 70-unit pitch-black fog during debug mode to grant full line of sight across the 768x768 facility. Safely stores prior scene background, environment, and fog states, cleanly restoring them upon disposal or when `remove()` is invoked.
+* **Explicit Non-Scope:** No changes to gameplay logic, physics, server simulation, combat weapons, or network protocols.
+* **Status:** Implemented and verified.
+
 

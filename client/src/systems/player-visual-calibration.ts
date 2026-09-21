@@ -43,14 +43,19 @@ export function normalizedName(name: string): string {
   return name.toLowerCase().replace(/[^a-z0-9]/g, "");
 }
 
-function isHeadObjectName(name: string): boolean {
+export function isHeadObjectName(name: string): boolean {
   const value = normalizedName(name);
-  return value === "head"
-    || value.endsWith("head")
-    || value.includes("headmesh")
-    || value.includes("helmet")
+  return value.includes("head")
+    || value.includes("neck")
+    || value.includes("jaw")
+    || value.includes("chin")
+    || value.includes("eye")
+    || value.includes("ear")
     || value.includes("hair")
-    || value.includes("face");
+    || value.includes("face")
+    || value.includes("helmet")
+    || value.includes("facial")
+    || value.includes("skull");
 }
 
 export function hideFirstPersonHead(root: THREE.Object3D): FirstPersonHeadFilterStats {
@@ -76,7 +81,7 @@ export function hideFirstPersonHead(root: THREE.Object3D): FirstPersonHeadFilter
     if (!child.isSkinnedMesh || !child.geometry || !child.skeleton) return;
     const headBones = new Set<number>();
     child.skeleton.bones.forEach((bone: THREE.Bone, index: number) => {
-      if (/head/i.test(normalizedName(bone.name))) headBones.add(index);
+      if (isHeadObjectName(bone.name)) headBones.add(index);
     });
     const indexAttribute = child.geometry.getIndex();
     const skinIndex = child.geometry.getAttribute("skinIndex");
@@ -107,7 +112,8 @@ export function hideFirstPersonHead(root: THREE.Object3D): FirstPersonHeadFilter
           indexAttribute.getX(offset + 1),
           indexAttribute.getX(offset + 2),
         ];
-        const isHeadTriangle = vertices.every((vertexIndex) => readHeadWeight(vertexIndex) >= 0.5);
+        const isHeadTriangle = vertices.some((vertexIndex) => readHeadWeight(vertexIndex) >= 0.2)
+          || vertices.every((vertexIndex) => readHeadWeight(vertexIndex) > 0.01);
         if (isHeadTriangle) {
           hiddenTriangles += 1;
           continue;

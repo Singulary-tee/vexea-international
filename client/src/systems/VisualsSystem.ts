@@ -40,12 +40,14 @@ import {
 } from "../vfx/VFXOrchestrator";
 import { rifleGroup, pistolGroup } from "../../weapons_model";
 import { getSettings, applySettings } from "../../settings";
+import { applyTempDebugEnvironment, TempDebugEnvironmentHandle } from "./TempDebugEnvironment";
 
 export class VisualsSystem {
   private match: MatchController;
   private decorativeProps: THREE.Mesh[] = [];
   private initialized = false;
   private disposed = false;
+  private tempDebugEnvHandle: TempDebugEnvironmentHandle | null = null;
 
   constructor(match: MatchController) {
     this.match = match;
@@ -175,6 +177,9 @@ export class VisualsSystem {
       console.log(`[VisualsSystem] Pre-warm complete in ${(performance.now() - tStart).toFixed(2)}ms`);
     }
 
+    // ponytail: Temporary self-contained debug lighting & skybox for map visibility.
+    this.tempDebugEnvHandle = applyTempDebugEnvironment(scene, renderer);
+
     console.log("[VisualsSystem] Scene initialized for match.");
   }
 
@@ -231,6 +236,10 @@ export class VisualsSystem {
 
   public dispose() {
     this.disposed = true;
+    if (this.tempDebugEnvHandle) {
+      this.tempDebugEnvHandle.remove();
+      this.tempDebugEnvHandle = null;
+    }
     clearAllVisuals();
     window.removeEventListener("VEXEA_GRAPHICS_CHANGED", this.onGraphicsChanged as any);
   }
