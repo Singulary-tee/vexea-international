@@ -4,6 +4,7 @@ import { CatalogItem } from "../../shared/verification/types";
 import { audioManager } from "../audio";
 import { StudioPreviewManager, AVAILABLE_SKINS } from "../StudioPreviewManager";
 import { auth } from "../firebase";
+import { authedFetch } from "../api/authed-fetch";
 import { bindTabs, bindContentEntry, bindSelection, TabItem } from "../src/ui/ui-motion";
 
 let activeCategoryFilter: 'ALL' | 'cosmetic' | 'blueprint' | 'booster' | 'bundle' | 'resupply' = 'ALL';
@@ -537,22 +538,11 @@ async function handleStorePurchase(itemId: string, userData: any, container: HTM
     return;
   }
 
-  const currentCredits = userData?.credits !== undefined ? userData.credits : 500;
-  const currentEnergy = userData?.energy !== undefined ? userData.energy : 10;
-  const unlockedItems = userData?.unlockedItems || [];
-  const playerId = getPlayerId();
-
   try {
-    const response = await fetch('/api/economy/purchase', {
+    const response = await authedFetch('/api/economy/purchase', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        playerId,
-        itemId: catalogItem.id,
-        currentCredits,
-        currentEnergy,
-        unlockedItems
-      })
+      body: JSON.stringify({ itemId: catalogItem.id })
     });
 
     const data = await response.json();

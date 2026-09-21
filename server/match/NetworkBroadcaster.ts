@@ -15,6 +15,10 @@ import {
   benchmarkCounter,
   benchmarkInstrumentationEnabled,
 } from "../benchmark/telemetry";
+import {
+  INTERNAL_SERVICE_TOKEN_HEADER,
+  getInternalServiceToken,
+} from "../security/internal-token";
 
 export class NetworkBroadcaster {
   public preallocatedBuffer = new ArrayBuffer(CONST_BUFFER_SIZE);
@@ -249,6 +253,7 @@ export class NetworkBroadcaster {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
+            [INTERNAL_SERVICE_TOKEN_HEADER]: getInternalServiceToken(),
           },
           body: JSON.stringify(payload),
         }

@@ -414,7 +414,7 @@ const initClient = async () => {
       match.transport = channel;
 
       if (cloudUid) {
-        lockMatchSession(matchId, cloudUid).then((locked) => {
+        lockMatchSession(matchId).then((locked) => {
           if (locked) {
             (window as any).vexMatchId = matchId;
             if (channel)
