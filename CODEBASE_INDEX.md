@@ -103,7 +103,16 @@ This file is the authoritative index of all directories and source files within 
         *   **`social-handlers.ts`**: Handles social and messaging events (`CHAT_MESSAGE`, `QUICK_COMM`).
         *   **`connection-handlers.ts`**: Handles connection quality and player session management (`ping`, `latency_report`, `rewarded_ad`, `select_class`).
 *   **`routes/` (Server API Endpoints)**
-    *   **`api-routes.ts`**: Configures all server REST endpoints (`/api/health`, `/api/debug-sentry`, `/api/log`, `/api/logs`, `/api/doppler-client-secrets`, `/api/proxy-asset`, `/api/debug`, `/api/test-compile`, `/api/economy/store`, `/api/economy/factions`).
+    *   **`api-routes.ts`**: Configures all server REST endpoints (`/api/health`, `/api/debug-sentry`, `/api/log`, `/api/logs`, `/api/doppler-client-secrets`, `/api/proxy-asset`, `/api/debug`, `/api/test-compile`, `/api/economy/*`, `/api/match/*`, `/api/player/*`). Debug, log and Doppler routes return 404 unless `IS_DEV`; every mutating economy/match/player route is wrapped in `strictLimiter` + `requireAuth` and derives the acting player from the verified Firebase uid.
+*   **`security/` (Server Security Modules)**
+    *   **`auth-middleware.ts`**: `requireAuth` Express middleware verifying `Authorization: Bearer <firebase-id-token>` via `getAuth().verifyIdToken`, attaching `req.authUid`; `resolveAuthedPlayerId` rejects body `playerId` values that mismatch the verified uid. Also accepts the loopback internal-service token for server-to-server reward posts.
+    *   **`client-secret-filter.ts`**: `filterClientSecrets` reduces a Doppler bundle to `VITE_`-prefixed (client-safe) keys only.
+    *   **`url-allowlist.ts`**: `isAllowedAssetUrl` restricts `/api/proxy-asset` targets to the https asset CDN host (SSRF guard).
+    *   **`cors-config.ts`**: Allowlist of permitted *client* origins (Firebase Hosting in production; `*.run.app` and localhost only when `IS_DEV`) and `resolveAllowedOrigin` for echoing a single matched origin.
+    *   **`rate-limit.ts`**: `strictLimiter` (economy/auth-adjacent) and `generalLimiter` (rest of `/api`) express-rate-limit instances, skipping loopback traffic.
+    *   **`ad-multiplier.ts`**: `clampAdMultiplier` constrains post-match reward multipliers to the server-granted set.
+    *   **`log-sanitizer.ts`**: `sanitizeClientLog` coerces and caps forwarded client log payloads.
+    *   **`internal-token.ts`**: Boot-generated loopback service token (`x-vexea-internal-token`) inherited by forked room workers, with constant-time comparison.
 *   **`validation/` (Validation Service Wrapper)**
     *   **`validation-service.ts`**: Backwards-compatibility alias re-exporting `VerificationService`.
 *   **`verification/` (Server & Worker Verification)**
@@ -233,6 +242,8 @@ This file is the authoritative index of all directories and source files within 
     *   **`inverted_plus.svg`**: Specialized crosshair asset.
 *   **`weapons_model.ts`**
     *   *Purpose:* Handles first-person weapon meshes, reload animations, and procedural recoil offsets.
+*   **`api/` (Client API Transport Helpers)**
+    *   **`authed-fetch.ts`**: `authedFetch`/`getIdToken` attach the current Firebase ID token as a bearer credential to server economy/match/player requests.
 *   **`ads/` (Client Ad & Transmission Providers)**
     *   **`ad-provider.ts`**: Manages client-side rewarded ad simulation and API transmission playback (`MockAdProvider`), handling daily view cap enforcement (`DAILY_AD_CAP`), loading state delays, progress countdown overlay UI, and fallback verification against `/api/economy/ad-reward`.
 *   **`data/` (JSON Data Registries)**
@@ -925,3 +936,10 @@ Every file change in the VEXEA codebase must follow this strict two-step protoco
 * **Status:** Implemented and verified.
 
 
+
+### Cycle 2026-09-21-01: Security Scan Remediation (9 Findings)
+* **Target Files:** `server/security/` (new: `auth-middleware.ts`, `client-secret-filter.ts`, `url-allowlist.ts`, `cors-config.ts`, `rate-limit.ts`, `ad-multiplier.ts`, `log-sanitizer.ts`, `internal-token.ts`), `server/routes/api-routes.ts`, `server/index.ts`, `server/match/NetworkBroadcaster.ts`, `client/api/authed-fetch.ts` (new), `client/firebase.ts`, `client/main.ts`, `client/screens/store-screen.ts`, `client/ads/ad-provider.ts`, `client/src/systems/ClassLoadoutSystem.ts`, `client/src/systems/ClassLoadoutPersistence.ts`, `tests/security-hardening.test.ts` (new), `package.json`, `package-lock.json`, `CODEBASE_INDEX.md`.
+* **Scope:** (1) `/api/doppler-client-secrets` returns `{ available: false }` with 404 unless `IS_DEV`, and filters the bundle to `VITE_`-prefixed keys. (2) All mutating `/api/economy/*`, `/api/match/*` and `/api/player/*` routes require a verified Firebase ID token and derive `playerId` from the token; purchase/daily-claim balances are read from Firestore instead of the request body; `adMultiplier` is clamped server-side and only exceeds 1 on the internal loopback path. (3) `/api/proxy-asset` accepts only `https://vexea-r2-asset-guard.alte.workers.dev`, and the forged `Origin` header is dev-only. (4) Wildcard CORS replaced with a client-origin allowlist echoing a single matched origin plus `Vary: Origin`. (5-6) `/api/logs`, `/api/debug`, `/api/debug-sentry` 404 in production. (7) Service-account diagnostic log gated by `IS_DEV`; `/api/log` is dev-only and sanitized. (8) `express-rate-limit` strict/general limiters. (9) Email-bearing client auth logs gated by `IS_DEV`.
+* **Explicit Non-Scope:** No gameplay, physics, renderer, transport or Firestore rule changes. AI Studio preview fallbacks (Doppler proxy, asset proxy, debug endpoints, `*.run.app`/localhost CORS) remain functional under `IS_DEV`.
+* **Verification:** `tsc --noEmit` exits 0; `npx vitest run tests/security-hardening.test.ts` passes 10/10; full suite run recorded in the PR.
+* **Status:** Implemented and verified.

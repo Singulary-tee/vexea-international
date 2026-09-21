@@ -32,12 +32,18 @@ import { registerApiRoutes } from "./routes/api-routes";
 import { roomAllocator } from "./execution/RoomAllocator";
 import { RoomExecution } from "./execution/RoomExecution";
 import { IS_DEV } from "../shared/gates/production.gate";
+import { resolveAllowedOrigin } from "./security/cors-config";
+import { getInternalServiceToken } from "./security/internal-token";
 import { closeBenchmarkTelemetry } from "./benchmark/telemetry";
 import "./benchmark/determinism";
 
 export { IS_DEV }; // Master toggle to easily disable all development cheats/commands on the server for production.
 
 dotenv.config();
+
+// Seed the loopback service credential before any room worker is forked so
+// child processes inherit it through the environment.
+getInternalServiceToken();
 
 /**
  * Global debug log broadcast patch
@@ -307,7 +313,11 @@ app.use((req, res, next) => {
 
 // Configure general global CORS middleware for decoupled client-server hosting environments
 app.use((req, res, next) => {
-  res.setHeader("Access-Control-Allow-Origin", "*");
+  const allowedOrigin = resolveAllowedOrigin(req.headers.origin);
+  res.setHeader("Vary", "Origin");
+  if (allowedOrigin) {
+    res.setHeader("Access-Control-Allow-Origin", allowedOrigin);
+  }
   res.setHeader(
     "Access-Control-Allow-Methods",
     "GET, POST, OPTIONS, PUT, PATCH, DELETE",
@@ -460,7 +470,9 @@ const serveApp = async () => {
   try {
     if (envSecret) {
       serviceAccount = JSON.parse(envSecret);
-      console.log(`[FIREBASE DIAGNOSTIC] Successfully parsed service account JSON. Project ID: "${serviceAccount?.project_id}", Client Email: "${serviceAccount?.client_email}"`);
+      if (IS_DEV) {
+        console.log(`[FIREBASE DIAGNOSTIC] Successfully parsed service account JSON. Project ID: "${serviceAccount?.project_id}", Client Email: "${serviceAccount?.client_email}"`);
+      }
     }
   } catch (e: any) {
     console.error(

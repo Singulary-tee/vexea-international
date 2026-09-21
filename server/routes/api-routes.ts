@@ -13,8 +13,17 @@ import {
 } from "../../shared/verification/verifier";
 import { db, doc, getDoc, setDoc, updateDoc, deleteDoc, runTransaction, increment } from "../db/firestore-bridge";
 import { DEFAULT_SHARED_FEATURE_FLAGS, SharedFeatureFlagKey } from "../../shared/feature-flags";
+import { IS_DEV } from "../../shared/gates/production.gate";
+import { AuthedRequest, requireAuth, resolveAuthedPlayerId } from "../security/auth-middleware";
+import { filterClientSecrets } from "../security/client-secret-filter";
+import { isAllowedAssetUrl } from "../security/url-allowlist";
+import { clampAdMultiplier } from "../security/ad-multiplier";
+import { sanitizeClientLog } from "../security/log-sanitizer";
+import { generalLimiter, strictLimiter } from "../security/rate-limit";
 
 export function registerApiRoutes(app: Express): void {
+  app.use("/api", generalLimiter);
+
   app.get("/.well-known/discord", (req, res) => {
     res.type("text/plain").send("dh=c7fcc88ec8fb058c2fa2b99e5a177846e092b3f7");
   });
@@ -24,21 +33,26 @@ export function registerApiRoutes(app: Express): void {
   });
 
   app.get("/api/debug-sentry", (req, res) => {
+    if (!IS_DEV) return res.sendStatus(404);
     // Intentional error test snippet
     (global as any).myUndefinedFunction();
     res.send("Triggered Sentry test error");
   });
 
   app.post("/api/log", (req, res) => {
-    console.log("[CLIENT LOG]", ...req.body);
+    if (!IS_DEV) return res.sendStatus(404);
+    console.log("[CLIENT LOG]", sanitizeClientLog(req.body));
     res.sendStatus(200);
   });
 
   app.get("/api/logs", (req, res) => {
+    if (!IS_DEV) return res.sendStatus(404);
     res.json((global as any).serverLogs || []);
   });
 
   app.get("/api/doppler-client-secrets", async (req, res) => {
+    if (!IS_DEV) return res.status(404).json({ available: false });
+
     const token =
       (req.query.token as string) ||
       process.env.VITE_DOPPLER_TOKEN ||
@@ -69,7 +83,7 @@ export function registerApiRoutes(app: Express): void {
       }
 
       const secrets = await response.json();
-      return res.json(secrets);
+      return res.json(filterClientSecrets(secrets));
     } catch (err: any) {
       return res
         .status(500)
@@ -82,14 +96,19 @@ export function registerApiRoutes(app: Express): void {
     if (!fileUrl) {
       return res.status(400).send("URL parameter is required");
     }
+    if (!isAllowedAssetUrl(fileUrl)) {
+      return res.status(400).send("URL host is not an allowed asset origin");
+    }
 
     try {
-      const fetchResponse = await fetch(fileUrl, {
-        headers: {
-          "User-Agent": "Vexea-Game-Server/1.0",
-          "Origin": "http://localhost:5173"
-        }
-      });
+      const proxyHeaders: Record<string, string> = {
+        "User-Agent": "Vexea-Game-Server/1.0"
+      };
+      if (IS_DEV) {
+        proxyHeaders["Origin"] = "http://localhost:5173";
+      }
+
+      const fetchResponse = await fetch(fileUrl, { headers: proxyHeaders });
       if (!fetchResponse.ok) {
         return res
           .status(fetchResponse.status)
@@ -99,7 +118,6 @@ export function registerApiRoutes(app: Express): void {
       const contentType =
         fetchResponse.headers.get("Content-Type") || "application/octet-stream";
       res.setHeader("Content-Type", contentType);
-      res.setHeader("Access-Control-Allow-Origin", "*");
       res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
 
       const contentLength = fetchResponse.headers.get("Content-Length");
@@ -118,6 +136,7 @@ export function registerApiRoutes(app: Express): void {
   });
 
   app.get("/api/debug", (req, res) => {
+    if (!IS_DEV) return res.sendStatus(404);
     const roomsData = matchManager.getRooms().map((r) => ({
       roomId: r.roomId,
       active: r.matchActive,
@@ -145,12 +164,10 @@ export function registerApiRoutes(app: Express): void {
     }
   });
 
-  app.post("/api/economy/init-player", async (req, res) => {
+  app.post("/api/economy/init-player", strictLimiter, requireAuth, async (req: AuthedRequest, res) => {
     try {
-      const { playerId } = req.body;
-      if (!playerId) {
-        return res.status(400).json({ success: false, error: "playerId is required." });
-      }
+      const playerId = resolveAuthedPlayerId(req, res);
+      if (!playerId) return;
       const userRef = doc(db, "Users", playerId);
       const userSnap = await getDoc(userRef);
       if (!userSnap.exists()) {
@@ -180,13 +197,15 @@ export function registerApiRoutes(app: Express): void {
     }
   });
 
-  app.post("/api/economy/purchase", async (req, res) => {
+  app.post("/api/economy/purchase", strictLimiter, requireAuth, async (req: AuthedRequest, res) => {
     try {
-      const { playerId, itemId, currentCredits, currentEnergy, unlockedItems } = req.body;
-      if (!playerId || !itemId) {
+      const playerId = resolveAuthedPlayerId(req, res);
+      if (!playerId) return;
+      const { itemId } = req.body;
+      if (!itemId) {
         return res.status(400).json({
           success: false,
-          error: { code: 'INVALID_INPUT', message: 'playerId and itemId are required.' }
+          error: { code: 'INVALID_INPUT', message: 'itemId is required.' }
         });
       }
 
@@ -202,9 +221,9 @@ export function registerApiRoutes(app: Express): void {
       const userSnap = await getDoc(userRef);
       const playerData = userSnap.exists() ? userSnap.data() : {};
 
-      const pCredits = currentCredits ?? playerData.credits ?? 500;
-      const pEnergy = currentEnergy ?? playerData.energy ?? 10;
-      const pUnlocked = unlockedItems ?? playerData.unlockedItems ?? [];
+      const pCredits = playerData.credits ?? 500;
+      const pEnergy = playerData.energy ?? 10;
+      const pUnlocked = playerData.unlockedItems ?? [];
       const pLevel = playerData.battlePass || 1;
 
       const result = verifyPurchase(
@@ -256,23 +275,18 @@ export function registerApiRoutes(app: Express): void {
     }
   });
 
-  app.post("/api/economy/claim-daily", async (req, res) => {
+  app.post("/api/economy/claim-daily", strictLimiter, requireAuth, async (req: AuthedRequest, res) => {
     try {
-      const { playerId, currentCredits, currentEnergy, lastClaimTimestamp } = req.body;
-      if (!playerId) {
-        return res.status(400).json({
-          success: false,
-          error: { code: 'INVALID_INPUT', message: 'playerId is required.' }
-        });
-      }
+      const playerId = resolveAuthedPlayerId(req, res);
+      if (!playerId) return;
 
       const userRef = doc(db, "Users", playerId);
       const userSnap = await getDoc(userRef);
       const playerData = userSnap.exists() ? userSnap.data() : {};
 
-      const pCredits = currentCredits ?? playerData.credits ?? 500;
-      const pEnergy = currentEnergy ?? playerData.energy ?? 10;
-      const pLastClaim = lastClaimTimestamp ?? playerData.dailyRefreshedAt ?? 0;
+      const pCredits = playerData.credits ?? 500;
+      const pEnergy = playerData.energy ?? 10;
+      const pLastClaim = playerData.dailyRefreshedAt ?? 0;
 
       const result = verifyClaim({
         playerId,
@@ -318,10 +332,12 @@ export function registerApiRoutes(app: Express): void {
     }
   });
 
-  app.post("/api/economy/match-rewards", async (req, res) => {
+  app.post("/api/economy/match-rewards", strictLimiter, requireAuth, async (req: AuthedRequest, res) => {
     try {
+      const playerId = resolveAuthedPlayerId(req, res);
+      if (!playerId) return;
+
       const {
-        playerId,
         matchDurationSec,
         kills,
         deaths,
@@ -333,13 +349,6 @@ export function registerApiRoutes(app: Express): void {
         gameMode,
         adMultiplier
       } = req.body;
-
-      if (!playerId) {
-        return res.status(400).json({
-          success: false,
-          error: { code: 'INVALID_INPUT', message: 'playerId is required.' }
-        });
-      }
 
       // Feature flag values
       const matchEnergyCost = DEFAULT_SHARED_FEATURE_FLAGS[SharedFeatureFlagKey.MATCH_ENERGY_COST]; // should be 2
@@ -361,7 +370,9 @@ export function registerApiRoutes(app: Express): void {
         return res.status(400).json({ success: false, error: result.error });
       }
 
-      const mult = adMultiplier || 1;
+      // Only the server itself (verified `rewarded_ad` event) may raise the
+      // multiplier; client-supplied values are discarded.
+      const mult = req.isInternalService ? clampAdMultiplier(adMultiplier) : 1;
       const droneKills = kills || 0;
       const pDeaths = deaths || 0;
       const pScoreIndividual = scoreIndividual || 0;
@@ -458,23 +469,18 @@ export function registerApiRoutes(app: Express): void {
     }
   });
 
-  app.post("/api/economy/ad-reward", async (req, res) => {
+  app.post("/api/economy/ad-reward", strictLimiter, requireAuth, async (req: AuthedRequest, res) => {
     try {
-      const { playerId, currentEnergy, adClaimsToday, lastAdClaimDate } = req.body;
-      if (!playerId) {
-        return res.status(400).json({
-          success: false,
-          error: { code: 'INVALID_INPUT', message: 'playerId is required.' }
-        });
-      }
+      const playerId = resolveAuthedPlayerId(req, res);
+      if (!playerId) return;
 
       const userRef = doc(db, "Users", playerId);
       const userSnap = await getDoc(userRef);
       const playerData = userSnap.exists() ? userSnap.data() : {};
 
-      const pEnergy = currentEnergy ?? playerData.energy ?? 10;
-      const pAdClaimsToday = adClaimsToday ?? playerData.adClaimsToday ?? 0;
-      const pLastAdClaimDate = lastAdClaimDate ?? playerData.lastAdClaimDate ?? 0;
+      const pEnergy = playerData.energy ?? 10;
+      const pAdClaimsToday = playerData.adClaimsToday ?? 0;
+      const pLastAdClaimDate = playerData.lastAdClaimDate ?? 0;
 
       const result = verifyAdReward({
         playerId,
@@ -528,13 +534,15 @@ export function registerApiRoutes(app: Express): void {
     }
   });
 
-  app.post("/api/match/lock", async (req, res) => {
+  app.post("/api/match/lock", strictLimiter, requireAuth, async (req: AuthedRequest, res) => {
     try {
-      const { matchId, playerId } = req.body;
-      if (!matchId || !playerId) {
+      const playerId = resolveAuthedPlayerId(req, res);
+      if (!playerId) return;
+      const { matchId } = req.body;
+      if (!matchId) {
         return res.status(400).json({
           success: false,
-          error: { code: "INVALID_INPUT", message: "matchId and playerId are required." }
+          error: { code: "INVALID_INPUT", message: "matchId is required." }
         });
       }
       const docRef = doc(db, "matches_in_progress", matchId);
@@ -551,8 +559,10 @@ export function registerApiRoutes(app: Express): void {
     }
   });
 
-  app.post("/api/match/unlock", async (req, res) => {
+  app.post("/api/match/unlock", strictLimiter, requireAuth, async (req: AuthedRequest, res) => {
     try {
+      const playerId = resolveAuthedPlayerId(req, res);
+      if (!playerId) return;
       const { matchId } = req.body;
       if (!matchId) {
         return res.status(400).json({
@@ -561,6 +571,13 @@ export function registerApiRoutes(app: Express): void {
         });
       }
       const docRef = doc(db, "matches_in_progress", matchId);
+      const lockSnap = await getDoc(docRef);
+      if (lockSnap.exists() && lockSnap.data()?.playerId !== playerId) {
+        return res.status(403).json({
+          success: false,
+          error: { code: "FORBIDDEN", message: "Match lock belongs to another player." }
+        });
+      }
       await deleteDoc(docRef);
       return res.json({ success: true });
     } catch (err: any) {
@@ -571,13 +588,15 @@ export function registerApiRoutes(app: Express): void {
     }
   });
 
-  app.post("/api/player/loadout", async (req, res) => {
+  app.post("/api/player/loadout", strictLimiter, requireAuth, async (req: AuthedRequest, res) => {
     try {
-      const { playerId, classId, items } = req.body;
-      if (!playerId || !classId || !items) {
+      const playerId = resolveAuthedPlayerId(req, res);
+      if (!playerId) return;
+      const { classId, items } = req.body;
+      if (!classId || !items) {
         return res.status(400).json({
           success: false,
-          error: { code: "INVALID_INPUT", message: "playerId, classId, and items are required." }
+          error: { code: "INVALID_INPUT", message: "classId and items are required." }
         });
       }
       const userRef = doc(db, "Users", playerId);
@@ -593,13 +612,15 @@ export function registerApiRoutes(app: Express): void {
     }
   });
 
-  app.post("/api/player/item-skins", async (req, res) => {
+  app.post("/api/player/item-skins", strictLimiter, requireAuth, async (req: AuthedRequest, res) => {
     try {
-      const { playerId, skins } = req.body;
-      if (!playerId || !skins) {
+      const playerId = resolveAuthedPlayerId(req, res);
+      if (!playerId) return;
+      const { skins } = req.body;
+      if (!skins) {
         return res.status(400).json({
           success: false,
-          error: { code: "INVALID_INPUT", message: "playerId, and skins are required." }
+          error: { code: "INVALID_INPUT", message: "skins are required." }
         });
       }
       const userRef = doc(db, "Users", playerId);

@@ -1,6 +1,7 @@
 import * as THREE from "three/webgpu";
 import { getFirestore, doc, getDoc, updateDoc } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
+import { authedFetch } from "../../api/authed-fetch";
 
 export interface WeaponSkin {
   id: string;
@@ -209,13 +210,10 @@ export class ClassLoadoutSystem {
       try {
         const auth = getAuth();
         if (auth.currentUser) {
-          const res = await fetch("/api/player/item-skins", {
+          const res = await authedFetch("/api/player/item-skins", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              playerId: auth.currentUser.uid,
-              skins: saved
-            })
+            body: JSON.stringify({ skins: saved })
           });
           const data = await res.json();
           if (data.success) {

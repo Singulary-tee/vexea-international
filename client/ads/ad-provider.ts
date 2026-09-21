@@ -3,6 +3,7 @@ import { audioManager } from "../audio";
 import { clientFlagService } from "../flags/flag-service";
 import { SharedFeatureFlagKey } from "../../shared/feature-flags";
 import { getAuth } from "firebase/auth";
+import { authedFetch } from "../api/authed-fetch";
 
 export interface AdRewardResult {
   success: boolean;
@@ -178,22 +179,11 @@ export class MockAdProvider {
           timerBadge.style.color = "#00FF66";
         }
 
-        const auth = getAuth();
-        const playerId = auth.currentUser?.uid || localStorage.getItem('guestId') || (window as any).vexPlayerUid || 'GUEST_USER';
-        const currentEnergy = userData?.energy !== undefined ? userData.energy : 10;
-        const adClaimsToday = userData?.adClaimsToday ?? parseInt(localStorage.getItem('vex_ad_claims_today') || '0', 10);
-        const lastAdClaimDate = userData?.lastAdClaimDate ?? parseInt(localStorage.getItem('vex_last_ad_claim_date') || '0', 10);
-
         try {
-          const response = await fetch('/api/economy/ad-reward', {
+          const response = await authedFetch('/api/economy/ad-reward', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              playerId,
-              currentEnergy,
-              adClaimsToday,
-              lastAdClaimDate
-            })
+            body: JSON.stringify({})
           });
 
           const data = await response.json();

@@ -1,5 +1,6 @@
 import { getFirestore, doc, updateDoc } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
+import { authedFetch } from "../../api/authed-fetch";
 import { CATALOG_LOADOUTS, LoadoutSlotItem } from "../../screens/armory-screen";
 import { CLASSES, ClassId, isClassWeaponAllowed, getClassWeaponId } from "../../../shared/classes";
 import { isRuntimeWeaponId } from "../../../shared/constants";
@@ -200,14 +201,10 @@ export class ClassLoadoutPersistence {
       try {
         const auth = getAuth();
         if (auth.currentUser) {
-          const res = await fetch("/api/player/loadout", {
+          const res = await authedFetch("/api/player/loadout", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              playerId: auth.currentUser.uid,
-              classId,
-              items
-            })
+            body: JSON.stringify({ classId, items })
           });
           const data = await res.json();
           if (data.success) {

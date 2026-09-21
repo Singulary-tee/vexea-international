@@ -22,6 +22,8 @@ import {
 import { getStorage, FirebaseStorage } from "firebase/storage";
 import { getAnalytics, Analytics, logEvent, isSupported } from "firebase/analytics";
 import type { Database } from "firebase/database";
+import { IS_DEV } from "../shared/gates/production.gate";
+import { authedFetch } from "./api/authed-fetch";
 
 export enum OperationType {
   CREATE = "create",
@@ -149,7 +151,9 @@ export async function linkAnonymousAccount(
   }
 
   const currentUser = auth.currentUser;
-  console.log("[Account Link Attempt] Linking anonymous UID:", currentUser.uid, "with email:", email);
+  if (IS_DEV) {
+    console.log("[Account Link Attempt] Linking anonymous UID:", currentUser.uid, "with email:", email);
+  }
   try {
     const credential = EmailAuthProvider.credential(email, password);
     const result = await linkWithCredential(currentUser, credential);
@@ -170,12 +174,16 @@ export async function signInWithLinkedAccount(
 ): Promise<{ success: boolean; uid: string | null; error: string | null }> {
   if (!auth) {
     const res = { success: false, uid: null, error: "Firebase Auth not initialized" };
-    console.log("[Sign-In Attempt] Check failed: Auth not initialized for email:", email);
+    if (IS_DEV) {
+      console.log("[Sign-In Attempt] Check failed: Auth not initialized for email:", email);
+    }
     console.log("[Sign-In Result]", res);
     return res;
   }
 
-  console.log("[Sign-In Attempt] Signing in with linked account for email:", email);
+  if (IS_DEV) {
+    console.log("[Sign-In Attempt] Signing in with linked account for email:", email);
+  }
   try {
     const userCredential = await signInWithEmailAndPassword(auth, email, password);
     const res = { success: true, uid: userCredential.user.uid, error: null };
@@ -240,12 +248,12 @@ export async function savePlayerStats(playerId: string, matchesPlayed: number, h
   }
 }
 
-export async function lockMatchSession(matchId: string, playerId: string): Promise<boolean> {
+export async function lockMatchSession(matchId: string): Promise<boolean> {
   try {
-    const res = await fetch("/api/match/lock", {
+    const res = await authedFetch("/api/match/lock", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ matchId, playerId })
+      body: JSON.stringify({ matchId })
     });
     const data = await res.json();
     return !!data.success;
@@ -257,7 +265,7 @@ export async function lockMatchSession(matchId: string, playerId: string): Promi
 
 export async function unlockMatchSession(matchId: string): Promise<boolean> {
   try {
-    const res = await fetch("/api/match/unlock", {
+    const res = await authedFetch("/api/match/unlock", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ matchId })
