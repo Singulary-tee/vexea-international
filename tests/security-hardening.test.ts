@@ -5,6 +5,14 @@ import { isAllowedClientOrigin, resolveAllowedOrigin, PRODUCTION_CLIENT_ORIGINS 
 import { clampAdMultiplier } from '../server/security/ad-multiplier';
 import { sanitizeClientLog, MAX_LOG_LENGTH, MAX_LOG_ENTRIES } from '../server/security/log-sanitizer';
 import { getInternalServiceToken, isInternalServiceToken } from '../server/security/internal-token';
+import {
+  isValidClassId,
+  sanitizeItemSkins,
+  sanitizeLoadoutItems,
+  MAX_LOADOUT_ITEMS,
+  MAX_SKIN_ENTRIES,
+  MAX_FIELD_LENGTH
+} from '../server/security/loadout-payload';
 import { IS_DEV } from '../shared/gates/production.gate';
 
 describe('client secret filter', () => {
@@ -84,6 +92,38 @@ describe('client log sanitizer', () => {
 
     const many = Array.from({ length: MAX_LOG_ENTRIES * 2 }, () => 'a');
     expect(sanitizeClientLog(many).split(' ').length).toBe(MAX_LOG_ENTRIES);
+  });
+});
+
+describe('loadout payload validation', () => {
+  it('accepts a catalog-shaped loadout and drops the derived stats blob', () => {
+    const sanitized = sanitizeLoadoutItems([
+      { id: 'm4_rifle_assault', name: 'M4 BATTLE RIFLE', weaponKey: 'rifle', category: 'Assault Rifle', slotName: 'PRIMARY', stats: { damage: 30 } }
+    ]);
+    expect(sanitized).toEqual([
+      { id: 'm4_rifle_assault', slotName: 'PRIMARY', weaponKey: 'rifle', name: 'M4 BATTLE RIFLE', category: 'Assault Rifle' }
+    ]);
+  });
+
+  it('rejects malformed, oversized and unbounded payloads', () => {
+    expect(sanitizeLoadoutItems('nope')).toBeNull();
+    expect(sanitizeLoadoutItems([{ slotName: 'PRIMARY' }])).toBeNull();
+    expect(sanitizeLoadoutItems([{ id: 'a', slotName: 'PRIMARY', weaponKey: 'x'.repeat(MAX_FIELD_LENGTH + 1) }])).toBeNull();
+    expect(sanitizeLoadoutItems(Array.from({ length: MAX_LOADOUT_ITEMS + 1 }, () => ({ id: 'a', slotName: 'PRIMARY' })))).toBeNull();
+  });
+
+  it('bounds the item-skin map', () => {
+    expect(sanitizeItemSkins({ m4_rifle_assault: 'test_skin' })).toEqual({ m4_rifle_assault: 'test_skin' });
+    expect(sanitizeItemSkins({ a: { nested: true } })).toBeNull();
+    expect(sanitizeItemSkins([])).toBeNull();
+    const oversized = Object.fromEntries(Array.from({ length: MAX_SKIN_ENTRIES + 1 }, (_, i) => [`i${i}`, 's']));
+    expect(sanitizeItemSkins(oversized)).toBeNull();
+  });
+
+  it('only accepts known operative classes', () => {
+    expect(isValidClassId('ASSAULT')).toBe(true);
+    expect(isValidClassId('__proto__')).toBe(false);
+    expect(isValidClassId('ADMIN')).toBe(false);
   });
 });
 

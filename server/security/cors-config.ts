@@ -10,6 +10,10 @@
 import { IS_DEV } from "../../shared/gates/production.gate";
 
 export const PRODUCTION_CLIENT_ORIGINS: readonly string[] = [
+  // Hosting site id from firebase.json
+  "https://vexea-international.firebaseapp.com",
+  "https://vexea-international.web.app",
+  // Project-id domains
   "https://vexea-e0a37.firebaseapp.com",
   "https://vexea-e0a37.web.app",
 ];

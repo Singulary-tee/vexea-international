@@ -11,7 +11,7 @@ import {
   verifyAdReward,
   calculateLevelMetrics
 } from "../../shared/verification/verifier";
-import { db, doc, getDoc, setDoc, updateDoc, deleteDoc, runTransaction, increment } from "../db/firestore-bridge";
+import { db, doc, getDoc, setDoc, updateDoc, deleteDoc, runTransaction, getTransactionDoc, increment } from "../db/firestore-bridge";
 import { DEFAULT_SHARED_FEATURE_FLAGS, SharedFeatureFlagKey } from "../../shared/feature-flags";
 import { IS_DEV } from "../../shared/gates/production.gate";
 import { AuthedRequest, requireAuth, resolveAuthedPlayerId } from "../security/auth-middleware";
@@ -20,6 +20,7 @@ import { isAllowedAssetUrl } from "../security/url-allowlist";
 import { clampAdMultiplier } from "../security/ad-multiplier";
 import { sanitizeClientLog } from "../security/log-sanitizer";
 import { generalLimiter, strictLimiter } from "../security/rate-limit";
+import { isValidClassId, sanitizeItemSkins, sanitizeLoadoutItems } from "../security/loadout-payload";
 
 export function registerApiRoutes(app: Express): void {
   app.use("/api", generalLimiter);
@@ -218,54 +219,68 @@ export function registerApiRoutes(app: Express): void {
       }
 
       const userRef = doc(db, "Users", playerId);
-      const userSnap = await getDoc(userRef);
-      const playerData = userSnap.exists() ? userSnap.data() : {};
 
-      const pCredits = playerData.credits ?? 500;
-      const pEnergy = playerData.energy ?? 10;
-      const pUnlocked = playerData.unlockedItems ?? [];
-      const pLevel = playerData.battlePass || 1;
+      const outcome = await runTransaction(db, async (transaction: any) => {
+        const userDoc = await getTransactionDoc(transaction, userRef);
+        const playerData = userDoc.exists() ? userDoc.data() || {} : {};
 
-      const result = verifyPurchase(
-        {
-          playerId,
-          itemId,
-          currentCredits: pCredits,
-          currentEnergy: pEnergy,
-          currentLevel: pLevel,
-          unlockedItems: pUnlocked
-        },
-        catalogItem
-      );
+        const pCredits = playerData.credits ?? 500;
+        const pEnergy = playerData.energy ?? 10;
+        const pUnlocked = playerData.unlockedItems ?? [];
+        const pLevel = playerData.battlePass || 1;
 
-      if (!result.isApproved) {
-        return res.status(400).json({ success: false, error: result.error });
-      }
+        const result = verifyPurchase(
+          {
+            playerId,
+            itemId,
+            currentCredits: pCredits,
+            currentEnergy: pEnergy,
+            currentLevel: pLevel,
+            unlockedItems: pUnlocked
+          },
+          catalogItem
+        );
 
-      const updatedUnlocked = pUnlocked.includes(itemId) ? pUnlocked : [...pUnlocked, itemId];
+        if (!result.isApproved) {
+          return { approved: false as const, error: result.error };
+        }
 
-      if (userSnap.exists()) {
-        await updateDoc(userRef, {
-          credits: result.remainingCredits,
-          energy: result.remainingEnergy,
+        const updatedUnlocked = pUnlocked.includes(itemId) ? pUnlocked : [...pUnlocked, itemId];
+
+        if (userDoc.exists()) {
+          transaction.update(userRef, {
+            credits: result.remainingCredits,
+            energy: result.remainingEnergy,
+            unlockedItems: updatedUnlocked
+          });
+        } else {
+          transaction.set(userRef, {
+            credits: result.remainingCredits,
+            energy: result.remainingEnergy,
+            unlockedItems: updatedUnlocked,
+            totalXp: 0,
+            adClaimsToday: 0,
+            lastAdClaimDate: 0
+          });
+        }
+
+        return {
+          approved: true as const,
+          newCredits: result.remainingCredits,
+          newEnergy: result.remainingEnergy,
           unlockedItems: updatedUnlocked
-        });
-      } else {
-        await setDoc(userRef, {
-          credits: result.remainingCredits,
-          energy: result.remainingEnergy,
-          unlockedItems: updatedUnlocked,
-          totalXp: 0,
-          adClaimsToday: 0,
-          lastAdClaimDate: 0
-        });
+        };
+      });
+
+      if (!outcome.approved) {
+        return res.status(400).json({ success: false, error: outcome.error });
       }
 
       return res.json({
         success: true,
-        newCredits: result.remainingCredits,
-        newEnergy: result.remainingEnergy,
-        unlockedItems: updatedUnlocked
+        newCredits: outcome.newCredits,
+        newEnergy: outcome.newEnergy,
+        unlockedItems: outcome.unlockedItems
       });
     } catch (err: any) {
       return res.status(500).json({
@@ -281,48 +296,57 @@ export function registerApiRoutes(app: Express): void {
       if (!playerId) return;
 
       const userRef = doc(db, "Users", playerId);
-      const userSnap = await getDoc(userRef);
-      const playerData = userSnap.exists() ? userSnap.data() : {};
 
-      const pCredits = playerData.credits ?? 500;
-      const pEnergy = playerData.energy ?? 10;
-      const pLastClaim = playerData.dailyRefreshedAt ?? 0;
+      const outcome = await runTransaction(db, async (transaction: any) => {
+        const userDoc = await getTransactionDoc(transaction, userRef);
+        const playerData = userDoc.exists() ? userDoc.data() || {} : {};
 
-      const result = verifyClaim({
-        playerId,
-        claimType: "DAILY_LOGIN",
-        currentCredits: pCredits,
-        currentEnergy: pEnergy,
-        lastClaimTimestamp: pLastClaim
+        const result = verifyClaim({
+          playerId,
+          claimType: "DAILY_LOGIN",
+          currentCredits: playerData.credits ?? 500,
+          currentEnergy: playerData.energy ?? 10,
+          lastClaimTimestamp: playerData.dailyRefreshedAt ?? 0
+        });
+
+        if (!result.isApproved) {
+          return { approved: false as const, error: result.error };
+        }
+
+        const now = Date.now();
+        if (userDoc.exists()) {
+          transaction.update(userRef, {
+            credits: result.newCredits,
+            energy: result.newEnergy,
+            dailyRefreshedAt: now
+          });
+        } else {
+          transaction.set(userRef, {
+            credits: result.newCredits,
+            energy: result.newEnergy,
+            dailyRefreshedAt: now,
+            unlockedItems: [],
+            totalXp: 0,
+            adClaimsToday: 0,
+            lastAdClaimDate: 0
+          });
+        }
+
+        return {
+          approved: true as const,
+          newCredits: result.newCredits,
+          newEnergy: result.newEnergy
+        };
       });
 
-      if (!result.isApproved) {
-        return res.status(400).json({ success: false, error: result.error });
-      }
-
-      const now = Date.now();
-      if (userSnap.exists()) {
-        await updateDoc(userRef, {
-          credits: result.newCredits,
-          energy: result.newEnergy,
-          dailyRefreshedAt: now
-        });
-      } else {
-        await setDoc(userRef, {
-          credits: result.newCredits,
-          energy: result.newEnergy,
-          dailyRefreshedAt: now,
-          unlockedItems: [],
-          totalXp: 0,
-          adClaimsToday: 0,
-          lastAdClaimDate: 0
-        });
+      if (!outcome.approved) {
+        return res.status(400).json({ success: false, error: outcome.error });
       }
 
       return res.json({
         success: true,
-        newCredits: result.newCredits,
-        newEnergy: result.newEnergy
+        newCredits: outcome.newCredits,
+        newEnergy: outcome.newEnergy
       });
     } catch (err: any) {
       return res.status(500).json({
@@ -388,7 +412,7 @@ export function registerApiRoutes(app: Express): void {
       const userRef = doc(db, "Users", playerId);
       
       await runTransaction(db, async (transaction) => {
-        const userDoc = await transaction.get(userRef);
+        const userDoc = await getTransactionDoc(transaction, userRef);
 
         if (!userDoc.exists()) {
           const totalMatches = 1;
@@ -475,46 +499,55 @@ export function registerApiRoutes(app: Express): void {
       if (!playerId) return;
 
       const userRef = doc(db, "Users", playerId);
-      const userSnap = await getDoc(userRef);
-      const playerData = userSnap.exists() ? userSnap.data() : {};
 
-      const pEnergy = playerData.energy ?? 10;
-      const pAdClaimsToday = playerData.adClaimsToday ?? 0;
-      const pLastAdClaimDate = playerData.lastAdClaimDate ?? 0;
+      const outcome = await runTransaction(db, async (transaction: any) => {
+        const userDoc = await getTransactionDoc(transaction, userRef);
+        const playerData = userDoc.exists() ? userDoc.data() || {} : {};
 
-      const result = verifyAdReward({
-        playerId,
-        currentEnergy: pEnergy,
-        adClaimsToday: pAdClaimsToday,
-        lastAdClaimDate: pLastAdClaimDate
+        const result = verifyAdReward({
+          playerId,
+          currentEnergy: playerData.energy ?? 10,
+          adClaimsToday: playerData.adClaimsToday ?? 0,
+          lastAdClaimDate: playerData.lastAdClaimDate ?? 0
+        });
+
+        if (!result.isApproved) {
+          return { approved: false as const, error: result.error };
+        }
+
+        const now = Date.now();
+        if (userDoc.exists()) {
+          transaction.update(userRef, {
+            energy: result.newEnergy,
+            adClaimsToday: result.adClaimsToday,
+            lastAdClaimDate: now
+          });
+        } else {
+          transaction.set(userRef, {
+            credits: 500,
+            energy: result.newEnergy,
+            unlockedItems: [],
+            totalXp: 0,
+            adClaimsToday: result.adClaimsToday,
+            lastAdClaimDate: now
+          });
+        }
+
+        return {
+          approved: true as const,
+          newEnergy: result.newEnergy,
+          adClaimsToday: result.adClaimsToday
+        };
       });
 
-      if (!result.isApproved) {
-        return res.status(400).json({ success: false, error: result.error });
-      }
-
-      const now = Date.now();
-      if (userSnap.exists()) {
-        await updateDoc(userRef, {
-          energy: result.newEnergy,
-          adClaimsToday: result.adClaimsToday,
-          lastAdClaimDate: now
-        });
-      } else {
-        await setDoc(userRef, {
-          credits: 500,
-          energy: result.newEnergy,
-          unlockedItems: [],
-          totalXp: 0,
-          adClaimsToday: result.adClaimsToday,
-          lastAdClaimDate: now
-        });
+      if (!outcome.approved) {
+        return res.status(400).json({ success: false, error: outcome.error });
       }
 
       return res.json({
         success: true,
-        newEnergy: result.newEnergy,
-        adClaimsToday: result.adClaimsToday
+        newEnergy: outcome.newEnergy,
+        adClaimsToday: outcome.adClaimsToday
       });
     } catch (err: any) {
       return res.status(500).json({
@@ -593,15 +626,22 @@ export function registerApiRoutes(app: Express): void {
       const playerId = resolveAuthedPlayerId(req, res);
       if (!playerId) return;
       const { classId, items } = req.body;
-      if (!classId || !items) {
+      if (!isValidClassId(classId)) {
         return res.status(400).json({
           success: false,
-          error: { code: "INVALID_INPUT", message: "classId and items are required." }
+          error: { code: "INVALID_INPUT", message: "classId must be a known operative class." }
+        });
+      }
+      const sanitizedItems = sanitizeLoadoutItems(items);
+      if (!sanitizedItems) {
+        return res.status(400).json({
+          success: false,
+          error: { code: "INVALID_INPUT", message: "items payload is malformed or too large." }
         });
       }
       const userRef = doc(db, "Users", playerId);
       await updateDoc(userRef, {
-        [`armory.loadouts.${classId}`]: items
+        [`armory.loadouts.${classId}`]: sanitizedItems
       });
       return res.json({ success: true });
     } catch (err: any) {
@@ -616,16 +656,16 @@ export function registerApiRoutes(app: Express): void {
     try {
       const playerId = resolveAuthedPlayerId(req, res);
       if (!playerId) return;
-      const { skins } = req.body;
-      if (!skins) {
+      const sanitizedSkins = sanitizeItemSkins(req.body.skins);
+      if (!sanitizedSkins) {
         return res.status(400).json({
           success: false,
-          error: { code: "INVALID_INPUT", message: "skins are required." }
+          error: { code: "INVALID_INPUT", message: "skins payload is malformed or too large." }
         });
       }
       const userRef = doc(db, "Users", playerId);
       await updateDoc(userRef, {
-        "armory.itemSkins": skins
+        "armory.itemSkins": sanitizedSkins
       });
       return res.json({ success: true });
     } catch (err: any) {

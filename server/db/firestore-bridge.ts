@@ -112,6 +112,20 @@ export async function deleteDoc(docRef: any) {
   return docRef.delete();
 }
 
+/**
+ * Reads a document inside a transaction and normalizes the snapshot to the
+ * `exists()` accessor shape used by `getDoc`. The admin SDK exposes `exists`
+ * as a boolean property, the sandbox proxy as a function.
+ */
+export async function getTransactionDoc(transaction: any, docRef: any) {
+  const snap = await transaction.get(docRef);
+  const exists = typeof snap.exists === "function" ? snap.exists() : !!snap.exists;
+  return {
+    exists: () => exists,
+    data: () => snap.data(),
+  };
+}
+
 export async function runTransaction(database: any, updateFunction: any) {
   return db.runTransaction(updateFunction);
 }
