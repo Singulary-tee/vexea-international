@@ -104,8 +104,9 @@ async function playSample(entry: AudioManifestEntry): Promise<void> {
   currentHowlInstance = howl;
   updateSampleCardState(targetKey);
 
-  // Set up end callback (Condition 1: Sample ends, non-looping samples only)
-  const isLooping = !!(entry.loop || (typeof howl.loop === "function" && howl.loop()));
+  // Reset loop state to match manifest definition before auditioning
+  howl.loop(entry.loop ?? false);
+  const isLooping = !!entry.loop;
   if (!isLooping) {
     howl.once("end", () => {
       if (currentPlayingKey === targetKey) {

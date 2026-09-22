@@ -20,9 +20,10 @@ import { isAllowedAssetUrl } from "../security/url-allowlist";
 import { clampAdMultiplier } from "../security/ad-multiplier";
 import { sanitizeClientLog } from "../security/log-sanitizer";
 import { generalLimiter, strictLimiter } from "../security/rate-limit";
-import { isValidClassId, sanitizeItemSkins, sanitizeLoadoutItems } from "../security/loadout-payload";
+import { isValidClassId, sanitizeItemSkins, sanitizeLoadoutItems, isDefaultStartingItem } from "../security/loadout-payload";
 
 export function registerApiRoutes(app: Express): void {
+  app.set("trust proxy", 1);
   app.use("/api", generalLimiter);
 
   app.get("/.well-known/discord", (req, res) => {
@@ -358,6 +359,13 @@ export function registerApiRoutes(app: Express): void {
 
   app.post("/api/economy/match-rewards", strictLimiter, requireAuth, async (req: AuthedRequest, res) => {
     try {
+      if (!req.isInternalService) {
+        return res.status(403).json({
+          success: false,
+          error: { code: "FORBIDDEN", message: "match-rewards is restricted to internal server calls." }
+        });
+      }
+
       const playerId = resolveAuthedPlayerId(req, res);
       if (!playerId) return;
 
@@ -632,17 +640,41 @@ export function registerApiRoutes(app: Express): void {
           error: { code: "INVALID_INPUT", message: "classId must be a known operative class." }
         });
       }
-      const sanitizedItems = sanitizeLoadoutItems(items);
+      const sanitizedItems = sanitizeLoadoutItems(items, classId);
       if (!sanitizedItems) {
         return res.status(400).json({
           success: false,
-          error: { code: "INVALID_INPUT", message: "items payload is malformed or too large." }
+          error: { code: "INVALID_INPUT", message: "items payload is malformed, invalid for class, or contains uncataloged equipment." }
         });
       }
+
       const userRef = doc(db, "Users", playerId);
-      await updateDoc(userRef, {
-        [`armory.loadouts.${classId}`]: sanitizedItems
-      });
+      const userSnap = await getDoc(userRef);
+      const userData = userSnap.exists() ? userSnap.data() || {} : {};
+      const unlockedItems = new Set<string>(Array.isArray(userData.unlockedItems) ? userData.unlockedItems : []);
+
+      for (const item of sanitizedItems) {
+        if (!isDefaultStartingItem(classId, item.id) && !unlockedItems.has(item.id)) {
+          return res.status(403).json({
+            success: false,
+            error: { code: "FORBIDDEN", message: `Equipment ${item.id} is not unlocked.` }
+          });
+        }
+      }
+
+      if (userSnap.exists()) {
+        await updateDoc(userRef, {
+          [`armory.loadouts.${classId}`]: sanitizedItems
+        });
+      } else {
+        await setDoc(userRef, {
+          armory: {
+            loadouts: {
+              [classId]: sanitizedItems
+            }
+          }
+        }, { merge: true });
+      }
       return res.json({ success: true });
     } catch (err: any) {
       return res.status(500).json({
@@ -660,13 +692,38 @@ export function registerApiRoutes(app: Express): void {
       if (!sanitizedSkins) {
         return res.status(400).json({
           success: false,
-          error: { code: "INVALID_INPUT", message: "skins payload is malformed or too large." }
+          error: { code: "INVALID_INPUT", message: "skins payload is malformed or contains invalid items/skins." }
         });
       }
+
       const userRef = doc(db, "Users", playerId);
-      await updateDoc(userRef, {
-        "armory.itemSkins": sanitizedSkins
-      });
+      const userSnap = await getDoc(userRef);
+      const userData = userSnap.exists() ? userSnap.data() || {} : {};
+      const unlocked = new Set<string>([
+        ...(Array.isArray(userData.unlockedItems) ? userData.unlockedItems : []),
+        ...(Array.isArray(userData.unlockedSkins) ? userData.unlockedSkins : [])
+      ]);
+
+      for (const [itemId, skinId] of Object.entries(sanitizedSkins)) {
+        if (skinId !== "STANDARD" && !unlocked.has(skinId)) {
+          return res.status(403).json({
+            success: false,
+            error: { code: "FORBIDDEN", message: `Skin ${skinId} is not unlocked.` }
+          });
+        }
+      }
+
+      if (userSnap.exists()) {
+        await updateDoc(userRef, {
+          "armory.itemSkins": sanitizedSkins
+        });
+      } else {
+        await setDoc(userRef, {
+          armory: {
+            itemSkins: sanitizedSkins
+          }
+        }, { merge: true });
+      }
       return res.json({ success: true });
     } catch (err: any) {
       return res.status(500).json({

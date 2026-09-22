@@ -7,6 +7,7 @@ import { RoomExecution } from "../../execution/RoomExecution";
 import { InProcessRoomExecution } from "../../execution/InProcessRoomExecution";
 import { ForkedRoomExecution } from "../../execution/ForkedRoomExecution";
 import { ClassId } from "../../../shared/classes";
+import { getAuth } from "firebase-admin/auth";
 
 export function registerMatchmakingHandlers(
   channel: ChannelAdapter,
@@ -52,7 +53,21 @@ export function registerMatchmakingHandlers(
 
   const handleMatchmakingRequest = async (args: any) => {
     disposeOutboundSubscription();
-    const reqUid = args?.uid || playerId;
+    let reqUid = args?.uid || playerId;
+    const providedToken = typeof args?.authToken === "string" ? args.authToken : (typeof args?.idToken === "string" ? args.idToken : null);
+    if (providedToken) {
+      try {
+        const decoded = await getAuth().verifyIdToken(providedToken);
+        reqUid = decoded.uid;
+      } catch (err) {
+        console.warn(`[VEXEA SERVER] Failed to verify authToken for socket ${playerId}:`, err);
+        channel.emit("reliable_event", {
+          type: "MATCHMAKING_ERROR",
+          message: "Authentication token verification failed.",
+        });
+        return;
+      }
+    }
     const reqMap = args?.mapId || args?.map?.id || "map_1_facility";
     const reqClass = (args?.class || args?.playerClass || "ASSAULT") as ClassId;
     const reqPrimaryWeaponId = typeof args?.primaryWeaponId === "string" ? args.primaryWeaponId : undefined;

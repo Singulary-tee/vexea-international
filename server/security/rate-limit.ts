@@ -16,11 +16,21 @@ function isLoopback(req: Request): boolean {
   return LOOPBACK_ADDRESSES.has(req.ip || "");
 }
 
+function getClientRateLimitKey(req: Request): string {
+  const auth = req.headers.authorization;
+  if (typeof auth === "string" && auth.startsWith("Bearer ")) {
+    return `token:${auth.slice(7).trim()}`;
+  }
+  return req.ip || req.socket.remoteAddress || "unknown";
+}
+
 export const strictLimiter = rateLimit({
   windowMs: MINUTE_MS,
   limit: 30,
   standardHeaders: "draft-7",
   legacyHeaders: false,
+  validate: { trustProxy: false },
+  keyGenerator: getClientRateLimitKey,
   skip: isLoopback,
   message: {
     success: false,
@@ -33,6 +43,8 @@ export const generalLimiter = rateLimit({
   limit: 300,
   standardHeaders: "draft-7",
   legacyHeaders: false,
+  validate: { trustProxy: false },
+  keyGenerator: getClientRateLimitKey,
   skip: isLoopback,
   message: {
     success: false,

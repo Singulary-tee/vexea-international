@@ -25,8 +25,9 @@ export class MinimapSystem {
   private lastIsFS = false;
   private lastW = 0;
   private lastH = 0;
-  private lastScaleX = 0;
-  private lastScaleZ = 0;
+  private lastScale = 0;
+  private lastOffsetX = 0;
+  private lastOffsetY = 0;
 
   // Dynamic Markers Caching (20Hz / 50ms)
   private cachedMarkers: Array<{ dx: number; dz: number; color: string; isPlayer?: boolean }> = [];
@@ -46,19 +47,33 @@ export class MinimapSystem {
     return !!(container && container.classList.contains("fullscreen-minimap"));
   }
 
-  private renderStaticMap(spec: any, isFS: boolean, w: number, h: number, scaleX: number, scaleZ: number, cx: number, cy: number, scx: number, scy: number) {
+  private renderStaticMap(
+    spec: any,
+    isFS: boolean,
+    w: number,
+    h: number,
+    scale: number,
+    offsetX: number,
+    offsetY: number,
+    mapW: number,
+    mapH: number
+  ) {
     if (!this.staticCanvas) {
       this.staticCanvas = document.createElement("canvas");
     }
-    this.staticCanvas.width = isFS ? w : spec.worldSize.x * scaleX;
-    this.staticCanvas.height = isFS ? h : spec.worldSize.z * scaleZ;
+    this.staticCanvas.width = w;
+    this.staticCanvas.height = h;
     const ctx = this.staticCanvas.getContext("2d");
     if (!ctx) return;
 
     ctx.clearRect(0, 0, this.staticCanvas.width, this.staticCanvas.height);
 
-    const drawCx = isFS ? cx : scx;
-    const drawCy = isFS ? cy : scy;
+    // Facility boundary background & border
+    ctx.fillStyle = DS.utils.rgba(DS.colors.surface, 0.4);
+    ctx.fillRect(offsetX, offsetY, mapW, mapH);
+    ctx.strokeStyle = DS.glass.border;
+    ctx.lineWidth = 1;
+    ctx.strokeRect(offsetX, offsetY, mapW, mapH);
 
     // 1. Draw Zones
     if (spec.zones) {
@@ -67,14 +82,16 @@ export class MinimapSystem {
         const zWidth = zone.bounds.xMax - zone.bounds.xMin;
         const zHeight = zone.bounds.zMax - zone.bounds.zMin;
         
-        const zx = drawCx + zone.bounds.xMin * scaleX;
-        const zz = drawCy + zone.bounds.zMin * scaleZ;
+        const zx = offsetX + zone.bounds.xMin * scale;
+        const zz = offsetY + zone.bounds.zMin * scale;
+        const zw = zWidth * scale;
+        const zh = zHeight * scale;
         
-        ctx.fillStyle = DS.utils.rgba(DS.colors.surface, 0.2);
+        ctx.fillStyle = DS.utils.rgba(DS.colors.surface, 0.25);
         ctx.strokeStyle = DS.glass.border;
         ctx.lineWidth = 1;
-        ctx.fillRect(zx, zz, zWidth * scaleX, zHeight * scaleZ);
-        ctx.strokeRect(zx, zz, zWidth * scaleX, zHeight * scaleZ);
+        ctx.fillRect(zx, zz, zw, zh);
+        ctx.strokeRect(zx, zz, zw, zh);
       }
     }
 
@@ -82,12 +99,12 @@ export class MinimapSystem {
     if (spec.buildings) {
       for (const b of spec.buildings) {
         if (!b || !b.position || !b.size) continue;
-        const bx = drawCx + b.position.x * scaleX;
-        const bz = drawCy + b.position.z * scaleZ;
-        const bw = b.size.x * (b.scale?.x || 1) * scaleX;
-        const bh = b.size.z * (b.scale?.z || 1) * scaleZ;
+        const bx = offsetX + b.position.x * scale;
+        const bz = offsetY + b.position.z * scale;
+        const bw = b.size.x * (b.scale?.x || 1) * scale;
+        const bh = b.size.z * (b.scale?.z || 1) * scale;
 
-        ctx.fillStyle = DS.utils.rgba(DS.colors.textMuted, 0.3);
+        ctx.fillStyle = DS.utils.rgba(DS.colors.textMuted, 0.35);
         ctx.strokeStyle = DS.utils.rgba(DS.colors.text, 0.4);
         ctx.lineWidth = 0.5;
 
@@ -161,32 +178,27 @@ export class MinimapSystem {
     const cx = w / 2;
     const cy = h / 2;
     
-    const px = (window as any).camera?.position.x || 0;
-    const pz = (window as any).camera?.position.z || 0;
-    const playerYaw = (window as any).getPlayerYaw?.() || 0;
+    const px = this.match?.playerPos ? this.match.playerPos.x : ((window as any).camera?.position.x || 0);
+    const pz = this.match?.playerPos ? this.match.playerPos.z : ((window as any).camera?.position.z || 0);
+    const playerYaw = this.match?.playerYaw ?? ((window as any).getPlayerYaw?.() || 0);
 
-    if (this.playerArrow) {
-      this.playerArrow.style.display = "flex";
-      this.playerArrow.style.transform = `rotate(${-playerYaw}rad)`;
-    }
+    let scale = 1.0;
+    let offsetX = 0;
+    let offsetY = 0;
+    let mapW = w;
+    let mapH = h;
 
-    let scaleX = 1.0;
-    let scaleZ = 1.0;
-
-    if (spec) {
-      if (isFS) {
-        const worldX = spec.worldSize.x;
-        const worldZ = spec.worldSize.z;
-        const baseScale = Math.min(w / worldX, h / worldZ) * 0.95; // slightly inset to be safe
-        scaleX = baseScale;
-        scaleZ = baseScale;
-      } else {
-        const zoomFactor = 2.5;
-        this.rangeX = spec.worldSize.x / zoomFactor;
-        this.rangeZ = spec.worldSize.z / zoomFactor;
-        scaleX = w / this.rangeX;
-        scaleZ = h / this.rangeZ;
-      }
+    if (spec && spec.worldSize) {
+      const worldX = spec.worldSize.x;
+      const worldZ = spec.worldSize.z;
+      const padding = isFS ? 24 : 4;
+      const availW = Math.max(w - padding * 2, 1);
+      const availH = Math.max(h - padding * 2, 1);
+      scale = Math.min(availW / worldX, availH / worldZ);
+      mapW = worldX * scale;
+      mapH = worldZ * scale;
+      offsetX = (w - mapW) / 2;
+      offsetY = (h - mapH) / 2;
     }
 
     // Apply Pan and Zoom inside the matrix stack if fullscreen
@@ -200,9 +212,6 @@ export class MinimapSystem {
     }
 
     if (spec) {
-      const scx = (spec.worldSize.x * scaleX) / 2;
-      const scy = (spec.worldSize.z * scaleZ) / 2;
-
       // Caching static canvas layer
       if (
         !this.staticCanvas ||
@@ -210,25 +219,23 @@ export class MinimapSystem {
         this.lastIsFS !== isFS ||
         this.lastW !== w ||
         this.lastH !== h ||
-        this.lastScaleX !== scaleX ||
-        this.lastScaleZ !== scaleZ
+        this.lastScale !== scale ||
+        this.lastOffsetX !== offsetX ||
+        this.lastOffsetY !== offsetY
       ) {
-        this.renderStaticMap(spec, isFS, w, h, scaleX, scaleZ, cx, cy, scx, scy);
+        this.renderStaticMap(spec, isFS, w, h, scale, offsetX, offsetY, mapW, mapH);
         this.lastSpec = spec;
         this.lastIsFS = isFS;
         this.lastW = w;
         this.lastH = h;
-        this.lastScaleX = scaleX;
-        this.lastScaleZ = scaleZ;
+        this.lastScale = scale;
+        this.lastOffsetX = offsetX;
+        this.lastOffsetY = offsetY;
       }
 
       // Draw Static Canvas
       if (this.staticCanvas) {
-        if (isFS) {
-          ctx.drawImage(this.staticCanvas, 0, 0);
-        } else {
-          ctx.drawImage(this.staticCanvas, cx - scx - px * scaleX, cy - scy - pz * scaleZ);
-        }
+        ctx.drawImage(this.staticCanvas, 0, 0);
       }
     }
 
@@ -271,8 +278,8 @@ export class MinimapSystem {
 
     // 3. Draw Drones and Remote Players from cached markers
     for (const marker of this.cachedMarkers) {
-      const dx = cx + (marker.dx - (isFS ? 0 : px)) * scaleX;
-      const dz = cy + (marker.dz - (isFS ? 0 : pz)) * scaleZ;
+      const dx = offsetX + marker.dx * scale;
+      const dz = offsetY + marker.dz * scale;
 
       ctx.save();
       ctx.shadowColor = marker.color;
@@ -300,19 +307,20 @@ export class MinimapSystem {
 
     // Position HTML Player Arrow
     if (this.playerArrow) {
+      this.playerArrow.style.display = "flex";
+      this.playerArrow.style.transform = `rotate(${-playerYaw}rad)`;
+
+      const rawX = offsetX + px * scale;
+      const rawY = offsetY + pz * scale;
+
       if (isFS) {
-        // Calculate player screen position under Pan & Zoom
-        const worldX_scaled = px * scaleX;
-        const worldZ_scaled = pz * scaleZ;
-        
-        const screenX = (worldX_scaled) * this.zoom + this.panX + cx;
-        const screenY = (worldZ_scaled) * this.zoom + this.panY + cy;
-        
+        const screenX = (rawX - cx) * this.zoom + cx + this.panX;
+        const screenY = (rawY - cy) * this.zoom + cy + this.panY;
         this.playerArrow.style.left = `${screenX}px`;
         this.playerArrow.style.top = `${screenY}px`;
       } else {
-        this.playerArrow.style.left = "50%";
-        this.playerArrow.style.top = "50%";
+        this.playerArrow.style.left = `${rawX}px`;
+        this.playerArrow.style.top = `${rawY}px`;
       }
     }
     

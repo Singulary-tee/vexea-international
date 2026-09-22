@@ -182,6 +182,7 @@ export async function orchestrateMatchLoad(
 
   // Phase 4 — Prewarm shaders and materials with a multi-directional panoramic view from the spawn point
   loadingScreen.setPhase('PREWARMING SHADERS');
+  match?.visuals?.init();
   const prewarmCam = new THREE.PerspectiveCamera(90, 1, 0.1, 2000);
   
   // Position near player spawn coordinates (384, 5, 10)
@@ -239,7 +240,6 @@ export async function orchestrateMatchLoad(
     return discardStaleLoad();
   }
 
-  match?.visuals?.init();
   loadingScreen.destroy();
   return true;
 }

@@ -160,7 +160,10 @@ class AudioManager {
             } else {
                 sound.rate(1.0);
             }
-            sound.play();
+            const soundId = sound.play();
+            if (soundId !== undefined && entry) {
+                sound.loop(entry.loop ?? false, soundId);
+            }
         } else {
             console.warn(`[Audio] Sound ${name} not found`);
         }
@@ -221,6 +224,10 @@ class AudioManager {
 
         const soundId = sound.play();
         if (soundId === undefined) return null;
+
+        if (entry) {
+            sound.loop(entry.loop ?? false, soundId);
+        }
 
         if (sourceOrX instanceof THREE.Vector3) {
             const source = sourceOrX;
@@ -288,11 +295,11 @@ class AudioManager {
         if (baseVol <= 0) return;
 
         const shouldLoop = options?.loop !== false;
-        sound.loop(shouldLoop);
 
         const soundId = sound.play();
         if (soundId === undefined) return;
 
+        sound.loop(shouldLoop, soundId);
         sound.volume(baseVol, soundId);
 
         if (s.spatialAudio !== false) {
@@ -330,6 +337,10 @@ class AudioManager {
         const emitter = this.activeEmitters.get(entityId);
         if (emitter) {
             emitter.howl.stop(emitter.soundId);
+            const entry = getManifestEntry(emitter.key);
+            if (entry) {
+                emitter.howl.loop(entry.loop ?? false);
+            }
             this.activeEmitters.delete(entityId);
         }
     }
@@ -337,12 +348,24 @@ class AudioManager {
     public stopAllEmitters(): void {
         this.activeEmitters.forEach((emitter) => {
             emitter.howl.stop(emitter.soundId);
+            const entry = getManifestEntry(emitter.key);
+            if (entry) {
+                emitter.howl.loop(entry.loop ?? false);
+            }
         });
         this.activeEmitters.clear();
         this.stopMatchAmbience();
         this.footstepTimer = 0;
         this.heartbeatActive = false;
         this.stopWeaponReload();
+        // Stop match-owned gameplay sounds so they do not bleed into menus
+        for (const key in this.sounds) {
+            const entry = getManifestEntry(key);
+            if (entry && entry.category !== 'ui' && entry.category !== 'music') {
+                this.sounds[key].stop();
+                this.sounds[key].loop(entry.loop ?? false);
+            }
+        }
     }
     
     public setMatchState(inMatch: boolean) {

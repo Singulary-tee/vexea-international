@@ -1003,6 +1003,7 @@ export function initMainMenu() {
   });
 
   const tierText = document.createElement('div');
+  tierText.id = 'mm-bp-tier-text';
   tierText.textContent = `TIER ${String(currentTier).padStart(2, '0')}`;
   Object.assign(tierText.style, {
     fontFamily: DS.typography.fontFamily, fontSize: 'clamp(0.56rem, 1.2vh, 0.69rem)', color: '#FFFFFF',
@@ -1017,6 +1018,7 @@ export function initMainMenu() {
   });
   
   const barFill = document.createElement('div');
+  barFill.id = 'mm-bp-bar-fill';
   Object.assign(barFill.style, {
     width: `${progressPct}%`, height: '100%', background: DS.colors.accent,
     boxShadow: `0 0 0.63rem ${DS.colors.accent}`, transition: 'width 0.5s ease-out'
@@ -1325,6 +1327,14 @@ function updateProfileBox() {
       const progressPct = Math.min(100, Math.max(15, xp % 100 || 65));
       xpFill.style.height = `${progressPct}%`;
     }
+
+    const bpXP = getRegisteredUserData().battlePass || 0;
+    const tierNum = Math.floor(bpXP / 10);
+    const bpProgress = ((bpXP % 10) / 10) * 100;
+    const bpTierEl = document.getElementById('mm-bp-tier-text');
+    const bpFillEl = document.getElementById('mm-bp-bar-fill');
+    if (bpTierEl) bpTierEl.textContent = `TIER ${String(tierNum).padStart(2, '0')}`;
+    if (bpFillEl) bpFillEl.style.width = `${bpProgress}%`;
 
     const creditsVal = getRegisteredUserData().credits !== undefined ? getRegisteredUserData().credits : 100;
     const energyVal = getRegisteredUserData().energy !== undefined ? getRegisteredUserData().energy : 10;
@@ -2223,7 +2233,7 @@ export function refreshCardImages() {
     { id: 'mm-updates-card', asset: 'update_card_1.webp' },
     { id: 'leaderboard-card', asset: 'leaderboard_card_1.webp' },
     { id: 'mm-intel-card', asset: 'intel_card_1.webp' },
-    { id: 'mm-squad-card', asset: 'squad_card_1.webp' },
+    { id: 'mm-bp-card', asset: 'squad_card_1.webp' },
     { id: 'mm-store-card', asset: 'promo_rifle_1.webp' }
   ];
   cards.forEach(({ id, asset }) => {

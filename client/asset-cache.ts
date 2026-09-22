@@ -479,7 +479,7 @@ export async function downloadMapAssets(
           onProgress({ loaded, total, currentFile: item.name, filePercent: percent });
         });
       } catch (e) {
-        console.error(`[Cache] Error preloading ${item.name}:`, e);
+        console.warn(`[Cache] Preload unavailable for ${item.name}, will fallback to repository:`, e);
       }
       loaded++;
       onProgress({ loaded, total, currentFile: item.name, filePercent: 100 });
@@ -616,7 +616,7 @@ export async function getCachedOrFetchUrl(
     blobUrlMap.set(cacheKey, url);
     return url;
   } catch (error) {
-    console.error(`[Cache] Failed to fetch asset ${filename} (${category}) for cacheKey ${cacheKey}:`, error);
+    console.warn(`[Cache] Asset ${filename} (${category}) not available in cache/bucket for cacheKey ${cacheKey}:`, error);
     throw error;
   }
 }

@@ -56,6 +56,7 @@ import { ASSET_STRUCTURE } from "../shared/asset-structure";
 import { inputManager, InputAction } from "./input";
 import { GlobalState } from "./state";
 import { keys, tempInputBuffer, tempInputView, incrementInputSequence } from "./src/input/InputSynchronizer";
+import { getIdToken } from "./api/authed-fetch";
 
 import { HUD_HTML } from "./hud_template";
 import {
@@ -414,12 +415,14 @@ const initClient = async () => {
       match.transport = channel;
 
       if (cloudUid) {
-        lockMatchSession(matchId).then((locked) => {
+        lockMatchSession(matchId).then(async (locked) => {
           if (locked) {
             (window as any).vexMatchId = matchId;
+            const authToken = await getIdToken();
             if (channel)
               channel.emit("start_match", {
                 uid: cloudUid,
+                authToken: authToken || undefined,
                 matchId,
                 mapId: requestedMap,
                 class: classId,
@@ -490,9 +493,11 @@ const initClient = async () => {
     });
 
     const cloudUid = (window as any).vexPlayerUid;
+    const authToken = await getIdToken();
     if (channel) {
       channel.emit("start_match", {
         uid: cloudUid || ("guest_" + Math.floor(Math.random() * 1000000)),
+        authToken: authToken || undefined,
         mapId: requestedMap,
         class: classId,
         primaryWeaponId: selectedWeapons.primaryWeaponId,

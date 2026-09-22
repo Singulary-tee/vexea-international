@@ -92,10 +92,10 @@ export class MapLoader {
       const fullUrl = browserDir + meshFile;
       let cachedUrl = fullUrl;
       try {
-          cachedUrl = await getCachedOrFetchUrl(fullUrl, 'Asset');
-        } catch (e) {
-          console.warn(`[MapLoader] Cache routing failed, falling back:`, e);
-        }
+        cachedUrl = await getCachedOrFetchUrl(fullUrl, 'Asset');
+      } catch (e) {
+        console.warn(`[MapLoader] Asset ${meshFile} not available in bucket, consuming from repository:`, e);
+      }
 
         if (this.disposed || !isCurrent()) return;
 

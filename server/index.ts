@@ -303,6 +303,7 @@ const matchProgressGcInterval = setInterval(
 
 // Create Express and HTTP Server
 const app = express();
+app.set("trust proxy", 1);
 const server = http.createServer(app);
 app.use((req, res, next) => {
   res.setHeader("Cross-Origin-Opener-Policy", "same-origin");
